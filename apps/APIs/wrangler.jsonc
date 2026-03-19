@@ -1,6 +1,6 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "slide-sage-apis",
+    "name": "slide-sage",
     "main": "src/index.ts",
     "compatibility_date": "2026-03-20",
     "compatibility_flags": ["nodejs_compat"]
