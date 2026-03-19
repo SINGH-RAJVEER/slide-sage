@@ -10,6 +10,7 @@
     "build": "turbo run build",
     "build:apis": "turbo run build --filter=slide-sage-apis",
     "build:web": "turbo run build --filter=slide-sage-web",
+    "deploy:apis": "bun --cwd apps/APIs run deploy",
     "dev": "turbo run dev --ui=tui",
     "dev:stream": "turbo run dev --ui=stream",
     "dev:apis": "turbo run dev --ui=tui --filter=slide-sage-apis",
