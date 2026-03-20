@@ -7,6 +7,7 @@
   "module": "src/main.tsx",
   "scripts": {
     "dev": "bunx vite",
+    "prebuild": "bun install --no-frozen-lockfile",
     "build": "bunx vite build",
     "preview": "bunx vite preview",
     "test": "bun test",
