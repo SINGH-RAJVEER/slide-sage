@@ -1,9 +1,9 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
-  "extends": ["../../biome.json"],
-  "css": {
-    "parser": {
-      "tailwindDirectives": true
+    "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
+    "extends": ["../../biome.json"],
+    "css": {
+        "parser": {
+            "tailwindDirectives": true
+        }
     }
-  }
 }

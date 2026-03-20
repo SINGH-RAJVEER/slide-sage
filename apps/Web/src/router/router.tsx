@@ -9,65 +9,57 @@ import SignUpPage from "@/routes/SignUpPage";
 import VerifyEmailPage from "@/routes/VerifyEmailPage";
 import ProfilePage from "@/routes/ProfilePage";
 
-function lazyRoute<T extends { default: ComponentType }>(
-	importer: () => Promise<T>,
-) {
-	return async () => {
-		const mod = await importer();
-		return { Component: mod.default };
-	};
+function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise<T>) {
+    return async () => {
+        const mod = await importer();
+        return { Component: mod.default };
+    };
 }
 
 export const router = createBrowserRouter([
-	{
-		errorElement: <RouteErrorPage />,
-		children: [
-			{ path: "sign-in/*", element: <SignInPage /> },
-			{ path: "sign-up/*", element: <SignUpPage /> },
-			{ path: "sign-up/verify-email", element: <VerifyEmailPage /> },
-			{
-				element: <RequireSignedInLayout />,
-				children: [
-					{ index: true, element: <HomePage /> },
-					{ path: "profile", element: <ProfilePage /> },
-					{
-						path: "generate",
-						lazy: lazyRoute(() => import("@/modules/pages/GeneratePPTPage")),
-					},
-					{
-						path: "generate/research",
-						lazy: lazyRoute(
-							() => import("@/modules/pages/GenerateResearchPage"),
-						),
-					},
-					{
-						path: "presentations",
-						lazy: lazyRoute(
-							() => import("@/modules/pages/PresentationsGridPage"),
-						),
-					},
-					{
-						path: "presentations/:presentationId",
-						lazy: lazyRoute(() => import("@/modules/pages/PresentationViewer")),
-					},
-					// Streaming / legacy route (kept because generation navigates here before an id exists)
-					{
-						path: "presentation",
-						lazy: lazyRoute(() => import("@/modules/pages/PresentationViewer")),
-					},
-					{
-						path: "presentation-error",
-						lazy: lazyRoute(
-							() => import("@/modules/pages/PresentationErrorPage"),
-						),
-					},
-					{
-						path: "purchase",
-						lazy: lazyRoute(() => import("@/modules/pages/PurchaseTokensPage")),
-					},
-				],
-			},
-			{ path: "*", element: <NotFoundPage /> },
-		],
-	},
+    {
+        errorElement: <RouteErrorPage />,
+        children: [
+            { path: "sign-in/*", element: <SignInPage /> },
+            { path: "sign-up/*", element: <SignUpPage /> },
+            { path: "sign-up/verify-email", element: <VerifyEmailPage /> },
+            {
+                element: <RequireSignedInLayout />,
+                children: [
+                    { index: true, element: <HomePage /> },
+                    { path: "profile", element: <ProfilePage /> },
+                    {
+                        path: "generate",
+                        lazy: lazyRoute(() => import("@/modules/pages/GeneratePPTPage")),
+                    },
+                    {
+                        path: "generate/research",
+                        lazy: lazyRoute(() => import("@/modules/pages/GenerateResearchPage")),
+                    },
+                    {
+                        path: "presentations",
+                        lazy: lazyRoute(() => import("@/modules/pages/PresentationsGridPage")),
+                    },
+                    {
+                        path: "presentations/:presentationId",
+                        lazy: lazyRoute(() => import("@/modules/pages/PresentationViewer")),
+                    },
+                    // Streaming / legacy route (kept because generation navigates here before an id exists)
+                    {
+                        path: "presentation",
+                        lazy: lazyRoute(() => import("@/modules/pages/PresentationViewer")),
+                    },
+                    {
+                        path: "presentation-error",
+                        lazy: lazyRoute(() => import("@/modules/pages/PresentationErrorPage")),
+                    },
+                    {
+                        path: "purchase",
+                        lazy: lazyRoute(() => import("@/modules/pages/PurchaseTokensPage")),
+                    },
+                ],
+            },
+            { path: "*", element: <NotFoundPage /> },
+        ],
+    },
 ]);

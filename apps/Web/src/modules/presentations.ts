@@ -1,6 +1,6 @@
 export {
-	StreamingProvider,
-	useStreaming,
+    StreamingProvider,
+    useStreaming,
 } from "@/modules/contexts/StreamingContext";
 export { default as GeneratePPTPage } from "@/modules/pages/GeneratePPTPage";
 export { default as PresentationErrorPage } from "@/modules/pages/PresentationErrorPage";

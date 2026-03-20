@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
 let resend: Resend | null = null;
 
@@ -6,38 +6,43 @@ let resend: Resend | null = null;
  * Get or initialize Resend client
  */
 function getResendClient(): Resend | null {
-  if (!process.env.RESEND_API_KEY) {
-    return null;
-  }
+    if (!process.env.RESEND_API_KEY) {
+        return null;
+    }
 
-  if (!resend) {
-    resend = new Resend(process.env.RESEND_API_KEY);
-  }
+    if (!resend) {
+        resend = new Resend(process.env.RESEND_API_KEY);
+    }
 
-  return resend;
+    return resend;
 }
 
 /**
  * Send verification code email to user
  */
 export async function sendVerificationEmail(
-  email: string,
-  code: string,
-  name: string
+    email: string,
+    code: string,
+    name: string
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const client = getResendClient();
+    try {
+        const client = getResendClient();
 
-    if (!client) {
-      console.warn('RESEND_API_KEY not configured. Email would be sent to:', email, 'Code:', code);
-      return { success: true };
-    }
+        if (!client) {
+            console.warn(
+                "RESEND_API_KEY not configured. Email would be sent to:",
+                email,
+                "Code:",
+                code
+            );
+            return { success: true };
+        }
 
-    const result = await client.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-      to: email,
-      subject: 'Verify your Slide Sage email',
-      html: `
+        const result = await client.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+            to: email,
+            subject: "Verify your Slide Sage email",
+            html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #333; margin-bottom: 20px;">Welcome to Slide Sage, ${name}! 👋</h1>
           
@@ -61,19 +66,19 @@ export async function sendVerificationEmail(
           </p>
         </div>
       `,
-    });
+        });
 
-    if (result.error) {
-      console.error('Resend API error:', result.error);
-      return { success: false, error: 'Failed to send verification email' };
+        if (result.error) {
+            console.error("Resend API error:", result.error);
+            return { success: false, error: "Failed to send verification email" };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to send email",
+        };
     }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error sending verification email:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to send email',
-    };
-  }
 }
