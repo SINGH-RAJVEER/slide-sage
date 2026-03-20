@@ -7,7 +7,12 @@ import billingRoutes from "./routes/billing.routes";
 import presentationRoutes from "./routes/presentation.routes";
 import profileRoutes from "./routes/profile.routes";
 
-loadEnv({ path: new URL("../../../.env", import.meta.url), override: false });
+if (
+  typeof import.meta.url === "string" &&
+  import.meta.url.startsWith("file:")
+) {
+  loadEnv({ path: new URL("../../../.env", import.meta.url), override: false });
+}
 
 const app = new Hono();
 

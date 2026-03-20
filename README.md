@@ -96,41 +96,31 @@ docker compose --env-file docker/.env -f docker/prod/docker-compose.prod.yml up
 
 ## Documentation
 
-### Getting Started
+### Docs Index (All Files In `/docs`)
 
-| Document                                              | Description                            |
-| ----------------------------------------------------- | -------------------------------------- |
-| [**DEVELOPMENT_SETUP.md**](docs/DEVELOPMENT_SETUP.md) | Complete environment setup guide       |
-| [**CODE_STANDARDS.md**](docs/CODE_STANDARDS.md)       | Coding conventions and best practices  |
-| [**AGENTS.md**](AGENTS.md)                            | AI agent behavior and shell guidelines |
+| Document                                                            | Description                                               |
+| ------------------------------------------------------------------- | --------------------------------------------------------- |
+| [**API_OVERVIEW.md**](docs/API_OVERVIEW.md)                         | General API standards and conventions                     |
+| [**APIs_ARCHITECTURE.md**](docs/APIs_ARCHITECTURE.md)               | APIs architecture, layers, and boundaries                 |
+| [**AUTH_API.md**](docs/AUTH_API.md)                                 | Authentication endpoints and request/response contracts   |
+| [**BETTER_AUTH_SETUP.md**](docs/BETTER_AUTH_SETUP.md)               | Better Auth setup and integration details                 |
+| [**CODE_STANDARDS.md**](docs/CODE_STANDARDS.md)                     | Coding conventions and best practices                     |
+| [**DEVELOPMENT_SETUP.md**](docs/DEVELOPMENT_SETUP.md)               | Local development environment and startup steps           |
+| [**EMAIL_VERIFICATION_SETUP.md**](docs/EMAIL_VERIFICATION_SETUP.md) | Email verification flow setup and configuration           |
+| [**ENVIRONMENT_VARIABLES.md**](docs/ENVIRONMENT_VARIABLES.md)       | Complete environment variable reference and usage mapping |
+| [**MONOREPO_STRUCTURE.md**](docs/MONOREPO_STRUCTURE.md)             | Workspace/monorepo layout and package relationships       |
+| [**PRESENTATIONS_API.md**](docs/PRESENTATIONS_API.md)               | Presentation CRUD and generation API details              |
+| [**PROFILE_MANAGEMENT.md**](docs/PROFILE_MANAGEMENT.md)             | Profile endpoints and profile data management             |
+| [**RAG_IMPLEMENTATION.md**](docs/RAG_IMPLEMENTATION.md)             | RAG architecture, embeddings, and retrieval behavior      |
+| [**REQUEST_FLOWS.md**](docs/REQUEST_FLOWS.md)                       | Request lifecycle and sequence diagrams                   |
+| [**TECH_STACK.md**](docs/TECH_STACK.md)                             | Technology stack and toolchain decisions                  |
+| [**WEB_ROUTING.md**](docs/WEB_ROUTING.md)                           | Web route map and navigation/auth behavior                |
 
-### Architecture & Technology
+Additional root-level docs:
 
-| Document                                                | Description                                 |
-| ------------------------------------------------------- | ------------------------------------------- |
-| [**MONOREPO_STRUCTURE.md**](docs/MONOREPO_STRUCTURE.md) | Monorepo layout and workspace configuration |
-| [**TECH_STACK.md**](docs/TECH_STACK.md)                 | Detailed technology stack overview          |
-| [**APIs_ARCHITECTURE.md**](docs/APIs_ARCHITECTURE.md)   | APIs layers and component design            |
-| [**REQUEST_FLOWS.md**](docs/REQUEST_FLOWS.md)           | Request flow diagrams and sequences         |
-| [**RAG_IMPLEMENTATION.md**](docs/RAG_IMPLEMENTATION.md) | Retrieval Augmented Generation details      |
-
-### API Documentation
-
-| Document                                              | Description                                       |
-| ----------------------------------------------------- | ------------------------------------------------- |
-| [**API_OVERVIEW.md**](docs/API_OVERVIEW.md)           | General API standards and conventions             |
-| [**AUTH_API.md**](docs/AUTH_API.md)                   | Authentication endpoints (login, register, OAuth) |
-| [**PRESENTATIONS_API.md**](docs/PRESENTATIONS_API.md) | Presentation CRUD and AI generation endpoints     |
-| [**BETTER_AUTH_SETUP.md**](docs/BETTER_AUTH_SETUP.md) | Better Auth configuration and integration         |
-
-### Development Workflows
-
-| Document                                                      | Description                                   |
-| ------------------------------------------------------------- | --------------------------------------------- |
-| [**DEVELOPMENT_WORKFLOWS.md**](docs/DEVELOPMENT_WORKFLOWS.md) | Feature development, testing, and code review |
-| [**DEPLOYMENT_WORKFLOWS.md**](docs/DEPLOYMENT_WORKFLOWS.md)   | Docker deployment and CI/CD pipelines         |
-| [**WEB_ROUTING.md**](docs/WEB_ROUTING.md)                     | Web route map and auth guard                  |
-| [**MIGRATION_GUIDE.md**](MIGRATION_GUIDE.md)                  | Gemini embeddings migration guide             |
+| Document                   | Description                                           |
+| -------------------------- | ----------------------------------------------------- |
+| [**AGENTS.md**](AGENTS.md) | AI agent behavior and shell rules for this repository |
 
 ---
 
@@ -225,8 +215,9 @@ slide-sage/
 │   ├── APIs_ARCHITECTURE.md        # APIs layers
 │   ├── REQUEST_FLOWS.md            # Request flow diagrams
 │   ├── DEVELOPMENT_SETUP.md        # Environment setup guide
-│   ├── DEVELOPMENT_WORKFLOWS.md    # Development processes
-│   ├── DEPLOYMENT_WORKFLOWS.md     # Deployment guide
+│   ├── EMAIL_VERIFICATION_SETUP.md # Email verification setup
+│   ├── ENVIRONMENT_VARIABLES.md    # Environment variable reference
+│   ├── PROFILE_MANAGEMENT.md       # Profile API and data management
 │   ├── CODE_STANDARDS.md           # Coding standards
 │   └── WEB_ROUTING.md              # Web routing configuration
 ├── AGENTS.md              # AI agent behavior guidelines
@@ -258,7 +249,7 @@ slide-sage/
 
 ### 1. Feature Development
 
-1. **Plan**: Read [DEVELOPMENT_WORKFLOWS.md](docs/DEVELOPMENT_WORKFLOWS.md)
+1. **Plan**: Review [REQUEST_FLOWS.md](docs/REQUEST_FLOWS.md)
 2. **Setup**: Follow [DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md)
 3. **Code**: Follow [CODE_STANDARDS.md](docs/CODE_STANDARDS.md)
 4. **Test**: Use test commands and follow guidelines
@@ -276,7 +267,7 @@ slide-sage/
 
 1. **Local Development**: Use `just dev-up-d` to start all services
 2. **Production**: Deploy with `just prod-up`, or manually run `docker compose --env-file docker/.env -f docker/prod/docker-compose.prod.yml up -d`
-3. **Docker Management**: See [DEPLOYMENT_WORKFLOWS.md](docs/DEPLOYMENT_WORKFLOWS.md)
+3. **Docker Management**: See [DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md)
 4. **CI/CD**: Use automated pipelines and monitoring
 
 ---
@@ -378,12 +369,13 @@ CORS_ORIGINS=*
 ## 📖 Documentation Guide
 
 - **New to project?** → Start with [DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md)
-- **Adding features?** → Read [DEVELOPMENT_WORKFLOWS.md](docs/DEVELOPMENT_WORKFLOWS.md)
+- **Adding features?** → Read [CODE_STANDARDS.md](docs/CODE_STANDARDS.md)
 - **Working with API?** → Check [API_OVERVIEW.md](docs/API_OVERVIEW.md) first
 - **Implementing RAG?** → See [RAG_IMPLEMENTATION.md](docs/RAG_IMPLEMENTATION.md)
 - **Setting up auth?** → Follow [BETTER_AUTH_SETUP.md](docs/BETTER_AUTH_SETUP.md)
-- **Migrating embeddings?** → Use [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
-- **Deploying?** → Follow [DEPLOYMENT_WORKFLOWS.md](docs/DEPLOYMENT_WORKFLOWS.md)
+- **Configuring env vars?** → Use [ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md)
+- **Setting up email verification?** → Use [EMAIL_VERIFICATION_SETUP.md](docs/EMAIL_VERIFICATION_SETUP.md)
+- **Working on profiles?** → See [PROFILE_MANAGEMENT.md](docs/PROFILE_MANAGEMENT.md)
 - **Need architecture info?** → See [MONOREPO_STRUCTURE.md](docs/MONOREPO_STRUCTURE.md)
 - **Working with AI agents?** → Review [AGENTS.md](AGENTS.md)
 
