@@ -349,7 +349,7 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 1. **Check Documentation**: Start with relevant docs in `/docs` folder
 2. **Review Logs**: Use `just dev-logs` or `just dev-logs <service>` for service-specific logs
-3. **Test API**: Use `/api/health` endpoint to verify APIs health
+3. **Test API**: Use `/` endpoint to verify APIs health
 4. **Test RAG**: Run `cd apps/APIs && bash -lc 'bun run src/scripts/test-rag.ts'`
 5. **Validate Setup**: Ensure all required environment variables are configured
 

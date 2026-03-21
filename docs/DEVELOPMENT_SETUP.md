@@ -146,7 +146,7 @@ turbo run dev --filter=Web
 
 ```bash
 # Test APIs health
-curl http://localhost:8000/health
+curl http://localhost:8000/
 
 # Check Web (open in browser)
 open http://localhost:5173

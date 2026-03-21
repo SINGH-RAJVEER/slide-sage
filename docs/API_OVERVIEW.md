@@ -16,7 +16,7 @@ Development: http://localhost:8000
 Production:  https://your-domain.com
 ```
 
-API routes are mounted under `/api` (for example `/api/presentations`), while the health check is `/health`.
+API routes are mounted under `/api` (for example `/api/presentations`), while the health check is `/`.
 
 ## Authentication Standards
 
@@ -26,7 +26,7 @@ APIs use better-auth with HTTP-only cookies. Clients must send cookies when call
 
 ```javascript
 fetch(`${API_URL}/api/presentations`, {
-    credentials: "include",
+  credentials: "include",
 });
 ```
 
@@ -119,11 +119,11 @@ Currently not implemented but planned for production:
 ```typescript
 // Hono CORS middleware
 app.use(
-    "*",
-    cors({
-        origin: ["http://localhost:5173"],
-        credentials: true,
-    }),
+  "*",
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  }),
 );
 ```
 
@@ -151,7 +151,7 @@ Future versions may include version in URL:
 ### Endpoint
 
 ```
-GET /health
+GET /
 ```
 
 ### Response
@@ -168,7 +168,7 @@ GET /health
 
 ```javascript
 // Check API health before making requests
-const healthResponse = await fetch("/health");
+const healthResponse = await fetch("/");
 if (healthResponse.ok) {
   // API is healthy, proceed with requests
 }
