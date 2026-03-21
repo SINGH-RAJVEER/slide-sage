@@ -322,6 +322,8 @@ bun build
 ### Database Commands
 
 ```bash
+cd packages/DB
+
 # Generate migration
 bun run db:generate
 

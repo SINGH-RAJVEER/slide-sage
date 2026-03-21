@@ -15,8 +15,6 @@ slide-sage/
 |   |   |   |-- services/     # Core services (AI, auth, profile, search)
 |   |   |   |-- utils/        # Helpers
 |   |   |   `-- index.ts      # Application entry point
-|   |   |-- drizzle/          # Drizzle migrations + snapshots
-|   |   |-- drizzle.config.ts # Drizzle config
 |   |   |-- biome.json        # Linter/formatter config
 |   |   `-- package.json
 |   |-- Web/                  # React SPA
@@ -32,7 +30,10 @@ slide-sage/
 |   |   `-- package.json
 |-- packages/
 |   |-- auth/                 # Better Auth client + auth middleware helpers
-|   |-- DB/                   # Drizzle schema + repositories
+|   |-- DB/                   # Drizzle schema, migrations + repositories
+|   |   |-- drizzle/          # Drizzle migrations + snapshots
+|   |   |-- drizzle.config.ts # Drizzle config
+|   |   `-- src/
 |   `-- contracts/            # Shared API and model contracts
 |-- docker/                   # Docker assets
 |   |-- dev/                  # Dev Dockerfiles + compose

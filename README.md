@@ -141,7 +141,7 @@ bun format           # Format all code
 ```bash
 # APIs only
 bun dev:apis
-cd apps/APIs && bun run db:studio
+cd packages/DB && bun run db:studio
 
 # Web only
 bun dev:web
@@ -151,7 +151,7 @@ bun build:web
 ### Database Operations
 
 ```bash
-cd apps/APIs
+cd packages/DB
 bun run db:push       # Push schema changes
 bun run db:migrate    # Run migrations
 bun run db:studio     # Open Drizzle Studio
@@ -178,7 +178,6 @@ slide-sage/
 │   │   │   ├── services/  # Business logic (AI, RAG, search, etc.)
 │   │   │   ├── middleware/ # Auth and other middleware
 │   │   │   └── scripts/   # Management and test scripts
-│   │   └── drizzle/       # Database migrations
 │   └── Web/                # React SPA (Vite + Tailwind + Shadcn UI)
 │       └── src/           # Source code
 │           ├── components/ # React components
@@ -187,8 +186,10 @@ slide-sage/
 │           └── hooks/     # Custom hooks
 ├── packages/               # Shared packages
 │   ├── contracts/         # Shared TypeScript contracts/types
-│   └── DB/               # Database schemas and repositories
-│       ├── db/           # Database connection and setup
+│   └── DB/               # Database schema, migrations, and repositories
+│       ├── drizzle/      # Drizzle migrations and snapshots
+│       ├── drizzle.config.ts # Drizzle toolkit configuration
+│       ├── src/db/       # Database connection and schema
 │       ├── repositories/ # Data access layer
 │       ├── services/     # Database-related services
 │       └── types/        # Database types

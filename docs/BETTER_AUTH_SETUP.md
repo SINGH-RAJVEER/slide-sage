@@ -65,7 +65,7 @@ The following tables have been added/modified:
 ## Running Migrations
 
 ```bash
-cd apps/APIs
+cd packages/DB
 bun run db:generate  # Generate migration files
 bun run db:push     # Apply migrations to database
 ```

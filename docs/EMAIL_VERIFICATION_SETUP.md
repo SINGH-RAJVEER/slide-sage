@@ -68,7 +68,7 @@ For development/testing, the default `onboarding@resend.dev` will work.
 The `verifications` table must exist. Check that migrations have been applied:
 
 ```bash
-cd apps/APIs
+cd packages/DB
 bun run db:push
 ```
 

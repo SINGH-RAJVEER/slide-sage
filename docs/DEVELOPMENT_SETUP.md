@@ -152,7 +152,7 @@ curl http://localhost:8000/
 open http://localhost:5173
 
 # Verify database connection
-cd apps/APIs && bun run db:studio
+cd packages/DB && bun run db:studio
 ```
 
 ### Expected Responses
@@ -290,7 +290,7 @@ If Vite logs `http proxy error: /api/... ECONNREFUSED` in Docker, verify Web is 
 
 ```bash
 # Database operations
-cd apps/APIs
+cd packages/DB
 bun run db:push      # Push schema changes
 bun run db:studio    # Open Drizzle Studio
 bun run db:generate  # Generate migrations
@@ -309,7 +309,7 @@ bun run dev:web
 
 ```bash
 # View tables and data
-cd apps/APIs
+cd packages/DB
 bun run db:studio
 
 # Reset database (development only)
