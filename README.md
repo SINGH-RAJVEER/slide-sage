@@ -312,7 +312,7 @@ VITE_API_URL=http://localhost:8000
 VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
 
 # CORS
-CORS_ORIGINS=*
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 **Key Configuration Notes:**

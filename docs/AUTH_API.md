@@ -5,7 +5,7 @@ Authentication endpoints for SlideSage. The APIs use better-auth with cookie-bas
 ## Base URL
 
 - **Development**: `http://localhost:8000/api/auth`
-- **Production**: `AUTH_URL` + `/api/auth`
+- **Production**: `BASE_URL` + `/api/auth`
 
 ## Authentication Method
 

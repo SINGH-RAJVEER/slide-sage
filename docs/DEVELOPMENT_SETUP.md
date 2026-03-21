@@ -6,7 +6,7 @@ Complete guide to setting up the SlideSage development environment.
 
 ### Required Software
 
-- **Bun** (1.3.6+): Package manager and runtime
+- **Bun** (1.3.10+): Package manager and runtime
 - **Docker** & **Docker Compose**: Container management
 - **Git**: Version control
 
@@ -77,7 +77,7 @@ CORS_ORIGINS=http://localhost:5173
 
 # better-auth
 AUTH_SECRET=your-secret-key-change-in-production
-AUTH_URL=http://localhost:8000
+BASE_URL=http://localhost:8000
 
 # OAuth providers
 GOOGLE_CLIENT_ID=your-google-client-id

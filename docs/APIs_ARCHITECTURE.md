@@ -94,12 +94,14 @@ presentations.post(
 ### Session-based Authentication
 
 ```typescript
-// apps/APIs/src/middleware/auth.middleware.ts
+// packages/auth/src/middleware.ts
 const sessionCookie = getCookie(c, "better-auth.session_token");
 if (!sessionCookie) {
   return c.json({ error: { message: "Unauthorized" } }, 401);
 }
 ```
+
+Auth setup is abstracted into the shared `@slide-sage/auth` package (Better Auth client + middleware helpers), which is consumed by `apps/APIs`.
 
 ## Database Layer
 
@@ -128,7 +130,7 @@ For manual runs, the APIs service loads `.env` at the repo root.
 
 Key variables:
 
-- `AUTH_SECRET`, `AUTH_URL`
+- `AUTH_SECRET`, `BASE_URL`
 - `DATABASE_URL`
 - `CORS_ORIGINS`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`

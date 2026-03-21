@@ -17,13 +17,19 @@ const corsOrigins = process.env.CORS_ORIGINS?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);
 
-const corsOriginConfig = corsOrigins && corsOrigins.length > 0 ? corsOrigins : "*";
+const defaultCorsOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const allowedCorsOrigins = corsOrigins && corsOrigins.length > 0 ? corsOrigins : defaultCorsOrigins;
+
+const resolveCorsOrigin = (origin?: string): string | undefined => {
+    if (!origin) return undefined;
+    return allowedCorsOrigins.includes(origin) ? origin : undefined;
+};
 
 app.use("*", logger());
 app.use(
     "*",
     cors({
-        origin: corsOriginConfig,
+        origin: (origin) => resolveCorsOrigin(origin),
         credentials: true,
         allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization"],

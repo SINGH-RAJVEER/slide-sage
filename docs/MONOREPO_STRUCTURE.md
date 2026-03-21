@@ -31,6 +31,7 @@ slide-sage/
 |   |   |   `-- App.tsx
 |   |   `-- package.json
 |-- packages/
+|   |-- auth/                 # Better Auth client + auth middleware helpers
 |   |-- DB/                   # Drizzle schema + repositories
 |   `-- contracts/            # Shared API and model contracts
 |-- docker/                   # Docker assets

@@ -1,9 +1,8 @@
-import { Hono, type Context } from "hono";
-import { db } from "@slide-sage/db";
-import { accounts, users } from "@slide-sage/db";
+import { authClient } from "@slide-sage/auth";
+import { accounts, db, users } from "@slide-sage/db";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
-import authClient from "../services/auth";
+import { type Context, Hono } from "hono";
 import {
     resendVerificationCode,
     signUpWithEmail,
@@ -13,12 +12,12 @@ import {
 const authRoutes = new Hono();
 
 async function attachSessionCookie(c: Context, email: string, password: string): Promise<void> {
-    const signInUrl = `${process.env.AUTH_URL || "http://localhost:8000"}/api/auth/sign-in/email`;
+    const signInUrl = `${process.env.BASE_URL || "http://localhost:8000"}/api/auth/sign-in/email`;
     const signInResponse = await fetch(signInUrl, {
         method: "POST",
         headers: {
             "content-type": "application/json",
-            origin: c.req.header("origin") || process.env.AUTH_URL || "http://localhost:8000",
+            origin: c.req.header("origin") || process.env.BASE_URL || "http://localhost:8000",
             "user-agent": c.req.header("user-agent") || "slide-sage-server",
             "x-forwarded-for": c.req.header("x-forwarded-for") || "127.0.0.1",
             "x-forwarded-proto": c.req.header("x-forwarded-proto") || "http",

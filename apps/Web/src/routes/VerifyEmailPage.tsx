@@ -2,8 +2,9 @@ import { type SubmitEvent, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
+import { getApiBaseUrl } from "@/lib/utils";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 function sanitizeRedirectPath(value: string | null) {
   if (!value) return "/";

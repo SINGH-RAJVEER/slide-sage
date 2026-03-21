@@ -9,7 +9,7 @@ Add these to your `.env` file at the project root:
 ```env
 # Better Auth Configuration
 AUTH_SECRET=your-secret-key-change-in-production
-AUTH_URL=http://localhost:8000 # For development. Use production URL in production
+BASE_URL=http://localhost:8000 # For development. Use production URL in production
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -156,7 +156,7 @@ If any check fails, returns `401 Unauthorized`.
 
 - Ensure cookies are enabled in browser
 - Check `CORS_ORIGINS` includes frontend URL
-- Verify `AUTH_URL` matches your backend domain
+- Verify `BASE_URL` matches your backend domain
 
 ### OAuth Callback Fails
 

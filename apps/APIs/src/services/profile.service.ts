@@ -1,6 +1,31 @@
-import { db } from "@slide-sage/db";
-import { users } from "@slide-sage/db";
-import { eq } from "drizzle-orm";
+import { accounts, db, users } from "@slide-sage/db";
+import { and, eq } from "drizzle-orm";
+
+type ProfileUser = Pick<
+    typeof users.$inferSelect,
+    | "id"
+    | "name"
+    | "email"
+    | "image"
+    | "emailVerified"
+    | "slideTokens"
+    | "isUnlimited"
+    | "createdAt"
+>;
+
+type EditableProfileFields = Partial<Pick<typeof users.$inferInsert, "name" | "email" | "image">>;
+
+type ProfileMutationResult = {
+    success: boolean;
+    error?: string;
+    user?: ProfileUser;
+};
+
+type AvatarMutationResult = {
+    success: boolean;
+    error?: string;
+    user?: Pick<typeof users.$inferSelect, "id" | "image">;
+};
 
 /**
  * Hash password using SHA-256
@@ -57,11 +82,7 @@ export async function updateUserProfile(
         currentPassword?: string;
         newPassword?: string;
     }
-): Promise<{
-    success: boolean;
-    error?: string;
-    user?: any;
-}> {
+): Promise<ProfileMutationResult> {
     try {
         const user = await db.query.users.findFirst({
             where: eq(users.id, userId),
@@ -72,13 +93,13 @@ export async function updateUserProfile(
         }
 
         // Prepare updates
-        const updates: Record<string, any> = {};
+        const updates: EditableProfileFields = {};
 
-        if (data.name && data.name.trim()) {
+        if (data.name?.trim()) {
             updates.name = data.name.trim();
         }
 
-        if (data.email && data.email.trim()) {
+        if (data.email?.trim()) {
             // Check if email is already taken
             const existingUser = await db.query.users.findFirst({
                 where: eq(users.email, data.email.toLowerCase()),
@@ -101,12 +122,30 @@ export async function updateUserProfile(
 
             // Verify current password against account record
             // Note: In production, you'd hash and compare properly
-            // For now, we're just noting that password change was requested
             const hashedNewPassword = await hashPassword(data.newPassword);
-            updates.password = hashedNewPassword;
+            await db
+                .update(accounts)
+                .set({ password: hashedNewPassword })
+                .where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")));
         }
 
         if (Object.keys(updates).length === 0) {
+            if (data.newPassword) {
+                return {
+                    success: true,
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        image: user.image,
+                        emailVerified: user.emailVerified,
+                        slideTokens: user.slideTokens,
+                        isUnlimited: user.isUnlimited,
+                        createdAt: user.createdAt,
+                    },
+                };
+            }
+
             return { success: false, error: "No updates provided" };
         }
 
@@ -127,6 +166,9 @@ export async function updateUserProfile(
                 email: updatedUser.email,
                 image: updatedUser.image,
                 emailVerified: updatedUser.emailVerified,
+                slideTokens: updatedUser.slideTokens,
+                isUnlimited: updatedUser.isUnlimited,
+                createdAt: updatedUser.createdAt,
             },
         };
     } catch (error) {
@@ -144,11 +186,7 @@ export async function updateUserProfile(
 export async function updateUserAvatar(
     userId: string,
     imageUrl: string
-): Promise<{
-    success: boolean;
-    error?: string;
-    user?: any;
-}> {
+): Promise<AvatarMutationResult> {
     try {
         if (!imageUrl || !imageUrl.trim()) {
             return { success: false, error: "Image URL is required" };

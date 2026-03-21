@@ -6,8 +6,9 @@ import {
   useEffect,
   useState,
 } from "react";
+import { getApiBaseUrl } from "@/lib/utils";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 interface User {
   id: string;
@@ -54,8 +55,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setUser(data?.user || null);
+        const contentType = res.headers.get("content-type") || "";
+
+        if (contentType.includes("application/json")) {
+          const data = await res.json();
+          setUser(data?.user || null);
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }

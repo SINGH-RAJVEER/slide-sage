@@ -1,5 +1,4 @@
-import { db } from "@slide-sage/db";
-import { accounts, users, verifications } from "@slide-sage/db";
+import { accounts, db, users, verifications } from "@slide-sage/db";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
 import {
