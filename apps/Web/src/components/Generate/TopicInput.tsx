@@ -21,13 +21,25 @@ export const TopicInput: React.FC<TopicInputProps> = ({
     onEditTopic,
     disabled,
 }) => {
+    const topicCounts = new Map<string, number>();
+    const topicEntries = topics.map((topic, index) => {
+        const count = (topicCounts.get(topic) ?? 0) + 1;
+        topicCounts.set(topic, count);
+
+        return {
+            key: `${topic}-${count}`,
+            topic,
+            index,
+        };
+    });
+
     return (
         <div className="relative w-full flex flex-col items-center justify-center">
             <div className="absolute bottom-[calc(100%+2rem)] left-0 right-0 max-h-[30vh] overflow-y-auto custom-scrollbar flex flex-wrap gap-2 justify-center">
-                {topics.length > 0 &&
-                    topics.map((topic, index) => (
+                {topicEntries.length > 0 &&
+                    topicEntries.map(({ key, topic, index }) => (
                         <div
-                            key={`${index}-${topic}`}
+                            key={key}
                             className="group flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-white/90 transition-colors hover:bg-white/10"
                         >
                             <button

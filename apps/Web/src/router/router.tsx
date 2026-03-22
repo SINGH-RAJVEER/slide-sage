@@ -3,11 +3,11 @@ import { createBrowserRouter } from "react-router-dom";
 import RequireSignedInLayout from "@/router/RequireSignedInLayout";
 import HomePage from "@/routes/HomePage";
 import NotFoundPage from "@/routes/NotFoundPage";
+import ProfilePage from "@/routes/ProfilePage";
 import RouteErrorPage from "@/routes/RouteErrorPage";
 import SignInPage from "@/routes/SignInPage";
 import SignUpPage from "@/routes/SignUpPage";
 import VerifyEmailPage from "@/routes/VerifyEmailPage";
-import ProfilePage from "@/routes/ProfilePage";
 
 function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise<T>) {
     return async () => {
