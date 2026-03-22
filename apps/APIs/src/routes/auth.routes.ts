@@ -11,13 +11,28 @@ import {
 
 const authRoutes = new Hono();
 
+function resolveRequestOrigin(c: Context): string {
+    const explicitBaseUrl = process.env.BASE_URL?.trim();
+    if (explicitBaseUrl) {
+        return explicitBaseUrl.replace(/\/$/, "");
+    }
+
+    const forwardedProto = c.req.header("x-forwarded-proto");
+    const proto = forwardedProto || new URL(c.req.url).protocol.replace(":", "") || "http";
+    const forwardedHost = c.req.header("x-forwarded-host");
+    const host = forwardedHost || c.req.header("host") || "localhost:8000";
+
+    return `${proto}://${host}`;
+}
+
 async function attachSessionCookie(c: Context, email: string, password: string): Promise<void> {
-    const signInUrl = `${process.env.BASE_URL || "http://localhost:8000"}/api/auth/sign-in/email`;
+    const requestOrigin = resolveRequestOrigin(c);
+    const signInUrl = `${requestOrigin}/api/auth/sign-in/email`;
     const signInResponse = await fetch(signInUrl, {
         method: "POST",
         headers: {
             "content-type": "application/json",
-            origin: c.req.header("origin") || process.env.BASE_URL || "http://localhost:8000",
+            origin: c.req.header("origin") || requestOrigin,
             "user-agent": c.req.header("user-agent") || "slide-sage-server",
             "x-forwarded-for": c.req.header("x-forwarded-for") || "127.0.0.1",
             "x-forwarded-proto": c.req.header("x-forwarded-proto") || "http",
