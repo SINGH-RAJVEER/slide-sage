@@ -1,10 +1,8 @@
 import { type SubmitEvent, useEffect, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { getApiBaseUrl } from "@/lib/utils";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
+import { authClient } from "@/lib/auth-client";
 
 function sanitizeRedirectPath(value: string | null) {
     if (!value) return "/";
@@ -17,13 +15,8 @@ export default function VerifyEmailPage() {
     const [searchParams] = useSearchParams();
     const email = searchParams.get("email");
     const redirectTo = sanitizeRedirectPath(searchParams.get("redirect_url"));
-    const location = useLocation();
-    const password =
-        typeof (location.state as { password?: unknown } | null)?.password === "string"
-            ? (location.state as { password?: string }).password
-            : undefined;
     const navigate = useNavigate();
-    const { isSignedIn, user } = useAuth();
+    const { isSignedIn, user, refreshSession } = useAuth();
     const [code, setCode] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -53,26 +46,17 @@ export default function VerifyEmailPage() {
         setSubmitting(true);
 
         try {
-            const res = await fetch(`${API_URL}/api/auth/verify-code`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    email,
-                    code,
-                    password,
-                }),
+            const { error } = await authClient.emailOtp.verifyEmail({
+                email: email!,
+                otp: code,
             });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => null);
-                throw new Error(data?.error?.message || "Verification failed");
+            if (error) {
+                throw new Error(error.message || "Verification failed");
             }
 
             setSuccess(true);
-            // Redirect after a short delay to show success message
+            await refreshSession();
             setTimeout(() => {
                 navigate(redirectTo, { replace: true });
             }, 1500);
@@ -90,20 +74,15 @@ export default function VerifyEmailPage() {
         setError(null);
 
         try {
-            const res = await fetch(`${API_URL}/api/auth/resend-code`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email }),
+            const { error } = await authClient.emailOtp.sendVerificationOtp({
+                email,
+                type: "email-verification",
             });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => null);
-                throw new Error(data?.error?.message || "Failed to resend code");
+            if (error) {
+                throw new Error(error.message || "Failed to resend code");
             }
 
-            setError(null);
             alert("Verification code sent to your email");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to resend code");

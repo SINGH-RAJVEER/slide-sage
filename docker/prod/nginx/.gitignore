@@ -1,7 +1,1 @@
-# Ignore SSL certificates (they should not be committed)
-ssl/*.pem
-ssl/*.key
-ssl/*.crt
-
-# Keep the directory structure
-!ssl/.gitkeep
+ssl/*

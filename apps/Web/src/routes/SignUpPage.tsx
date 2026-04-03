@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
+import { authClient } from "@/lib/auth-client";
 import { getApiBaseUrl } from "@/lib/utils";
 
 const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
@@ -54,33 +55,19 @@ export default function SignUpPage() {
         setSubmitting(true);
 
         try {
-            const res = await fetch(`${API_URL}/api/auth/signup/email`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    name,
-                    email,
-                    password,
-                }),
+            const { error } = await authClient.signUp.email({
+                name,
+                email,
+                password,
             });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => null);
-                throw new Error(data?.error?.message || "Sign up failed.");
+            if (error) {
+                throw new Error(error.message || "Sign up failed.");
             }
 
-            // Redirect to verification page
             navigate(
                 `/sign-up/verify-email?email=${encodeURIComponent(email)}&redirect_url=${encodeURIComponent(redirectTo)}`,
-                {
-                    state: {
-                        password,
-                    },
-                    replace: true,
-                },
+                { replace: true },
             );
         } catch (err) {
             setError(err instanceof Error ? err.message : "Sign up failed.");
