@@ -25,7 +25,7 @@ async function sendOTPEmail(email: string, otp: string, name: string): Promise<v
         subject: "Verify your Slide Sage email",
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #333; margin-bottom: 20px;">Welcome to Slide Sage${name ? `, ${name}` : ""}! 👋</h1>
+          <h1 style="color: #333; margin-bottom: 20px;">Welcome to Slide Sage${name ? `, ${name}` : ""}! </h1>
           <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
             Thank you for signing up. To complete your account setup, please verify your email address using the code below:
           </p>
