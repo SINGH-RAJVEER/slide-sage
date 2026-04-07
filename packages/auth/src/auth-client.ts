@@ -73,11 +73,9 @@ const resolveBaseUrl = (): string => {
 
 const baseUrl = resolveBaseUrl();
 
-const trustedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
-    : ["http://localhost:5173", "http://127.0.0.1:5173"];
+const trustedOrigins = process.env.CORS_ORIGIN
+    ? [process.env.CORS_ORIGIN.trim().replace(/\/$/, "")]
+    : ["http://localhost:5173"];
 
 const authClient = betterAuth({
     database: drizzleAdapter(db, {

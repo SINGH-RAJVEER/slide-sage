@@ -24,7 +24,7 @@ services:
       start_period: 10s
 
   database:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg17
     container_name: slide-sage-postgres-prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-slidesage}
@@ -55,7 +55,7 @@ services:
     image: slide-sage/apis:prod
     container_name: slide-sage-apis-prod
     env_file:
-      - ../.env
+      - ../../.env
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
@@ -75,7 +75,7 @@ services:
           "CMD",
           "bun",
           "-e",
-          "fetch('http://localhost:8000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:8000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 30s
       timeout: 10s
@@ -91,14 +91,14 @@ services:
       target: production
       args:
         NODE_ENV: production
-        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_API_URL: ${VITE_API_URL:-}
     image: slide-sage/web:prod
     container_name: slide-sage-web-prod
     env_file:
-      - ../.env
+      - ../../.env
     environment:
       NODE_ENV: production
-      VITE_API_URL: ${VITE_API_URL:-/api}
+      VITE_API_URL: ${VITE_API_URL:-}
       ROOT_DIR: /app
     restart: unless-stopped
     depends_on:
@@ -114,7 +114,7 @@ services:
         ]
       interval: 30s
       timeout: 10s
-      start_period: 180s
+      start_period: 10s
       retries: 3
     networks:
       - slide-sage-network

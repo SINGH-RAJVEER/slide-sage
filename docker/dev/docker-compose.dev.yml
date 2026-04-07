@@ -26,7 +26,7 @@ services:
       start_period: 10s
 
   database:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg17
     container_name: slide-sage-postgres-dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-slidesage}
@@ -62,10 +62,12 @@ services:
       - "${APIS_PORT:-8000}:8000"
     restart: "no"
     env_file:
-      - ../.env
+      - ../../.env
     environment:
       NODE_ENV: development
       LOG_LEVEL: debug
+      BASE_URL: "http://localhost:8000"
+      CORS_ORIGIN: "http://localhost:5173"
       DATABASE_URL: postgresql://${POSTGRES_USER:-slidesage}:${POSTGRES_PASSWORD:-slidesage}@database:5432/${POSTGRES_DB:-slidesage}
       LITELLM_PROXY_BASE: http://litellm:4000
       LITELLM_SEARCH_MODEL: ${LITELLM_SEARCH_MODEL:-llama-3.1-8b-instant}
@@ -80,6 +82,7 @@ services:
       - ../../apps/APIs:/app/apps/APIs
       - ../../packages/DB:/app/packages/DB
       - ../../packages/contracts:/app/packages/contracts
+      - ../../packages/auth:/app/packages/auth
       - bun_install_cache:/root/.bun/install/cache
       - docker_cache:/app/.docker-cache
     depends_on:
@@ -93,7 +96,7 @@ services:
           "CMD",
           "bun",
           "-e",
-          "fetch('http://localhost:8000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:8000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 30s
       timeout: 10s
@@ -109,17 +112,16 @@ services:
       target: development
       args:
         NODE_ENV: development
-        VITE_API_URL: "http://apis:8000"
     image: slide-sage/web:dev
     container_name: slide-sage-web-dev
     ports:
       - "${WEB_PORT:-5173}:5173"
     restart: "no"
     env_file:
-      - ../.env
+      - ../../.env
     environment:
       NODE_ENV: development
-      VITE_API_URL: "http://apis:8000"
+      VITE_PROXY_TARGET: "http://apis:8000"
       ROOT_DIR: /app
       BUN_CACHE_DIR: /root/.bun/install/cache
       STAMP_DIR: /app/.docker-cache/web
@@ -145,7 +147,7 @@ services:
         ]
       interval: 30s
       timeout: 10s
-      start_period: 180s
+      start_period: 30s
       retries: 3
     networks:
       - slide-sage-network

@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { getApiBaseUrl } from "@/lib/utils";
+import { API_URL } from "@/lib/api";
 import type { PresentationData, ResearchPayload, Slide, Source } from "../types/presentation";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 interface StreamingState {
     isStreaming: boolean;

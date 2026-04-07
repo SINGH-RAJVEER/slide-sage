@@ -8,7 +8,7 @@ import { usePlayback } from "@/hooks/usePlayback";
 import type { ViewerLocationState } from "@/hooks/usePresentationData";
 import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
-import { getApiBaseUrl } from "@/lib/utils";
+import { API_URL } from "@/lib/api";
 import { useStreaming } from "@/modules/presentations";
 import { useTemplate } from "@/modules/useTemplate";
 import { ROUTES } from "@/router/paths";
@@ -19,8 +19,6 @@ import { ViewerHeaderControls } from "./ViewerHeaderControls";
 import { ViewerNavigationControls } from "./ViewerNavigationControls";
 import { ViewerSlideCarousel } from "./ViewerSlideCarousel";
 import { ViewerThumbnails } from "./ViewerThumbnails";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 export default function PresentationViewerPage() {
     const location = useLocation();

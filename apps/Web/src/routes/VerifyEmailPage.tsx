@@ -38,6 +38,8 @@ export default function VerifyEmailPage() {
         event.preventDefault();
         setError(null);
 
+        if (!email) return;
+
         if (!code || code.length !== 6) {
             setError("Please enter a valid 6-digit code");
             return;
@@ -47,7 +49,7 @@ export default function VerifyEmailPage() {
 
         try {
             const { error } = await authClient.emailOtp.verifyEmail({
-                email: email!,
+                email,
                 otp: code,
             });
 

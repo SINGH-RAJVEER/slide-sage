@@ -17,13 +17,11 @@ COPY apps/APIs/package.json ./apps/APIs/package.json
 COPY apps/Web/package.json ./apps/Web/package.json
 COPY packages/DB/package.json ./packages/DB/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
+COPY packages/auth/package.json ./packages/auth/package.json
 
 RUN --mount=type=cache,target=/root/.bun/install/cache \
 	bun install --frozen-lockfile --ignore-scripts
 
 EXPOSE 8000
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-	CMD bun -e "fetch('http://localhost:8000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["sh", "-lc", "cd /app/apps/APIs && bun run db:push && bun run dev"]

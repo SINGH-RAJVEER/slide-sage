@@ -2,10 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
-import { getApiBaseUrl } from "@/lib/utils";
+import { API_URL } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 export default function HomePage() {
     const [loading, setLoading] = useState(true);

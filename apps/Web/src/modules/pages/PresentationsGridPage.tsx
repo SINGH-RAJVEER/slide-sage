@@ -18,10 +18,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { getApiBaseUrl } from "@/lib/utils";
+import { API_URL } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 interface Presentation {
     id: number;

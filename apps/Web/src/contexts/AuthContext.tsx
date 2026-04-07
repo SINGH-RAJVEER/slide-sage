@@ -1,8 +1,6 @@
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { getApiBaseUrl } from "@/lib/utils";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
+import { API_URL } from "@/lib/api";
 
 interface User {
     id: string;

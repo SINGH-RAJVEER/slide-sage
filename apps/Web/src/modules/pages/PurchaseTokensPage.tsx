@@ -4,9 +4,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getApiBaseUrl } from "@/lib/utils";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
+import { API_URL } from "@/lib/api";
 
 type BillingBalance = {
     slide_tokens: number;

@@ -3,12 +3,10 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { getApiBaseUrl } from "@/lib/utils";
+import { API_URL } from "@/lib/api";
 import { useStreaming } from "@/modules/presentations";
 import type { ResearchPayload, Source } from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
-
-const API_URL = getApiBaseUrl(import.meta.env.VITE_API_URL);
 
 interface ResearchRouteState {
     prompt: string;
