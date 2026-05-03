@@ -8,7 +8,7 @@ FROM base AS workspace-manifests
 COPY package.json ./
 COPY bun.lock ./
 COPY tsconfig.json ./
-COPY turbo.json ./
+COPY nx.json ./
 
 COPY apps/Web/package.json ./apps/Web/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
@@ -29,7 +29,7 @@ FROM base AS source
 COPY package.json ./
 COPY bun.lock ./
 COPY tsconfig.json ./
-COPY turbo.json ./
+COPY nx.json ./
 
 COPY apps/Web ./apps/Web
 COPY packages/contracts ./packages/contracts

@@ -78,11 +78,15 @@ services:
       - ../../package.json:/app/package.json:ro
       - ../../bun.lock:/app/bun.lock:ro
       - ../../tsconfig.json:/app/tsconfig.json:ro
-      - ../../turbo.json:/app/turbo.json:ro
+      - ../../nx.json:/app/nx.json:ro
       - ../../apps/APIs:/app/apps/APIs
+      - /app/apps/APIs/node_modules
       - ../../packages/DB:/app/packages/DB
+      - /app/packages/DB/node_modules
       - ../../packages/contracts:/app/packages/contracts
+      - /app/packages/contracts/node_modules
       - ../../packages/auth:/app/packages/auth
+      - /app/packages/auth/node_modules
       - bun_install_cache:/root/.bun/install/cache
       - docker_cache:/app/.docker-cache
     depends_on:
@@ -129,9 +133,11 @@ services:
       - ../../package.json:/app/package.json:ro
       - ../../bun.lock:/app/bun.lock:ro
       - ../../tsconfig.json:/app/tsconfig.json:ro
-      - ../../turbo.json:/app/turbo.json:ro
+      - ../../nx.json:/app/nx.json:ro
       - ../../apps/Web:/app/apps/Web
+      - /app/apps/Web/node_modules
       - ../../packages/contracts:/app/packages/contracts
+      - /app/packages/contracts/node_modules
       - bun_install_cache:/root/.bun/install/cache
       - docker_cache:/app/.docker-cache
     depends_on:

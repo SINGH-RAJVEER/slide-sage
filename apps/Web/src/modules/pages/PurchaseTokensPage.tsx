@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +11,64 @@ type BillingBalance = {
     is_unlimited: boolean;
 };
 
+type CheckoutResponse = {
+    orderId: string;
+    amount: number;
+    currency: string;
+    tokens: number;
+    keyId: string;
+};
+
+type VerifyResponse = {
+    success: boolean;
+    tokens_awarded: number;
+    new_balance: number;
+};
+
+declare global {
+    interface Window {
+        Razorpay: new (options: RazorpayOptions) => { open(): void };
+    }
+}
+
+interface RazorpayOptions {
+    key: string;
+    amount: number;
+    currency: string;
+    order_id: string;
+    name: string;
+    description: string;
+    theme?: { color?: string };
+    handler: (response: {
+        razorpay_payment_id: string;
+        razorpay_order_id: string;
+        razorpay_signature: string;
+    }) => void;
+    modal?: { ondismiss?: () => void };
+}
+
+function loadRazorpayScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+        if (window.Razorpay) {
+            resolve();
+            return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load Razorpay"));
+        document.body.appendChild(script);
+    });
+}
+
 export default function PurchaseTokensPage() {
     const [customAmount, setCustomAmount] = useState<string>("");
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [balance, setBalance] = useState<BillingBalance | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const processingRef = useRef(false);
 
     const status = useMemo(() => {
         const params = new URLSearchParams(window.location.search);
@@ -32,53 +84,36 @@ export default function PurchaseTokensPage() {
             if (!res.ok) return;
             const data = (await res.json()) as BillingBalance;
             setBalance(data);
-            // Note: User data will be refreshed on next auth context update
         } catch {
             // ignore
         }
     }, []);
 
     useEffect(() => {
-        let cancelled = false;
-        const pollAfterSuccess = async () => {
-            // Billing can take a moment to finalize + sync balances.
-            // Poll a few times after returning so the user sees updated points.
-            if (status !== "success") return;
-
-            for (let attempt = 0; attempt < 6; attempt++) {
-                if (cancelled) return;
-                await fetchBalance();
-                // Backoff: 0.5s, 1s, 1.5s, ...
-                await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
-            }
-        };
-
         void fetchBalance();
-        void pollAfterSuccess();
-        // If we just returned from checkout, clear the query param for cleaner UX.
+
         if (status === "success" || status === "cancel") {
             const url = new URL(window.location.href);
             url.searchParams.delete("status");
             window.history.replaceState({}, "", url.toString());
         }
-
-        return () => {
-            cancelled = true;
-        };
     }, [fetchBalance, status]);
 
     const handlePurchase = async (amount: number, option: string) => {
+        if (processingRef.current) return;
+        processingRef.current = true;
         setIsProcessing(true);
         setSelectedOption(option);
         setErrorMessage(null);
+        setSuccessMessage(null);
 
         try {
+            await loadRazorpayScript();
+
             const res = await fetch(`${API_URL}/api/billing/checkout`, {
                 method: "POST",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     pack: option,
                     quantity: option === "custom" ? amount : undefined,
@@ -87,18 +122,70 @@ export default function PurchaseTokensPage() {
 
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                throw new Error(data?.error?.message || data?.error || "Failed to start checkout");
+                throw new Error(data?.error?.message || "Failed to start checkout");
             }
 
-            if (!data?.url || typeof data.url !== "string") {
-                throw new Error("Checkout URL missing");
-            }
+            const order = data as CheckoutResponse;
 
-            window.location.href = data.url;
+            await new Promise<void>((resolve, reject) => {
+                const rzp = new window.Razorpay({
+                    key: order.keyId,
+                    amount: order.amount,
+                    currency: order.currency,
+                    order_id: order.orderId,
+                    name: "Slide Sage",
+                    description: `${order.tokens} slide points`,
+                    theme: { color: "#3B82F6" },
+                    handler: async (response) => {
+                        try {
+                            const verifyRes = await fetch(`${API_URL}/api/billing/verify`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                }),
+                            });
+
+                            const verifyData = (await verifyRes.json()) as VerifyResponse;
+
+                            if (!verifyRes.ok || !verifyData.success) {
+                                reject(new Error("Payment verification failed"));
+                                return;
+                            }
+
+                            setBalance({
+                                slide_tokens: verifyData.new_balance,
+                                is_unlimited: false,
+                            });
+                            setSuccessMessage(
+                                `${verifyData.tokens_awarded} points added to your account!`,
+                            );
+                            resolve();
+                        } catch (err) {
+                            reject(err);
+                        }
+                    },
+                    modal: {
+                        ondismiss: () => {
+                            reject(new Error("cancelled"));
+                        },
+                    },
+                });
+
+                rzp.open();
+            });
         } catch (err) {
+            const msg = err instanceof Error ? err.message : "Checkout failed";
+            if (msg !== "cancelled") {
+                setErrorMessage(msg);
+            }
+        } finally {
+            processingRef.current = false;
             setIsProcessing(false);
             setSelectedOption(null);
-            setErrorMessage(err instanceof Error ? err.message : "Checkout failed");
         }
     };
 
@@ -119,9 +206,9 @@ export default function PurchaseTokensPage() {
         if (Number.isNaN(amount)) return 0;
         let price = amount * 5;
         if (amount > 250) {
-            price = price * 0.8; // 20% discount for >250
+            price = price * 0.8;
         } else if (amount > 100) {
-            price = price * 0.9; // 10% discount for >100
+            price = price * 0.9;
         }
         return price;
     };
@@ -158,14 +245,9 @@ export default function PurchaseTokensPage() {
                                 Unlimited Access
                             </div>
                         )}
-                        {status === "success" && (
+                        {successMessage && (
                             <div className="text-xs text-green-400/80 font-medium tracking-wide">
-                                Payment successful. Balance syncing...
-                            </div>
-                        )}
-                        {status === "cancel" && (
-                            <div className="text-xs text-white/60 font-medium tracking-wide">
-                                Payment cancelled.
+                                {successMessage}
                             </div>
                         )}
                         {errorMessage && (

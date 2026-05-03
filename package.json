@@ -7,23 +7,22 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
-    "build:apis": "turbo run build --filter=slide-sage-apis",
-    "build:web": "turbo run build --filter=slide-sage-web",
-    "deploy:apis": "bun --cwd apps/APIs run deploy",
-    "dev": "turbo run dev --ui=tui",
-    "dev:stream": "turbo run dev --ui=stream",
-    "dev:apis": "turbo run dev --ui=tui --filter=slide-sage-apis",
-    "dev:web": "turbo run dev --ui=tui --filter=slide-sage-web",
-    "lint": "turbo run lint",
-    "lint:apis": "turbo run lint --filter=slide-sage-apis",
-    "lint:web": "turbo run lint --filter=slide-sage-web",
-    "format": "turbo run format",
-    "format:apis": "turbo run format --filter=slide-sage-apis",
-    "format:web": "turbo run format --filter=slide-sage-web"
+    "build": "nx run-many -t build",
+    "build:web": "nx run slide-sage-web:build",
+    "deploy:apis": "nx run slide-sage-apis:deploy",
+    "dev": "nx run-many -t dev --parallel",
+    "dev:stream": "nx run-many -t dev --parallel --output-style=stream",
+    "dev:apis": "nx run slide-sage-apis:dev",
+    "dev:web": "nx run slide-sage-web:dev",
+    "lint": "nx run-many -t lint",
+    "lint:apis": "nx run slide-sage-apis:lint",
+    "lint:web": "nx run slide-sage-web:lint",
+    "format": "nx run-many -t format",
+    "format:apis": "nx run slide-sage-apis:format",
+    "format:web": "nx run slide-sage-web:format"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "nx": "latest"
   },
   "trustedDependencies": [],
   "packageManager": "bun@1.3.10"

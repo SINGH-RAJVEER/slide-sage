@@ -11,7 +11,7 @@ ENV PORT=5173
 COPY package.json ./
 COPY bun.lock ./
 COPY tsconfig.json ./
-COPY turbo.json ./
+COPY nx.json ./
 
 COPY apps/Web/package.json ./apps/Web/package.json
 COPY apps/APIs/package.json ./apps/APIs/package.json
@@ -24,4 +24,4 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 EXPOSE 5173
 
-CMD ["sh", "-lc", "cd /app/apps/Web && bun run dev --host 0.0.0.0"]
+CMD ["sh", "-lc", "cd /app/apps/Web && bun ./node_modules/.bin/vite --host 0.0.0.0"]

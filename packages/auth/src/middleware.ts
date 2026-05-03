@@ -1,12 +1,13 @@
 import { db, users } from "@slide-sage/db";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
-import authClient from "./auth-client";
+import { createAuth } from "./auth-client";
 
 async function getSessionFromCookie(
     c: Context,
 ): Promise<{ userId: string; sessionId: string } | null> {
-    const sessionData = await authClient.api.getSession({
+    const auth = createAuth(c.env);
+    const sessionData = await auth.api.getSession({
         headers: c.req.raw.headers,
     });
 

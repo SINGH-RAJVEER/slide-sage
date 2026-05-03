@@ -155,8 +155,26 @@ If any check fails, returns `401 Unauthorized`.
 ### Session Not Persisting
 
 - Ensure cookies are enabled in browser
-- Check `CORS_ORIGINS` includes frontend URL
+- Check `CORS_ORIGINS` includes the exact frontend origin
 - Verify `BASE_URL` matches your backend domain
+- On Cloudflare Workers, configure runtime variables in the Worker environment. The API reads CORS and auth origins from the Worker runtime, not from a bundled `.env` file in production.
+
+### Cloudflare Workers Deployment
+
+When the frontend and API are on different origins, configure both the API CORS allowlist and Better Auth trusted origins with the same public frontend origin.
+
+Required production variables:
+
+```env
+BASE_URL=https://slide-sage.therajveersingh.workers.dev
+CORS_ORIGINS=https://slide-sage.pages.dev
+```
+
+Notes:
+
+- `CORS_ORIGINS` is the preferred variable and supports a comma-separated allowlist.
+- `CORS_ORIGIN` is still accepted as a backward-compatible fallback, but new deployments should use `CORS_ORIGINS`.
+- The auth handler and CORS middleware both resolve origins from the Cloudflare Worker runtime on each request, which avoids stale localhost-only config in production.
 
 ### OAuth Callback Fails
 

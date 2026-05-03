@@ -1,5 +1,5 @@
-export type { Session } from "./auth-client";
-export { default as authClient } from "./auth-client";
+export type { Env, Session } from "./auth-client";
+export { createAuth } from "./auth-client";
 export {
     authMiddleware,
     ensureUserInDbMiddleware,

@@ -1,4 +1,4 @@
-import { authClient } from "@slide-sage/auth";
+import { createAuth } from "@slide-sage/auth";
 import { accounts, db, users } from "@slide-sage/db";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
@@ -22,7 +22,7 @@ authRoutes.post("/sign-in/email", async (c) => {
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
-        return authClient.handler(c.req.raw);
+        return createAuth(c.env).handler(c.req.raw);
     }
 
     const user = await db.query.users.findFirst({
@@ -56,10 +56,10 @@ authRoutes.post("/sign-in/email", async (c) => {
         }
     }
 
-    return authClient.handler(c.req.raw);
+    return createAuth(c.env).handler(c.req.raw);
 });
 
 // All other auth routes handled by better-auth
-authRoutes.all("/*", (c) => authClient.handler(c.req.raw));
+authRoutes.all("/*", (c) => createAuth(c.env).handler(c.req.raw));
 
 export default authRoutes;

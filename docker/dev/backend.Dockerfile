@@ -11,7 +11,7 @@ ENV PORT=8000
 COPY package.json ./
 COPY bun.lock ./
 COPY tsconfig.json ./
-COPY turbo.json ./
+COPY nx.json ./
 
 COPY apps/APIs/package.json ./apps/APIs/package.json
 COPY apps/Web/package.json ./apps/Web/package.json
@@ -24,4 +24,4 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 EXPOSE 8000
 
-CMD ["sh", "-lc", "cd /app/apps/APIs && bun run db:push && bun run dev"]
+CMD ["sh", "-lc", "cd /app/packages/DB && bun run db:migrate && cd /app/apps/APIs && bun run dev"]
