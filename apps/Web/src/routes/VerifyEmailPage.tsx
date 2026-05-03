@@ -1,4 +1,4 @@
-import { type SubmitEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +34,7 @@ export default function VerifyEmailPage() {
         if (!email) navigate("/sign-up");
     }, [email, navigate]);
 
-    const handleVerify = async (event: SubmitEvent<HTMLFormElement>) => {
+    const handleVerify = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
 
@@ -107,7 +107,7 @@ export default function VerifyEmailPage() {
 
                         {success ? (
                             <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-100 mb-6">
-                                ✓ Email verified successfully! Redirecting to sign in...
+                                ✓ Email verified! Redirecting...
                             </div>
                         ) : (
                             <form className="space-y-4" onSubmit={handleVerify}>

@@ -125,6 +125,7 @@ services:
       - ../../.env
     environment:
       NODE_ENV: development
+      VITE_API_URL: "http://localhost:5173"
       VITE_PROXY_TARGET: "http://apis:8000"
       ROOT_DIR: /app
       BUN_CACHE_DIR: /root/.bun/install/cache

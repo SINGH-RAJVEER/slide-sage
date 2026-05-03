@@ -32,13 +32,17 @@ export default function SignUpPage() {
     }, [isSignedIn, navigate]);
 
     const handleGoogleSignUp = () => {
-        const callbackUrl = encodeURIComponent(window.location.origin + redirectTo);
-        window.location.href = `${API_URL}/api/auth/callback/google?callbackURL=${callbackUrl}`;
+        authClient.signIn.social({
+            provider: "google",
+            callbackURL: window.location.origin + redirectTo,
+        });
     };
 
     const handleGithubSignUp = () => {
-        const callbackUrl = encodeURIComponent(window.location.origin + redirectTo);
-        window.location.href = `${API_URL}/api/auth/callback/github?callbackURL=${callbackUrl}`;
+        authClient.signIn.social({
+            provider: "github",
+            callbackURL: window.location.origin + redirectTo,
+        });
     };
 
     const handleEmailSignUp = async (event: FormEvent<HTMLFormElement>) => {

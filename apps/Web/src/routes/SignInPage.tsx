@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { API_URL } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 
 function sanitizeRedirectPath(value: string | null) {
     if (!value) return "/";
@@ -29,13 +29,17 @@ export default function SignInPage() {
     }, [isSignedIn, navigate]);
 
     const handleGoogleSignIn = () => {
-        const callbackUrl = encodeURIComponent(window.location.origin + redirectTo);
-        window.location.href = `${API_URL}/api/auth/callback/google?callbackURL=${callbackUrl}`;
+        authClient.signIn.social({
+            provider: "google",
+            callbackURL: window.location.origin + redirectTo,
+        });
     };
 
     const handleGithubSignIn = () => {
-        const callbackUrl = encodeURIComponent(window.location.origin + redirectTo);
-        window.location.href = `${API_URL}/api/auth/callback/github?callbackURL=${callbackUrl}`;
+        authClient.signIn.social({
+            provider: "github",
+            callbackURL: window.location.origin + redirectTo,
+        });
     };
 
     const handleEmailSignIn = async (event: FormEvent<HTMLFormElement>) => {
@@ -44,22 +48,24 @@ export default function SignInPage() {
         setSubmitting(true);
 
         try {
-            const res = await fetch(`${API_URL}/api/auth/sign-in/email`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    email,
-                    password,
-                    rememberMe: true,
-                }),
+            const { error } = await authClient.signIn.email({
+                email,
+                password,
+                rememberMe: true,
             });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => null);
-                throw new Error(data?.error?.message || "Sign in failed.");
+            if (error) {
+                if (error.code === "EMAIL_NOT_VERIFIED") {
+                    await authClient.emailOtp.sendVerificationOtp({
+                        email,
+                        type: "email-verification",
+                    });
+                    navigate(
+                        `/sign-up/verify-email?email=${encodeURIComponent(email)}&redirect_url=${encodeURIComponent(redirectTo)}`,
+                    );
+                    return;
+                }
+                throw new Error(error.message || "Sign in failed.");
             }
 
             await refreshSession();
