@@ -17,7 +17,7 @@ Architecture overview for the SlideSage APIs service.
 |                            |                              |
 |  +-----------------------------------------------------+  |
 |  | Route Handlers                                      |  |
-|  |  - /api/auth (better-auth + email verification)     |  |
+|  |  - /api/auth (Better Auth + email OTPs)             |  |
 |  |  - /api/profile                                     |  |
 |  |  - /api (presentations + research)                  |  |
 |  |  - /api/billing (placeholder)                       |  |
@@ -31,8 +31,8 @@ Architecture overview for the SlideSage APIs service.
 |  - AIService                                              |
 |  - SearchService                                          |
 |  - ProfileService                                         |
-|  - EmailAuthService (verification codes)                  |
-|  - better-auth (session handling)                         |
+|  - Better Auth (sessions, email verification/reset OTPs)  |
+|  - Resend (outbound auth emails)                          |
 +-----------------------------------------------------------+
                             |
                             v
@@ -52,26 +52,23 @@ Architecture overview for the SlideSage APIs service.
 
 ## Route Handler Layer
 
-### Auth Routes (email verification + better-auth)
+### Auth Routes (email verification + Better Auth)
 
 ```typescript
 // apps/APIs/src/routes/auth.routes.ts
 const authRoutes = new Hono();
 
-authRoutes.post("/signup/email", async (c) => {
-  // Create user and send verification code
+authRoutes.post("/sign-in/email", async (c) => {
+    // Compatibility shim for legacy password accounts, then delegate to Better Auth.
 });
 
-authRoutes.post("/verify-code", async (c) => {
-  // Verify email code
-});
-
-authRoutes.post("/resend-code", async (c) => {
-  // Resend verification code
-});
-
-// All other auth routes are handled by better-auth
-authRoutes.all("/*", (c) => authClient.handler(c.req.raw));
+// Better Auth handles sign-up, email OTP verification, and password reset OTP routes:
+// POST /api/auth/sign-up/email
+// POST /api/auth/email-otp/send-verification-otp
+// POST /api/auth/email-otp/verify-email
+// POST /api/auth/email-otp/request-password-reset
+// POST /api/auth/email-otp/reset-password
+authRoutes.all("/*", (c) => createAuth(c.env).handler(c.req.raw));
 ```
 
 ### Presentation Routes (SSE streaming)

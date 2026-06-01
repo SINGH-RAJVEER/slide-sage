@@ -52,7 +52,7 @@ app.route("/api", presentationRoutes);
 app.route("/api/billing", billingRoutes);
 
 app.onError((err, c) => {
-    console.error("Error:", err);
+    console.error("Error:", err instanceof Error ? err.message : String(err));
     return c.json({ error: { message: "Internal server error" } }, 500);
 });
 

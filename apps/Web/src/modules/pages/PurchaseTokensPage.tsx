@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 
 type BillingBalance = {
@@ -62,6 +63,7 @@ function loadRazorpayScript(): Promise<void> {
 }
 
 export default function PurchaseTokensPage() {
+    const { refreshSession } = useAuth();
     const [customAmount, setCustomAmount] = useState<string>("");
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -163,6 +165,7 @@ export default function PurchaseTokensPage() {
                             setSuccessMessage(
                                 `${verifyData.tokens_awarded} points added to your account!`,
                             );
+                            void refreshSession();
                             resolve();
                         } catch (err) {
                             reject(err);

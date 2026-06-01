@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { API_URL } from "@/lib/api";
+
 import { authClient } from "@/lib/auth-client";
 
 function sanitizeRedirectPath(value: string | null) {

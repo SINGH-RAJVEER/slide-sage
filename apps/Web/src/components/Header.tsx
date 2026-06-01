@@ -33,6 +33,8 @@ export default function Header() {
     const isAuthPage =
         location.pathname === ROUTES.signIn ||
         location.pathname === ROUTES.signUp ||
+        location.pathname === ROUTES.forgotPassword ||
+        location.pathname === ROUTES.resetPassword ||
         location.pathname.startsWith(`${ROUTES.signIn}/`) ||
         location.pathname.startsWith(`${ROUTES.signUp}/`);
 

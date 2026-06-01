@@ -1,10 +1,24 @@
-import { createAuth } from "@slide-sage/auth";
-import { accounts, db, users } from "@slide-sage/db";
+import { createAuth, type Env } from "@slide-sage/auth";
+import { accounts, db, users, verifications } from "@slide-sage/db";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 const authRoutes = new Hono();
+
+function getAuthEnv(env: unknown): Env {
+    return (env ?? {}) as Env;
+}
+
+type EmailOTPType = "email-verification" | "sign-in" | "forget-password";
+
+function isEmailOTPType(value: unknown): value is EmailOTPType {
+    return value === "email-verification" || value === "sign-in" || value === "forget-password";
+}
+
+async function deleteExistingOTP(identifier: string): Promise<void> {
+    await db.delete(verifications).where(eq(verifications.identifier, identifier));
+}
 
 async function hashLegacyPassword(password: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -14,6 +28,35 @@ async function hashLegacyPassword(password: string): Promise<string> {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+authRoutes.post("/email-otp/send-verification-otp", async (c) => {
+    const body = await c.req.raw
+        .clone()
+        .json()
+        .catch(() => ({}));
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const type = isEmailOTPType(body.type) ? body.type : null;
+
+    if (email && type) {
+        await deleteExistingOTP(`${type}-otp-${email}`);
+    }
+
+    return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
+});
+
+authRoutes.post("/email-otp/request-password-reset", async (c) => {
+    const body = await c.req.raw
+        .clone()
+        .json()
+        .catch(() => ({}));
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+
+    if (email) {
+        await deleteExistingOTP(`forget-password-otp-${email}`);
+    }
+
+    return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
+});
+
 // Compatibility shim for legacy accounts created before provider/password format fix.
 authRoutes.post("/sign-in/email", async (c) => {
     const parsedRequest = c.req.raw.clone();
@@ -22,7 +65,7 @@ authRoutes.post("/sign-in/email", async (c) => {
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
-        return createAuth(c.env).handler(c.req.raw);
+        return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
     }
 
     const user = await db.query.users.findFirst({
@@ -56,10 +99,10 @@ authRoutes.post("/sign-in/email", async (c) => {
         }
     }
 
-    return createAuth(c.env).handler(c.req.raw);
+    return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
 });
 
 // All other auth routes handled by better-auth
-authRoutes.all("/*", (c) => createAuth(c.env).handler(c.req.raw));
+authRoutes.all("/*", (c) => createAuth(getAuthEnv(c.env)).handler(c.req.raw));
 
 export default authRoutes;

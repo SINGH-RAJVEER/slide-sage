@@ -104,6 +104,15 @@ bun run db:push     # Apply migrations to database
 4. Session token stored in HTTP-only cookie `better-auth.session_token`
 5. User redirected back to requested page
 
+### Forgot Password with Email OTP
+
+1. User opens `/forgot-password` and submits their email.
+2. The web app calls `POST /api/auth/email-otp/request-password-reset`.
+3. Better Auth generates a `forget-password` OTP and the auth package sends a custom Resend email.
+4. User opens `/reset-password?email=...`, enters the OTP, and chooses a new password.
+5. The web app calls `POST /api/auth/email-otp/reset-password`.
+6. Better Auth updates or creates the credential password and the user is redirected to `/sign-in`.
+
 ### Database Schema
 
 **users table**

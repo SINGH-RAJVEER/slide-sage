@@ -8,6 +8,8 @@ Public:
 
 - `/sign-in/*` - sign-in flow
 - `/sign-up/*` - sign-up flow
+- `/forgot-password` - request a password reset OTP by email
+- `/reset-password` - submit password reset OTP and new password
 
 Protected (requires auth):
 
@@ -20,6 +22,8 @@ Protected (requires auth):
 
 ## Auth Guard
 
+Password reset routes are public. If an already signed-in user opens `/forgot-password` or `/reset-password`, the page redirects them to `/`.
+
 Protected routes are wrapped by `RequireSignedInLayout`, which redirects signed-out users to:
 
 - `/sign-in?redirect_url=<current-path>`
@@ -31,3 +35,5 @@ Protected routes are wrapped by `RequireSignedInLayout`, which redirects signed-
 - Router definition: apps/Web/src/router/router.tsx
 - Auth guard: apps/Web/src/router/RequireSignedInLayout.tsx
 - Routes (route-level components): apps/Web/src/routes/
+- Forgot password page: apps/Web/src/routes/ForgotPasswordPage.tsx
+- Reset password page: apps/Web/src/routes/ResetPasswordPage.tsx

@@ -1,6 +1,6 @@
 # Authentication API
 
-Authentication endpoints for SlideSage. The APIs use better-auth with cookie-based sessions and a custom email verification flow.
+Authentication endpoints for SlideSage. The APIs use Better Auth with cookie-based sessions, email verification OTPs, and password reset OTPs delivered through Resend.
 
 ## Base URL
 
@@ -34,7 +34,7 @@ fetch("/api/auth/get-session", {
 
 ---
 
-## POST /api/auth/signup/email
+## POST /api/auth/sign-up/email
 
 Create a new user and send a verification code.
 
@@ -69,7 +69,7 @@ Create a new user and send a verification code.
 
 ---
 
-## POST /api/auth/verify-code
+## POST /api/auth/email-otp/verify-email
 
 Verify a user email with the code sent by email.
 
@@ -78,7 +78,7 @@ Verify a user email with the code sent by email.
 ```json
 {
   "email": "user@example.com",
-  "code": "123456"
+  "otp": "123456"
 }
 ```
 
@@ -86,8 +86,8 @@ Verify a user email with the code sent by email.
 
 ```json
 {
-  "success": true,
-  "message": "Email verified successfully",
+  "status": true,
+  "token": "session-token",
   "user": {
     "id": "user-id",
     "email": "user@example.com",
@@ -98,8 +98,7 @@ Verify a user email with the code sent by email.
 
 ### Session Behavior
 
-- If `password` is provided in the request body, the endpoint signs the user in and refreshes `better-auth.session_token`.
-- If an active session already exists from signup, verification completes without requiring manual sign-in.
+- Email verification is configured with `autoSignInAfterVerification: true`, so a successful verification creates a session and sets `better-auth.session_token`.
 
 ### Error Responses
 
@@ -107,9 +106,32 @@ Verify a user email with the code sent by email.
 
 ---
 
-## POST /api/auth/resend-code
+## POST /api/auth/email-otp/send-verification-otp
 
-Resend a verification code to the user.
+Resend a verification code to the user. Use `type: "email-verification"` for sign-up verification emails.
+
+### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "type": "email-verification"
+}
+```
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
+## POST /api/auth/email-otp/request-password-reset
+
+Send a password reset OTP to the user's email address. The response is intentionally generic so callers cannot determine whether an email is registered.
 
 ### Request Body
 
@@ -123,10 +145,50 @@ Resend a verification code to the user.
 
 ```json
 {
-  "success": true,
-  "message": "Verification code sent"
+  "success": true
 }
 ```
+
+### Email Behavior
+
+- Sends a custom Resend email with subject `Reset your Slide Sage password`.
+- The email contains a 6-digit OTP.
+- The OTP expires after 15 minutes.
+- If `RESEND_API_KEY` is not configured, the OTP is logged by the API server for local development.
+
+---
+
+## POST /api/auth/email-otp/reset-password
+
+Reset a user's password with the OTP sent by email.
+
+### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456",
+  "password": "NewSecurePass1"
+}
+```
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+### Error Responses
+
+- `400`: Invalid or expired OTP, password too short, password too long, or user not found
+- `403`: Too many invalid OTP attempts
+
+### Session Behavior
+
+- Password reset does not sign the user in automatically.
+- The web flow redirects users back to `/sign-in` after a successful reset.
 
 ---
 

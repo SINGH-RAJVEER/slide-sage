@@ -91,7 +91,7 @@ export class PresentationService {
             console.error("Error in presentation generation:", error);
             yield {
                 event: "error",
-                data: { error: `Generation failed: ${error}` },
+                data: { error: "Generation failed. Please try again." },
             };
         }
     }
@@ -157,7 +157,7 @@ export class PresentationService {
             console.error("Error in presentation iteration:", error);
             yield {
                 event: "error",
-                data: { error: `Iteration failed: ${error}` },
+                data: { error: "Iteration failed. Please try again." },
             };
         }
     }

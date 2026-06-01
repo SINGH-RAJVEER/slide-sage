@@ -20,28 +20,89 @@ function getResendClient(env: Env): Resend | null {
     return resendClient;
 }
 
-async function sendOTPEmail(env: Env, email: string, otp: string, name: string): Promise<void> {
+type OTPEmailType = "sign-in" | "email-verification" | "forget-password";
+
+function escapeHtml(value: string): string {
+    return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
+function getOTPEmailContent(type: OTPEmailType, name: string) {
+    const escapedName = escapeHtml(name.trim());
+    const greetingName = escapedName ? `, ${escapedName}` : "";
+
+    if (type === "forget-password") {
+        return {
+            subject: "Reset your Slide Sage password",
+            title: `Reset your password${greetingName}`,
+            intro: "We received a request to reset your Slide Sage password. Use the code below to choose a new password.",
+            label: "Your password reset code is:",
+            note: "This code will expire in 15 minutes. If you did not request a password reset, you can safely ignore this email.",
+        };
+    }
+
+    if (type === "sign-in") {
+        return {
+            subject: "Your Slide Sage sign-in code",
+            title: `Sign in to Slide Sage${greetingName}`,
+            intro: "Use the code below to finish signing in to your Slide Sage account.",
+            label: "Your sign-in code is:",
+            note: "This code will expire in 15 minutes. If you did not request this code, you can safely ignore this email.",
+        };
+    }
+
+    return {
+        subject: "Verify your Slide Sage email",
+        title: `Welcome to Slide Sage${greetingName}!`,
+        intro: "Thank you for signing up. To complete your account setup, please verify your email address using the code below:",
+        label: "Your verification code is:",
+        note: "This code will expire in 15 minutes. If you didn't create this account, please ignore this email.",
+    };
+}
+
+async function sendOTPEmail(
+    env: Env,
+    email: string,
+    otp: string,
+    type: OTPEmailType,
+    name: string,
+): Promise<void> {
     const client = getResendClient(env);
     if (!client) {
-        console.warn("RESEND_API_KEY not configured. OTP for", email, "is:", otp);
+        const isProduction = (getEnvVar(env, "NODE_ENV") ?? "") === "production";
+        if (isProduction) {
+            // Never log auth codes in production. Surface a non-sensitive error instead.
+            console.error(
+                `RESEND_API_KEY not configured; unable to send ${type} OTP to a user.`,
+            );
+            throw new Error("Email service is not configured");
+        }
+        // Dev-only convenience: print the code so local testing works without email.
+        console.warn(`[dev] RESEND_API_KEY not configured. ${type} OTP for`, email, "is:", otp);
         return;
     }
+
+    const content = getOTPEmailContent(type, name);
     const result = await client.emails.send({
         from: getEnvVar(env, "RESEND_FROM_EMAIL") || "onboarding@resend.dev",
         to: email,
-        subject: "Verify your Slide Sage email",
+        subject: content.subject,
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #333; margin-bottom: 20px;">Welcome to Slide Sage${name ? `, ${name}` : ""}!</h1>
+          <h1 style="color: #333; margin-bottom: 20px;">${content.title}</h1>
           <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-            Thank you for signing up. To complete your account setup, please verify your email address using the code below:
+            ${content.intro}
           </p>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
-            <p style="margin: 0; color: #999; font-size: 14px; margin-bottom: 10px;">Your verification code is:</p>
+            <p style="margin: 0; color: #999; font-size: 14px; margin-bottom: 10px;">${content.label}</p>
             <p style="margin: 0; font-size: 36px; font-weight: bold; color: #000; letter-spacing: 5px;">${otp}</p>
           </div>
           <p style="color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-            This code will expire in 15 minutes. If you didn't create this account, please ignore this email.
+            ${content.note}
           </p>
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
           <p style="color: #999; font-size: 12px;">© 2026 Slide Sage. All rights reserved.</p>
@@ -121,12 +182,10 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
                 expiresIn: 900,
                 sendVerificationOnSignUp: true,
                 async sendVerificationOTP({ email, otp, type }) {
-                    if (type === "email-verification") {
-                        const user = await db.query.users.findFirst({
-                            where: eq(users.email, email),
-                        });
-                        await sendOTPEmail(env, email, otp, user?.name ?? "");
-                    }
+                    const user = await db.query.users.findFirst({
+                        where: eq(users.email, email.toLowerCase()),
+                    });
+                    await sendOTPEmail(env, email, otp, type, user?.name ?? "");
                 },
             }),
         ],

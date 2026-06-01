@@ -387,7 +387,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             console.error("Error during generation:", error);
             yield {
                 event: "error",
-                data: { error: `An error occurred: ${error}` },
+                data: { error: "An error occurred while generating the presentation." },
             };
         }
     }
@@ -477,14 +477,8 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error(
-                `API request failed: ${response.status} ${response.statusText}`,
-                errorText
-            );
-            throw new Error(
-                `API request failed: ${response.status} ${response.statusText} - ${errorText}`
-            );
+            console.error(`API request failed: ${response.status} ${response.statusText}`);
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
 
         return response;
@@ -775,7 +769,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             console.error("Error during iteration:", error);
             yield {
                 event: "error",
-                data: { error: `An error occurred during iteration: ${error}` },
+                data: { error: "An error occurred while updating the presentation." },
             };
         }
     }

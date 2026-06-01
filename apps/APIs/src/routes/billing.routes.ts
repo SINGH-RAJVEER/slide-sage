@@ -22,7 +22,7 @@ billing.get("/balance", authMiddleware, async (c) => {
             is_unlimited: user.isUnlimited,
         });
     } catch (error) {
-        console.error("Balance error:", error);
+        console.error("Balance error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Internal server error" } }, 500);
     }
 });
@@ -62,7 +62,7 @@ billing.post("/checkout", authMiddleware, async (c) => {
             keyId: order.keyId,
         });
     } catch (error) {
-        console.error("Checkout error:", error);
+        console.error("Checkout error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Failed to create order" } }, 500);
     }
 });
@@ -129,7 +129,7 @@ billing.post("/verify", authMiddleware, async (c) => {
             new_balance: updatedUser.slideTokens,
         });
     } catch (error) {
-        console.error("Verify error:", error);
+        console.error("Verify error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Payment verification failed" } }, 500);
     }
 });
@@ -185,7 +185,7 @@ billing.post("/webhook", async (c) => {
 
         return c.json({ status: "ok" });
     } catch (error) {
-        console.error("Webhook error:", error);
+        console.error("Webhook error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Webhook processing failed" } }, 500);
     }
 });

@@ -8,6 +8,8 @@ interface User {
     email: string;
     image: string | null;
     emailVerified: boolean;
+    slideTokens: number;
+    isUnlimited: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
