@@ -1,7 +1,4 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { cn } from "@/lib/utils";
-import { ROUTES } from "@/router/paths";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,6 +6,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
+import { ROUTES } from "@/router/paths";
 
 export default function Header() {
     const { user, signOut } = useAuth();
@@ -33,6 +33,8 @@ export default function Header() {
     const isAuthPage =
         location.pathname === ROUTES.signIn ||
         location.pathname === ROUTES.signUp ||
+        location.pathname === ROUTES.forgotPassword ||
+        location.pathname === ROUTES.resetPassword ||
         location.pathname.startsWith(`${ROUTES.signIn}/`) ||
         location.pathname.startsWith(`${ROUTES.signUp}/`);
 

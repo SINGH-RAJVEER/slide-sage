@@ -8,24 +8,52 @@ Request flow diagrams for key SlideSage endpoints.
 sequenceDiagram
     participant Client as Client
     participant Hono as Hono Router
-    participant EmailAuth as EmailAuthService
+    participant Auth as Better Auth
     participant DB as PostgreSQL
-    participant Email as Email Provider
+    participant Email as Resend
 
-    Client->>Hono: POST /api/auth/signup/email
+    Client->>Hono: POST /api/auth/sign-up/email
     Note over Client,Hono: { email, name, password }
 
-    Hono->>EmailAuth: signUpWithEmail()
-    EmailAuth->>DB: INSERT users, accounts, verifications
-    EmailAuth->>Email: Send verification code
-    Hono->>Client: 201 Created + { userId }
+    Hono->>Auth: signUp.email()
+    Auth->>DB: INSERT users, accounts, verifications
+    Auth->>Email: Send verification OTP
+    Hono->>Client: 200 OK
 
-    Client->>Hono: POST /api/auth/verify-code
-    Note over Client,Hono: { email, code }
+    Client->>Hono: POST /api/auth/email-otp/verify-email
+    Note over Client,Hono: { email, otp }
 
-    Hono->>EmailAuth: verifyEmailCode()
-    EmailAuth->>DB: UPDATE users.emailVerified
-    EmailAuth->>DB: DELETE verifications
+    Hono->>Auth: emailOtp.verifyEmail()
+    Auth->>DB: UPDATE users.emailVerified
+    Auth->>DB: DELETE verifications
+    Auth->>Hono: Set-Cookie (session)
+    Hono->>Client: 200 OK + { status: true }
+```
+
+## Forgot Password OTP Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant Hono as Hono Router
+    participant Auth as Better Auth
+    participant DB as PostgreSQL
+    participant Email as Resend
+
+    Client->>Hono: POST /api/auth/email-otp/request-password-reset
+    Note over Client,Hono: { email }
+
+    Hono->>Auth: emailOtp.requestPasswordReset()
+    Auth->>DB: INSERT verifications
+    Auth->>Email: Send password reset OTP
+    Hono->>Client: 200 OK + { success: true }
+
+    Client->>Hono: POST /api/auth/email-otp/reset-password
+    Note over Client,Hono: { email, otp, password }
+
+    Hono->>Auth: emailOtp.resetPassword()
+    Auth->>DB: Validate and delete verification
+    Auth->>DB: UPDATE accounts.password
     Hono->>Client: 200 OK + { success: true }
 ```
 

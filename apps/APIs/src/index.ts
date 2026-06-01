@@ -7,41 +7,43 @@ import billingRoutes from "./routes/billing.routes";
 import presentationRoutes from "./routes/presentation.routes";
 import profileRoutes from "./routes/profile.routes";
 
-if (
-  typeof import.meta.url === "string" &&
-  import.meta.url.startsWith("file:")
-) {
-  loadEnv({ path: new URL("../../../.env", import.meta.url), override: false });
+if (typeof import.meta.url === "string" && import.meta.url.startsWith("file:")) {
+    loadEnv({ path: new URL("../../../.env", import.meta.url), override: false });
 }
 
 const app = new Hono();
 
-const corsOrigins = process.env.CORS_ORIGINS?.split(",")
-  .map((value) => value.trim())
-  .filter(Boolean);
+const DEFAULT_CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"];
 
-const defaultCorsOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
-const allowedCorsOrigins =
-  corsOrigins && corsOrigins.length > 0 ? corsOrigins : defaultCorsOrigins;
-
-const resolveCorsOrigin = (origin?: string): string | undefined => {
-  if (!origin) return undefined;
-  return allowedCorsOrigins.includes(origin) ? origin : undefined;
-};
+function resolveAllowedOrigins(env: Record<string, string | undefined>): string[] {
+    const raw =
+        env?.CORS_ORIGINS ??
+        env?.CORS_ORIGIN ??
+        process.env.CORS_ORIGINS ??
+        process.env.CORS_ORIGIN ??
+        "";
+    const origins = raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    return origins.length > 0 ? origins : DEFAULT_CORS_ORIGINS;
+}
 
 app.use("*", logger());
-app.use(
-  "*",
-  cors({
-    origin: (origin) => resolveCorsOrigin(origin),
-    credentials: true,
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+app.use("*", async (c, next) => {
+    const allowed = resolveAllowedOrigins(c.env);
+    const corsHandler = cors({
+        origin: (origin) => (allowed.includes(origin) ? origin : null),
+        credentials: true,
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        maxAge: 86400,
+    });
+    return corsHandler(c, next);
+});
 
 app.get("/", (c) => {
-  return c.json({ status: "ok", timestamp: new Date().toISOString() });
+    return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.route("/api/auth", authRoutes);
@@ -50,12 +52,12 @@ app.route("/api", presentationRoutes);
 app.route("/api/billing", billingRoutes);
 
 app.onError((err, c) => {
-  console.error("Error:", err);
-  return c.json({ error: { message: "Internal server error" } }, 500);
+    console.error("Error:", err instanceof Error ? err.message : String(err));
+    return c.json({ error: { message: "Internal server error" } }, 500);
 });
 
 app.notFound((c) => {
-  return c.json({ error: { message: "Resource not found" } }, 404);
+    return c.json({ error: { message: "Resource not found" } }, 404);
 });
 
 const port = Number.parseInt(process.env.PORT || "8000", 10);
@@ -63,6 +65,6 @@ const port = Number.parseInt(process.env.PORT || "8000", 10);
 console.log(`Server started on port ${port}...`);
 
 export default {
-  port,
-  fetch: app.fetch,
+    port,
+    fetch: app.fetch,
 };

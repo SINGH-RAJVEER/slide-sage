@@ -4,328 +4,244 @@ Complete guide to setting up the SlideSage development environment.
 
 ## Prerequisites
 
-### Required Software
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [Nix](https://nixos.org/download/) | 2.18+ | Package management for the dev shell |
+| [direnv](https://direnv.net/) | 2.x+ | Automatic shell activation on `cd` |
+| [nix-direnv](https://github.com/nix-community/nix-direnv) | any | `use flake` support for direnv |
 
-- **Bun** (1.3.10+): Package manager and runtime
-- **Docker** & **Docker Compose**: Container management
-- **Git**: Version control
+Bun, just, PostgreSQL, pgvector, process-compose, and LiteLLM are provided by
+`flake.nix` inside the development shell.
 
-### Optional but Recommended
-
-- **PostgreSQL Client**: For direct database access
-- **VS Code**: Recommended IDE with extensions
-
-### Installation Commands
+### Install direnv and nix-direnv
 
 ```bash
-# Install Bun
-curl -fsSL https://bun.sh/install | bash
+# Install direnv and nix-direnv into your user profile
+nix profile install nixpkgs#direnv nixpkgs#nix-direnv
 
-# Install Docker (Linux)
-sudo apt update
-sudo apt install docker.io
-
-# Verify installations
-bun --version
-docker --version
-docker compose version
+# Hook direnv into your shell (add to ~/.bashrc or ~/.zshrc)
+eval "$(direnv hook bash)"
+# or
+eval "$(direnv hook zsh)"
 ```
 
 ## Initial Setup
 
-### 1. Clone Repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/your-username/slide-sage.git
 cd slide-sage
 ```
 
-### 2. Install Dependencies
+### 2. Allow direnv
+
+On first entry into the project directory, direnv will ask for permission:
 
 ```bash
-# Install all workspace dependencies
+direnv allow
+```
+
+This evaluates `.envrc`, which uses the local `flake.nix` to load the full
+development shell into the current shell session. Subsequent `cd` invocations
+into the project will activate the environment automatically.
+
+If you do not use direnv, enter the shell manually:
+
+```bash
+nix develop
+```
+
+### 3. Install JavaScript dependencies
+
+```bash
 bun install
-
-# This installs dependencies for:
-# - Root workspace (turbo, prettier)
-# - APIs app
-# - Web app
 ```
 
-### 3. Configure Environment Variables
-
-#### Environment File Sources
-
-- Docker services read variables from `docker/.env`.
-- Manual dev servers (`bun dev`) read variables from the repo root `.env`.
+### 4. Configure environment variables
 
 ```bash
-# Copy the Docker environment file
-cp docker/.env.example docker/.env
-
-# Edit with your configuration
-nano docker/.env
+cp .env.example .env
 ```
 
-**Key Variables:**
+Edit `.env` with your credentials. The Nix shell also injects a set of default
+values for local development (see `flake.nix`), but secrets such as API keys
+must still be provided in `.env`.
+
+**Key variables:**
 
 ```bash
-# APIs base configuration
-PORT=8000
-DATABASE_URL=postgresql://slidesage:slidesage@localhost:5432/slidesage
-CORS_ORIGINS=http://localhost:5173
-
-# better-auth
-AUTH_SECRET=your-secret-key-change-in-production
+# Auth
+AUTH_SECRET=change-me-in-production
 BASE_URL=http://localhost:8000
 
-# OAuth providers
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
+# OAuth (optional for local work)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 
-# Email delivery
-RESEND_API_KEY=your-resend-api-key
+# Email
+RESEND_API_KEY=your-resend-key
 RESEND_FROM_EMAIL=onboarding@yourdomain.com
 
 # AI providers
-GROQ_API_KEY=your-groq-api-key
-GEMINI_API_KEY=your-gemini-api-key
+GROQ_API_KEY=your-groq-key
+GEMINI_API_KEY=your-gemini-key
 OPENAI_API_KEY=
-
-# LiteLLM configuration
-LITELLM_MODEL=groq/llama-3.3-70b-versatile
-LITELLM_SEARCH_MODEL=llama-3.1-8b-instant
-LITELLM_PROXY_BASE=http://localhost:4000
 ```
 
-#### Local Root `.env` (Manual Runs)
+Database and service URL variables (`DATABASE_URL`, `LITELLM_PROXY_BASE`,
+`POSTGRES_USER`, etc.) are set automatically by `flake.nix` for local
+development and do not need to be in `.env`.
 
-If you are running services manually (without Docker), create a root `.env` file:
+## Starting the Development Environment
+
+### All-in-one
 
 ```bash
-# Repo root .env (used by manual bun/turbo runs)
-PORT=8000
-DATABASE_URL=postgresql://slidesage:slidesage@localhost:5432/slidesage
-CORS_ORIGINS=http://localhost:5173
-VITE_API_URL=http://localhost:8000
+just dev
 ```
 
-### 4. Start Development Services
+This runs `slidesage-dev-up`, a Nix-provided script that starts all services in
+a `process-compose` TUI:
 
-#### Option A: Docker (Recommended)
+| Process | Port | Description |
+|---------|------|-------------|
+| `postgres` | 5432 | PostgreSQL 17 with pgvector |
+| `litellm` | 4000 | LiteLLM proxy for AI model routing |
+| `migrate` | - | Runs drizzle migrations (exits on completion) |
+| `apis` | 8000 | Hono API server (hot-reload) |
+| `web` | 5173 | Vite frontend dev server |
+
+Startup ordering is enforced:
+- `migrate` waits for `postgres` to be healthy
+- `apis` waits for `migrate` to succeed and `litellm` to be healthy
+
+Press `Ctrl+C` to stop all processes. PostgreSQL is stopped automatically when
+`just dev` exits.
+
+### Individual services
 
 ```bash
-# Start all services with Docker
-docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml up --build
-
-# Services started:
-# - slide-sage-web (port 5173)
-# - slide-sage-apis (port 8000)
-# - slide-sage-postgres (port 5432)
+just apis    # API server only
+just web     # Vite dev server only
 ```
 
-#### Option B: Local Development
+## PostgreSQL
+
+The database is managed by the Nix-provided `slidesage-init-db` and
+`slidesage-stop-db` scripts. Its data lives in `.devenv/state/postgres/` and is
+created automatically on first run.
+
+The pgvector extension and the `slidesage` user/database are provisioned by
+`slidesage-init-db`.
+
+### Connect via psql
 
 ```bash
-# Start PostgreSQL (if running locally)
-docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml up database -d
-
-# Start development servers
-bun dev
-
-# Or start individual services:
-turbo run dev --filter=APIs
-turbo run dev --filter=Web
+just db-shell
 ```
 
-## Verify Setup
-
-### Check Services
+### Database operations
 
 ```bash
-# Test APIs health
-curl http://localhost:8000/
-
-# Check Web (open in browser)
-open http://localhost:5173
-
-# Verify database connection
-cd packages/DB && bun run db:studio
+just migrate       # Run pending drizzle migrations
+just db-generate   # Generate a new migration from schema changes
+just db-push       # Push schema directly (no migration file)
+just db-studio     # Open Drizzle Studio in the browser
 ```
 
-### Expected Responses
+### Reset the database
 
-#### Health Check
-
-```json
-{
-  "status": "healthy",
-  "message": "SlideSage API is running",
-  "timestamp": "2026-01-04T12:00:00Z"
-}
+```bash
+# Stop the dev environment first, then wipe the postgres state directory
+rm -rf .devenv/state/postgres
+just dev
 ```
 
-#### Web Loading
+## Justfile Reference
 
-- React development server should load
-- No 404 errors in console
-- API calls should connect to APIs
-
-## IDE Configuration
-
-### VS Code Extensions (Recommended)
-
-```json
-{
-  "recommendations": [
-    "ms-vscode.vscode-typescript-next",
-    "bradlc.vscode-tailwindcss",
-    "esbenp.prettier-vscode",
-    "ms-vscode.vscode-json",
-    "ms-vscode.vscode-docker"
-  ]
-}
 ```
-
-### VS Code Settings
-
-```json
-{
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "typescript.preferences.importModuleSpecifier": "relative"
-}
+just dev          - Start all services (postgres + litellm + apis + web)
+just apis         - Run the API server only
+just web          - Run the Vite dev server only
+just db-shell     - Open psql connected to the local database
+just migrate      - Run drizzle-kit migrate
+just db-generate  - Generate a drizzle migration
+just db-push      - Push schema changes directly
+just db-studio    - Open Drizzle Studio
+just lint         - Run biome check
+just lint-fix     - Run biome check --write
+just format       - Run biome format --write
+just install      - Run bun install
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### direnv does not activate
 
-#### Port Already in Use
+Make sure the direnv shell hook is configured and `nix-direnv` is installed.
+Then run:
 
 ```bash
-# Find process using port
-lsof -i :8000  # APIs
-lsof -i :5173  # Web
+direnv allow .
+```
 
-# Kill process
+### `use flake` is unknown
+
+Install `nix-direnv`:
+
+```bash
+nix profile install nixpkgs#nix-direnv
+```
+
+Then open a new shell or reload your shell configuration and run:
+
+```bash
+direnv allow .
+```
+
+### Port already in use
+
+Find and stop the conflicting process:
+
+```bash
+lsof -i :8000   # APIs
+lsof -i :5173   # Web
+lsof -i :5432   # Postgres
+lsof -i :4000   # LiteLLM
 kill -9 <PID>
-
-# Or change ports in docker/.env
-echo "PORT=8001" >> docker/.env
 ```
 
-#### Database Connection Failed
+### Database fails to start / corrupt state
+
+Wipe the local postgres state and restart:
 
 ```bash
-# Check if database is running
-docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml ps
-
-# Restart database
-docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml restart database
-
-# Check database logs
-docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml logs database
-
-# Test connection manually
-psql postgresql://user:password@localhost:5432/slide_sage
+rm -rf .devenv/state/postgres
+just dev
 ```
 
-If logs show `FATAL: role "slidesage" does not exist`, your Postgres volume was likely initialized from older credentials.
+### LiteLLM fails to start
+
+Ensure `GROQ_API_KEY` (and optionally `GEMINI_API_KEY`) are set in `.env`.
+LiteLLM reads them from the environment at startup via the `os.environ/` prefix
+in `litellm_config.yaml`.
+
+### Dependency installation failed
 
 ```bash
-# Recreate dev services and reset Postgres volume
-just dev-reset
-just ddu-d
-```
-
-Or create the expected role/database without wiping data:
-
-```bash
-docker exec slide-sage-postgres-dev psql -U postgres -d postgres -c "CREATE ROLE slidesage LOGIN PASSWORD 'slidesage';"
-docker exec slide-sage-postgres-dev psql -U postgres -d postgres -c "CREATE DATABASE slidesage OWNER slidesage;"
-```
-
-If migrations fail with `permission denied to create extension "vector"`, run:
-
-```bash
-docker exec slide-sage-postgres-dev psql -U postgres -d slidesage -c "CREATE EXTENSION IF NOT EXISTS vector;"
-```
-
-#### Dependency Installation Failed
-
-```bash
-# Clear cache and reinstall
 rm -rf node_modules
 bun install
 
-# Clear Bun cache
+# Clear Bun cache if needed
 bun pm cache rm
 bun install
 ```
 
-#### Web Build Errors
-
-```bash
-# Clear Vite cache
-cd apps/Web
-rm -rf .vite
-bun dev
-
-# Check TypeScript errors
-bun run build
-```
-
-#### Docker Web Proxy ECONNREFUSED
-
-If Vite logs `http proxy error: /api/... ECONNREFUSED` in Docker, verify Web is using the Docker network target (`http://apis:8000`) rather than `http://localhost:8000`. The dev compose file is preconfigured for this.
-
-## Development Tools
-
-### Useful Commands
-
-```bash
-# Database operations
-cd packages/DB
-bun run db:push      # Push schema changes
-bun run db:studio    # Open Drizzle Studio
-bun run db:generate  # Generate migrations
-
-# Code quality
-bun lint            # Lint all code
-bun format          # Format all code
-bun build           # Build all apps
-
-# Individual app commands
-bun run dev:apis
-bun run dev:web
-```
-
-### Database Management
-
-```bash
-# View tables and data
-cd packages/DB
-bun run db:studio
-
-# Reset database (development only)
-bun run db:migrate  # Run migrations
-# Or manually reset via:
-# docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml down database
-# docker compose --env-file docker/.env -f docker/dev/docker-compose.dev.yml up database
-```
-
 ## Next Steps
 
-After setup is complete:
-
-1. **Create Test User**: Register via the Web UI
-2. **Generate Presentation**: Try the AI generation feature
-3. **Explore Codebase**: Read the architecture documentation
-4. **Set Up Testing**: Configure test environment
-
-For request flow diagrams, see [REQUEST_FLOWS.md](REQUEST_FLOWS.md).
+- Read [MONOREPO_STRUCTURE.md](MONOREPO_STRUCTURE.md) for the project layout.
+- Read [REQUEST_FLOWS.md](REQUEST_FLOWS.md) for end-to-end flow diagrams.
+- Read [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for a full variable reference.

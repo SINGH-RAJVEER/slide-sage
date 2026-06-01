@@ -1,4 +1,4 @@
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { TopicInput } from "./TopicInput";

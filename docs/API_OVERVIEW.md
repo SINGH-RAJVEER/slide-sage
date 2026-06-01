@@ -135,6 +135,8 @@ Configure via `CORS_ORIGINS` environment variable:
 CORS_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
 ```
 
+For Cloudflare Workers, CORS is resolved from `c.env` at request time so the deployed Worker can use runtime variables instead of build-time `.env` values. Auth routes use the same runtime origin source for Better Auth trusted origins.
+
 ## API Versioning
 
 Current version: **v1** (implicit in all endpoints)

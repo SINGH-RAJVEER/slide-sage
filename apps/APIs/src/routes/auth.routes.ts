@@ -1,55 +1,23 @@
-import { authClient } from "@slide-sage/auth";
-import { accounts, db, users } from "@slide-sage/db";
+import { createAuth, type Env } from "@slide-sage/auth";
+import { accounts, db, users, verifications } from "@slide-sage/db";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
-import { type Context, Hono } from "hono";
-import {
-    resendVerificationCode,
-    signUpWithEmail,
-    verifyEmailCode,
-} from "../services/email-auth.service";
+import { Hono } from "hono";
 
 const authRoutes = new Hono();
 
-function resolveRequestOrigin(c: Context): string {
-    const explicitBaseUrl = process.env.BASE_URL?.trim();
-    if (explicitBaseUrl) {
-        return explicitBaseUrl.replace(/\/$/, "");
-    }
-
-    const forwardedProto = c.req.header("x-forwarded-proto");
-    const proto = forwardedProto || new URL(c.req.url).protocol.replace(":", "") || "http";
-    const forwardedHost = c.req.header("x-forwarded-host");
-    const host = forwardedHost || c.req.header("host") || "localhost:8000";
-
-    return `${proto}://${host}`;
+function getAuthEnv(env: unknown): Env {
+    return (env ?? {}) as Env;
 }
 
-async function attachSessionCookie(c: Context, email: string, password: string): Promise<void> {
-    const requestOrigin = resolveRequestOrigin(c);
-    const signInUrl = `${requestOrigin}/api/auth/sign-in/email`;
-    const signInResponse = await fetch(signInUrl, {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-            origin: c.req.header("origin") || requestOrigin,
-            "user-agent": c.req.header("user-agent") || "slide-sage-server",
-            "x-forwarded-for": c.req.header("x-forwarded-for") || "127.0.0.1",
-            "x-forwarded-proto": c.req.header("x-forwarded-proto") || "http",
-            "x-forwarded-host": c.req.header("x-forwarded-host") || "localhost",
-        },
-        body: JSON.stringify({
-            email,
-            password,
-            rememberMe: true,
-        }),
-    });
+type EmailOTPType = "email-verification" | "sign-in" | "forget-password";
 
-    const setCookie = signInResponse.headers.get("set-cookie");
+function isEmailOTPType(value: unknown): value is EmailOTPType {
+    return value === "email-verification" || value === "sign-in" || value === "forget-password";
+}
 
-    if (setCookie) {
-        c.header("set-cookie", setCookie, { append: true });
-    }
+async function deleteExistingOTP(identifier: string): Promise<void> {
+    await db.delete(verifications).where(eq(verifications.identifier, identifier));
 }
 
 async function hashLegacyPassword(password: string): Promise<string> {
@@ -60,122 +28,33 @@ async function hashLegacyPassword(password: string): Promise<string> {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Custom endpoints for email verification flow
-authRoutes.post("/signup/email", async (c) => {
-    const body = await c.req.json().catch(() => ({}));
-    const { email, password, name } = body;
+authRoutes.post("/email-otp/send-verification-otp", async (c) => {
+    const body = await c.req.raw
+        .clone()
+        .json()
+        .catch(() => ({}));
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const type = isEmailOTPType(body.type) ? body.type : null;
 
-    if (!email || !password || !name) {
-        return c.json(
-            {
-                error: {
-                    message: "Email, password, and name are required",
-                },
-            },
-            400
-        );
+    if (email && type) {
+        await deleteExistingOTP(`${type}-otp-${email}`);
     }
 
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const result = await signUpWithEmail(normalizedEmail, password, name);
-
-    if (!result.success) {
-        return c.json(
-            {
-                error: {
-                    message: result.error || "Sign up failed",
-                },
-            },
-            400
-        );
-    }
-
-    await attachSessionCookie(c, normalizedEmail, password);
-
-    return c.json(
-        {
-            success: true,
-            message: "Account created. Verification code sent to email.",
-            userId: result.userId,
-        },
-        201
-    );
+    return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
 });
 
-// Verify email code endpoint
-authRoutes.post("/verify-code", async (c) => {
-    const body = await c.req.json().catch(() => ({}));
-    const { email, code, password } = body;
+authRoutes.post("/email-otp/request-password-reset", async (c) => {
+    const body = await c.req.raw
+        .clone()
+        .json()
+        .catch(() => ({}));
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 
-    if (!email || !code) {
-        return c.json(
-            {
-                error: {
-                    message: "Email and code are required",
-                },
-            },
-            400
-        );
+    if (email) {
+        await deleteExistingOTP(`forget-password-otp-${email}`);
     }
 
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const result = await verifyEmailCode(normalizedEmail, code);
-
-    if (!result.success) {
-        return c.json(
-            {
-                error: {
-                    message: result.error || "Verification failed",
-                },
-            },
-            400
-        );
-    }
-
-    if (typeof password === "string" && password.length > 0) {
-        await attachSessionCookie(c, normalizedEmail, password);
-    }
-
-    return c.json({
-        success: true,
-        message: "Email verified successfully",
-        user: result.user,
-    });
-});
-
-// Resend verification code endpoint
-authRoutes.post("/resend-code", async (c) => {
-    const body = await c.req.json().catch(() => ({}));
-    const { email } = body;
-
-    if (!email) {
-        return c.json(
-            {
-                error: {
-                    message: "Email is required",
-                },
-            },
-            400
-        );
-    }
-
-    const result = await resendVerificationCode(email);
-
-    if (!result.success) {
-        return c.json(
-            {
-                error: {
-                    message: result.error || "Failed to resend code",
-                },
-            },
-            400
-        );
-    }
-
-    return c.json({
-        success: true,
-        message: "Verification code sent",
-    });
+    return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
 });
 
 // Compatibility shim for legacy accounts created before provider/password format fix.
@@ -186,7 +65,7 @@ authRoutes.post("/sign-in/email", async (c) => {
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
-        return authClient.handler(c.req.raw);
+        return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
     }
 
     const user = await db.query.users.findFirst({
@@ -220,10 +99,10 @@ authRoutes.post("/sign-in/email", async (c) => {
         }
     }
 
-    return authClient.handler(c.req.raw);
+    return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
 });
 
 // All other auth routes handled by better-auth
-authRoutes.all("/*", (c) => authClient.handler(c.req.raw));
+authRoutes.all("/*", (c) => createAuth(getAuthEnv(c.env)).handler(c.req.raw));
 
 export default authRoutes;

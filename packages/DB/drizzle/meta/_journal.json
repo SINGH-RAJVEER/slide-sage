@@ -36,6 +36,13 @@
             "when": 1773846900000,
             "tag": "0004_restore_auth_schema",
             "breakpoints": true
+        },
+        {
+            "idx": 5,
+            "version": "7",
+            "when": 1746230400000,
+            "tag": "0005_add_payments_table",
+            "breakpoints": true
         }
     ]
 }

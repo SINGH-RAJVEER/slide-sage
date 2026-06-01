@@ -1,3 +1,9 @@
 node_modules/
 .env
 .turbo
+.nx
+
+# nix / direnv
+.devenv/
+.direnv/
+flake.lock

@@ -1,37 +1,50 @@
 # Email Verification Setup
 
-This document explains the email verification flow implementation for user sign-up.
+This document explains the email OTP implementation for user sign-up verification and password reset.
 
 ## Overview
 
-The system uses a 6-digit verification code sent via Resend email service to verify user email addresses during sign-up.
+The system uses 6-digit OTP codes sent via the Resend email service. Better Auth's `emailOTP` plugin stores OTP verification records in the `verifications` table and enforces expiration/attempt limits.
 
 ## Flow
 
-1. **User Sign-up** (`POST /api/auth/signup/email`)
-   - User submits: email, password, and name
-   - Backend validates input and creates unverified user account
-   - Generates random 6-digit code
-   - Hashes the code using SHA-256
-   - Stores hashed code in `verifications` table with 15-minute expiration
-   - Sends code via Resend email service
-   - Returns success response
+### Email Verification
 
-2. **Email Verification** (`POST /api/auth/verify-code`)
-   - User submits: email and 6-digit code
-   - Backend retrieves verification record
-   - Checks expiration (if expired, deletes record and returns error)
-   - Verifies code against stored hash
-   - Updates user `emailVerified` field to true
-   - Deletes verification record
-   - User can now sign in
+1. **User Sign-up** (`POST /api/auth/sign-up/email`)
+   - User submits: email, password, and name.
+   - Better Auth creates an unverified user account.
+   - The `emailOTP` plugin generates a 6-digit verification code.
+   - The OTP is stored in `verifications` with a 15-minute expiration.
+   - A custom Resend verification email is sent.
 
-3. **Resend Code** (`POST /api/auth/resend-code`)
-   - User submits: email
-   - Backend generates new code
-   - Deletes old verification record if exists
-   - Sends new code via email
-   - Returns success response
+2. **Email Verification** (`POST /api/auth/email-otp/verify-email`)
+   - User submits: email and 6-digit code.
+   - Better Auth retrieves the verification record, validates expiration and attempts, and verifies the code.
+   - User `emailVerified` is set to true.
+   - The verification record is deleted.
+   - `autoSignInAfterVerification` creates a session cookie.
+
+3. **Resend Code** (`POST /api/auth/email-otp/send-verification-otp`)
+   - User submits: email and `type: "email-verification"`.
+   - A new verification code is generated and sent via Resend.
+
+### Password Reset
+
+1. **Request Reset** (`POST /api/auth/email-otp/request-password-reset`)
+   - User submits their email from `/forgot-password`.
+   - Better Auth generates a 6-digit `forget-password` OTP.
+   - Resend sends a custom password reset email with subject `Reset your Slide Sage password`.
+   - The API returns a generic success response even if the email is not registered.
+
+2. **Reset Password** (`POST /api/auth/email-otp/reset-password`)
+   - User submits email, OTP, and new password from `/reset-password`.
+   - Better Auth validates the OTP and password rules.
+   - The credential account password is created or updated.
+   - The OTP record is deleted.
+
+3. **Resend Reset Code** (`POST /api/auth/email-otp/request-password-reset`)
+   - The reset page calls the request endpoint again.
+   - Resend sends another custom password reset OTP email.
 
 ## Environment Variables
 
@@ -74,10 +87,10 @@ bun run db:push
 
 ## Security Considerations
 
-- **Code Hashing**: Codes are hashed with SHA-256 before storage (only hash stored in DB)
-- **Expiration**: Codes expire after 15 minutes
-- **Rate Limiting**: Consider adding rate limiting to resend-code endpoint in production
-- **Brute Force**: Consider adding attempt limits for verification code guessing
+- **Expiration**: Codes expire after 15 minutes.
+- **Attempt Limits**: Better Auth rejects codes after too many invalid attempts.
+- **Rate Limiting**: Better Auth rate limits the email OTP endpoints.
+- **Account Enumeration**: Password reset requests return a generic success response even when the email is not registered.
 
 ## Testing
 
@@ -85,9 +98,9 @@ bun run db:push
 
 1. Without `RESEND_API_KEY`: Codes are logged to console
 
-   ```
-   Verification email would be sent to: user@example.com
-   Code: 123456
+   ```text
+   RESEND_API_KEY not configured. email-verification OTP for user@example.com is: 123456
+   RESEND_API_KEY not configured. forget-password OTP for user@example.com is: 123456
    ```
 
 2. With valid API key: Actual emails sent via Resend
@@ -96,7 +109,7 @@ bun run db:push
 
 ```bash
 # 1. Sign up
-curl -X POST http://localhost:8000/api/auth/signup/email \
+curl -X POST http://localhost:8000/api/auth/sign-up/email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -105,30 +118,47 @@ curl -X POST http://localhost:8000/api/auth/signup/email \
   }'
 
 # 2. Verify email (copy code from email or console log)
-curl -X POST http://localhost:8000/api/auth/verify-code \
+curl -X POST http://localhost:8000/api/auth/email-otp/verify-email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
-    "code": "123456"
+    "otp": "123456"
   }'
 
-# 3. Sign in
+# 3. Request password reset OTP
+curl -X POST http://localhost:8000/api/auth/email-otp/request-password-reset \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com"
+  }'
+
+# 4. Reset password (copy reset code from email or console log)
+curl -X POST http://localhost:8000/api/auth/email-otp/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "otp": "123456",
+    "password": "NewTestPassword123"
+  }'
+
+# 5. Sign in
 curl -X POST http://localhost:8000/api/auth/sign-in/email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
-    "password": "TestPassword123"
+    "password": "NewTestPassword123"
   }'
 ```
 
 ## Frontend Integration
 
-The verification code is handled automatically:
+The verification and reset codes are handled by the web app:
 
-1. User signs up via `/sign-up` form
-2. Redirected to `/sign-up/verify-email?email=...`
-3. User enters 6-digit code
-4. After verification, redirected to `/sign-in` to log in
+1. User signs up via `/sign-up` and is redirected to `/sign-up/verify-email?email=...`.
+2. User enters the 6-digit verification code and is signed in after verification.
+3. User can request password reset from `/forgot-password`.
+4. User enters the 6-digit reset code and a new password on `/reset-password?email=...`.
+5. After password reset, the user is redirected to `/sign-in`.
 
 ## Troubleshooting
 
@@ -141,8 +171,8 @@ The verification code is handled automatically:
 ### Verification code expired
 
 - Code expires after 15 minutes
-- User can click "Resend Code" to get a new one
-- Old code is automatically deleted when requesting resend
+- User can click "Resend code" to get a new one.
+- The latest code sent by email should be used.
 
 ### "User not found" error
 

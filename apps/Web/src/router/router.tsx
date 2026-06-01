@@ -1,13 +1,15 @@
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import RequireSignedInLayout from "@/router/RequireSignedInLayout";
+import ForgotPasswordPage from "@/routes/ForgotPasswordPage";
 import HomePage from "@/routes/HomePage";
 import NotFoundPage from "@/routes/NotFoundPage";
+import ProfilePage from "@/routes/ProfilePage";
+import ResetPasswordPage from "@/routes/ResetPasswordPage";
 import RouteErrorPage from "@/routes/RouteErrorPage";
 import SignInPage from "@/routes/SignInPage";
 import SignUpPage from "@/routes/SignUpPage";
 import VerifyEmailPage from "@/routes/VerifyEmailPage";
-import ProfilePage from "@/routes/ProfilePage";
 
 function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise<T>) {
     return async () => {
@@ -23,6 +25,8 @@ export const router = createBrowserRouter([
             { path: "sign-in/*", element: <SignInPage /> },
             { path: "sign-up/*", element: <SignUpPage /> },
             { path: "sign-up/verify-email", element: <VerifyEmailPage /> },
+            { path: "forgot-password", element: <ForgotPasswordPage /> },
+            { path: "reset-password", element: <ResetPasswordPage /> },
             {
                 element: <RequireSignedInLayout />,
                 children: [

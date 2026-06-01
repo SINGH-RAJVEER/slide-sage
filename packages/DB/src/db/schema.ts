@@ -3,6 +3,7 @@ import {
     boolean,
     date,
     index,
+    integer,
     jsonb,
     pgTable,
     real,
@@ -142,6 +143,25 @@ export const presentationsRelations = relations(presentations, ({ one, many }) =
     }),
 }));
 
+export const payments = pgTable("payments", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => users.id, { onDelete: "cascade" }),
+    razorpayOrderId: text("razorpay_order_id").notNull().unique(),
+    razorpayPaymentId: text("razorpay_payment_id").unique(),
+    amountPaise: integer("amount_paise").notNull(),
+    tokensGranted: real("tokens_granted").notNull(),
+    status: varchar("status", { length: 50 }).notNull().default("created"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+        .notNull()
+        .defaultNow()
+        .$onUpdate(() => new Date()),
+});
+
 // RAG Embeddings Tables
 
 // Search embeddings - stores user search queries and their embeddings
@@ -228,6 +248,13 @@ export const ragContext = pgTable(
     }),
 );
 
+export const paymentsRelations = relations(payments, ({ one }) => ({
+    user: one(users, {
+        fields: [payments.userId],
+        references: [users.id],
+    }),
+}));
+
 // Relations
 export const searchEmbeddingsRelations = relations(searchEmbeddings, ({ one }) => ({
     user: one(users, {
@@ -275,3 +302,5 @@ export type PresentationEmbedding = typeof presentationEmbeddings.$inferSelect;
 export type NewPresentationEmbedding = typeof presentationEmbeddings.$inferInsert;
 export type RagContext = typeof ragContext.$inferSelect;
 export type NewRagContext = typeof ragContext.$inferInsert;
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;
