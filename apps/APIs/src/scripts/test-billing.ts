@@ -17,7 +17,6 @@ if (existingUsers.length === 0) {
             email: "test@test.com",
             emailVerified: true,
             slideTokens: 50.0,
-            isUnlimited: false,
         })
         .returning({ id: users.id, email: users.email });
     existingUsers.push(created[0]);

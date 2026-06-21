@@ -65,6 +65,10 @@ export default function SignInPage() {
                     );
                     return;
                 }
+                if (error.code === "INVALID_EMAIL_OR_PASSWORD") {
+                    setError("Incorrect email or password.");
+                    return;
+                }
                 throw new Error(error.message || "Sign in failed.");
             }
 

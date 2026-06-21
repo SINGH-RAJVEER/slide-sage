@@ -91,7 +91,11 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 '<div id="slide-content"><h2 id="slide-title">Data Visualization</h2><p id="slide-description">Chart data unavailable</p></div>';
         } else if (slide.html) {
             const htmlContent = slide.html.trim();
-            if (!htmlContent.startsWith('<div id="slide-content">')) {
+            // Match an existing wrapper with or without attributes (e.g. class="layout-title").
+            // The previous startsWith check failed whenever the AI added a class, causing the
+            // content to be double-wrapped into nested #slide-content divs.
+            const hasWrapper = /^<div\b[^>]*\bid=["']slide-content["']/i.test(htmlContent);
+            if (!hasWrapper) {
                 slide.html = `<div id="slide-content">${htmlContent}</div>`;
                 console.log(`Added slide-content wrapper to slide ${index}`);
             }

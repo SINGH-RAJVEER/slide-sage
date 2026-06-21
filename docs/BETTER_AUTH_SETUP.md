@@ -24,6 +24,9 @@ DATABASE_URL=postgresql://user:password@localhost:5432/slide-sage
 
 # Web App
 VITE_API_URL=http://localhost:8000 # Backend API URL for frontend
+
+# Auth redirect trust
+BETTER_AUTH_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ## Setting Up OAuth Providers
@@ -39,6 +42,8 @@ VITE_API_URL=http://localhost:8000 # Backend API URL for frontend
    - For production: `https://yourdomain.com/api/auth/callback/google`
 6. Copy the Client ID and Client Secret to `.env`
 
+The frontend origin must also be in `BETTER_AUTH_TRUSTED_ORIGINS` because social sign-in sends the web app URL as the post-auth `callbackURL`.
+
 ### GitHub OAuth Setup
 
 1. Go to [GitHub Settings > Developer settings > OAuth Apps](https://github.com/settings/developers)
@@ -47,6 +52,8 @@ VITE_API_URL=http://localhost:8000 # Backend API URL for frontend
    - For development: `http://localhost:8000/api/auth/callback/github`
    - For production: `https://yourdomain.com/api/auth/callback/github`
 4. Generate a Client Secret and copy both to `.env`
+
+The frontend origin must also be in `BETTER_AUTH_TRUSTED_ORIGINS` because social sign-in sends the web app URL as the post-auth `callbackURL`.
 
 ## Database Schema Changes
 

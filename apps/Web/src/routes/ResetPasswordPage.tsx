@@ -82,7 +82,9 @@ export default function ResetPasswordPage() {
         setSuccess(null);
 
         try {
-            const { error } = await authClient.emailOtp.requestPasswordReset({ email: normalizedEmail });
+            const { error } = await authClient.emailOtp.requestPasswordReset({
+                email: normalizedEmail,
+            });
             if (error) throw new Error(error.message || "Failed to resend reset code.");
             setSuccess("A new reset code was sent to your email.");
         } catch (err) {

@@ -18,8 +18,7 @@ billing.get("/balance", authMiddleware, async (c) => {
         const { user } = await UserRepository.getTokenBalance(userId);
 
         return c.json({
-            slide_tokens: user.isUnlimited ? Infinity : user.slideTokens,
-            is_unlimited: user.isUnlimited,
+            slide_tokens: user.slideTokens,
         });
     } catch (error) {
         console.error("Balance error:", error instanceof Error ? error.message : String(error));

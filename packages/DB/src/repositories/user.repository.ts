@@ -83,11 +83,6 @@ export class UserRepository {
             throw new Error("User not found");
         }
 
-        // Skip deduction for unlimited users
-        if (user.isUnlimited) {
-            return user;
-        }
-
         if (user.slideTokens < tokens) {
             throw new Error("Insufficient tokens");
         }
@@ -128,7 +123,6 @@ export class UserRepository {
         const validation = TokenCalculator.validateSufficientTokens(
             user.slideTokens,
             estimatedTokens,
-            user.isUnlimited,
         );
 
         return {
@@ -167,39 +161,11 @@ export class UserRepository {
     }
 
     /**
-     * Grant unlimited tokens to a user (admin function)
-     */
-    static async grantUnlimitedTokens(userId: string): Promise<User> {
-        return await UserRepository.update(userId, {
-            isUnlimited: true,
-            slideTokens: Number.POSITIVE_INFINITY, // Symbolic value
-        });
-    }
-
-    /**
-     * Revoke unlimited tokens from a user (admin function)
-     */
-    static async revokeUnlimitedTokens(userId: string, newTokenAmount = 50.0): Promise<User> {
-        return await UserRepository.update(userId, {
-            isUnlimited: false,
-            slideTokens: newTokenAmount,
-        });
-    }
-
-    /**
-     * Get all unlimited users (admin function)
-     */
-    static async getUnlimitedUsers(): Promise<User[]> {
-        return await db.select().from(users).where(eq(users.isUnlimited, true));
-    }
-
-    /**
      * Get user token balance with display formatting
      */
     static async getTokenBalance(userId: string): Promise<{
         user: User;
         displayBalance: string;
-        isUnlimited: boolean;
     }> {
         const user = await UserRepository.findById(userId);
 
@@ -209,8 +175,7 @@ export class UserRepository {
 
         return {
             user,
-            displayBalance: user.isUnlimited ? "∞" : user.slideTokens.toFixed(1),
-            isUnlimited: user.isUnlimited,
+            displayBalance: user.slideTokens.toFixed(1),
         };
     }
 
@@ -226,11 +191,6 @@ export class UserRepository {
 
         if (!user) {
             throw new Error("User not found");
-        }
-
-        // Skip refund for unlimited users
-        if (user.isUnlimited) {
-            return user;
         }
 
         const refundAmount = TokenCalculator.calculateRefund(estimatedTokens, actualTokensUsed);

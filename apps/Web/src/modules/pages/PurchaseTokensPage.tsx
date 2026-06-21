@@ -9,7 +9,6 @@ import { API_URL } from "@/lib/api";
 
 type BillingBalance = {
     slide_tokens: number;
-    is_unlimited: boolean;
 };
 
 type CheckoutResponse = {
@@ -160,8 +159,12 @@ export default function PurchaseTokensPage() {
 
                             setBalance({
                                 slide_tokens: verifyData.new_balance,
-                                is_unlimited: false,
                             });
+                            window.dispatchEvent(
+                                new CustomEvent("slide-sage:points-updated", {
+                                    detail: { slideTokens: verifyData.new_balance },
+                                }),
+                            );
                             setSuccessMessage(
                                 `${verifyData.tokens_awarded} points added to your account!`,
                             );
@@ -235,19 +238,10 @@ export default function PurchaseTokensPage() {
                         </h2>
                         <div className="flex items-baseline gap-2">
                             <span className="text-4xl font-light text-white">
-                                {balance?.is_unlimited ||
-                                (balance?.slide_tokens === Infinity && balance !== null)
-                                    ? "∞"
-                                    : (balance?.slide_tokens?.toFixed(1) ?? "0.0")}
+                                {balance?.slide_tokens?.toFixed(1) ?? "0.0"}
                             </span>
                             <span className="text-lg text-white/40 font-light">points</span>
                         </div>
-                        {(balance?.is_unlimited ||
-                            (balance?.slide_tokens === Infinity && balance !== null)) && (
-                            <div className="text-xs text-green-400/80 font-medium tracking-wide">
-                                Unlimited Access
-                            </div>
-                        )}
                         {successMessage && (
                             <div className="text-xs text-green-400/80 font-medium tracking-wide">
                                 {successMessage}

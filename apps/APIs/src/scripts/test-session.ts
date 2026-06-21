@@ -8,16 +8,18 @@ const existingUsers = await db.select({ id: users.id, email: users.email }).from
 console.log("Users found:", existingUsers);
 
 if (existingUsers.length === 0) {
-  const newUser = await db.insert(users).values({
-    id: crypto.randomUUID(),
-    name: "Test User",
-    email: "test-billing@test.com",
-    emailVerified: true,
-    slideTokens: 50.0,
-    isUnlimited: false,
-  }).returning();
-  console.log("Created user:", newUser[0]);
-  existingUsers.push({ id: newUser[0].id, email: newUser[0].email });
+    const newUser = await db
+        .insert(users)
+        .values({
+            id: crypto.randomUUID(),
+            name: "Test User",
+            email: "test-billing@test.com",
+            emailVerified: true,
+            slideTokens: 50.0,
+        })
+        .returning();
+    console.log("Created user:", newUser[0]);
+    existingUsers.push({ id: newUser[0].id, email: newUser[0].email });
 }
 
 const user = existingUsers[0];

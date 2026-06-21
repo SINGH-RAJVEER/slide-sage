@@ -7,7 +7,7 @@ export interface ViewerLocationState {
     isStreaming?: boolean;
     presentation?: PresentationData;
     isNewGeneration?: boolean;
-    presentationId?: number;
+    presentationId?: string;
 }
 
 interface StreamingLikeState {
@@ -16,14 +16,14 @@ interface StreamingLikeState {
     slides: Slide[];
     theme: string;
     title: string;
-    presentationId?: number;
+    presentationId?: string;
 }
 
 interface UsePresentationDataParams {
     apiUrl: string;
     navigate: NavigateFunction;
     locationState?: ViewerLocationState;
-    presentationIdFromParams?: number;
+    presentationIdFromParams?: string;
     isStreamingMode: boolean;
     streamingState: StreamingLikeState;
     getPresentation: () => PresentationData | null;
@@ -49,7 +49,7 @@ export function usePresentationData({
         getInitialPresentation(),
     );
 
-    const [presentationId, setPresentationId] = useState<number | undefined>(
+    const [presentationId, setPresentationId] = useState<string | undefined>(
         presentationIdFromParams || locationState?.presentationId || streamingState.presentationId,
     );
 
@@ -140,7 +140,7 @@ export function usePresentationData({
 
     const presentationHasSlides = !!presentation && presentation.slides.length > 0;
 
-    const lastFetchedPresentationIdRef = useRef<number | undefined>(undefined);
+    const lastFetchedPresentationIdRef = useRef<string | undefined>(undefined);
     useEffect(() => {
         const fetchPresentation = async () => {
             if (streamingState.isStreaming) {

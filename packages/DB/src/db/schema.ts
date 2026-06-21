@@ -21,7 +21,6 @@ export const users = pgTable("users", {
     image: text("image"),
 
     slideTokens: real("slide_tokens").notNull().default(50.0),
-    isUnlimited: boolean("is_unlimited").notNull().default(false),
     lastLoginDate: date("last_login_date", { mode: "date" }),
 
     createdAt: timestamp("created_at").notNull().defaultNow(),

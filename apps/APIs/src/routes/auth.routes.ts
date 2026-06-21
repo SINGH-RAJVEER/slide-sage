@@ -68,35 +68,39 @@ authRoutes.post("/sign-in/email", async (c) => {
         return createAuth(getAuthEnv(c.env)).handler(c.req.raw);
     }
 
-    const user = await db.query.users.findFirst({
-        where: eq(users.email, email.toLowerCase()),
-    });
-
-    if (user) {
-        const credentialAccount = await db.query.accounts.findFirst({
-            where: and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential")),
+    try {
+        const user = await db.query.users.findFirst({
+            where: eq(users.email, email.toLowerCase()),
         });
 
-        if (!credentialAccount) {
-            const legacyAccount = await db.query.accounts.findFirst({
-                where: and(eq(accounts.userId, user.id), eq(accounts.providerId, "email")),
+        if (user) {
+            const credentialAccount = await db.query.accounts.findFirst({
+                where: and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential")),
             });
 
-            if (legacyAccount?.password) {
-                const legacyHash = await hashLegacyPassword(password);
-                if (legacyHash === legacyAccount.password) {
-                    const compatibleHash = await hashBetterAuthPassword(password);
-                    await db
-                        .update(accounts)
-                        .set({
-                            providerId: "credential",
-                            accountId: user.id,
-                            password: compatibleHash,
-                        })
-                        .where(eq(accounts.id, legacyAccount.id));
+            if (!credentialAccount) {
+                const legacyAccount = await db.query.accounts.findFirst({
+                    where: and(eq(accounts.userId, user.id), eq(accounts.providerId, "email")),
+                });
+
+                if (legacyAccount?.password) {
+                    const legacyHash = await hashLegacyPassword(password);
+                    if (legacyHash === legacyAccount.password) {
+                        const compatibleHash = await hashBetterAuthPassword(password);
+                        await db
+                            .update(accounts)
+                            .set({
+                                providerId: "credential",
+                                accountId: user.id,
+                                password: compatibleHash,
+                            })
+                            .where(eq(accounts.id, legacyAccount.id));
+                    }
                 }
             }
         }
+    } catch (err) {
+        console.error("Legacy auth migration error:", err instanceof Error ? err.message : String(err));
     }
 
     return createAuth(getAuthEnv(c.env)).handler(c.req.raw);

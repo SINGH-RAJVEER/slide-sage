@@ -23,6 +23,11 @@ fetch(`${API_URL}/api/presentations`, {
 
 Generate a new presentation with Server-Sent Events (SSE) streaming.
 
+The endpoint estimates the point cost from `slide_count`, `detail_level`, and `tonality` before
+streaming begins. If the authenticated user does not have enough points, it returns `402` and no
+presentation record is created. After a successful save, the same estimate is deducted from
+`users.slide_tokens`.
+
 ### Headers
 
 ```bash
@@ -106,7 +111,7 @@ data: {"slides": [...], "theme": "modern", "title": "...", "tokens_used": 5000}
 
 ```
 event: saved
-data: {"presentation_id": "presentation-id", "success": true}
+data: {"presentation_id": "presentation-id", "success": true, "slide_tokens_remaining": 42.5}
 ```
 
 6. **error** - Error occurred
@@ -152,7 +157,22 @@ while (true) {
 
 - `400`: Validation failed
 - `401`: Not signed in
+- `402`: Insufficient points
 - `500`: Internal error
+
+Example insufficient-points response:
+
+```json
+{
+    "error": {
+        "message": "Insufficient points",
+        "code": "INSUFFICIENT_TOKENS"
+    },
+    "slide_tokens_remaining": 1.5,
+    "slide_tokens_required": 4,
+    "slide_tokens_shortfall": 2.5
+}
+```
 
 ---
 
@@ -201,6 +221,9 @@ Run a research prepass before generation. Returns a summary and sources that can
 ## POST /api/iterate-presentation-stream
 
 Iterate on an existing presentation with streaming.
+
+Iteration uses the same point estimate, `402` insufficient-points response, and saved-event
+`slide_tokens_remaining` payload as presentation generation.
 
 ### Request Body
 

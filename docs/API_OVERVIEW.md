@@ -76,7 +76,7 @@ All timestamps use ISO 8601 format (UTC):
 | `201`  | Created               | Resource created successfully                   |
 | `400`  | Bad Request           | Validation failed, malformed input              |
 | `401`  | Unauthorized          | Missing or expired session cookie               |
-| `402`  | Payment Required      | Token or billing enforcement (future use)       |
+| `402`  | Payment Required      | Insufficient points for generation or iteration |
 | `403`  | Forbidden             | Access denied to resource                       |
 | `404`  | Not Found             | Resource doesn't exist                          |
 | `409`  | Conflict              | Duplicate data (email already exists)           |
@@ -176,13 +176,18 @@ if (healthResponse.ok) {
 }
 ```
 
-## Billing Endpoints (Placeholder)
+## Billing Endpoints
 
-The billing routes exist but are not implemented yet. All return `501 Not Implemented`.
+Billing manages a single numeric points balance stored on `users.slide_tokens`.
 
-- `GET /api/billing/balance`
-- `POST /api/billing/checkout`
-- `POST /api/billing/webhook`
+- `GET /api/billing/balance` returns `{ "slide_tokens": 50.0 }`.
+- `POST /api/billing/checkout` creates a Razorpay order for `starter`, `pro`, `premium`, or `custom`.
+- `POST /api/billing/verify` verifies a Razorpay payment and adds purchased points.
+- `POST /api/billing/webhook` marks captured payments as paid and adds points server-side.
+
+Presentation generation and iteration check the estimated point cost before streaming. If the user
+does not have enough points, the API returns `402` with `INSUFFICIENT_TOKENS`,
+`slide_tokens_remaining`, `slide_tokens_required`, and `slide_tokens_shortfall`.
 
 ## Pagination
 
@@ -253,6 +258,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 | ------------------------------------- | ----------- | -------------------------------------------- |
 | [Authentication](AUTH_API.md)         | 7 endpoints | User registration, login, profile management |
 | [Presentations](PRESENTATIONS_API.md) | 4 endpoints | Presentation CRUD and AI generation          |
+| Billing                               | 4 endpoints | Points balance and Razorpay checkout         |
 | Health Check                          | 1 endpoint  | Service health monitoring                    |
 
 For detailed endpoint documentation:

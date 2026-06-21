@@ -154,7 +154,6 @@ erDiagram
         string name
         boolean email_verified
         float slide_tokens
-        boolean is_unlimited
         timestamp created_at
         timestamp updated_at
     }
