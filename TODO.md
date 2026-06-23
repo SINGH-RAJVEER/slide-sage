@@ -12,3 +12,7 @@
 
 - Fix the fullscreen view
 - Pressing enter to add a topic does not work
+
+## Others
+
+- Have a central tsconfig.json and make all the others extend it

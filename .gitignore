@@ -3,7 +3,5 @@ node_modules/
 .turbo
 .nx
 
-# nix / direnv
+# nix
 .devenv/
-.direnv/
-flake.lock
