@@ -15,8 +15,8 @@
         "@langchain/core": "^0.1.48",
         "@langchain/groq": "^0.0.12",
         "@slide-sage/auth": "workspace:*",
-        "@slide-sage/contracts": "workspace:*",
-        "@slide-sage/db": "workspace:*",
+        "@slide-sage/types": "workspace:*",
+        "@slide-sage/database": "workspace:*",
         "better-auth": "^1.4.18",
         "dotenv": "^17.4.2",
         "drizzle-orm": "^0.36.4",
@@ -38,7 +38,7 @@
         "@radix-ui/react-dropdown-menu": "^2.1.15",
         "@radix-ui/react-select": "^2.2.5",
         "@radix-ui/react-slot": "^1.2.3",
-        "@slide-sage/contracts": "workspace:*",
+        "@slide-sage/types": "workspace:*",
         "@tanstack/react-pacer": "^0.19.1",
         "@vitejs/plugin-react": "^4.5.2",
         "better-auth": "^1.4.18",
@@ -75,11 +75,11 @@
         "vitest": "^1.0.4",
       },
     },
-    "packages/DB": {
-      "name": "@slide-sage/db",
+    "packages/database": {
+      "name": "@slide-sage/database",
       "version": "1.0.0",
       "dependencies": {
-        "@slide-sage/contracts": "workspace:*",
+        "@slide-sage/types": "workspace:*",
         "drizzle-orm": "^0.36.4",
         "postgres": "^3.4.5",
       },
@@ -92,7 +92,7 @@
       "name": "@slide-sage/auth",
       "version": "1.0.0",
       "dependencies": {
-        "@slide-sage/db": "workspace:*",
+        "@slide-sage/database": "workspace:*",
         "better-auth": "^1.4.18",
         "drizzle-orm": "^0.36.4",
         "hono": "^4.6.14",
@@ -103,8 +103,8 @@
         "@types/bun": "latest",
       },
     },
-    "packages/contracts": {
-      "name": "@slide-sage/contracts",
+    "packages/types": {
+      "name": "@slide-sage/types",
       "version": "1.0.0",
       "devDependencies": {
         "@biomejs/biome": "^2.4.7",
@@ -230,7 +230,7 @@
 
     "@esbuild/linux-arm": ["@esbuild/linux-arm@0.19.12", "", { "os": "linux", "cpu": "arm" }, "sha512-J5jPms//KhSNv+LO1S1TX1UWp1ucM6N6XuL6ITdKWElCu8wXP72l9MM0zDTzzeikVyqFE6U8YAV9/tFyj0ti+w=="],
 
-    "@esbuild/linux-arm64": ["@esbuild/linux-arm64@0.19.12", "", { "os": "linux", "cpu": "arm64" }, "sha512-EoTjyYyLuVPfdPLsGVVVC8a0p1BFFvtpQDB/YLEhaXyf/5bczaGeN15QkR+O4S5LeJ92Tqotve7i1jn35qwvdA=="],
+    "@esbuild/linux-arm64": ["@esbuild/linux-arm64@0.19.12", "", { "os": "linux", "cpu": "arm64" }, "sha512-EoTjyYyLuVPfdPLsGVVVC8a0p1BFFvtpQdatabase/YLEhaXyf/5bczaGeN15QkR+O4S5LeJ92Tqotve7i1jn35qwvdA=="],
 
     "@esbuild/linux-ia32": ["@esbuild/linux-ia32@0.19.12", "", { "os": "linux", "cpu": "ia32" }, "sha512-Thsa42rrP1+UIGaWz47uydHSBOgTUnwBwNq59khgIwktK6x60Hivfbux9iNR0eHCHzOLjLMLfUMLCypBkZXMHA=="],
 
@@ -450,9 +450,9 @@
 
     "@slide-sage/auth": ["@slide-sage/auth@workspace:packages/auth"],
 
-    "@slide-sage/contracts": ["@slide-sage/contracts@workspace:packages/contracts"],
+    "@slide-sage/types": ["@slide-sage/types@workspace:packages/types"],
 
-    "@slide-sage/db": ["@slide-sage/db@workspace:packages/DB"],
+    "@slide-sage/database": ["@slide-sage/database@workspace:packages/database"],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 

@@ -1,12 +1,12 @@
 import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "@slide-sage/auth";
+import { PresentationRepository, UserRepository } from "@slide-sage/database";
 import type {
     PresentationJSON,
     ResearchOptions,
     ResearchPayload,
     Slide,
     Source,
-} from "@slide-sage/contracts";
-import { PresentationRepository, UserRepository } from "@slide-sage/db";
+} from "@slide-sage/types";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { PresentationService } from "../services/presentation.service";
@@ -132,7 +132,9 @@ presentations.post(
             return stream(c, async (stream) => {
                 // Send presentation ID immediately
                 await stream.write("event: created\n");
-                await stream.write(`data: ${JSON.stringify({ presentation_id: presentationId })}\n\n`);
+                await stream.write(
+                    `data: ${JSON.stringify({ presentation_id: presentationId })}\n\n`
+                );
 
                 try {
                     const allSlides: Slide[] = [];
@@ -255,7 +257,9 @@ presentations.post(
                         } catch (deductError) {
                             console.error(
                                 "Failed to deduct points:",
-                                deductError instanceof Error ? deductError.message : String(deductError)
+                                deductError instanceof Error
+                                    ? deductError.message
+                                    : String(deductError)
                             );
                         }
 

@@ -1,4 +1,4 @@
-import { accounts, db, users } from "@slide-sage/db";
+import { accounts, db, users } from "@slide-sage/database";
 import { and, eq } from "drizzle-orm";
 
 type ProfileUser = Pick<

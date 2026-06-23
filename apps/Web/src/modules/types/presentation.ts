@@ -1,4 +1,4 @@
-import type { Slide, Source } from "@slide-sage/contracts";
+import type { Slide, Source } from "@slide-sage/types";
 
 export type {
     BaseSlide,
@@ -23,7 +23,7 @@ export type {
     StreamSlideEvent,
     StreamStartEvent,
     StreamThemeEvent,
-} from "@slide-sage/contracts";
+} from "@slide-sage/types";
 
 // Streaming presentation state
 export interface StreamingPresentationState {

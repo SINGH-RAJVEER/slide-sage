@@ -23,7 +23,7 @@ export type {
     StreamSlideEvent,
     StreamStartEvent,
     StreamThemeEvent,
-} from "@slide-sage/contracts";
+} from "@slide-sage/types";
 export * from "./db";
 export * from "./db/schema";
 export { PresentationRepository } from "./repositories/presentation.repository";

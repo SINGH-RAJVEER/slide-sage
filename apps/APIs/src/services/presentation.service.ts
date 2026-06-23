@@ -3,14 +3,14 @@
  * Handles presentation generation with token management and streaming
  */
 
+import type { Presentation } from "@slide-sage/database";
+import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
 import type {
     PresentationStreamEvent,
     ResearchOptions,
     ResearchPayload,
     Slide,
-} from "@slide-sage/contracts";
-import type { Presentation } from "@slide-sage/db";
-import { PresentationRepository, TokenCalculator } from "@slide-sage/db";
+} from "@slide-sage/types";
 import { AIService } from "./ai.service";
 import { RAGService } from "./rag.service";
 

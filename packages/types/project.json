@@ -1,9 +1,9 @@
 {
-    "name": "@slide-sage/contracts",
+    "name": "@slide-sage/types",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "projectType": "library",
-    "root": "packages/contracts",
-    "sourceRoot": "packages/contracts/src",
+    "root": "packages/types",
+    "sourceRoot": "packages/types/src",
     "targets": {
         "lint": {
             "executor": "nx:run-commands",

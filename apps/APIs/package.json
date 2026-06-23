@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "bun --watch src/index.ts",
         "deploy": "bunx wrangler versions upload --config wrangler.jsonc",
-        "test:rag": "bun src/scripts/test-rag.ts",
+        "test": "bun test",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
         "format": "biome format --write ."
@@ -15,8 +15,8 @@
         "@langchain/core": "^0.1.48",
         "@langchain/groq": "^0.0.12",
         "@slide-sage/auth": "workspace:*",
-        "@slide-sage/contracts": "workspace:*",
-        "@slide-sage/db": "workspace:*",
+        "@slide-sage/types": "workspace:*",
+        "@slide-sage/database": "workspace:*",
         "better-auth": "^1.4.18",
         "dotenv": "^17.4.2",
         "drizzle-orm": "^0.36.4",

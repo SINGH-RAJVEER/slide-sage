@@ -1,5 +1,5 @@
 {
-    "name": "@slide-sage/db",
+    "name": "@slide-sage/database",
     "version": "1.0.0",
     "type": "module",
     "main": "./src/index.ts",
@@ -16,7 +16,7 @@
         "format": "biome format --write ."
     },
     "dependencies": {
-        "@slide-sage/contracts": "workspace:*",
+        "@slide-sage/types": "workspace:*",
         "drizzle-orm": "^0.36.4",
         "postgres": "^3.4.5"
     },

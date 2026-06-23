@@ -72,7 +72,7 @@ The following tables have been added/modified:
 ## Running Migrations
 
 ```bash
-cd packages/DB
+cd packages/database
 bun run db:generate  # Generate migration files
 bun run db:push     # Apply migrations to database
 ```

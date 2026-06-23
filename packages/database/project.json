@@ -1,9 +1,9 @@
 {
-    "name": "@slide-sage/db",
+    "name": "@slide-sage/database",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "projectType": "library",
-    "root": "packages/DB",
-    "sourceRoot": "packages/DB/src",
+    "root": "packages/database",
+    "sourceRoot": "packages/database/src",
     "targets": {
         "db-generate": {
             "executor": "nx:run-commands",

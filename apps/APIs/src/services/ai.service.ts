@@ -5,7 +5,7 @@ import type {
     ResearchPayload,
     Slide,
     Source,
-} from "@slide-sage/contracts";
+} from "@slide-sage/types";
 import { JSONRecoveryError, recoverJson } from "../utils/json-recovery";
 import { StreamProcessor } from "../utils/stream-processor";
 import { buildGenerationPrompt, buildIterationPrompt } from "./ai-prompts";

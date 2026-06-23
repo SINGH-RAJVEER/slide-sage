@@ -1,5 +1,5 @@
 import { createAuth, type Env } from "@slide-sage/auth";
-import { accounts, db, users, verifications } from "@slide-sage/db";
+import { accounts, db, users, verifications } from "@slide-sage/database";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -100,7 +100,10 @@ authRoutes.post("/sign-in/email", async (c) => {
             }
         }
     } catch (err) {
-        console.error("Legacy auth migration error:", err instanceof Error ? err.message : String(err));
+        console.error(
+            "Legacy auth migration error:",
+            err instanceof Error ? err.message : String(err)
+        );
     }
 
     return createAuth(getAuthEnv(c.env)).handler(c.req.raw);

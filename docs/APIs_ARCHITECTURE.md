@@ -38,7 +38,7 @@ Architecture overview for the SlideSage APIs service.
                             v
 +-----------------------------------------------------------+
 | Data Layer                                                |
-|  packages/DB (Drizzle ORM)                                |
+|  packages/database (Drizzle ORM)                          |
 |  - users, accounts, sessions, verifications               |
 |  - presentations                                          |
 |  - search_embeddings, presentation_embeddings, rag_context|
@@ -102,7 +102,7 @@ Auth setup is abstracted into the shared `@slide-sage/auth` package (Better Auth
 
 ## Database Layer
 
-The database schema lives in `packages/DB/src/db/schema.ts` and aligns with better-auth.
+The database schema lives in `packages/database/src/db/schema.ts` and aligns with better-auth.
 
 ```typescript
 export const users = pgTable("users", {

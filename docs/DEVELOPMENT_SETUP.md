@@ -6,23 +6,22 @@ Complete guide to setting up the SlideSage development environment.
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| [Nix](https://nixos.org/download/) | 2.18+ | Package management for the dev shell |
-| [direnv](https://direnv.net/) | 2.x+ | Automatic shell activation on `cd` |
-| [nix-direnv](https://github.com/nix-community/nix-direnv) | any | `use flake` support for direnv |
+| [Nix](https://nixos.org/download/) | 2.18+ | Package manager used by devenv |
+| [devenv](https://devenv.sh/) | latest | Project development shell |
 
 Bun, just, PostgreSQL, pgvector, process-compose, and LiteLLM are provided by
-`flake.nix` inside the development shell.
+`devenv.nix` inside the development shell.
 
-### Install direnv and nix-direnv
+### Install devenv
 
 ```bash
-# Install direnv and nix-direnv into your user profile
-nix profile install nixpkgs#direnv nixpkgs#nix-direnv
+nix profile install nixpkgs#devenv
+```
 
-# Hook direnv into your shell (add to ~/.bashrc or ~/.zshrc)
-eval "$(direnv hook bash)"
-# or
-eval "$(direnv hook zsh)"
+### Enter the development shell
+
+```bash
+devenv shell
 ```
 
 ## Initial Setup
@@ -34,23 +33,17 @@ git clone https://github.com/your-username/slide-sage.git
 cd slide-sage
 ```
 
-### 2. Allow direnv
+### 2. Enter the devenv shell
 
-On first entry into the project directory, direnv will ask for permission:
-
-```bash
-direnv allow
-```
-
-This evaluates `.envrc`, which uses the local `flake.nix` to load the full
-development shell into the current shell session. Subsequent `cd` invocations
-into the project will activate the environment automatically.
-
-If you do not use direnv, enter the shell manually:
+Open the project development shell before running `just`, `bun`, database, or
+service commands:
 
 ```bash
-nix develop
+devenv shell
 ```
+
+This evaluates `devenv.nix` and makes the repo-local commands available in your
+current shell. The shell also sets local defaults for database and service URLs.
 
 ### 3. Install JavaScript dependencies
 
@@ -64,9 +57,9 @@ bun install
 cp .env.example .env
 ```
 
-Edit `.env` with your credentials. The Nix shell also injects a set of default
-values for local development (see `flake.nix`), but secrets such as API keys
-must still be provided in `.env`.
+Edit `.env` with your credentials. `devenv shell` loads this file and also
+injects a set of default values for local development (see `devenv.nix`), but
+secrets such as API keys must still be provided in `.env`.
 
 **Key variables:**
 
@@ -92,7 +85,7 @@ OPENAI_API_KEY=
 ```
 
 Database and service URL variables (`DATABASE_URL`, `LITELLM_PROXY_BASE`,
-`POSTGRES_USER`, etc.) are set automatically by `flake.nix` for local
+`POSTGRES_USER`, etc.) are set automatically by `devenv.nix` for local
 development and do not need to be in `.env`.
 
 ## Starting the Development Environment
@@ -166,6 +159,9 @@ just dev
 just dev          - Start all services (postgres + litellm + apis + web)
 just apis         - Run the API server only
 just web          - Run the Vite dev server only
+just test         - Run all Bun test suites
+just test-apis    - Run API tests only
+just test-web     - Run Web tests only
 just db-shell     - Open psql connected to the local database
 just migrate      - Run drizzle-kit migrate
 just db-generate  - Generate a drizzle migration
@@ -177,29 +173,34 @@ just format       - Run biome format --write
 just install      - Run bun install
 ```
 
+## Testing
+
+Tests are first-class Bun test suites, not ad hoc scripts. Run them from the
+repository root:
+
+```bash
+bun run test
+```
+
+Run one application at a time when iterating:
+
+```bash
+bun run test:apis
+bun run test:web
+```
+
+The API tests mock external boundaries such as repositories and payment
+secrets, so they do not require PostgreSQL, LiteLLM, Razorpay, or provider API
+keys. The Web tests use happy-dom through `apps/Web/bunfig.toml`.
+
 ## Troubleshooting
 
-### direnv does not activate
+### `just`, `bun`, or `slidesage-dev-up` is missing
 
-Make sure the direnv shell hook is configured and `nix-direnv` is installed.
-Then run:
-
-```bash
-direnv allow .
-```
-
-### `use flake` is unknown
-
-Install `nix-direnv`:
+Enter the devenv shell from the repository root:
 
 ```bash
-nix profile install nixpkgs#nix-direnv
-```
-
-Then open a new shell or reload your shell configuration and run:
-
-```bash
-direnv allow .
+devenv shell
 ```
 
 ### Port already in use

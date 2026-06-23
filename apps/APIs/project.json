@@ -19,6 +19,13 @@
                 "cwd": "{projectRoot}"
             }
         },
+        "test": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bun test",
+                "cwd": "{projectRoot}"
+            }
+        },
         "lint": {
             "executor": "nx:run-commands",
             "options": {

@@ -1,4 +1,4 @@
-import type { PresentationJSON } from "@slide-sage/contracts";
+import type { PresentationJSON } from "@slide-sage/types";
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { type Presentation, presentations } from "../db/schema";

@@ -3,7 +3,6 @@
  * Handles embedding generation, storage, and retrieval for augmented generation
  */
 
-import type { Slide } from "@slide-sage/contracts";
 import {
     db,
     type PresentationEmbedding,
@@ -12,7 +11,8 @@ import {
     ragContext,
     type SearchEmbedding,
     searchEmbeddings,
-} from "@slide-sage/db";
+} from "@slide-sage/database";
+import type { Slide } from "@slide-sage/types";
 import { and, cosineDistance, desc, eq, sql } from "drizzle-orm";
 
 export interface EmbeddingResult {

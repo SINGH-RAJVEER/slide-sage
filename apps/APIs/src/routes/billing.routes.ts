@@ -1,10 +1,10 @@
 import { authMiddleware, getCurrentUserId } from "@slide-sage/auth";
-import { UserRepository, db, payments } from "@slide-sage/db";
+import { db, payments, UserRepository } from "@slide-sage/database";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import {
-    type PackName,
     createOrder,
+    type PackName,
     resolvePackPrice,
     verifyPaymentSignature,
     verifyWebhookSignature,
@@ -83,7 +83,7 @@ billing.post("/verify", authMiddleware, async (c) => {
         const isValid = verifyPaymentSignature(
             razorpay_order_id,
             razorpay_payment_id,
-            razorpay_signature,
+            razorpay_signature
         );
 
         if (!isValid) {

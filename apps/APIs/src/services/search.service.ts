@@ -1,7 +1,7 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { ChatGroq } from "@langchain/groq";
-import type { ResearchOptions, Source } from "@slide-sage/contracts";
+import type { ResearchOptions, Source } from "@slide-sage/types";
 import { RAGService } from "./rag.service";
 
 export interface SearchSummaryResult {

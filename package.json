@@ -1,29 +1,32 @@
 {
-  "name": "slide-sage",
-  "version": "0.0.0",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "nx run-many -t build",
-    "build:web": "nx run slide-sage-web:build",
-    "deploy:apis": "nx run slide-sage-apis:deploy",
-    "dev": "nx run-many -t dev --parallel",
-    "dev:stream": "nx run-many -t dev --parallel --output-style=stream",
-    "dev:apis": "nx run slide-sage-apis:dev",
-    "dev:web": "nx run slide-sage-web:dev",
-    "lint": "nx run-many -t lint",
-    "lint:apis": "nx run slide-sage-apis:lint",
-    "lint:web": "nx run slide-sage-web:lint",
-    "format": "nx run-many -t format",
-    "format:apis": "nx run slide-sage-apis:format",
-    "format:web": "nx run slide-sage-web:format"
-  },
-  "devDependencies": {
-    "nx": "latest"
-  },
-  "trustedDependencies": [],
-  "packageManager": "bun@1.3.10"
+    "name": "slide-sage",
+    "version": "0.0.0",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "nx run-many -t build",
+        "build:web": "nx run slide-sage-web:build",
+        "deploy:apis": "nx run slide-sage-apis:deploy",
+        "dev": "nx run-many -t dev --parallel",
+        "dev:stream": "nx run-many -t dev --parallel --output-style=stream",
+        "dev:apis": "nx run slide-sage-apis:dev",
+        "dev:web": "nx run slide-sage-web:dev",
+        "test": "bun run test:apis && bun run test:web",
+        "test:apis": "bun --cwd apps/APIs test",
+        "test:web": "bun --cwd apps/Web test",
+        "lint": "nx run-many -t lint",
+        "lint:apis": "nx run slide-sage-apis:lint",
+        "lint:web": "nx run slide-sage-web:lint",
+        "format": "nx run-many -t format",
+        "format:apis": "nx run slide-sage-apis:format",
+        "format:web": "nx run slide-sage-web:format"
+    },
+    "devDependencies": {
+        "nx": "latest"
+    },
+    "trustedDependencies": [],
+    "packageManager": "bun@1.3.10"
 }

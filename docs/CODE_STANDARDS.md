@@ -24,6 +24,19 @@ Clean code guidelines and standards for SlideSage development.
 
 ---
 
+## TypeScript Configuration
+
+The repository root `tsconfig.json` is the central TypeScript configuration.
+Every app and package `tsconfig.json` must extend it and only define local
+overrides such as `jsx`, `types`, `outDir`, `rootDir`, or app-specific path
+aliases.
+
+Keep shared compiler defaults, strictness flags, module resolution, and common
+interop settings in the root config so TypeScript behavior stays consistent
+across Web, APIs, and packages.
+
+---
+
 ## Web Standards
 
 ### Component Structure
@@ -322,7 +335,7 @@ bun build
 ### Database Commands
 
 ```bash
-cd packages/DB
+cd packages/database
 
 # Generate migration
 bun run db:generate
