@@ -191,7 +191,9 @@ bun run test:web
 
 The API tests mock external boundaries such as repositories and payment
 secrets, so they do not require PostgreSQL, LiteLLM, Razorpay, or provider API
-keys. The Web tests use happy-dom through `apps/Web/bunfig.toml`.
+keys. They run with Bun's `--isolate` flag so file-local route mocks do not
+leak across test files. The Web tests use happy-dom through
+`apps/Web/bunfig.toml`.
 
 ## Troubleshooting
 

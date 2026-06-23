@@ -15,4 +15,4 @@
 
 ## Others
 
-- Have a central tsconfig.json and make all the others extend it
+- Switch to OpenRouter and remove legacy litellm code
