@@ -179,7 +179,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.OPEN_ROUTER_MODEL || "google/gemini-2.5-flash";
+            const model = process.env.OPEN_ROUTER_MODEL || "google/gemma-4-26b-a4b-it:free";
 
             const response = await this.callOpenRouterStreaming(model, messages);
 
@@ -517,7 +517,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.OPEN_ROUTER_MODEL || "google/gemini-2.5-flash";
+            const model = process.env.OPEN_ROUTER_MODEL || "google/gemma-4-26b-a4b-it:free";
 
             const response = await this.callOpenRouterStreaming(model, messages);
 

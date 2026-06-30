@@ -133,7 +133,7 @@ ${JSON.stringify(compactSources, null, 2)}`;
             const model =
                 process.env.OPEN_ROUTER_SEARCH_MODEL ||
                 process.env.OPEN_ROUTER_MODEL ||
-                "google/gemini-2.5-flash";
+                "google/gemma-4-26b-a4b-it:free";
 
             const response = await fetch(
                 process.env.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions",

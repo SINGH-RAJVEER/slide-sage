@@ -293,8 +293,8 @@ JWT_SECRET_KEY=change-this-secret-key-in-production
 
 # AI / LLM Configuration
 OPEN_ROUTER_API_KEY=your-openrouter-api-key
-OPEN_ROUTER_MODEL=google/gemini-2.5-flash
-OPEN_ROUTER_SEARCH_MODEL=google/gemini-2.5-flash
+OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free
+OPEN_ROUTER_SEARCH_MODEL=google/gemma-4-26b-a4b-it:free
 EMBEDDING_MODEL=google/gemini-embedding-001
 
 # Better Auth / OAuth

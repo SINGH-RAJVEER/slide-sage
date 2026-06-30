@@ -82,8 +82,8 @@ RESEND_FROM_EMAIL=onboarding@yourdomain.com
 
 # AI
 OPEN_ROUTER_API_KEY=your-openrouter-key
-OPEN_ROUTER_MODEL=google/gemini-2.5-flash
-OPEN_ROUTER_SEARCH_MODEL=google/gemini-2.5-flash
+OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free
+OPEN_ROUTER_SEARCH_MODEL=google/gemma-4-26b-a4b-it:free
 EMBEDDING_MODEL=google/gemini-embedding-001
 ```
 
@@ -234,7 +234,8 @@ just dev
 
 Ensure `OPEN_ROUTER_API_KEY` is set in `.env` and that `OPEN_ROUTER_MODEL`,
 `OPEN_ROUTER_SEARCH_MODEL`, and `EMBEDDING_MODEL` point to models available to
-your OpenRouter account.
+your OpenRouter account. The default chat model is `google/gemma-4-26b-a4b-it:free`,
+which is listed by OpenRouter with zero prompt and completion pricing.
 
 ### Dependency installation failed
 
