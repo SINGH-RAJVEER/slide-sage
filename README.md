@@ -27,7 +27,6 @@ bun dev
 - **Web**: `http://localhost:5173`
 - **APIs**: `http://localhost:8000`
 - **Database**: `localhost:5432`
-- **LiteLLM Proxy**: `http://localhost:4000`
 
 ### Docker Development Commands (using Just)
 
@@ -83,7 +82,7 @@ docker compose --env-file docker/.env -f docker/prod/docker-compose.prod.yml up
 
 ## Key Features
 
-- **AI Generation**: Comprehensive slide decks from simple prompts using LLMs via LiteLLM
+- **AI Generation**: Comprehensive slide decks from simple prompts using OpenRouter models
 - **RAG Integration**: Retrieval Augmented Generation with pgvector for context-aware iterations
 - **Smart Charts**: Automatic data visualizations (Bar, Line, Pie, etc.)
 - **⚡ Real-time Streaming**: Watch presentations build via Server-Sent Events
@@ -197,7 +196,6 @@ slide-sage/
 │   ├── dev/              # Development Dockerfiles + compose
 │   │   ├── backend.Dockerfile
 │   │   ├── frontend.Dockerfile
-│   │   ├── litellm.Dockerfile
 │   │   └── docker-compose.dev.yml
 │   ├── prod/             # Production Dockerfiles + compose + nginx config
 │   │   ├── backend.Dockerfile
@@ -224,7 +222,6 @@ slide-sage/
 ├── AGENTS.md              # AI agent behavior guidelines
 ├── MIGRATION_GUIDE.md     # Gemini embeddings migration
 ├── Justfile              # Docker management commands
-├── litellm_config.yaml   # LiteLLM proxy configuration
 ├── turbo.json            # Turbo build system config
 ├── package.json          # Root workspace configuration
 └── bun.lock             # Bun lockfile
@@ -237,8 +234,8 @@ slide-sage/
 - **APIs**: TypeScript + Bun + Hono + Drizzle ORM + PostgreSQL
 - **Web**: React + Vite + Tailwind CSS + Shadcn UI
 - **Authentication**: Better Auth with email/password and Google OAuth
-- **AI/LLM**: LiteLLM proxy for flexible model routing (Groq, Gemini, etc.)
-- **RAG**: pgvector for semantic search with Gemini text-embedding-004 (768 dims)
+- **AI/LLM**: OpenRouter for model routing and chat completions
+- **RAG**: pgvector for semantic search with OpenRouter embeddings (768 dims)
 - **Infrastructure**: Docker with multi-stage builds and optimized images
 - **Database**: PostgreSQL 16 Alpine with pgvector extension
 - **Task Runner**: Just (justfile) for Docker workflow automation
@@ -295,13 +292,10 @@ BASE_URL=http://localhost:8000
 JWT_SECRET_KEY=change-this-secret-key-in-production
 
 # AI / LLM Configuration
-LITELLM_BASE_URL=http://localhost:4000
-LITELLM_MODEL=groq/llama-3.3-70b-versatile
-EMBEDDING_MODEL=gemini/text-embedding-004
-
-# API Keys
-GROQ_API_KEY=your-groq-api-key
-GEMINI_API_KEY=your-gemini-api-key
+OPEN_ROUTER_API_KEY=your-openrouter-api-key
+OPEN_ROUTER_MODEL=google/gemini-2.5-flash
+OPEN_ROUTER_SEARCH_MODEL=google/gemini-2.5-flash
+EMBEDDING_MODEL=google/gemini-embedding-001
 
 # Better Auth / OAuth
 BETTER_AUTH_SECRET=change-this-secret-key-in-production
@@ -318,10 +312,9 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 **Key Configuration Notes:**
 
-- `LITELLM_BASE_URL`: Points to LiteLLM proxy service for unified LLM access
-- `EMBEDDING_MODEL`: Gemini text-embedding-004 (768 dimensions) for RAG
+- `OPEN_ROUTER_API_KEY`: Required for slide generation, research summarization, and embeddings
+- `EMBEDDING_MODEL`: OpenRouter embedding model configured for 768 dimensions for RAG
 - See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for embedding model migration details
-- See [litellm_config.yaml](litellm_config.yaml) for LiteLLM proxy configuration
 
 ---
 
@@ -333,13 +326,12 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 - **pgvector Extension**: If RAG features fail, ensure PostgreSQL has pgvector installed
 - **Web API**: Verify `VITE_API_URL` matches APIs port (default: 8000)
 - **Authentication**: Check that `JWT_SECRET_KEY` and `BETTER_AUTH_SECRET` are set
-- **LiteLLM Issues**:
-  - Verify LiteLLM service is running on port 4000
-  - Check API keys in environment variables (GROQ_API_KEY, GEMINI_API_KEY)
-  - Review [litellm_config.yaml](litellm_config.yaml) for model configuration
+- **OpenRouter Issues**:
+  - Ensure `OPEN_ROUTER_API_KEY` is set
+  - Verify configured models are available to your OpenRouter account
 - **RAG/Embedding Failures**:
-  - Ensure `GEMINI_API_KEY` is valid
-  - Check embedding dimensions (should be 768 for Gemini)
+  - Ensure `OPEN_ROUTER_API_KEY` is valid
+  - Check embedding dimensions (should be 768 for the current schema)
   - See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for migration help
 - **Docker Issues**:
   - Check that `.env` file exists in project root

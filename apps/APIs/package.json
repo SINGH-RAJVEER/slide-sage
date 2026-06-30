@@ -12,8 +12,6 @@
         "format": "biome format --write ."
     },
     "dependencies": {
-        "@langchain/core": "^0.1.48",
-        "@langchain/groq": "^0.0.12",
         "@slide-sage/auth": "workspace:*",
         "@slide-sage/types": "workspace:*",
         "@slide-sage/database": "workspace:*",

@@ -9,8 +9,8 @@ Complete guide to setting up the SlideSage development environment.
 | [Nix](https://nixos.org/download/) | 2.18+ | Package manager used by devenv |
 | [devenv](https://devenv.sh/) | latest | Project development shell |
 
-Bun, just, PostgreSQL, pgvector, process-compose, and LiteLLM are provided by
-`devenv.nix` inside the development shell.
+Bun, just, PostgreSQL, pgvector, and process-compose are provided by `devenv.nix`
+inside the development shell.
 
 ### Install devenv
 
@@ -44,6 +44,8 @@ devenv shell
 
 This evaluates `devenv.nix` and makes the repo-local commands available in your
 current shell. The shell also sets local defaults for database and service URLs.
+The project uses `devenv shell` directly, so `direnv`, `.envrc`, and `.direnv/`
+are not required for the development environment.
 
 ### 3. Install JavaScript dependencies
 
@@ -78,15 +80,16 @@ GITHUB_CLIENT_SECRET=
 RESEND_API_KEY=your-resend-key
 RESEND_FROM_EMAIL=onboarding@yourdomain.com
 
-# AI providers
-GROQ_API_KEY=your-groq-key
-GEMINI_API_KEY=your-gemini-key
-OPENAI_API_KEY=
+# AI
+OPEN_ROUTER_API_KEY=your-openrouter-key
+OPEN_ROUTER_MODEL=google/gemini-2.5-flash
+OPEN_ROUTER_SEARCH_MODEL=google/gemini-2.5-flash
+EMBEDDING_MODEL=google/gemini-embedding-001
 ```
 
-Database and service URL variables (`DATABASE_URL`, `LITELLM_PROXY_BASE`,
-`POSTGRES_USER`, etc.) are set automatically by `devenv.nix` for local
-development and do not need to be in `.env`.
+Database and service URL variables (`DATABASE_URL`, `POSTGRES_USER`, etc.) are
+set automatically by `devenv.nix` for local development and do not need to be in
+`.env`.
 
 ## Starting the Development Environment
 
@@ -102,14 +105,13 @@ a `process-compose` TUI:
 | Process | Port | Description |
 |---------|------|-------------|
 | `postgres` | 5432 | PostgreSQL 17 with pgvector |
-| `litellm` | 4000 | LiteLLM proxy for AI model routing |
 | `migrate` | - | Runs drizzle migrations (exits on completion) |
 | `apis` | 8000 | Hono API server (hot-reload) |
 | `web` | 5173 | Vite frontend dev server |
 
 Startup ordering is enforced:
 - `migrate` waits for `postgres` to be healthy
-- `apis` waits for `migrate` to succeed and `litellm` to be healthy
+- `apis` waits for `migrate` to succeed
 
 Press `Ctrl+C` to stop all processes. PostgreSQL is stopped automatically when
 `just dev` exits.
@@ -156,7 +158,7 @@ just dev
 ## Justfile Reference
 
 ```
-just dev          - Start all services (postgres + litellm + apis + web)
+just dev          - Start all services (postgres + apis + web)
 just apis         - Run the API server only
 just web          - Run the Vite dev server only
 just test         - Run all Bun test suites
@@ -190,7 +192,7 @@ bun run test:web
 ```
 
 The API tests mock external boundaries such as repositories and payment
-secrets, so they do not require PostgreSQL, LiteLLM, Razorpay, or provider API
+secrets, so they do not require PostgreSQL, Razorpay, or provider API
 keys. They run with Bun's `--isolate` flag so file-local route mocks do not
 leak across test files. The Web tests use happy-dom through
 `apps/Web/bunfig.toml`.
@@ -213,7 +215,6 @@ Find and stop the conflicting process:
 lsof -i :8000   # APIs
 lsof -i :5173   # Web
 lsof -i :5432   # Postgres
-lsof -i :4000   # LiteLLM
 kill -9 <PID>
 ```
 
@@ -226,11 +227,11 @@ rm -rf .devenv/state/postgres
 just dev
 ```
 
-### LiteLLM fails to start
+### OpenRouter requests fail
 
-Ensure `GROQ_API_KEY` (and optionally `GEMINI_API_KEY`) are set in `.env`.
-LiteLLM reads them from the environment at startup via the `os.environ/` prefix
-in `litellm_config.yaml`.
+Ensure `OPEN_ROUTER_API_KEY` is set in `.env` and that `OPEN_ROUTER_MODEL`,
+`OPEN_ROUTER_SEARCH_MODEL`, and `EMBEDDING_MODEL` point to models available to
+your OpenRouter account.
 
 ### Dependency installation failed
 

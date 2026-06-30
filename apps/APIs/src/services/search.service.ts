@@ -1,6 +1,3 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { PromptTemplate } from "@langchain/core/prompts";
-import { ChatGroq } from "@langchain/groq";
 import type { ResearchOptions, Source } from "@slide-sage/types";
 import { RAGService } from "./rag.service";
 
@@ -23,28 +20,7 @@ interface BraveWebSearchResponse {
 }
 
 export class SearchService {
-    private llm: ChatGroq | null = null;
     private ragService: RAGService | null = null;
-
-    private initializeLLM(): ChatGroq {
-        if (!this.llm) {
-            const apiKey = process.env.GROQ_API_KEY;
-            if (!apiKey) {
-                throw new Error("GROQ_API_KEY is not set");
-            }
-
-            const model = process.env.LITELLM_SEARCH_MODEL || "llama-3.1-8b-instant";
-
-            this.llm = new ChatGroq({
-                apiKey,
-                model,
-                temperature: 0.2,
-                maxTokens: 500,
-            });
-        }
-
-        return this.llm;
-    }
 
     async webSearch(query: string, options: ResearchOptions): Promise<Source[]> {
         if (!options.enabled) return [];
@@ -130,7 +106,6 @@ export class SearchService {
         }
 
         try {
-            const llm = this.initializeLLM();
             const trimmedQuery = this.normalizeQuery(query);
             const compactSources = sources.slice(0, 8).map((source) => ({
                 url: source.url,
@@ -147,33 +122,56 @@ export class SearchService {
 Sources (JSON):
 ${JSON.stringify(compactSources, null, 2)}`;
 
-            // Create prompt template
-            const promptTemplate = PromptTemplate.fromTemplate(`{system_prompt}
-
-{user_content}`);
-
-            const formattedPrompt = await promptTemplate.format({
-                system_prompt: systemPrompt,
-                user_content: userPromptText,
-            });
-
-            // Estimate tokens before calling the LLM
+            const formattedPrompt = `${systemPrompt}\n\n${userPromptText}`;
             const tokensEstimated = this.estimateTokens(formattedPrompt);
 
-            // Call LangChain LLM with proper message types
-            const messages = [new SystemMessage(systemPrompt), new HumanMessage(userPromptText)];
+            const apiKey = process.env.OPEN_ROUTER_API_KEY;
+            if (!apiKey) {
+                throw new Error("OPEN_ROUTER_API_KEY is not set");
+            }
 
-            const result = await llm.invoke(messages);
+            const model =
+                process.env.OPEN_ROUTER_SEARCH_MODEL ||
+                process.env.OPEN_ROUTER_MODEL ||
+                "google/gemini-2.5-flash";
+
+            const response = await fetch(
+                process.env.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${apiKey}`,
+                        "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                        "X-OpenRouter-Title": "Slide Sage",
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPromptText },
+                        ],
+                        temperature: 0.2,
+                        max_tokens: 500,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const body = await response.text();
+                throw new Error(
+                    `OpenRouter summarization failed: ${response.status} ${response.statusText} - ${body}`
+                );
+            }
+
+            const result = await response.json();
 
             const summary =
-                typeof result.content === "string"
-                    ? result.content.trim()
-                    : Array.isArray(result.content)
-                      ? result.content.map((c) => (typeof c === "string" ? c : c.text)).join("\n")
-                      : "";
+                typeof result.choices?.[0]?.message?.content === "string"
+                    ? result.choices[0].message.content.trim()
+                    : "";
 
-            // Try to get actual token usage from response metadata
-            const tokensUsed = result.response_metadata?.usage?.total_tokens || 0;
+            const tokensUsed = result.usage?.total_tokens || 0;
 
             return {
                 summary: summary || null,
@@ -181,7 +179,7 @@ ${JSON.stringify(compactSources, null, 2)}`;
                 tokensEstimated,
             };
         } catch (error) {
-            console.warn("LangChain summarization failed:", error);
+            console.warn("OpenRouter summarization failed:", error);
             return { summary: null, tokensUsed: 0, tokensEstimated: 0 };
         }
     }

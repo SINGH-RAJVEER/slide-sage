@@ -127,7 +127,7 @@ export type PresentationStreamEvent =
 
 export type StreamEvent = PresentationStreamEvent;
 
-export interface LiteLLMMessage {
+export interface OpenRouterMessage {
     role: string;
     content: string;
 }

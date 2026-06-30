@@ -1,5 +1,5 @@
 import type {
-    LiteLLMMessage,
+    OpenRouterMessage,
     PresentationStreamEvent,
     ResearchOptions,
     ResearchPayload,
@@ -12,25 +12,12 @@ import { buildGenerationPrompt, buildIterationPrompt } from "./ai-prompts";
 import { RAGService } from "./rag.service";
 import { SearchService } from "./search.service";
 
-// Using dynamic import for litellm compatibility
-const completion: unknown = null;
-
-async function initLiteLLM() {
-    if (!completion) {
-        try {
-            console.log("AI Service initialized");
-        } catch (error) {
-            console.warn("LiteLLM SDK not available:", error);
-        }
-    }
-}
-
 export class AIService {
     private searchService = new SearchService();
     private ragService = new RAGService();
 
     constructor() {
-        initLiteLLM();
+        console.log("AI Service initialized");
     }
 
     private buildResearchSystemMessage(
@@ -59,20 +46,6 @@ User topic: ${trimmedQuery || "(not provided)"}
 ${summaryBlock}
 RESEARCH SOURCES (JSON):
 ${JSON.stringify(cappedSources, null, 2)}`;
-    }
-
-    private getLiteLLMProxyCompletionsUrl(): string | null {
-        const explicitUrl = process.env.LITELLM_PROXY_URL;
-        if (explicitUrl) return explicitUrl;
-
-        const base = process.env.LITELLM_PROXY_BASE;
-        if (!base) return null;
-
-        const trimmed = base.replace(/\/+$/g, "");
-
-        if (trimmed.endsWith("/v1/chat/completions")) return trimmed;
-        if (trimmed.endsWith("/v1")) return `${trimmed}/chat/completions`;
-        return `${trimmed}/v1/chat/completions`;
     }
 
     private processSlide(slide: Slide, index: number): Slide | null {
@@ -198,7 +171,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             const messages = [
                 { role: "system", content: systemPrompt },
                 ...(researchMessage
-                    ? [{ role: "system", content: researchMessage } as LiteLLMMessage]
+                    ? [{ role: "system", content: researchMessage } as OpenRouterMessage]
                     : []),
                 {
                     role: "user",
@@ -206,10 +179,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.LITELLM_MODEL || "groq/llama3-8b-8192";
+            const model = process.env.OPEN_ROUTER_MODEL || "google/gemini-2.5-flash";
 
-            // Call LiteLLM API via Bun's fetch
-            const response = await this.callLiteLLMStreaming(model, messages);
+            const response = await this.callOpenRouterStreaming(model, messages);
 
             const processor = new StreamProcessor();
 
@@ -396,84 +368,29 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         }
     }
 
-    private async callLiteLLMStreaming(
+    private async callOpenRouterStreaming(
         model: string,
-        messages: LiteLLMMessage[]
+        messages: OpenRouterMessage[]
     ): Promise<Response> {
-        // LiteLLM-first path for Groq models when a proxy URL/base is configured.
-        // This preserves provider prefixes (e.g. "groq/llama-3.3-70b-versatile") and
-        // enables model alias routing from litellm_config.yaml (e.g. "kimi").
-        const proxyUrl = this.getLiteLLMProxyCompletionsUrl();
-        const shouldUseProxyForGroq = model.startsWith("groq/") && Boolean(proxyUrl);
-
-        if (shouldUseProxyForGroq && proxyUrl) {
-            const proxyKey = process.env.LITELLM_PROXY_KEY || process.env.LITELLM_API_KEY || "";
-
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-            };
-            if (proxyKey) {
-                headers.Authorization = `Bearer ${proxyKey}`;
-            }
-
-            const response = await fetch(proxyUrl, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    model,
-                    messages,
-                    stream: true,
-                    stream_options: { include_usage: true },
-                }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(
-                    `LiteLLM proxy request failed: ${response.status} ${response.statusText}`,
-                    errorText
-                );
-                throw new Error(
-                    `LiteLLM proxy request failed: ${response.status} ${response.statusText} - ${errorText}`
-                );
-            }
-
-            return response;
-        }
-
-        // Direct provider fallback (OpenAI-compatible endpoints)
-        let apiEndpoint = process.env.LITELLM_API_BASE;
-        let apiKey = process.env.LITELLM_API_KEY;
-
-        if (model.startsWith("groq/")) {
-            apiEndpoint = apiEndpoint || "https://api.groq.com/openai/v1/chat/completions";
-            apiKey = apiKey || process.env.GROQ_API_KEY;
-        } else if (model.startsWith("gemini/")) {
-            apiEndpoint =
-                apiEndpoint ||
-                "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-            apiKey = apiKey || process.env.GEMINI_API_KEY;
-        } else {
-            apiEndpoint = apiEndpoint || "https://api.openai.com/v1/chat/completions";
-            apiKey = apiKey || process.env.OPENAI_API_KEY;
-        }
+        const apiEndpoint =
+            process.env.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions";
+        const apiKey = process.env.OPEN_ROUTER_API_KEY;
 
         if (!apiKey) {
-            console.error(`Missing API Key for model ${model}`);
-            throw new Error(`Missing API Key for model ${model}`);
+            console.error("OPEN_ROUTER_API_KEY is not set");
+            throw new Error("OPEN_ROUTER_API_KEY is not set");
         }
-
-        // Extract the actual model name from provider prefix for direct provider calls.
-        const modelName = model.includes("/") ? model.split("/").slice(1).join("/") : model;
 
         const response = await fetch(apiEndpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${apiKey}`,
+                "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                "X-OpenRouter-Title": "Slide Sage",
             },
             body: JSON.stringify({
-                model: modelName,
+                model,
                 messages,
                 stream: true,
                 stream_options: { include_usage: true },
@@ -481,8 +398,14 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         });
 
         if (!response.ok) {
-            console.error(`API request failed: ${response.status} ${response.statusText}`);
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            console.error(
+                `OpenRouter request failed: ${response.status} ${response.statusText}`,
+                errorText
+            );
+            throw new Error(
+                `OpenRouter request failed: ${response.status} ${response.statusText} - ${errorText}`
+            );
         }
 
         return response;
@@ -586,7 +509,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             const messages = [
                 { role: "system", content: enhancedSystemPrompt },
                 ...(researchMessage
-                    ? [{ role: "system", content: researchMessage } as LiteLLMMessage]
+                    ? [{ role: "system", content: researchMessage } as OpenRouterMessage]
                     : []),
                 {
                     role: "user",
@@ -594,10 +517,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.LITELLM_MODEL || "groq/llama3-8b-8192";
+            const model = process.env.OPEN_ROUTER_MODEL || "google/gemini-2.5-flash";
 
-            // Call LiteLLM API via Bun's fetch
-            const response = await this.callLiteLLMStreaming(model, messages);
+            const response = await this.callOpenRouterStreaming(model, messages);
 
             const processor = new StreamProcessor();
 

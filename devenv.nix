@@ -7,15 +7,8 @@ let
     dbPort = "5432";
     apisPort = "8000";
     webPort = "5173";
-    litellmPort = "4000";
 
     postgres = pkgs.postgresql_17.withPackages (ps: [ ps.pgvector ]);
-    python = pkgs.python3.withPackages (
-        ps:
-            with ps;
-            [ litellm ] ++ litellm.optional-dependencies.proxy
-            ++ litellm.optional-dependencies.proxy-runtime
-    );
 
     initDb = pkgs.writeShellApplication {
         name = "slidesage-init-db";
@@ -89,7 +82,6 @@ CONF
             pkgs.curl
             pkgs.process-compose
             postgres
-            python
             initDb
             stopDb
         ];
@@ -105,7 +97,6 @@ CONF
             export POSTGRES_DB="''${POSTGRES_DB:-${dbName}}"
             export POSTGRES_PORT="''${POSTGRES_PORT:-${dbPort}}"
             export DATABASE_URL="''${DATABASE_URL:-postgresql://${dbUser}:${dbPassword}@127.0.0.1:${dbPort}/${dbName}}"
-            export LITELLM_PROXY_BASE="''${LITELLM_PROXY_BASE:-http://127.0.0.1:${litellmPort}}"
             export BASE_URL="''${BASE_URL:-http://localhost:${apisPort}}"
             export CORS_ORIGIN="''${CORS_ORIGIN:-http://localhost:${webPort}}"
             export VITE_API_URL="''${VITE_API_URL:-http://localhost:${webPort}}"
@@ -132,19 +123,6 @@ processes:
             success_threshold: 1
             failure_threshold: 30
 
-    litellm:
-        command: "env -u DATABASE_URL litellm --config litellm_config.yaml --port 4000"
-        readiness_probe:
-            http_get:
-                host: "127.0.0.1"
-                port: 4000
-                path: "/health"
-            initial_delay_seconds: 5
-            period_seconds: 3
-            timeout_seconds: 2
-            success_threshold: 1
-            failure_threshold: 30
-
     migrate:
         command: "cd packages/database && bun run db:migrate"
         depends_on:
@@ -158,8 +136,6 @@ processes:
         depends_on:
             migrate:
                 condition: "process_completed_successfully"
-            litellm:
-                condition: "process_healthy"
 
     web:
         command: "cd apps/Web && bunx vite"
@@ -189,7 +165,6 @@ in
         POSTGRES_DB = dbName;
         POSTGRES_PORT = dbPort;
         DATABASE_URL = "postgresql://${dbUser}:${dbPassword}@127.0.0.1:${dbPort}/${dbName}";
-        LITELLM_PROXY_BASE = "http://127.0.0.1:${litellmPort}";
         BASE_URL = "http://localhost:${apisPort}";
         CORS_ORIGIN = "http://localhost:${webPort}";
         VITE_API_URL = "http://localhost:${webPort}";

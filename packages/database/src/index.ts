@@ -3,7 +3,7 @@
 // Type exports
 export type {
     ChartConfig,
-    LiteLLMMessage,
+    OpenRouterMessage,
     PresentationData,
     PresentationJSON,
     PresentationStreamEvent,

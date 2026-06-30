@@ -19,7 +19,7 @@ The RAG system enhances the presentation generation and iteration process by:
 
 Core service for embedding management with the following responsibilities:
 
-- **Embedding Generation**: Uses Gemini API via LiteLLM to generate embeddings for text
+- **Embedding Generation**: Uses OpenRouter to generate embeddings for text
 - **Storage**: Persists embeddings to pgvector-enabled PostgreSQL
 - **Retrieval**: Performs similarity searches using cosine distance
 - **Context Building**: Converts retrieved embeddings into LLM-ready context strings
@@ -27,7 +27,7 @@ Core service for embedding management with the following responsibilities:
 **Key Methods:**
 
 ```typescript
-// Generate embeddings using Gemini via LiteLLM
+// Generate embeddings using OpenRouter
 async generateEmbedding(text: string): Promise<EmbeddingResult>
 
 // Store search queries as embeddings
@@ -143,7 +143,7 @@ Three new tables are created to support RAG:
 
 ```
 1. Query received for iteration
-   └─> Generate embedding using LiteLLM proxy
+   └─> Generate embedding using OpenRouter
 
 2. Search in search_embeddings table:
    - Use HNSW index for fast similarity search
@@ -166,15 +166,11 @@ Three new tables are created to support RAG:
 ### Environment Variables
 
 ```bash
-# Embedding Model Configuration (via LiteLLM)
-EMBEDDING_MODEL=gemini/text-embedding-004
+# OpenRouter Configuration
+OPEN_ROUTER_API_KEY=your-openrouter-key
 
-# LiteLLM Configuration (required for embeddings)
-LITELLM_PROXY_BASE=http://localhost:4000
-LITELLM_API_KEY=optional_api_key
-
-# Gemini API Key (required for embeddings)
-GEMINI_API_KEY=your-gemini-api-key
+# Embedding Model Configuration
+EMBEDDING_MODEL=google/gemini-embedding-001
 
 # Database URL (existing configuration)
 DATABASE_URL=postgresql://user:password@localhost:5432/slidesage
@@ -182,15 +178,17 @@ DATABASE_URL=postgresql://user:password@localhost:5432/slidesage
 
 ### Supported Embedding Models
 
-The system uses LiteLLM to access embedding models. Supported models include:
+The system uses OpenRouter to access embedding models. Supported models include:
 
 | Model                       | Dimensions | Provider | Recommendation                           |
 | --------------------------- | ---------- | -------- | ---------------------------------------- |
-| `gemini/text-embedding-004` | 768        | Google   | Recommended (default, high quality)      |
-| `nomic-embed-text-v1.5`     | 1536       | Groq     | Alternative (requires schema migration)  |
-| `text-embedding-3-small`    | 1536       | OpenAI   | Alternative (requires schema migration)  |
+| `google/gemini-embedding-001` | 768      | Google   | Recommended default for current schema   |
+| `qwen/qwen3-embedding-0.6b` | varies     | Qwen     | Alternative if configured for 768 dims   |
+| `openai/text-embedding-3-small` | 1536   | OpenAI   | Alternative requiring schema migration   |
 
-**Note:** The default model is Gemini's text-embedding-004 with 768 dimensions. If you want to use models with different dimensions, you'll need to run the appropriate database migration to update the vector dimensions.
+**Note:** The database schema stores 768-dimensional vectors. If you use a model
+that returns a different dimension, run an appropriate database migration and
+update the RAG service dimensions setting.
 
 ### Tunable Parameters
 

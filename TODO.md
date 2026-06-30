@@ -12,7 +12,3 @@
 
 - Fix the fullscreen view
 - Pressing enter to add a topic does not work
-
-## Others
-
-- Switch to OpenRouter and remove legacy litellm code

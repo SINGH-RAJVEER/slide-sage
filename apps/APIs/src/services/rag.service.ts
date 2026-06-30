@@ -34,15 +34,15 @@ export class RAGService {
     private embeddingModel: string;
 
     constructor() {
-        this.embeddingModel = process.env.EMBEDDING_MODEL || "gemini/text-embedding-004";
+        this.embeddingModel = process.env.EMBEDDING_MODEL || "google/gemini-embedding-001";
 
         if (!this.embeddingModel) {
-            console.warn("EMBEDDING_MODEL not set. Using default: gemini/text-embedding-004");
+            console.warn("EMBEDDING_MODEL not set. Using default: google/gemini-embedding-001");
         }
     }
 
     /**
-     * Generate embeddings using LiteLLM
+     * Generate embeddings using OpenRouter
      */
     async generateEmbedding(text: string): Promise<EmbeddingResult> {
         try {
@@ -50,7 +50,6 @@ export class RAGService {
                 throw new Error("Text cannot be empty");
             }
 
-            // Prepare the request body for LiteLLM (OpenAI-compatible)
             const requestBody = {
                 model: this.embeddingModel,
                 input: text,
@@ -58,9 +57,13 @@ export class RAGService {
                 dimensions: 768,
             };
 
-            // Determine the proxy URL for LiteLLM
-            const litellmProxyBase = process.env.LITELLM_PROXY_BASE || "http://localhost:4000";
-            const embeddingsUrl = this.resolveLiteLLMUrl(litellmProxyBase);
+            const apiKey = process.env.OPEN_ROUTER_API_KEY;
+            if (!apiKey) {
+                throw new Error("OPEN_ROUTER_API_KEY is not set");
+            }
+
+            const embeddingsUrl =
+                process.env.OPEN_ROUTER_EMBEDDINGS_URL || "https://openrouter.ai/api/v1/embeddings";
 
             console.log(
                 `Generating embedding using model: ${this.embeddingModel} at ${embeddingsUrl}`
@@ -70,16 +73,16 @@ export class RAGService {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(process.env.LITELLM_API_KEY && {
-                        Authorization: `Bearer ${process.env.LITELLM_API_KEY}`,
-                    }),
+                    Authorization: `Bearer ${apiKey}`,
+                    "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                    "X-OpenRouter-Title": "Slide Sage",
                 },
                 body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
                 const error = await response.text();
-                console.error("LiteLLM embedding API error:", error);
+                console.error("OpenRouter embedding API error:", error);
                 throw new Error(`Failed to generate embedding: ${response.statusText}`);
             }
 
@@ -103,21 +106,6 @@ export class RAGService {
             console.error("Error generating embedding:", error);
             throw error;
         }
-    }
-
-    /**
-     * Resolve LiteLLM endpoint URL
-     */
-    private resolveLiteLLMUrl(base: string): string {
-        const trimmed = base.replace(/\/+$/g, "");
-
-        if (trimmed.endsWith("/v1/embeddings")) {
-            return trimmed;
-        }
-        if (trimmed.endsWith("/v1")) {
-            return `${trimmed}/embeddings`;
-        }
-        return `${trimmed}/v1/embeddings`;
     }
 
     /**

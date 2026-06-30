@@ -7,7 +7,7 @@ default:
 
 # ---- Dev ----
 
-# Start all services and apps (postgres, litellm, apis, web)
+# Start all services and apps (postgres, apis, web)
 dev:
     slidesage-dev-up
 
