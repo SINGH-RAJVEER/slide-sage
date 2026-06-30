@@ -102,6 +102,8 @@ just dev
 This enters the `devenv` shell and runs `slidesage-dev-up`, a Nix-provided
 script that starts all services in a `process-compose` TUI. You can run it from
 a normal project shell as long as `devenv` is installed:
+The process-compose HTTP server is disabled, so other local tools can keep using
+port 8080.
 
 | Process | Port | Description |
 |---------|------|-------------|

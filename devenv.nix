@@ -111,7 +111,7 @@ version: "0.5"
 
 processes:
     postgres:
-        command: "slidesage-init-db && tail -f $SLIDESAGE_PGDATA/postgres.log"
+        command: "slidesage-init-db && tail -f .devenv/state/postgres/postgres.log"
         availability:
             restart: "on_failure"
         readiness_probe:
@@ -141,7 +141,7 @@ processes:
         command: "cd apps/Web && bunx vite"
 YAML
 
-            process-compose -f .devenv/process-compose/dev.yaml up
+            process-compose --no-server -f .devenv/process-compose/dev.yaml up
         '';
     };
 in
