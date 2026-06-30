@@ -1,0 +1,51 @@
+{
+    "name": "@slide-sage/database",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "library",
+    "root": "packages/database",
+    "sourceRoot": "packages/database/src",
+    "targets": {
+        "db-generate": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit generate --config drizzle.config.ts",
+                "cwd": "{projectRoot}"
+            }
+        },
+        "db-push": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit push --config drizzle.config.ts",
+                "cwd": "{projectRoot}"
+            }
+        },
+        "db-migrate": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit migrate --config drizzle.config.ts",
+                "cwd": "{projectRoot}"
+            }
+        },
+        "db-studio": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit studio --config drizzle.config.ts",
+                "cwd": "{projectRoot}"
+            }
+        },
+        "lint": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "biome check .",
+                "cwd": "{projectRoot}"
+            }
+        },
+        "format": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "biome format --write .",
+                "cwd": "{projectRoot}"
+            }
+        }
+    }
+}

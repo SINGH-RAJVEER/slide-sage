@@ -23,6 +23,15 @@ fetch(`${API_URL}/api/presentations`, {
 
 Generate a new presentation with Server-Sent Events (SSE) streaming.
 
+The endpoint estimates the point cost from `slide_count`, `detail_level`, and `tonality` before
+streaming begins. If the authenticated user does not have enough points, it returns `402` and no
+presentation record is created. After a successful save, the same estimate is deducted from
+`users.slide_tokens`.
+
+After a successful save, the API also stores semantic memory for future retrieval:
+slide summaries, deck summary, prompt event, style memory, source chunks when available, and a
+few-shot example of the generated deck. The exact deck JSON remains in `presentations.slides_data`.
+
 ### Headers
 
 ```bash
@@ -66,6 +75,9 @@ Content-Type: application/json
     - `enabled` (boolean): Enable/disable web research
     - `freshness` (optional): `day`, `week`, `month`, `year`
     - `maxResults` (optional): 1-10
+    - `includeDomains` / `excludeDomains` (optional): Domain filters for Exa search
+    - `startPublishedDate` / `endPublishedDate` (optional): ISO date filters for Exa search
+    - `maxAgeHours` (optional): Maximum age for fetched Exa result contents
 - `research_payload` (optional): Pre-fetched research summary and sources (usually from `/api/research-presentation`)
 
 ### Response (200 OK - SSE Stream)
@@ -106,7 +118,7 @@ data: {"slides": [...], "theme": "modern", "title": "...", "tokens_used": 5000}
 
 ```
 event: saved
-data: {"presentation_id": "presentation-id", "success": true}
+data: {"presentation_id": "presentation-id", "success": true, "slide_tokens_remaining": 42.5}
 ```
 
 6. **error** - Error occurred
@@ -152,13 +164,30 @@ while (true) {
 
 - `400`: Validation failed
 - `401`: Not signed in
+- `402`: Insufficient points
 - `500`: Internal error
+
+Example insufficient-points response:
+
+```json
+{
+    "error": {
+        "message": "Insufficient points",
+        "code": "INSUFFICIENT_TOKENS"
+    },
+    "slide_tokens_remaining": 1.5,
+    "slide_tokens_required": 4,
+    "slide_tokens_shortfall": 2.5
+}
+```
 
 ---
 
 ## POST /api/research-presentation
 
 Run a research prepass before generation. Returns a summary and sources that can be passed to `research_payload`.
+The search query and returned source snippets are stored as embeddings for later retrieval, but live
+search is still required for latest-information prompts.
 
 ### Request Body
 
@@ -183,7 +212,11 @@ Run a research prepass before generation. Returns a summary and sources that can
             "url": "https://example.com",
             "title": "Example",
             "snippet": "Summary excerpt",
-            "retrieved_at": "2026-01-04T12:00:00Z"
+            "retrieved_at": "2026-01-04T12:00:00Z",
+            "published_date": "2026-01-03",
+            "author": "Example Author",
+            "summary": "Exa-generated page summary",
+            "highlights": ["Relevant Exa highlight"]
         }
     ],
     "tokens_used": 1200,
@@ -201,6 +234,14 @@ Run a research prepass before generation. Returns a summary and sources that can
 ## POST /api/iterate-presentation-stream
 
 Iterate on an existing presentation with streaming.
+
+Iteration uses the same point estimate, `402` insufficient-points response, and saved-event
+`slide_tokens_remaining` payload as presentation generation.
+
+Before generating the iteration, the API retrieves semantic memory for the deck, including relevant
+slide summaries, prompt history, source chunks, templates, examples, style, and feedback. After a
+successful save, current slide/deck/style/source memories are refreshed and the prompt/feedback
+history is preserved.
 
 ### Request Body
 

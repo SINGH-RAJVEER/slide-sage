@@ -9,7 +9,6 @@ interface User {
     image: string | null;
     emailVerified: boolean;
     slideTokens: number;
-    isUnlimited: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -87,6 +86,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             window.removeEventListener("focus", handleWindowFocus);
         };
     }, [refreshSession]);
+
+    useEffect(() => {
+        const handlePointsUpdated = (event: Event) => {
+            const slideTokens = (event as CustomEvent<{ slideTokens?: unknown }>).detail
+                ?.slideTokens;
+            if (typeof slideTokens !== "number" || !Number.isFinite(slideTokens)) return;
+
+            setUser((currentUser) =>
+                currentUser
+                    ? {
+                          ...currentUser,
+                          slideTokens,
+                      }
+                    : currentUser,
+            );
+        };
+
+        window.addEventListener("slide-sage:points-updated", handlePointsUpdated);
+        return () => {
+            window.removeEventListener("slide-sage:points-updated", handlePointsUpdated);
+        };
+    }, []);
 
     const signOut = async () => {
         try {

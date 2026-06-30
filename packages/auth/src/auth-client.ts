@@ -1,4 +1,4 @@
-import { accounts, db, sessions, users, verifications } from "@slide-sage/db";
+import { accounts, db, sessions, users, verifications } from "@slide-sage/database";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins";
@@ -76,9 +76,7 @@ async function sendOTPEmail(
         const isProduction = (getEnvVar(env, "NODE_ENV") ?? "") === "production";
         if (isProduction) {
             // Never log auth codes in production. Surface a non-sensitive error instead.
-            console.error(
-                `RESEND_API_KEY not configured; unable to send ${type} OTP to a user.`,
-            );
+            console.error(`RESEND_API_KEY not configured; unable to send ${type} OTP to a user.`);
             throw new Error("Email service is not configured");
         }
         // Dev-only convenience: print the code so local testing works without email.
@@ -140,19 +138,35 @@ function resolveBaseUrl(env: Env): string {
 }
 
 function resolveTrustedOrigins(env: Env): string[] {
-    const raw = getEnvVar(env, "CORS_ORIGINS") ?? getEnvVar(env, "CORS_ORIGIN") ?? "";
+    const raw = [
+        getEnvVar(env, "BETTER_AUTH_TRUSTED_ORIGINS"),
+        getEnvVar(env, "CORS_ORIGINS"),
+        getEnvVar(env, "CORS_ORIGIN"),
+    ]
+        .filter(Boolean)
+        .join(",");
     const origins = raw
         .split(",")
         .map((s) => s.trim().replace(/\/$/, ""))
         .filter(Boolean);
-    return origins.length > 0 ? origins : ["http://localhost:5173"];
+    return origins.length > 0 ? Array.from(new Set(origins)) : ["http://localhost:5173"];
 }
 
 let cachedAuth: ReturnType<typeof betterAuth> | null = null;
 let cachedEnvKey = "";
 
 export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
-    const envKey = `${getEnvVar(env, "AUTH_SECRET") ?? ""}:${getEnvVar(env, "CORS_ORIGINS") ?? getEnvVar(env, "CORS_ORIGIN") ?? ""}`;
+    const envKey = [
+        getEnvVar(env, "AUTH_SECRET") ?? "",
+        getEnvVar(env, "BASE_URL") ?? "",
+        getEnvVar(env, "BETTER_AUTH_TRUSTED_ORIGINS") ?? "",
+        getEnvVar(env, "CORS_ORIGINS") ?? "",
+        getEnvVar(env, "CORS_ORIGIN") ?? "",
+        getEnvVar(env, "GOOGLE_CLIENT_ID") ?? "",
+        getEnvVar(env, "GOOGLE_CLIENT_SECRET") ?? "",
+        getEnvVar(env, "GITHUB_CLIENT_ID") ?? "",
+        getEnvVar(env, "GITHUB_CLIENT_SECRET") ?? "",
+    ].join(":");
     if (cachedAuth && cachedEnvKey === envKey) return cachedAuth;
 
     const baseUrl = resolveBaseUrl(env);
@@ -168,6 +182,14 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
                 verification: verifications,
             },
         }),
+        // Expose the points balance on the session user so the whole app reads a single
+        // source of truth (useAuth().user) instead of separately fetched, divergent values.
+        // input: false prevents clients from setting these during sign-up.
+        user: {
+            additionalFields: {
+                slideTokens: { type: "number", input: false, required: false },
+            },
+        },
         emailAndPassword: {
             enabled: true,
             autoSignIn: false,
@@ -203,14 +225,6 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
                 clientId: getEnvVar(env, "GITHUB_CLIENT_ID") || "",
                 clientSecret: getEnvVar(env, "GITHUB_CLIENT_SECRET") || "",
                 redirectURL: `${baseUrl}/api/auth/callback/github`,
-            },
-        },
-        callbacks: {
-            async session(session: unknown) {
-                return session;
-            },
-            async signUp(data: unknown) {
-                return data;
             },
         },
     });

@@ -1,48 +1,76 @@
 /**
  * RAG Service
- * Handles embedding generation, storage, and retrieval for augmented generation
+ * Handles embedding generation, semantic memory storage, and retrieval.
  */
 
-import type { Slide } from "@slide-sage/contracts";
+import type { RagContext } from "@slide-sage/database";
+import type { Source } from "@slide-sage/types";
+import { DEFAULT_EMBEDDING_MODEL } from "./rag/defaults";
 import {
-    db,
-    type PresentationEmbedding,
-    presentationEmbeddings,
-    type RagContext,
-    ragContext,
-    type SearchEmbedding,
-    searchEmbeddings,
-} from "@slide-sage/db";
-import { and, cosineDistance, desc, eq, sql } from "drizzle-orm";
+    retrieveBestSemanticCommandIntent,
+    retrieveDeckContexts,
+    retrieveExampleContexts,
+    retrieveFeedbackContexts,
+    retrievePromptContexts,
+    retrieveSlideContexts,
+    retrieveSourceContexts,
+    retrieveStyleContexts,
+    retrieveTemplateContexts,
+} from "./rag/retrieval";
+import {
+    seedDefaultSemanticCommandsIfMissing,
+    seedDefaultSlideTemplatesIfMissing,
+} from "./rag/seed";
+import {
+    cleanupOldEmbeddings as cleanupStoredEmbeddings,
+    clearCurrentPresentationMemory,
+    getPresentationRagContexts,
+    storeDeckMemory,
+    storeExampleGeneration,
+    storeFeedbackMemory,
+    storePromptEvent,
+    storeRagContext,
+    storeSlideMemories,
+    storeSourceChunks,
+    storeStyleMemory,
+} from "./rag/storage";
+import type {
+    EmbeddingResult,
+    MemorySourceType,
+    RankedSource,
+    SimilarContext,
+    StorePresentationSemanticMemoryParams,
+} from "./rag/types";
+import {
+    buildSourceChunkText,
+    cosineSimilarity,
+    fallbackPromptIntent,
+    formatSourceLabel,
+    normalizeText,
+    truncateText,
+} from "./rag/utils";
 
-export interface EmbeddingResult {
-    embedding: number[];
-    model: string;
-}
-
-export interface SimilarContext {
-    context: string;
-    similarity: number;
-    sourceType: string;
-    metadata?: Record<string, unknown>;
-}
+export type {
+    EmbeddingResult,
+    MemorySourceType,
+    SimilarContext,
+    StorePresentationSemanticMemoryParams,
+} from "./rag/types";
 
 /**
- * RAG Service for managing embeddings and context retrieval
+ * RAG Service for managing embeddings and context retrieval.
  */
 export class RAGService {
     private embeddingModel: string;
+    private defaultTemplatesSeeded = false;
+    private defaultSemanticCommandsSeeded = false;
 
     constructor() {
-        this.embeddingModel = process.env.EMBEDDING_MODEL || "gemini/text-embedding-004";
-
-        if (!this.embeddingModel) {
-            console.warn("EMBEDDING_MODEL not set. Using default: gemini/text-embedding-004");
-        }
+        this.embeddingModel = process.env.EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL;
     }
 
     /**
-     * Generate embeddings using LiteLLM
+     * Generate embeddings using OpenRouter.
      */
     async generateEmbedding(text: string): Promise<EmbeddingResult> {
         try {
@@ -50,7 +78,6 @@ export class RAGService {
                 throw new Error("Text cannot be empty");
             }
 
-            // Prepare the request body for LiteLLM (OpenAI-compatible)
             const requestBody = {
                 model: this.embeddingModel,
                 input: text,
@@ -58,28 +85,28 @@ export class RAGService {
                 dimensions: 768,
             };
 
-            // Determine the proxy URL for LiteLLM
-            const litellmProxyBase = process.env.LITELLM_PROXY_BASE || "http://localhost:4000";
-            const embeddingsUrl = this.resolveLiteLLMUrl(litellmProxyBase);
+            const apiKey = process.env.OPEN_ROUTER_API_KEY;
+            if (!apiKey) {
+                throw new Error("OPEN_ROUTER_API_KEY is not set");
+            }
 
-            console.log(
-                `Generating embedding using model: ${this.embeddingModel} at ${embeddingsUrl}`
-            );
+            const embeddingsUrl =
+                process.env.OPEN_ROUTER_EMBEDDINGS_URL || "https://openrouter.ai/api/v1/embeddings";
 
             const response = await fetch(embeddingsUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(process.env.LITELLM_API_KEY && {
-                        Authorization: `Bearer ${process.env.LITELLM_API_KEY}`,
-                    }),
+                    Authorization: `Bearer ${apiKey}`,
+                    "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                    "X-OpenRouter-Title": "Slide Sage",
                 },
                 body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
                 const error = await response.text();
-                console.error("LiteLLM embedding API error:", error);
+                console.error("OpenRouter embedding API error:", error);
                 throw new Error(`Failed to generate embedding: ${response.statusText}`);
             }
 
@@ -106,156 +133,184 @@ export class RAGService {
     }
 
     /**
-     * Resolve LiteLLM endpoint URL
+     * Store source snippets/chunks from web search results.
      */
-    private resolveLiteLLMUrl(base: string): string {
-        const trimmed = base.replace(/\/+$/g, "");
-
-        if (trimmed.endsWith("/v1/embeddings")) {
-            return trimmed;
-        }
-        if (trimmed.endsWith("/v1")) {
-            return `${trimmed}/embeddings`;
-        }
-        return `${trimmed}/v1/embeddings`;
-    }
-
-    /**
-     * Store search query embedding
-     */
-    async storeSearchEmbedding(
+    async storeSourceChunks(
         userId: string,
-        searchQuery: string
-    ): Promise<SearchEmbedding | null> {
-        try {
-            const { embedding } = await this.generateEmbedding(searchQuery);
-
-            const result = await db
-                .insert(searchEmbeddings)
-                .values({
-                    userId,
-                    searchQuery,
-                    embedding,
-                    embeddingModel: this.embeddingModel,
-                    metadata: {
-                        queryLength: searchQuery.length,
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-                .returning();
-
-            return result[0] || null;
-        } catch (error) {
-            console.error("Error storing search embedding:", error);
-            return null;
-        }
+        query: string,
+        sources: Source[],
+        presentationId?: string
+    ): Promise<void> {
+        return storeSourceChunks(
+            this.generateEmbedding.bind(this),
+            userId,
+            query,
+            sources,
+            presentationId
+        );
     }
 
     /**
-     * Store presentation iteration embedding
+     * Store all semantic memories produced by a saved generation or iteration.
      */
-    async storePresentationEmbedding(
-        presentationId: string,
-        userId: string,
-        iterationPrompt: string,
-        slides: Slide[]
-    ): Promise<PresentationEmbedding | null> {
-        try {
-            // Serialize presentation content for context
-            const presentationContent = this.serializeSlides(slides);
-            const combinedText = `${iterationPrompt}\n\n${presentationContent}`;
+    async storePresentationSemanticMemory(
+        params: StorePresentationSemanticMemoryParams
+    ): Promise<void> {
+        const normalizedPrompt = normalizeText(params.prompt);
+        if (!normalizedPrompt || params.slides.length === 0) return;
 
-            const { embedding } = await this.generateEmbedding(combinedText);
+        const embeddingGenerator = this.generateEmbedding.bind(this);
+        const intentClassifier = this.classifyPromptIntentWithEmbedding.bind(this);
+        const normalizedParams = { ...params, prompt: normalizedPrompt };
 
-            const result = await db
-                .insert(presentationEmbeddings)
-                .values({
-                    presentationId,
-                    userId,
-                    iterationPrompt,
-                    presentationContent,
-                    embedding,
-                    embeddingModel: this.embeddingModel,
-                    metadata: {
-                        slideCount: slides.length,
-                        timestamp: new Date().toISOString(),
-                        contentLength: presentationContent.length,
-                    },
-                })
-                .returning();
+        await this.runMemoryTask("clear current presentation memory", () =>
+            clearCurrentPresentationMemory(params.presentationId)
+        );
+        await this.runMemoryTask("prompt event", () =>
+            storePromptEvent(embeddingGenerator, intentClassifier, normalizedParams)
+        );
+        await this.runMemoryTask("deck summary", () =>
+            storeDeckMemory(embeddingGenerator, normalizedParams)
+        );
+        await this.runMemoryTask("slide summaries", () =>
+            storeSlideMemories(embeddingGenerator, normalizedParams)
+        );
+        await this.runMemoryTask("style memory", () =>
+            storeStyleMemory(embeddingGenerator, normalizedParams)
+        );
+        await this.runMemoryTask("example generation", () =>
+            storeExampleGeneration(embeddingGenerator, normalizedParams)
+        );
 
-            return result[0] || null;
-        } catch (error) {
-            console.error("Error storing presentation embedding:", error);
-            return null;
+        if (params.operation === "iteration") {
+            await this.runMemoryTask("feedback memory", () =>
+                storeFeedbackMemory(embeddingGenerator, normalizedParams)
+            );
+        }
+
+        if (params.sources?.length) {
+            await this.runMemoryTask("source chunks", () =>
+                storeSourceChunks(
+                    embeddingGenerator,
+                    params.userId,
+                    normalizedPrompt,
+                    params.sources ?? [],
+                    params.presentationId
+                )
+            );
         }
     }
 
     /**
-     * Retrieve similar contexts for a presentation
+     * Rank fresh search sources with embeddings. This does not replace live search.
+     */
+    async rankSourcesBySemanticRelevance(
+        query: string,
+        sources: Source[],
+        limit = 8
+    ): Promise<Source[]> {
+        if (sources.length <= 1) return sources.slice(0, limit);
+
+        try {
+            const { embedding: queryEmbedding } = await this.generateEmbedding(query);
+            const ranked: RankedSource[] = [];
+
+            for (const source of sources) {
+                const chunkText = buildSourceChunkText(query, source);
+                if (!chunkText) continue;
+
+                const { embedding } = await this.generateEmbedding(chunkText);
+                ranked.push({
+                    ...source,
+                    similarity: cosineSimilarity(queryEmbedding, embedding),
+                });
+            }
+
+            if (!ranked.length) return sources.slice(0, limit);
+
+            return ranked
+                .sort((a, b) => b.similarity - a.similarity)
+                .slice(0, limit)
+                .map(({ similarity: _similarity, ...source }) => source);
+        } catch (error) {
+            console.warn("Semantic source ranking failed; using original search order:", error);
+            return sources.slice(0, limit);
+        }
+    }
+
+    /**
+     * Retrieve similar semantic contexts for a presentation.
      */
     async retrieveSimilarContexts(
         userId: string,
         presentationId: string,
         query: string,
-        topK = 5,
-        similarityThreshold = 0.7
+        topK = 8,
+        similarityThreshold = 0.55
     ): Promise<SimilarContext[]> {
         try {
+            await this.ensureDefaultSlideTemplatesSeeded();
             const { embedding } = await this.generateEmbedding(query);
+            const perTableLimit = Math.max(2, Math.ceil(topK / 2));
 
-            // Calculate similarity distance (cosine distance is 1 - cosine similarity)
-            const searchEmbed = sql<number>`1 - (${cosineDistance(
-                searchEmbeddings.embedding,
-                embedding
-            )})`;
-            const presentEmbed = sql<number>`1 - (${cosineDistance(
-                presentationEmbeddings.embedding,
-                embedding
-            )})`;
+            const allContexts: SimilarContext[] = [
+                ...(await retrieveSlideContexts(
+                    userId,
+                    presentationId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrieveDeckContexts(
+                    userId,
+                    presentationId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrievePromptContexts(
+                    userId,
+                    presentationId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrieveSourceContexts(
+                    userId,
+                    presentationId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrieveTemplateContexts(
+                    this.embeddingModel,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrieveExampleContexts(
+                    userId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrieveStyleContexts(
+                    userId,
+                    presentationId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+                ...(await retrieveFeedbackContexts(
+                    userId,
+                    presentationId,
+                    embedding,
+                    perTableLimit,
+                    similarityThreshold
+                )),
+            ];
 
-            // Retrieve similar search embeddings
-            const similarSearches = await db
-                .select({
-                    context: searchEmbeddings.searchQuery,
-                    similarity: searchEmbed,
-                    sourceType: sql<string>`'search'`,
-                    metadata: searchEmbeddings.metadata,
-                })
-                .from(searchEmbeddings)
-                .where(
-                    and(
-                        eq(searchEmbeddings.userId, userId),
-                        sql`1 - (${cosineDistance(searchEmbeddings.embedding, embedding)}) > ${similarityThreshold}`
-                    )
-                )
-                .orderBy(desc(searchEmbed))
-                .limit(Math.ceil(topK / 2));
-
-            // Retrieve similar presentation embeddings
-            const similarPresentations = await db
-                .select({
-                    context: presentationEmbeddings.iterationPrompt,
-                    similarity: presentEmbed,
-                    sourceType: sql<string>`'iteration'`,
-                    metadata: presentationEmbeddings.metadata,
-                })
-                .from(presentationEmbeddings)
-                .where(
-                    and(
-                        eq(presentationEmbeddings.userId, userId),
-                        eq(presentationEmbeddings.presentationId, presentationId),
-                        sql`1 - (${cosineDistance(presentationEmbeddings.embedding, embedding)}) > ${similarityThreshold}`
-                    )
-                )
-                .orderBy(desc(presentEmbed))
-                .limit(Math.ceil(topK / 2));
-
-            // Combine and sort by similarity
-            const allContexts: SimilarContext[] = [...similarSearches, ...similarPresentations];
-            allContexts.sort((a, b) => b.similarity - a.similarity);
-
-            return allContexts.slice(0, topK);
+            return allContexts.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
         } catch (error) {
             console.error("Error retrieving similar contexts:", error);
             return [];
@@ -263,58 +318,35 @@ export class RAGService {
     }
 
     /**
-     * Store RAG context for a presentation
+     * Store RAG context for a presentation.
      */
     async storeRagContext(
         presentationId: string,
         userId: string,
-        sourceType: "search" | "iteration" | "presentation",
+        sourceType: MemorySourceType,
         retrievedContext: string,
         sourceId?: string,
         similarityScore?: number
     ): Promise<RagContext | null> {
-        try {
-            const result = await db
-                .insert(ragContext)
-                .values({
-                    presentationId,
-                    userId,
-                    sourceType,
-                    sourceId,
-                    retrievedContext,
-                    similarityScore,
-                    metadata: {
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-                .returning();
-
-            return result[0] || null;
-        } catch (error) {
-            console.error("Error storing RAG context:", error);
-            return null;
-        }
+        return storeRagContext(
+            presentationId,
+            userId,
+            sourceType,
+            retrievedContext,
+            sourceId,
+            similarityScore
+        );
     }
 
     /**
-     * Get all RAG contexts for a presentation
+     * Get all RAG contexts for a presentation.
      */
     async getPresentationRagContexts(presentationId: string, limit = 10): Promise<RagContext[]> {
-        try {
-            return await db
-                .select()
-                .from(ragContext)
-                .where(eq(ragContext.presentationId, presentationId))
-                .orderBy(desc(ragContext.createdAt))
-                .limit(limit);
-        } catch (error) {
-            console.error("Error retrieving RAG contexts:", error);
-            return [];
-        }
+        return getPresentationRagContexts(presentationId, limit);
     }
 
     /**
-     * Build RAG context string for LLM prompt
+     * Build formatted context string for an iteration prompt.
      */
     async buildRagContextString(
         userId: string,
@@ -326,22 +358,31 @@ export class RAGService {
                 userId,
                 presentationId,
                 query,
-                5,
-                0.6
+                8,
+                0.55
             );
 
             if (similarContexts.length === 0) {
                 return "";
             }
 
+            for (const context of similarContexts) {
+                await this.storeRagContext(
+                    presentationId,
+                    userId,
+                    context.sourceType,
+                    context.context,
+                    context.sourceId,
+                    context.similarity
+                );
+            }
+
             const contextLines = similarContexts.map((ctx, index) => {
-                const sourceLabel =
-                    ctx.sourceType === "search" ? "Previous Search" : "Previous Iteration";
                 const similarity = (ctx.similarity * 100).toFixed(1);
-                return `${index + 1}. ${sourceLabel} (${similarity}% similarity):\n${ctx.context}`;
+                return `${index + 1}. ${formatSourceLabel(ctx.sourceType)} (${similarity}% similarity):\n${truncateText(ctx.context, 1400)}`;
             });
 
-            return `## RELEVANT PREVIOUS CONTEXTS:\n\n${contextLines.join("\n\n")}\n\n`;
+            return `## RELEVANT SEMANTIC MEMORY:\n\n${contextLines.join("\n\n")}\n\n`;
         } catch (error) {
             console.error("Error building RAG context string:", error);
             return "";
@@ -349,55 +390,99 @@ export class RAGService {
     }
 
     /**
-     * Serialize slides to text for embedding
+     * Build reusable memory for a new generation request.
      */
-    private serializeSlides(slides: Slide[]): string {
-        return slides
-            .map((slide, index) => {
-                const lines: string[] = [`Slide ${index + 1}:`];
+    async buildGenerationMemoryContextString(userId: string, query: string): Promise<string> {
+        try {
+            await this.ensureDefaultSlideTemplatesSeeded();
+            const { embedding } = await this.generateEmbedding(query);
+            const contexts = [
+                ...(await retrieveTemplateContexts(this.embeddingModel, embedding, 3, 0.45)),
+                ...(await retrieveExampleContexts(userId, embedding, 2, 0.5)),
+                ...(await retrieveStyleContexts(userId, undefined, embedding, 2, 0.45)),
+            ]
+                .sort((a, b) => b.similarity - a.similarity)
+                .slice(0, 5);
 
-                if (slide.title) lines.push(`Title: ${slide.title}`);
-                if (slide.content) lines.push(`Content: ${slide.content}`);
-                if (slide.notes) lines.push(`Notes: ${slide.notes}`);
-                if (slide.type) lines.push(`Type: ${slide.type}`);
+            if (!contexts.length) return "";
 
-                return lines.join("\n");
-            })
-            .join("\n\n");
+            const lines = contexts.map((ctx, index) => {
+                const similarity = (ctx.similarity * 100).toFixed(1);
+                return `${index + 1}. ${formatSourceLabel(ctx.sourceType)} (${similarity}% similarity):\n${truncateText(ctx.context, 1200)}`;
+            });
+
+            return `## RELEVANT GENERATION MEMORY:\n\n${lines.join("\n\n")}\n\n`;
+        } catch (error) {
+            console.warn("Failed to build generation memory context:", error);
+            return "";
+        }
     }
 
     /**
-     * Clean up old embeddings for a user
+     * Clean up old embeddings for a user.
      */
     async cleanupOldEmbeddings(userId: string, daysToKeep = 30): Promise<number> {
         try {
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-
-            // Delete old search embeddings
-            await db
-                .delete(searchEmbeddings)
-                .where(
-                    and(
-                        eq(searchEmbeddings.userId, userId),
-                        sql`${searchEmbeddings.createdAt} < ${cutoffDate}`
-                    )
-                );
-
-            // Delete old presentation embeddings
-            const result = await db
-                .delete(presentationEmbeddings)
-                .where(
-                    and(
-                        eq(presentationEmbeddings.userId, userId),
-                        sql`${presentationEmbeddings.createdAt} < ${cutoffDate}`
-                    )
-                );
-
-            return result.rowCount || 0;
+            return await cleanupStoredEmbeddings(userId, cutoffDate);
         } catch (error) {
             console.error("Error cleaning up embeddings:", error);
             return 0;
+        }
+    }
+
+    private async classifyPromptIntentWithEmbedding(
+        embedding: number[],
+        prompt: string
+    ): Promise<string> {
+        try {
+            await this.ensureDefaultSemanticCommandsSeeded();
+            const match = await retrieveBestSemanticCommandIntent(this.embeddingModel, embedding);
+
+            if (match && Number(match.similarity) >= 0.45) {
+                return match.intent;
+            }
+        } catch (error) {
+            console.warn("Semantic command classification failed:", error);
+        }
+
+        return fallbackPromptIntent(prompt);
+    }
+
+    private async ensureDefaultSlideTemplatesSeeded(): Promise<void> {
+        if (this.defaultTemplatesSeeded) return;
+
+        try {
+            await seedDefaultSlideTemplatesIfMissing(
+                this.generateEmbedding.bind(this),
+                this.embeddingModel
+            );
+            this.defaultTemplatesSeeded = true;
+        } catch (error) {
+            console.warn("Failed to seed default slide templates:", error);
+        }
+    }
+
+    private async ensureDefaultSemanticCommandsSeeded(): Promise<void> {
+        if (this.defaultSemanticCommandsSeeded) return;
+
+        try {
+            await seedDefaultSemanticCommandsIfMissing(
+                this.generateEmbedding.bind(this),
+                this.embeddingModel
+            );
+            this.defaultSemanticCommandsSeeded = true;
+        } catch (error) {
+            console.warn("Failed to seed default semantic commands:", error);
+        }
+    }
+
+    private async runMemoryTask(name: string, task: () => Promise<unknown>): Promise<void> {
+        try {
+            await task();
+        } catch (error) {
+            console.warn(`Semantic memory task failed (${name}):`, error);
         }
     }
 }

@@ -3,14 +3,15 @@
  * Handles presentation generation with token management and streaming
  */
 
+import type { Presentation } from "@slide-sage/database";
+import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
 import type {
     PresentationStreamEvent,
     ResearchOptions,
     ResearchPayload,
     Slide,
-} from "@slide-sage/contracts";
-import type { Presentation } from "@slide-sage/db";
-import { PresentationRepository, TokenCalculator } from "@slide-sage/db";
+    Source,
+} from "@slide-sage/types";
 import { AIService } from "./ai.service";
 import { RAGService } from "./rag.service";
 
@@ -33,6 +34,19 @@ export interface IteratePresentationParams {
     detailLevel?: string;
     tonality?: string;
     research?: ResearchOptions;
+}
+
+export interface StorePresentationMemoryParams {
+    presentationId: string;
+    userId: string;
+    prompt: string;
+    slides: Slide[];
+    title: string;
+    theme: string;
+    operation: "generation" | "iteration";
+    detailLevel?: string;
+    tonality?: string;
+    sources?: Source[];
 }
 
 export class PresentationService {
@@ -83,7 +97,8 @@ export class PresentationService {
                 detailLevel,
                 tonality,
                 research,
-                researchPayload
+                researchPayload,
+                params.userId
             )) {
                 yield event;
             }
@@ -223,27 +238,16 @@ export class PresentationService {
     }
 
     /**
-     * Store presentation iteration with RAG embedding
+     * Store semantic memory for saved presentation state.
      */
-    async storeIterationWithEmbedding(
-        presentationId: string,
-        userId: string,
-        feedback: string,
-        slides: Slide[]
-    ): Promise<void> {
+    async storePresentationMemory(params: StorePresentationMemoryParams): Promise<void> {
         try {
-            await this.ragService.storePresentationEmbedding(
-                presentationId,
-                userId,
-                feedback,
-                slides
-            );
+            await this.ragService.storePresentationSemanticMemory(params);
             console.log(
-                `Stored presentation embedding for iteration: ${feedback.substring(0, 50)}...`
+                `Stored semantic memory for presentation ${params.presentationId} (${params.operation})`
             );
         } catch (error) {
-            console.warn("Failed to store presentation embedding:", error);
-            // Non-critical, continue without RAG
+            console.warn("Failed to store presentation semantic memory:", error);
         }
     }
 

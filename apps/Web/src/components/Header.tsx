@@ -103,9 +103,7 @@ export default function Header() {
                                 className="rounded-full border border-white/10 px-5 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
                                 title="Click to purchase more points"
                             >
-                                {user.slideTokens === Infinity
-                                    ? "∞ points"
-                                    : `${user.slideTokens?.toFixed(1) ?? "0.0"} points`}
+                                {`${user.slideTokens?.toFixed(1) ?? "0.0"} points`}
                             </button>
 
                             <DropdownMenu>

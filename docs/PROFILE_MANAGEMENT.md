@@ -29,7 +29,6 @@ Retrieve current user's profile information.
     "image": "https://example.com/avatar.jpg",
     "emailVerified": true,
     "slideTokens": 50.0,
-    "isUnlimited": false,
     "createdAt": "2026-02-26T00:00:00Z"
   }
 }
@@ -65,7 +64,9 @@ Update user profile (name, email, or password).
     "name": "Jane Doe",
     "email": "jane@example.com",
     "image": "https://example.com/avatar.jpg",
-    "emailVerified": true
+    "emailVerified": true,
+    "slideTokens": 50.0,
+    "createdAt": "2026-02-26T00:00:00Z"
   }
 }
 ```

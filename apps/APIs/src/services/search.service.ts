@@ -1,7 +1,5 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { PromptTemplate } from "@langchain/core/prompts";
-import { ChatGroq } from "@langchain/groq";
-import type { ResearchOptions, Source } from "@slide-sage/contracts";
+import type { ResearchOptions, Source } from "@slide-sage/types";
+import Exa from "exa-js";
 import { RAGService } from "./rag.service";
 
 export interface SearchSummaryResult {
@@ -10,50 +8,24 @@ export interface SearchSummaryResult {
     tokensEstimated: number;
 }
 
-interface BraveWebSearchResult {
-    url?: string;
-    title?: string;
-    description?: string;
-}
-
-interface BraveWebSearchResponse {
-    web?: {
-        results?: BraveWebSearchResult[];
-    };
+interface ExaSearchResult {
+    url: string;
+    title?: string | null;
+    publishedDate?: string;
+    author?: string;
+    highlights?: string[];
+    summary?: string;
 }
 
 export class SearchService {
-    private llm: ChatGroq | null = null;
     private ragService: RAGService | null = null;
-
-    private initializeLLM(): ChatGroq {
-        if (!this.llm) {
-            const apiKey = process.env.GROQ_API_KEY;
-            if (!apiKey) {
-                throw new Error("GROQ_API_KEY is not set");
-            }
-
-            const model = process.env.LITELLM_SEARCH_MODEL || "llama-3.1-8b-instant";
-
-            this.llm = new ChatGroq({
-                apiKey,
-                model,
-                temperature: 0.2,
-                maxTokens: 500,
-            });
-        }
-
-        return this.llm;
-    }
 
     async webSearch(query: string, options: ResearchOptions): Promise<Source[]> {
         if (!options.enabled) return [];
 
-        const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+        const apiKey = process.env.EXA_API_KEY;
         if (!apiKey) {
-            console.warn(
-                "Web research enabled but BRAVE_SEARCH_API_KEY is not set; skipping search."
-            );
+            console.warn("Web research enabled but EXA_API_KEY is not set; skipping search.");
             return [];
         }
 
@@ -61,67 +33,121 @@ export class SearchService {
         if (!normalizedQuery) return [];
 
         const maxResults = this.clampNumber(options.maxResults ?? 5, 1, 10);
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8_000);
+        const maxAgeHours = this.resolveMaxAgeHours(options);
+        const exa = new Exa(apiKey);
 
         try {
-            const url = new URL("https://api.search.brave.com/res/v1/web/search");
-            url.searchParams.set("q", normalizedQuery);
-            url.searchParams.set("count", String(maxResults));
-            url.searchParams.set("safesearch", "moderate");
-
-            if (options.freshness) {
-                url.searchParams.set("freshness", options.freshness);
-            }
-
-            const response = await fetch(url.toString(), {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                    "X-Subscription-Token": apiKey,
-                },
-                signal: controller.signal,
-            });
-
-            if (!response.ok) {
-                const body = await response.text();
-                console.warn(
-                    `Brave Search failed: ${response.status} ${response.statusText}`,
-                    body
-                );
-                return [];
-            }
-
-            const data = (await response.json()) as BraveWebSearchResponse;
-            const results = Array.isArray(data.web?.results) ? data.web?.results : [];
+            const result = await this.withTimeout(
+                exa.search(normalizedQuery, {
+                    type: "auto",
+                    numResults: maxResults,
+                    includeDomains: options.includeDomains,
+                    excludeDomains: options.excludeDomains,
+                    startPublishedDate:
+                        options.startPublishedDate ??
+                        this.startPublishedDateForFreshness(options.freshness),
+                    endPublishedDate: options.endPublishedDate,
+                    contents: {
+                        highlights: {
+                            query: normalizedQuery,
+                            maxCharacters: 1200,
+                        },
+                        summary: {
+                            query: normalizedQuery,
+                        },
+                        maxAgeHours,
+                    },
+                }),
+                10_000,
+                "Exa search request timed out"
+            );
 
             const retrievedAt = new Date().toISOString();
-
             const sources: Source[] = [];
-            for (const r of results) {
-                const urlValue = typeof r.url === "string" ? r.url.trim() : "";
-                if (!urlValue || !this.isLikelyHttpUrl(urlValue)) continue;
+            const results = Array.isArray(result.results)
+                ? (result.results as ExaSearchResult[])
+                : [];
+
+            for (const item of results) {
+                const url = item.url.trim();
+                if (!url || !this.isLikelyHttpUrl(url)) continue;
+
+                const highlights = Array.isArray(item.highlights)
+                    ? item.highlights.map((highlight) => highlight.trim()).filter(Boolean)
+                    : [];
+                const summary = typeof item.summary === "string" ? item.summary.trim() : "";
+                const snippet = summary || highlights[0];
 
                 sources.push({
-                    url: urlValue,
-                    title: typeof r.title === "string" ? r.title.trim() : undefined,
-                    snippet: typeof r.description === "string" ? r.description.trim() : undefined,
+                    url,
+                    title: typeof item.title === "string" ? item.title.trim() : undefined,
+                    snippet,
                     retrieved_at: retrievedAt,
+                    published_date: item.publishedDate,
+                    author: item.author,
+                    highlights,
+                    summary: summary || undefined,
                 });
             }
 
             return sources;
         } catch (error) {
-            if (error instanceof Error && error.name === "AbortError") {
-                console.warn("Brave Search request timed out");
-                return [];
-            }
-            console.warn("Brave Search request failed:", error);
+            console.warn("Exa search request failed:", error);
             return [];
-        } finally {
-            clearTimeout(timeout);
         }
+    }
+
+    private async withTimeout<T>(
+        promise: Promise<T>,
+        timeoutMs: number,
+        message: string
+    ): Promise<T> {
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        const timeoutPromise = new Promise<never>((_resolve, reject) => {
+            timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+        });
+
+        try {
+            return await Promise.race([promise, timeoutPromise]);
+        } finally {
+            if (timeout) clearTimeout(timeout);
+        }
+    }
+
+    private resolveMaxAgeHours(options: ResearchOptions): number | undefined {
+        if (typeof options.maxAgeHours === "number" && Number.isFinite(options.maxAgeHours)) {
+            return Math.max(0, Math.floor(options.maxAgeHours));
+        }
+
+        switch (options.freshness) {
+            case "day":
+                return 24;
+            case "week":
+                return 24 * 7;
+            case "month":
+                return 24 * 30;
+            case "year":
+                return 24 * 365;
+            default:
+                return undefined;
+        }
+    }
+
+    private startPublishedDateForFreshness(
+        freshness: ResearchOptions["freshness"]
+    ): string | undefined {
+        if (!freshness) return undefined;
+
+        const date = new Date();
+        const daysBack = {
+            day: 1,
+            week: 7,
+            month: 30,
+            year: 365,
+        }[freshness];
+
+        date.setDate(date.getDate() - daysBack);
+        return date.toISOString().slice(0, 10);
     }
 
     async summarizeSourcesDetailed(query: string, sources: Source[]): Promise<SearchSummaryResult> {
@@ -130,12 +156,15 @@ export class SearchService {
         }
 
         try {
-            const llm = this.initializeLLM();
             const trimmedQuery = this.normalizeQuery(query);
             const compactSources = sources.slice(0, 8).map((source) => ({
                 url: source.url,
                 title: source.title,
                 snippet: source.snippet,
+                published_date: source.published_date,
+                author: source.author,
+                highlights: source.highlights?.slice(0, 4),
+                summary: source.summary,
                 retrieved_at: source.retrieved_at,
             }));
 
@@ -147,33 +176,56 @@ export class SearchService {
 Sources (JSON):
 ${JSON.stringify(compactSources, null, 2)}`;
 
-            // Create prompt template
-            const promptTemplate = PromptTemplate.fromTemplate(`{system_prompt}
-
-{user_content}`);
-
-            const formattedPrompt = await promptTemplate.format({
-                system_prompt: systemPrompt,
-                user_content: userPromptText,
-            });
-
-            // Estimate tokens before calling the LLM
+            const formattedPrompt = `${systemPrompt}\n\n${userPromptText}`;
             const tokensEstimated = this.estimateTokens(formattedPrompt);
 
-            // Call LangChain LLM with proper message types
-            const messages = [new SystemMessage(systemPrompt), new HumanMessage(userPromptText)];
+            const apiKey = process.env.OPEN_ROUTER_API_KEY;
+            if (!apiKey) {
+                throw new Error("OPEN_ROUTER_API_KEY is not set");
+            }
 
-            const result = await llm.invoke(messages);
+            const model =
+                process.env.OPEN_ROUTER_SEARCH_MODEL ||
+                process.env.OPEN_ROUTER_MODEL ||
+                "google/gemma-4-26b-a4b-it:free";
+
+            const response = await fetch(
+                process.env.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${apiKey}`,
+                        "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                        "X-OpenRouter-Title": "Slide Sage",
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPromptText },
+                        ],
+                        temperature: 0.2,
+                        max_tokens: 500,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const body = await response.text();
+                throw new Error(
+                    `OpenRouter summarization failed: ${response.status} ${response.statusText} - ${body}`
+                );
+            }
+
+            const result = await response.json();
 
             const summary =
-                typeof result.content === "string"
-                    ? result.content.trim()
-                    : Array.isArray(result.content)
-                      ? result.content.map((c) => (typeof c === "string" ? c : c.text)).join("\n")
-                      : "";
+                typeof result.choices?.[0]?.message?.content === "string"
+                    ? result.choices[0].message.content.trim()
+                    : "";
 
-            // Try to get actual token usage from response metadata
-            const tokensUsed = result.response_metadata?.usage?.total_tokens || 0;
+            const tokensUsed = result.usage?.total_tokens || 0;
 
             return {
                 summary: summary || null,
@@ -181,14 +233,9 @@ ${JSON.stringify(compactSources, null, 2)}`;
                 tokensEstimated,
             };
         } catch (error) {
-            console.warn("LangChain summarization failed:", error);
+            console.warn("OpenRouter summarization failed:", error);
             return { summary: null, tokensUsed: 0, tokensEstimated: 0 };
         }
-    }
-
-    async summarizeSources(query: string, sources: Source[]): Promise<string | null> {
-        const result = await this.summarizeSourcesDetailed(query, sources);
-        return result.summary;
     }
 
     private estimateTokens(text: string): number {
@@ -216,19 +263,21 @@ ${JSON.stringify(compactSources, null, 2)}`;
         }
     }
 
-    /**
-     * Store search query with RAG embedding for future reference
-     */
-    async storeSearchWithEmbedding(userId: string, query: string): Promise<void> {
+    async storeSourceChunks(
+        userId: string,
+        query: string,
+        sources: Source[] = [],
+        presentationId?: string
+    ): Promise<void> {
         try {
             if (!this.ragService) {
                 this.ragService = new RAGService();
             }
 
-            await this.ragService.storeSearchEmbedding(userId, query);
-            console.log(`Stored search embedding for query: ${query.substring(0, 50)}...`);
+            await this.ragService.storeSourceChunks(userId, query, sources, presentationId);
+            console.log(`Stored source chunks for query: ${query.substring(0, 50)}...`);
         } catch (error) {
-            console.warn("Failed to store search embedding:", error);
+            console.warn("Failed to store source chunks:", error);
             // Non-critical, continue without RAG
         }
     }

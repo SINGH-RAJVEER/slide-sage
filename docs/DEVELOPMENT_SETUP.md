@@ -6,23 +6,22 @@ Complete guide to setting up the SlideSage development environment.
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| [Nix](https://nixos.org/download/) | 2.18+ | Package management for the dev shell |
-| [direnv](https://direnv.net/) | 2.x+ | Automatic shell activation on `cd` |
-| [nix-direnv](https://github.com/nix-community/nix-direnv) | any | `use flake` support for direnv |
+| [Nix](https://nixos.org/download/) | 2.18+ | Package manager used by devenv |
+| [devenv](https://devenv.sh/) | latest | Project development shell |
 
-Bun, just, PostgreSQL, pgvector, process-compose, and LiteLLM are provided by
-`flake.nix` inside the development shell.
+Bun, just, PostgreSQL, pgvector, and process-compose are provided by `devenv.nix`
+inside the development shell.
 
-### Install direnv and nix-direnv
+### Install devenv
 
 ```bash
-# Install direnv and nix-direnv into your user profile
-nix profile install nixpkgs#direnv nixpkgs#nix-direnv
+nix profile install nixpkgs#devenv
+```
 
-# Hook direnv into your shell (add to ~/.bashrc or ~/.zshrc)
-eval "$(direnv hook bash)"
-# or
-eval "$(direnv hook zsh)"
+### Enter the development shell
+
+```bash
+devenv shell
 ```
 
 ## Initial Setup
@@ -34,23 +33,19 @@ git clone https://github.com/your-username/slide-sage.git
 cd slide-sage
 ```
 
-### 2. Allow direnv
+### 2. Enter the devenv shell
 
-On first entry into the project directory, direnv will ask for permission:
-
-```bash
-direnv allow
-```
-
-This evaluates `.envrc`, which uses the local `flake.nix` to load the full
-development shell into the current shell session. Subsequent `cd` invocations
-into the project will activate the environment automatically.
-
-If you do not use direnv, enter the shell manually:
+Open the project development shell before running `just`, `bun`, database, or
+service commands:
 
 ```bash
-nix develop
+devenv shell
 ```
+
+This evaluates `devenv.nix` and makes the repo-local commands available in your
+current shell. The shell also sets local defaults for database and service URLs.
+The project uses `devenv shell` directly, so `direnv`, `.envrc`, and `.direnv/`
+are not required for the development environment.
 
 ### 3. Install JavaScript dependencies
 
@@ -64,9 +59,9 @@ bun install
 cp .env.example .env
 ```
 
-Edit `.env` with your credentials. The Nix shell also injects a set of default
-values for local development (see `flake.nix`), but secrets such as API keys
-must still be provided in `.env`.
+Edit `.env` with your credentials. `devenv shell` loads this file and also
+injects a set of default values for local development (see `devenv.nix`), but
+secrets such as API keys must still be provided in `.env`.
 
 **Key variables:**
 
@@ -85,15 +80,16 @@ GITHUB_CLIENT_SECRET=
 RESEND_API_KEY=your-resend-key
 RESEND_FROM_EMAIL=onboarding@yourdomain.com
 
-# AI providers
-GROQ_API_KEY=your-groq-key
-GEMINI_API_KEY=your-gemini-key
-OPENAI_API_KEY=
+# AI
+OPEN_ROUTER_API_KEY=your-openrouter-key
+OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free
+OPEN_ROUTER_SEARCH_MODEL=google/gemma-4-26b-a4b-it:free
+EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
 ```
 
-Database and service URL variables (`DATABASE_URL`, `LITELLM_PROXY_BASE`,
-`POSTGRES_USER`, etc.) are set automatically by `flake.nix` for local
-development and do not need to be in `.env`.
+Database and service URL variables (`DATABASE_URL`, `POSTGRES_USER`, etc.) are
+set automatically by `devenv.nix` for local development and do not need to be in
+`.env`.
 
 ## Starting the Development Environment
 
@@ -103,20 +99,22 @@ development and do not need to be in `.env`.
 just dev
 ```
 
-This runs `slidesage-dev-up`, a Nix-provided script that starts all services in
-a `process-compose` TUI:
+This enters the `devenv` shell and runs `slidesage-dev-up`, a Nix-provided
+script that starts all services in a `process-compose` TUI. You can run it from
+a normal project shell as long as `devenv` is installed:
+The process-compose HTTP server is disabled, so other local tools can keep using
+port 8080.
 
 | Process | Port | Description |
 |---------|------|-------------|
 | `postgres` | 5432 | PostgreSQL 17 with pgvector |
-| `litellm` | 4000 | LiteLLM proxy for AI model routing |
 | `migrate` | - | Runs drizzle migrations (exits on completion) |
 | `apis` | 8000 | Hono API server (hot-reload) |
 | `web` | 5173 | Vite frontend dev server |
 
 Startup ordering is enforced:
 - `migrate` waits for `postgres` to be healthy
-- `apis` waits for `migrate` to succeed and `litellm` to be healthy
+- `apis` waits for `migrate` to succeed
 
 Press `Ctrl+C` to stop all processes. PostgreSQL is stopped automatically when
 `just dev` exits.
@@ -163,9 +161,12 @@ just dev
 ## Justfile Reference
 
 ```
-just dev          - Start all services (postgres + litellm + apis + web)
+just dev          - Start all services (postgres + apis + web)
 just apis         - Run the API server only
 just web          - Run the Vite dev server only
+just test         - Run all Bun test suites
+just test-apis    - Run API tests only
+just test-web     - Run Web tests only
 just db-shell     - Open psql connected to the local database
 just migrate      - Run drizzle-kit migrate
 just db-generate  - Generate a drizzle migration
@@ -177,29 +178,36 @@ just format       - Run biome format --write
 just install      - Run bun install
 ```
 
+## Testing
+
+Tests are first-class Bun test suites, not ad hoc scripts. Run them from the
+repository root:
+
+```bash
+bun run test
+```
+
+Run one application at a time when iterating:
+
+```bash
+bun run test:apis
+bun run test:web
+```
+
+The API tests mock external boundaries such as repositories and payment
+secrets, so they do not require PostgreSQL, Razorpay, or provider API
+keys. They run with Bun's `--isolate` flag so file-local route mocks do not
+leak across test files. The Web tests use happy-dom through
+`apps/Web/bunfig.toml`.
+
 ## Troubleshooting
 
-### direnv does not activate
+### `just`, `bun`, or `slidesage-dev-up` is missing
 
-Make sure the direnv shell hook is configured and `nix-direnv` is installed.
-Then run:
-
-```bash
-direnv allow .
-```
-
-### `use flake` is unknown
-
-Install `nix-direnv`:
+Enter the devenv shell from the repository root:
 
 ```bash
-nix profile install nixpkgs#nix-direnv
-```
-
-Then open a new shell or reload your shell configuration and run:
-
-```bash
-direnv allow .
+devenv shell
 ```
 
 ### Port already in use
@@ -210,7 +218,6 @@ Find and stop the conflicting process:
 lsof -i :8000   # APIs
 lsof -i :5173   # Web
 lsof -i :5432   # Postgres
-lsof -i :4000   # LiteLLM
 kill -9 <PID>
 ```
 
@@ -223,25 +230,9 @@ rm -rf .devenv/state/postgres
 just dev
 ```
 
-### LiteLLM fails to start
+### OpenRouter requests fail
 
-Ensure `GROQ_API_KEY` (and optionally `GEMINI_API_KEY`) are set in `.env`.
-LiteLLM reads them from the environment at startup via the `os.environ/` prefix
-in `litellm_config.yaml`.
-
-### Dependency installation failed
-
-```bash
-rm -rf node_modules
-bun install
-
-# Clear Bun cache if needed
-bun pm cache rm
-bun install
-```
-
-## Next Steps
-
-- Read [MONOREPO_STRUCTURE.md](MONOREPO_STRUCTURE.md) for the project layout.
-- Read [REQUEST_FLOWS.md](REQUEST_FLOWS.md) for end-to-end flow diagrams.
-- Read [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for a full variable reference.
+Ensure `OPEN_ROUTER_API_KEY` is set in `.env` and that `OPEN_ROUTER_MODEL`,
+`OPEN_ROUTER_SEARCH_MODEL`, and `EMBEDDING_MODEL` point to models available to
+your OpenRouter account. The default chat model is `google/gemma-4-26b-a4b-it:free`,
+which is listed by OpenRouter with zero prompt and completion pricing.

@@ -9,7 +9,7 @@ interface StreamingState {
     theme: string;
     title: string;
     totalSlides: number;
-    presentationId?: number;
+    presentationId?: string;
     error?: string;
     isComplete: boolean;
     researchSummary?: string;
@@ -53,6 +53,15 @@ const initialState: StreamingState = {
 };
 
 const StreamingContext = createContext<StreamingContextValue | null>(null);
+
+function publishPointsBalance(slideTokens: unknown) {
+    if (typeof slideTokens !== "number" || !Number.isFinite(slideTokens)) return;
+    window.dispatchEvent(
+        new CustomEvent("slide-sage:points-updated", {
+            detail: { slideTokens },
+        }),
+    );
+}
 
 export function StreamingProvider({ children }: { children: ReactNode }) {
     const [streamingState, setStreamingState] = useState<StreamingState>(initialState);
@@ -300,16 +309,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                     "Presentation saved:",
                                                     data.presentation_id,
                                                 );
-                                                // Refresh user to get updated slide token balance
-                                                if (data.slide_tokens_deducted !== undefined) {
-                                                    console.log(
-                                                        "Points deducted:",
-                                                        data.slide_tokens_deducted,
-                                                        "Remaining:",
-                                                        data.slide_tokens_remaining,
-                                                    );
-                                                    // Note: Token balance updates on next auth refresh
-                                                }
+                                                publishPointsBalance(
+                                                    data.slide_tokens_remaining,
+                                                );
                                                 break;
 
                                             case "save_error":
@@ -588,16 +590,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                     "Iteration saved to presentation:",
                                                     data.presentation_id,
                                                 );
-                                                // Refresh user to get updated slide token balance
-                                                if (data.slide_tokens_deducted !== undefined) {
-                                                    console.log(
-                                                        "Points deducted:",
-                                                        data.slide_tokens_deducted,
-                                                        "Remaining:",
-                                                        data.slide_tokens_remaining,
-                                                    );
-                                                    // Note: Token balance updates on next auth refresh
-                                                }
+                                                publishPointsBalance(
+                                                    data.slide_tokens_remaining,
+                                                );
                                                 break;
 
                                             case "save_error":

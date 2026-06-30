@@ -1,4 +1,4 @@
-import { db, users } from "@slide-sage/db";
+import { db, users } from "@slide-sage/database";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { createAuth } from "./auth-client";

@@ -157,12 +157,12 @@ Detailed overview of technologies used in SlideSage monorepo.
 
 ## AI Integration
 
-### LiteLLM
+### OpenRouter
 
-- **Purpose**: Unified LLM API interface
+- **Purpose**: Unified LLM and embedding API interface
 - **Features**:
-  - Multiple provider support
-  - Consistent API interface
+  - OpenRouter-hosted model access
+  - OpenAI-compatible chat and embeddings endpoints
   - Error handling
   - Cost tracking
 

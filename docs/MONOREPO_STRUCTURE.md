@@ -30,11 +30,11 @@ slide-sage/
 |   |   `-- package.json
 |-- packages/
 |   |-- auth/                 # Better Auth client + auth middleware helpers
-|   |-- DB/                   # Drizzle schema, migrations + repositories
+|   |-- database/             # Drizzle schema, migrations + repositories
 |   |   |-- drizzle/          # Drizzle migrations + snapshots
 |   |   |-- drizzle.config.ts # Drizzle config
 |   |   `-- src/
-|   `-- contracts/            # Shared API and model contracts
+|   `-- types/                # Shared API and model types
 |-- docker/                   # Docker assets
 |   |-- dev/                  # Dev Dockerfiles + compose
 |   `-- prod/                 # Prod compose + nginx

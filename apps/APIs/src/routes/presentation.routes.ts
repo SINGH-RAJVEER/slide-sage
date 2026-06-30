@@ -1,12 +1,12 @@
 import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "@slide-sage/auth";
+import { PresentationRepository, UserRepository } from "@slide-sage/database";
 import type {
     PresentationJSON,
     ResearchOptions,
     ResearchPayload,
     Slide,
     Source,
-} from "@slide-sage/contracts";
-import { PresentationRepository } from "@slide-sage/db";
+} from "@slide-sage/types";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { PresentationService } from "../services/presentation.service";
@@ -34,12 +34,38 @@ function parseResearchOptions(input: unknown): ResearchOptions | undefined {
             ? maxResultsRaw
             : undefined;
 
+    const includeDomains = parseStringList(value.includeDomains);
+    const excludeDomains = parseStringList(value.excludeDomains);
+    const startPublishedDate =
+        typeof value.startPublishedDate === "string" ? value.startPublishedDate : undefined;
+    const endPublishedDate =
+        typeof value.endPublishedDate === "string" ? value.endPublishedDate : undefined;
+    const maxAgeHoursRaw = value.maxAgeHours;
+    const maxAgeHours =
+        typeof maxAgeHoursRaw === "number" && Number.isFinite(maxAgeHoursRaw)
+            ? maxAgeHoursRaw
+            : undefined;
+
     return {
         enabled: true,
-        provider: "brave",
         freshness,
         maxResults,
+        includeDomains,
+        excludeDomains,
+        startPublishedDate,
+        endPublishedDate,
+        maxAgeHours,
     };
+}
+
+function parseStringList(input: unknown): string[] | undefined {
+    if (!Array.isArray(input)) return undefined;
+
+    const values = input
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter(Boolean);
+
+    return values.length ? values : undefined;
 }
 
 function parseResearchPayload(input: unknown): ResearchPayload | undefined {
@@ -60,6 +86,15 @@ function parseResearchPayload(input: unknown): ResearchPayload | undefined {
             title: typeof src.title === "string" ? src.title : undefined,
             snippet: typeof src.snippet === "string" ? src.snippet : undefined,
             retrieved_at: typeof src.retrieved_at === "string" ? src.retrieved_at : undefined,
+            published_date:
+                typeof src.published_date === "string"
+                    ? src.published_date
+                    : typeof src.publishedDate === "string"
+                      ? src.publishedDate
+                      : undefined,
+            author: typeof src.author === "string" ? src.author : undefined,
+            highlights: parseStringList(src.highlights),
+            summary: typeof src.summary === "string" ? src.summary : undefined,
         });
     }
 
@@ -78,171 +113,227 @@ const presentationRepo = new PresentationRepository();
 const searchService = new SearchService();
 
 // Generate presentation with streaming
-presentations.post("/generate-presentation-stream", authMiddleware, async (c) => {
-    try {
-        const userId = getCurrentUserId(c);
-        const body = await c.req.json();
+presentations.post(
+    "/generate-presentation-stream",
+    authMiddleware,
+    ensureUserInDbMiddleware,
+    async (c) => {
+        try {
+            const userId = getCurrentUserId(c);
+            const body = await c.req.json();
 
-        const { topic, slide_count, detail_level, tonality } = body;
-        const research = parseResearchOptions(body?.research);
-        const researchPayload = parseResearchPayload(
-            body?.research_payload ?? body?.researchPayload
-        );
+            const { topic, slide_count, detail_level, tonality } = body;
+            const research = parseResearchOptions(body?.research);
+            const researchPayload = parseResearchPayload(
+                body?.research_payload ?? body?.researchPayload
+            );
 
-        if (!topic || !slide_count) {
-            return c.json({ error: { message: "Missing required fields" } }, 400);
-        }
+            if (!topic || !slide_count) {
+                return c.json({ error: { message: "Missing required fields" } }, 400);
+            }
 
-        // Create initial presentation record
-        const presentation = await presentationRepo.create(userId, "Generating...", topic, {
-            slides: [],
-            theme: "default",
-            title: "Generating...",
-        });
+            // Verify the user has enough points BEFORE we create anything or start streaming.
+            // The frontend expects a 402 with { slide_tokens_remaining, slide_tokens_required }.
+            const estimatedTokens = presentationService.calculateEstimatedTokens(
+                slide_count,
+                detail_level || "balanced",
+                tonality || "professional"
+            );
+            const { sufficient, user, shortfall } = await UserRepository.hasSufficientTokens(
+                userId,
+                estimatedTokens
+            );
+            if (!sufficient) {
+                return c.json(
+                    {
+                        error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
+                        slide_tokens_remaining: user.slideTokens,
+                        slide_tokens_required: estimatedTokens,
+                        slide_tokens_shortfall: shortfall ?? estimatedTokens,
+                    },
+                    402
+                );
+            }
 
-        const presentationId = presentation.id;
+            // Create initial presentation record
+            const presentation = await presentationRepo.create(userId, "Generating...", topic, {
+                slides: [],
+                theme: "default",
+                title: "Generating...",
+            });
 
-        return stream(c, async (stream) => {
-            // Send presentation ID immediately
-            await stream.write("event: created\n");
-            await stream.write(`data: ${JSON.stringify({ presentation_id: presentationId })}\n\n`);
+            const presentationId = presentation.id;
 
-            try {
-                const allSlides: Slide[] = [];
-                let theme = "default";
-                let title = "Untitled Presentation";
-                let sources: Source[] | undefined;
-                let tokensUsed = 0;
+            return stream(c, async (stream) => {
+                // Send presentation ID immediately
+                await stream.write("event: created\n");
+                await stream.write(
+                    `data: ${JSON.stringify({ presentation_id: presentationId })}\n\n`
+                );
 
-                // Stream presentation generation
-                for await (const event of presentationService.generatePresentationStream({
-                    userId,
-                    operationId: presentationId,
-                    topic,
-                    slideCount: slide_count,
-                    detailLevel: detail_level || "balanced",
-                    tonality: tonality || "professional",
-                    research,
-                    researchPayload,
-                })) {
-                    const eventType = event.event || "data";
-                    // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
-                    const eventData = (event as any).data || {};
+                try {
+                    const allSlides: Slide[] = [];
+                    let theme = "default";
+                    let title = "Untitled Presentation";
+                    let sources: Source[] | undefined;
+                    let tokensUsed = 0;
 
-                    // Accumulate data
-                    if (eventType === "theme") {
-                        theme = eventData.theme || theme;
+                    // Stream presentation generation
+                    for await (const event of presentationService.generatePresentationStream({
+                        userId,
+                        operationId: presentationId,
+                        topic,
+                        slideCount: slide_count,
+                        detailLevel: detail_level || "balanced",
+                        tonality: tonality || "professional",
+                        research,
+                        researchPayload,
+                    })) {
+                        const eventType = event.event || "data";
+                        // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
+                        const eventData = (event as any).data || {};
+
+                        // Accumulate data
+                        if (eventType === "theme") {
+                            theme = eventData.theme || theme;
+                        }
+
+                        if (eventType === "slide") {
+                            const slide = eventData.slide;
+                            if (slide) {
+                                allSlides.push(slide);
+                            }
+                            if (eventData.title) {
+                                title = eventData.title;
+                            }
+                        }
+
+                        if (eventType === "complete") {
+                            if (eventData.slides) {
+                                allSlides.length = 0;
+                                allSlides.push(...eventData.slides);
+                            }
+                            if (eventData.theme) {
+                                theme = eventData.theme;
+                            }
+                            if (eventData.title) {
+                                title = eventData.title;
+                            }
+                            if (Array.isArray(eventData.sources)) {
+                                sources = eventData.sources;
+                            }
+                            tokensUsed = eventData.tokens_used || 0;
+                        }
+
+                        // Stream event to frontend
+                        await stream.write(`event: ${eventType}\n`);
+                        await stream.write(`data: ${JSON.stringify(eventData)}\n\n`);
                     }
 
-                    if (eventType === "slide") {
-                        const slide = eventData.slide;
-                        if (slide) {
-                            allSlides.push(slide);
+                    // Save final presentation data
+                    if (allSlides.length > 0) {
+                        const finalTitle = (() => {
+                            const trimmed = typeof title === "string" ? title.trim() : "";
+                            const fromTopic = typeof topic === "string" ? topic.trim() : "";
+
+                            const candidate =
+                                trimmed && trimmed !== "Untitled Presentation"
+                                    ? trimmed
+                                    : fromTopic || "Untitled Presentation";
+
+                            // DB schema sets varchar(255)
+                            return candidate.slice(0, 255);
+                        })();
+
+                        const finalData: PresentationJSON = {
+                            slides: allSlides,
+                            theme,
+                            title: finalTitle,
+                            totalSlides: allSlides.length,
+                            tokens_used: tokensUsed,
+                        };
+
+                        if (sources?.length) {
+                            finalData.sources = sources;
                         }
-                        if (eventData.title) {
-                            title = eventData.title;
+
+                        // Update the existing presentation with final data
+                        await presentationRepo.update(presentationId, {
+                            title: finalTitle,
+                            slidesData: finalData,
+                        });
+
+                        // Store semantic memory for retrieval during future iterations.
+                        try {
+                            await presentationService.storePresentationMemory({
+                                presentationId,
+                                userId,
+                                prompt: topic,
+                                slides: allSlides,
+                                title: finalTitle,
+                                theme,
+                                operation: "generation",
+                                detailLevel: detail_level || "balanced",
+                                tonality: tonality || "professional",
+                                sources,
+                            });
+                        } catch (error) {
+                            console.warn("Failed to store presentation semantic memory:", error);
                         }
-                    }
 
-                    if (eventType === "complete") {
-                        if (eventData.slides) {
-                            allSlides.length = 0;
-                            allSlides.push(...eventData.slides);
-                        }
-                        if (eventData.theme) {
-                            theme = eventData.theme;
-                        }
-                        if (eventData.title) {
-                            title = eventData.title;
-                        }
-                        if (Array.isArray(eventData.sources)) {
-                            sources = eventData.sources;
-                        }
-                        tokensUsed = eventData.tokens_used || 0;
-                    }
-
-                    // Stream event to frontend
-                    await stream.write(`event: ${eventType}\n`);
-                    await stream.write(`data: ${JSON.stringify(eventData)}\n\n`);
-                }
-
-                // Save final presentation data
-                if (allSlides.length > 0) {
-                    const finalTitle = (() => {
-                        const trimmed = typeof title === "string" ? title.trim() : "";
-                        const fromTopic = typeof topic === "string" ? topic.trim() : "";
-
-                        const candidate =
-                            trimmed && trimmed !== "Untitled Presentation"
-                                ? trimmed
-                                : fromTopic || "Untitled Presentation";
-
-                        // DB schema sets varchar(255)
-                        return candidate.slice(0, 255);
-                    })();
-
-                    const finalData: PresentationJSON = {
-                        slides: allSlides,
-                        theme,
-                        title: finalTitle,
-                        totalSlides: allSlides.length,
-                        tokens_used: tokensUsed,
-                    };
-
-                    if (sources?.length) {
-                        finalData.sources = sources;
-                    }
-
-                    // Update the existing presentation with final data
-                    await presentationRepo.update(presentationId, {
-                        title: finalTitle,
-                        slidesData: finalData,
-                    });
-
-                    // Store initial topic/prompt with RAG embedding
-                    try {
-                        await presentationService.storeIterationWithEmbedding(
-                            presentationId,
-                            userId,
-                            topic,
-                            allSlides
+                        console.log(
+                            `Saved presentation ${presentationId} with ${allSlides.length} slides`
                         );
-                    } catch (error) {
-                        console.warn("Failed to store initial topic embedding:", error);
+
+                        // Deduct the SAME slide-based estimate we checked against up front and that
+                        // the purchase page advertises, so the price charged matches the price
+                        // quoted everywhere (no surprise AI-token-based amount).
+                        let newBalance: number | null = null;
+                        try {
+                            const updatedUser = await UserRepository.deductTokens(
+                                userId,
+                                estimatedTokens
+                            );
+                            newBalance = updatedUser.slideTokens;
+                        } catch (deductError) {
+                            console.error(
+                                "Failed to deduct points:",
+                                deductError instanceof Error
+                                    ? deductError.message
+                                    : String(deductError)
+                            );
+                        }
+
+                        await stream.write("event: saved\n");
+                        await stream.write(
+                            `data: ${JSON.stringify({
+                                presentation_id: presentationId,
+                                success: true,
+                                slide_tokens_remaining: newBalance,
+                            })}\n\n`
+                        );
+                    } else {
+                        console.error(`No slides generated for presentation ${presentationId}`);
+                        await presentationService.deletePresentation(presentationId, userId);
+                        await stream.write("event: error\n");
+                        await stream.write(
+                            `data: ${JSON.stringify({ error: "Failed to generate presentation content" })}\n\n`
+                        );
                     }
-
-                    console.log(
-                        `Saved presentation ${presentationId} with ${allSlides.length} slides`
-                    );
-
-                    await stream.write("event: saved\n");
-                    await stream.write(
-                        `data: ${JSON.stringify({
-                            presentation_id: presentationId,
-                            success: true,
-                        })}\n\n`
-                    );
-                } else {
-                    console.error(`No slides generated for presentation ${presentationId}`);
+                } catch (error: unknown) {
+                    const message = error instanceof Error ? error.message : "Unknown error";
+                    console.error("Error during generation:", error);
                     await presentationService.deletePresentation(presentationId, userId);
                     await stream.write("event: error\n");
-                    await stream.write(
-                        `data: ${JSON.stringify({ error: "Failed to generate presentation content" })}\n\n`
-                    );
+                    await stream.write(`data: ${JSON.stringify({ error: message })}\n\n`);
                 }
-            } catch (error: unknown) {
-                const message = error instanceof Error ? error.message : "Unknown error";
-                console.error("Error during generation:", error);
-                await presentationService.deletePresentation(presentationId, userId);
-                await stream.write("event: error\n");
-                await stream.write(`data: ${JSON.stringify({ error: message })}\n\n`);
-            }
-        });
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return c.json({ error: { message } }, 400);
+            });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            return c.json({ error: { message } }, 400);
+        }
     }
-});
+);
 
 // Perform research prepass before generation
 presentations.post(
@@ -264,9 +355,9 @@ presentations.post(
 
             // Store search embedding for RAG context
             try {
-                await searchService.storeSearchWithEmbedding(userId, String(topic));
+                await searchService.storeSourceChunks(userId, String(topic), sources);
             } catch (error) {
-                console.warn("Failed to store search embedding:", error);
+                console.warn("Failed to store source chunks:", error);
             }
 
             const summaryResult = sources.length
@@ -315,6 +406,32 @@ presentations.post(
             }
 
             const presentationId = String(parentPresentationId);
+
+            // Verify the user has enough points before iterating (mirrors generation).
+            const iterationSlideCount = Number(slideCount);
+            const estimatedTokens = presentationService.calculateEstimatedTokens(
+                Number.isFinite(iterationSlideCount) && iterationSlideCount > 0
+                    ? iterationSlideCount
+                    : 5,
+                detailLevel || "balanced",
+                tonality || "professional"
+            );
+            const { sufficient, user, shortfall } = await UserRepository.hasSufficientTokens(
+                userId,
+                estimatedTokens
+            );
+            if (!sufficient) {
+                return c.json(
+                    {
+                        error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
+                        slide_tokens_remaining: user.slideTokens,
+                        slide_tokens_required: estimatedTokens,
+                        slide_tokens_shortfall: shortfall ?? estimatedTokens,
+                    },
+                    402
+                );
+            }
+
             const effectiveFeedback = (() => {
                 const count = Number(slideCount);
                 if (Number.isFinite(count) && count > 0) {
@@ -402,16 +519,40 @@ presentations.post(
                             slidesData: finalData,
                         });
 
-                        // Store iteration embedding for RAG context
+                        // Store semantic memory for future RAG context.
                         try {
-                            await presentationService.storeIterationWithEmbedding(
+                            await presentationService.storePresentationMemory({
                                 presentationId,
                                 userId,
-                                effectiveFeedback,
-                                allSlides
-                            );
+                                prompt: effectiveFeedback,
+                                slides: allSlides,
+                                title: finalTitle,
+                                theme,
+                                operation: "iteration",
+                                detailLevel: detailLevel || "balanced",
+                                tonality: tonality || "professional",
+                                sources,
+                            });
                         } catch (error) {
-                            console.warn("Failed to store iteration embedding:", error);
+                            console.warn("Failed to store presentation semantic memory:", error);
+                        }
+
+                        // Deduct the same slide-based estimate we checked against (consistent
+                        // with generation and the advertised pricing).
+                        let newBalance: number | null = null;
+                        try {
+                            const updatedUser = await UserRepository.deductTokens(
+                                userId,
+                                estimatedTokens
+                            );
+                            newBalance = updatedUser.slideTokens;
+                        } catch (deductError) {
+                            console.error(
+                                "Failed to deduct points:",
+                                deductError instanceof Error
+                                    ? deductError.message
+                                    : String(deductError)
+                            );
                         }
 
                         await stream.write("event: saved\n");
@@ -419,6 +560,7 @@ presentations.post(
                             `data: ${JSON.stringify({
                                 presentation_id: presentationId,
                                 success: true,
+                                slide_tokens_remaining: newBalance,
                             })}\n\n`
                         );
                     } else {

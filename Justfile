@@ -7,9 +7,9 @@ default:
 
 # ---- Dev ----
 
-# Start all services and apps (postgres, litellm, apis, web)
+# Start all services and apps (postgres, apis, web)
 dev:
-    slidesage-dev-up
+    devenv shell slidesage-dev-up
 
 # ---- Database ----
 
@@ -19,19 +19,19 @@ db-shell:
 
 # Run drizzle-kit migrations
 migrate:
-    cd packages/DB && bun run db:migrate
+    cd packages/database && bun run db:migrate
 
 # Generate a new drizzle migration from schema changes
 db-generate:
-    cd packages/DB && bun run db:generate
+    cd packages/database && bun run db:generate
 
 # Push schema changes directly (no migration file)
 db-push:
-    cd packages/DB && bun run db:push
+    cd packages/database && bun run db:push
 
 # Open drizzle studio
 db-studio:
-    cd packages/DB && bun run db:studio
+    cd packages/database && bun run db:studio
 
 # ---- Apps ----
 
@@ -44,6 +44,15 @@ web:
     cd apps/Web && bunx vite
 
 # ---- Code quality ----
+
+test:
+    bun run test
+
+test-apis:
+    bun run test:apis
+
+test-web:
+    bun run test:web
 
 lint:
     bun run biome check .

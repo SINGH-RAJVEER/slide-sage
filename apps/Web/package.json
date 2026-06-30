@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "@vitejs/plugin-react": "^4.5.2",
-        "@slide-sage/contracts": "workspace:*",
+        "@slide-sage/types": "workspace:*",
         "@radix-ui/react-dialog": "^1.1.15",
         "@radix-ui/react-dropdown-menu": "^2.1.15",
         "@radix-ui/react-select": "^2.2.5",

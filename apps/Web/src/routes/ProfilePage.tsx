@@ -10,7 +10,6 @@ interface UserProfile {
     image: string | null;
     emailVerified: boolean;
     slideTokens: number;
-    isUnlimited: boolean;
     createdAt: string;
 }
 
@@ -73,6 +72,28 @@ export default function ProfilePage() {
     useEffect(() => {
         void fetchProfile();
     }, [fetchProfile]);
+
+    useEffect(() => {
+        const handlePointsUpdated = (event: Event) => {
+            const slideTokens = (event as CustomEvent<{ slideTokens?: unknown }>).detail
+                ?.slideTokens;
+            if (typeof slideTokens !== "number" || !Number.isFinite(slideTokens)) return;
+
+            setProfile((currentProfile) =>
+                currentProfile
+                    ? {
+                          ...currentProfile,
+                          slideTokens,
+                      }
+                    : currentProfile,
+            );
+        };
+
+        window.addEventListener("slide-sage:points-updated", handlePointsUpdated);
+        return () => {
+            window.removeEventListener("slide-sage:points-updated", handlePointsUpdated);
+        };
+    }, []);
 
     const handleUpdateName = async (event: FormEvent) => {
         event.preventDefault();
@@ -541,9 +562,9 @@ export default function ProfilePage() {
 
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-white/60">Slide Tokens</span>
+                                <span className="text-white/60">Points</span>
                                 <span className="text-white font-semibold">
-                                    {profile.isUnlimited ? "Unlimited" : profile.slideTokens}
+                                    {profile.slideTokens?.toFixed(1) ?? "0.0"}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">

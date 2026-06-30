@@ -238,7 +238,7 @@ function removeTrailingCommas(input: string): string {
 
 function saveMalformedJson(content: string): void {
     try {
-        const tempFile = join(tmpdir(), `litellm_error_${Date.now()}.json`);
+        const tempFile = join(tmpdir(), `openrouter_error_${Date.now()}.json`);
         writeFileSync(tempFile, content);
         console.error(`Saved malformed JSON to: ${tempFile}`);
     } catch (e) {

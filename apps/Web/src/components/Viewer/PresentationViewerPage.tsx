@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import IterateModal from "@/components/Viewer/IterateModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAutoHideControls } from "@/hooks/useAutoHideControls";
 import { useFullscreenMode } from "@/hooks/useFullscreenMode";
 import { usePlayback } from "@/hooks/usePlayback";
@@ -9,7 +10,11 @@ import type { ViewerLocationState } from "@/hooks/usePresentationData";
 import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { API_URL } from "@/lib/api";
-import { useStreaming } from "@/modules/presentations";
+// Import directly from source modules (not the @/modules/presentations barrel) to avoid a
+// circular dependency: the barrel re-exports this very page, which under circular evaluation
+// left the AVAILABLE_TEMPLATES binding unestablished (ReferenceError at render).
+import { useStreaming } from "@/modules/contexts/StreamingContext";
+import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
 import { useTemplate } from "@/modules/useTemplate";
 import { ROUTES } from "@/router/paths";
 import { CenteredStatusScreen } from "./CenteredStatusScreen";
@@ -25,15 +30,28 @@ export default function PresentationViewerPage() {
     const navigate = useNavigate();
     const params = useParams();
     const { streamingState, getPresentation, startIterating } = useStreaming();
+    const { refreshSession } = useAuth();
+
+    // Points are deducted server-side when a generation/iteration finishes; re-sync the
+    // session on each streaming->complete transition so the balance shown in the header (and
+    // everywhere reading useAuth) reflects the new total — including after re-iterating.
+    const wasStreamingForBalanceRef = useRef(streamingState.isStreaming);
+    useEffect(() => {
+        const finishedStreaming =
+            wasStreamingForBalanceRef.current &&
+            !streamingState.isStreaming &&
+            streamingState.isComplete;
+        wasStreamingForBalanceRef.current = streamingState.isStreaming;
+        if (finishedStreaming) {
+            void refreshSession();
+        }
+    }, [streamingState.isStreaming, streamingState.isComplete, refreshSession]);
     const { currentTemplate, changeTemplate } = useTemplate();
 
     const locationState = location.state as ViewerLocationState | undefined;
 
     const presentationIdFromParams = useMemo(() => {
-        const raw = params.presentationId;
-        if (!raw) return undefined;
-        const parsed = Number(raw);
-        return Number.isFinite(parsed) ? parsed : undefined;
+        return params.presentationId || undefined;
     }, [params.presentationId]);
 
     const isStreamingMode = locationState?.isStreaming === true;
@@ -54,6 +72,19 @@ export default function PresentationViewerPage() {
         streamingState,
         getPresentation,
     });
+
+    // Sync the AI-chosen theme into the template selector. We only apply it when the theme
+    // value itself changes (tracked via ref) so that a manual template selection isn't
+    // overridden on every re-render, and we ignore unknown values so a stray theme string
+    // from the model can't blank out the styling.
+    const appliedThemeRef = useRef<string | null>(null);
+    useEffect(() => {
+        const theme = streamingState.theme || presentation?.theme;
+        if (!theme || theme === appliedThemeRef.current) return;
+        if (!AVAILABLE_TEMPLATES.some((t) => t.id === theme)) return;
+        appliedThemeRef.current = theme;
+        changeTemplate(theme);
+    }, [streamingState.theme, presentation?.theme, changeTemplate]);
 
     const slideContainerRef = useRef<HTMLDivElement | null>(null);
     const navigation = useSlideNavigation({
@@ -138,6 +169,14 @@ export default function PresentationViewerPage() {
 
         return () => clearTimeout(id);
     }, [navigation.scrollToSlide, streamingSlidesCount, streamingState.isStreaming]);
+
+    // Once streaming finishes and we have an ID, move to the canonical URL so reloads work
+    useEffect(() => {
+        if (!streamingState.isComplete || streamingState.isStreaming) return;
+        const id = streamingState.presentationId ?? presentationId;
+        if (!id || params.presentationId) return;
+        navigate(ROUTES.presentationById(id), { replace: true });
+    }, [streamingState.isComplete, streamingState.isStreaming, streamingState.presentationId, presentationId, params.presentationId, navigate]);
 
     // Reset to first slide when streaming completes
     useEffect(() => {

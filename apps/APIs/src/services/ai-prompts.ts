@@ -73,6 +73,12 @@ CRITICAL JSON FORMATTING RULES:
 6. NO single quotes for strings
 7. ALL HTML content must be properly escaped within the JSON strings
 
+THEME SELECTION (REQUIRED):
+- The top-level "theme" field MUST be EXACTLY ONE of these ids (no other value is allowed):
+  modern-dark, corporate-blue, minimalist, creative-studio, elegant-serif, nature-green
+- Choose the id that best fits the topic and tone. Output only the bare id string
+  (e.g. "theme": "corporate-blue"). Do NOT output the list, labels, or any extra words.
+
 CRITICAL HTML STRUCTURE REQUIREMENTS:
 - EVERY slide's HTML content MUST start with <div id="slide-content">
 - ALL content must be wrapped inside the slide-content div
@@ -167,7 +173,7 @@ IMAGE GUIDELINES:
 
 Required JSON structure (MUST match exactly):
 {
-  "theme": "string", 
+  "theme": "one of: modern-dark | corporate-blue | minimalist | creative-studio | elegant-serif | nature-green",
   "slides": [
     {
       "id": "string",
@@ -236,6 +242,12 @@ CRITICAL JSON FORMATTING RULES:
 6. NO single quotes for strings
 7. ALL HTML content must be properly escaped within the JSON strings
 
+THEME SELECTION (REQUIRED):
+- The top-level "theme" field MUST be EXACTLY ONE of these ids (no other value is allowed):
+  modern-dark, corporate-blue, minimalist, creative-studio, elegant-serif, nature-green
+- Choose the id that best fits the topic and tone. Output only the bare id string
+  (e.g. "theme": "corporate-blue"). Do NOT output the list, labels, or any extra words.
+
 CRITICAL HTML STRUCTURE REQUIREMENTS:
 - EVERY slide's HTML content MUST start with <div id="slide-content">
 - ALL content must be wrapped inside the slide-content div
@@ -267,7 +279,7 @@ HTML TABLE GUIDELINES:
 
 Required JSON structure (MUST match exactly):
 {
-  "theme": "string", 
+  "theme": "one of: modern-dark | corporate-blue | minimalist | creative-studio | elegant-serif | nature-green",
   "slides": [
     {
       "id": "string",

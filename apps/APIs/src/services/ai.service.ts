@@ -1,36 +1,23 @@
 import type {
-    LiteLLMMessage,
+    OpenRouterMessage,
     PresentationStreamEvent,
     ResearchOptions,
     ResearchPayload,
     Slide,
     Source,
-} from "@slide-sage/contracts";
+} from "@slide-sage/types";
 import { JSONRecoveryError, recoverJson } from "../utils/json-recovery";
 import { StreamProcessor } from "../utils/stream-processor";
 import { buildGenerationPrompt, buildIterationPrompt } from "./ai-prompts";
 import { RAGService } from "./rag.service";
 import { SearchService } from "./search.service";
 
-// Using dynamic import for litellm compatibility
-const completion: unknown = null;
-
-async function initLiteLLM() {
-    if (!completion) {
-        try {
-            console.log("AI Service initialized");
-        } catch (error) {
-            console.warn("LiteLLM SDK not available:", error);
-        }
-    }
-}
-
 export class AIService {
     private searchService = new SearchService();
     private ragService = new RAGService();
 
     constructor() {
-        initLiteLLM();
+        console.log("AI Service initialized");
     }
 
     private buildResearchSystemMessage(
@@ -61,20 +48,6 @@ RESEARCH SOURCES (JSON):
 ${JSON.stringify(cappedSources, null, 2)}`;
     }
 
-    private getLiteLLMProxyCompletionsUrl(): string | null {
-        const explicitUrl = process.env.LITELLM_PROXY_URL;
-        if (explicitUrl) return explicitUrl;
-
-        const base = process.env.LITELLM_PROXY_BASE;
-        if (!base) return null;
-
-        const trimmed = base.replace(/\/+$/g, "");
-
-        if (trimmed.endsWith("/v1/chat/completions")) return trimmed;
-        if (trimmed.endsWith("/v1")) return `${trimmed}/chat/completions`;
-        return `${trimmed}/v1/chat/completions`;
-    }
-
     private processSlide(slide: Slide, index: number): Slide | null {
         if (!slide || typeof slide !== "object") {
             console.warn(`Invalid slide ${index}, skipping`);
@@ -91,7 +64,11 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 '<div id="slide-content"><h2 id="slide-title">Data Visualization</h2><p id="slide-description">Chart data unavailable</p></div>';
         } else if (slide.html) {
             const htmlContent = slide.html.trim();
-            if (!htmlContent.startsWith('<div id="slide-content">')) {
+            // Match an existing wrapper with or without attributes (e.g. class="layout-title").
+            // The previous startsWith check failed whenever the AI added a class, causing the
+            // content to be double-wrapped into nested #slide-content divs.
+            const hasWrapper = /^<div\b[^>]*\bid=["']slide-content["']/i.test(htmlContent);
+            if (!hasWrapper) {
                 slide.html = `<div id="slide-content">${htmlContent}</div>`;
                 console.log(`Added slide-content wrapper to slide ${index}`);
             }
@@ -106,7 +83,8 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         detailLevel = "balanced",
         tonality = "professional",
         research?: ResearchOptions,
-        researchPayload?: ResearchPayload
+        researchPayload?: ResearchPayload,
+        userId?: string
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting generate presentation for: ${userPrompt.substring(0, 50)}... with ${slideCount} slides`
@@ -114,6 +92,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
 
         try {
             const systemPrompt = buildGenerationPrompt(detailLevel, tonality);
+            const generationMemoryContext = userId
+                ? await this.ragService.buildGenerationMemoryContextString(userId, userPrompt)
+                : "";
 
             const effectiveResearch: ResearchOptions | undefined =
                 research && typeof research === "object" ? research : undefined;
@@ -126,6 +107,13 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             if (researchPayload && Array.isArray(researchPayload.sources)) {
                 sources = researchPayload.sources;
                 researchSummary = researchPayload.summary ?? null;
+                if (sources.length) {
+                    sources = await this.ragService.rankSourcesBySemanticRelevance(
+                        userPrompt,
+                        sources,
+                        8
+                    );
+                }
             } else {
                 if (effectiveResearch?.enabled) {
                     yield {
@@ -137,11 +125,23 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 sources = effectiveResearch?.enabled
                     ? await this.searchService.webSearch(userPrompt, {
                           enabled: true,
-                          provider: "brave",
                           freshness: effectiveResearch.freshness,
                           maxResults: effectiveResearch.maxResults,
+                          includeDomains: effectiveResearch.includeDomains,
+                          excludeDomains: effectiveResearch.excludeDomains,
+                          startPublishedDate: effectiveResearch.startPublishedDate,
+                          endPublishedDate: effectiveResearch.endPublishedDate,
+                          maxAgeHours: effectiveResearch.maxAgeHours,
                       })
                     : [];
+
+                if (sources.length) {
+                    sources = await this.ragService.rankSourcesBySemanticRelevance(
+                        userPrompt,
+                        sources,
+                        8
+                    );
+                }
 
                 if (effectiveResearch?.enabled) {
                     yield {
@@ -193,8 +193,11 @@ ${JSON.stringify(cappedSources, null, 2)}`;
 
             const messages = [
                 { role: "system", content: systemPrompt },
+                ...(generationMemoryContext
+                    ? [{ role: "system", content: generationMemoryContext } as OpenRouterMessage]
+                    : []),
                 ...(researchMessage
-                    ? [{ role: "system", content: researchMessage } as LiteLLMMessage]
+                    ? [{ role: "system", content: researchMessage } as OpenRouterMessage]
                     : []),
                 {
                     role: "user",
@@ -202,10 +205,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.LITELLM_MODEL || "groq/llama3-8b-8192";
+            const model = process.env.OPEN_ROUTER_MODEL || "google/gemma-4-26b-a4b-it:free";
 
-            // Call LiteLLM API via Bun's fetch
-            const response = await this.callLiteLLMStreaming(model, messages);
+            const response = await this.callOpenRouterStreaming(model, messages);
 
             const processor = new StreamProcessor();
 
@@ -392,84 +394,29 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         }
     }
 
-    private async callLiteLLMStreaming(
+    private async callOpenRouterStreaming(
         model: string,
-        messages: LiteLLMMessage[]
+        messages: OpenRouterMessage[]
     ): Promise<Response> {
-        // LiteLLM-first path for Groq models when a proxy URL/base is configured.
-        // This preserves provider prefixes (e.g. "groq/llama-3.3-70b-versatile") and
-        // enables model alias routing from litellm_config.yaml (e.g. "kimi").
-        const proxyUrl = this.getLiteLLMProxyCompletionsUrl();
-        const shouldUseProxyForGroq = model.startsWith("groq/") && Boolean(proxyUrl);
-
-        if (shouldUseProxyForGroq && proxyUrl) {
-            const proxyKey = process.env.LITELLM_PROXY_KEY || process.env.LITELLM_API_KEY || "";
-
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-            };
-            if (proxyKey) {
-                headers.Authorization = `Bearer ${proxyKey}`;
-            }
-
-            const response = await fetch(proxyUrl, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    model,
-                    messages,
-                    stream: true,
-                    stream_options: { include_usage: true },
-                }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(
-                    `LiteLLM proxy request failed: ${response.status} ${response.statusText}`,
-                    errorText
-                );
-                throw new Error(
-                    `LiteLLM proxy request failed: ${response.status} ${response.statusText} - ${errorText}`
-                );
-            }
-
-            return response;
-        }
-
-        // Direct provider fallback (OpenAI-compatible endpoints)
-        let apiEndpoint = process.env.LITELLM_API_BASE;
-        let apiKey = process.env.LITELLM_API_KEY;
-
-        if (model.startsWith("groq/")) {
-            apiEndpoint = apiEndpoint || "https://api.groq.com/openai/v1/chat/completions";
-            apiKey = apiKey || process.env.GROQ_API_KEY;
-        } else if (model.startsWith("gemini/")) {
-            apiEndpoint =
-                apiEndpoint ||
-                "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-            apiKey = apiKey || process.env.GEMINI_API_KEY;
-        } else {
-            apiEndpoint = apiEndpoint || "https://api.openai.com/v1/chat/completions";
-            apiKey = apiKey || process.env.OPENAI_API_KEY;
-        }
+        const apiEndpoint =
+            process.env.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions";
+        const apiKey = process.env.OPEN_ROUTER_API_KEY;
 
         if (!apiKey) {
-            console.error(`Missing API Key for model ${model}`);
-            throw new Error(`Missing API Key for model ${model}`);
+            console.error("OPEN_ROUTER_API_KEY is not set");
+            throw new Error("OPEN_ROUTER_API_KEY is not set");
         }
-
-        // Extract the actual model name from provider prefix for direct provider calls.
-        const modelName = model.includes("/") ? model.split("/").slice(1).join("/") : model;
 
         const response = await fetch(apiEndpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${apiKey}`,
+                "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                "X-OpenRouter-Title": "Slide Sage",
             },
             body: JSON.stringify({
-                model: modelName,
+                model,
                 messages,
                 stream: true,
                 stream_options: { include_usage: true },
@@ -477,8 +424,14 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         });
 
         if (!response.ok) {
-            console.error(`API request failed: ${response.status} ${response.statusText}`);
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            console.error(
+                `OpenRouter request failed: ${response.status} ${response.statusText}`,
+                errorText
+            );
+            throw new Error(
+                `OpenRouter request failed: ${response.status} ${response.statusText} - ${errorText}`
+            );
         }
 
         return response;
@@ -522,14 +475,26 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 };
             }
 
-            const sources = effectiveResearch?.enabled
+            let sources = effectiveResearch?.enabled
                 ? await this.searchService.webSearch(feedback, {
                       enabled: true,
-                      provider: "brave",
                       freshness: effectiveResearch.freshness,
                       maxResults: effectiveResearch.maxResults,
+                      includeDomains: effectiveResearch.includeDomains,
+                      excludeDomains: effectiveResearch.excludeDomains,
+                      startPublishedDate: effectiveResearch.startPublishedDate,
+                      endPublishedDate: effectiveResearch.endPublishedDate,
+                      maxAgeHours: effectiveResearch.maxAgeHours,
                   })
                 : [];
+
+            if (sources.length) {
+                sources = await this.ragService.rankSourcesBySemanticRelevance(
+                    feedback,
+                    sources,
+                    8
+                );
+            }
 
             if (effectiveResearch?.enabled) {
                 yield {
@@ -582,7 +547,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             const messages = [
                 { role: "system", content: enhancedSystemPrompt },
                 ...(researchMessage
-                    ? [{ role: "system", content: researchMessage } as LiteLLMMessage]
+                    ? [{ role: "system", content: researchMessage } as OpenRouterMessage]
                     : []),
                 {
                     role: "user",
@@ -590,10 +555,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.LITELLM_MODEL || "groq/llama3-8b-8192";
+            const model = process.env.OPEN_ROUTER_MODEL || "google/gemma-4-26b-a4b-it:free";
 
-            // Call LiteLLM API via Bun's fetch
-            const response = await this.callLiteLLMStreaming(model, messages);
+            const response = await this.callOpenRouterStreaming(model, messages);
 
             const processor = new StreamProcessor();
 
@@ -623,7 +587,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 for (const line of lines) {
                     if (line.startsWith("data: ")) {
                         const data = line.slice(6);
-                        if (data === "[DONE]") enhancedSontinue;
+                        if (data === "[DONE]") continue;
 
                         try {
                             const parsed = JSON.parse(data);

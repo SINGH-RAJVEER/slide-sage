@@ -1,4 +1,4 @@
-import { accounts, db, users } from "@slide-sage/db";
+import { accounts, db, users } from "@slide-sage/database";
 import { and, eq } from "drizzle-orm";
 
 type ProfileUser = Pick<
@@ -9,7 +9,6 @@ type ProfileUser = Pick<
     | "image"
     | "emailVerified"
     | "slideTokens"
-    | "isUnlimited"
     | "createdAt"
 >;
 
@@ -58,7 +57,6 @@ export async function getUserProfile(userId: string) {
                 image: user.image,
                 emailVerified: user.emailVerified,
                 slideTokens: user.slideTokens,
-                isUnlimited: user.isUnlimited,
                 createdAt: user.createdAt,
             },
         };
@@ -140,7 +138,6 @@ export async function updateUserProfile(
                         image: user.image,
                         emailVerified: user.emailVerified,
                         slideTokens: user.slideTokens,
-                        isUnlimited: user.isUnlimited,
                         createdAt: user.createdAt,
                     },
                 };
@@ -167,7 +164,6 @@ export async function updateUserProfile(
                 image: updatedUser.image,
                 emailVerified: updatedUser.emailVerified,
                 slideTokens: updatedUser.slideTokens,
-                isUnlimited: updatedUser.isUnlimited,
                 createdAt: updatedUser.createdAt,
             },
         };

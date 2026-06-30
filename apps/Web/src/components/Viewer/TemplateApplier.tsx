@@ -18,146 +18,160 @@ const TemplateApplier: React.FC<TemplateApplierProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
 
     useLayoutEffect(() => {
-        const template = AVAILABLE_TEMPLATES.find((t) => t.id === templateId);
-        if (!template || !containerRef.current) return;
-
         const container = containerRef.current;
+        const template = AVAILABLE_TEMPLATES.find((t) => t.id === templateId);
+        if (!template || !container) return;
+
         const styles = template.styles;
 
         // Determine alignment based on slide type
         const isCenteredSlide = ["title", "quote", "conclusion"].includes(slideType);
         const contentJustify = isCenteredSlide ? "center" : "flex-start";
-        // Apply styles to elements with specific IDs
-        const applyStyles = (id: string, elementStyles: React.CSSProperties) => {
-            const elements = container.querySelectorAll(`#${id}`);
-            elements.forEach((element) => {
-                const htmlElement = element as HTMLElement;
-                Object.assign(htmlElement.style, elementStyles);
+
+        // The full styling pass. Re-runnable and idempotent so it can fire on the initial
+        // mount, on template/type changes, and whenever streamed HTML is replaced with the
+        // final parsed HTML (handled by the MutationObserver below). This guarantees no slide
+        // is ever left unstyled regardless of when its DOM content settles.
+        const applyAll = () => {
+            // Apply styles to elements with specific IDs (querySelectorAll handles the case
+            // where the AI emits duplicate IDs, e.g. multiple #slide-list in a two-column).
+            const applyStyles = (id: string, elementStyles: React.CSSProperties) => {
+                container.querySelectorAll(`#${id}`).forEach((element) => {
+                    Object.assign((element as HTMLElement).style, elementStyles);
+                });
+            };
+
+            const applyClassStyles = (cls: string, elementStyles: React.CSSProperties) => {
+                container.querySelectorAll(`.${cls}`).forEach((element) => {
+                    Object.assign((element as HTMLElement).style, elementStyles);
+                });
+            };
+
+            // Base theme styling applied to the wrapper container itself. This is the safety
+            // net: even if the AI omits the #slide-content wrapper or the standardized IDs,
+            // every slide still inherits the theme background, text color and font.
+            Object.assign(container.style, {
+                background: styles.slideContent.background,
+                color: styles.slideContent.color,
+                fontFamily: styles.slideContent.fontFamily,
+                boxSizing: "border-box",
             });
-        };
 
-        // Apply styles to elements with specific classes
-        const applyClassStyles = (className: string, elementStyles: React.CSSProperties) => {
-            const elements = container.querySelectorAll(`.${className}`);
-            elements.forEach((element) => {
-                const htmlElement = element as HTMLElement;
-                Object.assign(htmlElement.style, elementStyles);
+            applyStyles("slide-content", {
+                ...styles.slideContent,
+                width: "100%",
+                height: "100%",
+                boxSizing: "border-box",
+                justifyContent: contentJustify,
+                ...(isCenteredSlide ? {} : { paddingTop: "4rem" }),
             });
-        };
+            applyStyles("slide-title", styles.slideTitle);
+            applyStyles("slide-subtitle", styles.slideSubtitle);
 
-        // Apply all template styles
-        applyStyles("slide-content", {
-            ...styles.slideContent,
-            width: "100%",
-            height: "100%",
-            boxSizing: "border-box",
-            justifyContent: contentJustify,
-            ...(isCenteredSlide ? {} : { paddingTop: "4rem" }),
-        });
-        applyStyles("slide-title", styles.slideTitle);
-        applyStyles("slide-subtitle", styles.slideSubtitle);
-
-        // Helper for content blocks in non-centered slides
-        const contentBlockStyle = isCenteredSlide
-            ? {}
-            : {
-                  width: "90%",
-                  maxWidth: "1400px",
-                  textAlign: "left" as const,
-                  alignSelf: "center",
-                  marginTop: "auto",
-                  marginBottom: "auto",
-                  // Remove display: flex/column here as it breaks lists/tables
-              };
-
-        applyStyles("slide-list", {
-            ...styles.slideList,
-            ...contentBlockStyle,
-            // Ensure lists look good
-            paddingLeft: "2rem",
-            paddingRight: "2rem",
-            // Add some internal spacing for list items
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-        });
-        applyStyles("slide-table", {
-            ...styles.slideTable,
-            ...contentBlockStyle,
-            // Ensure tables are centered
-            marginLeft: "auto",
-            marginRight: "auto",
-        });
-        applyStyles("slide-quote", styles.slideQuote);
-        applyStyles("slide-description", {
-            ...styles.slideDescription,
-            ...contentBlockStyle,
-            display: "block",
-            textAlign: "center", // Descriptions usually look better centered
-        });
-        applyStyles("slide-highlight", {
-            ...styles.slideHighlight,
-            ...(isCenteredSlide
+            // Helper for content blocks in non-centered slides
+            const contentBlockStyle = isCenteredSlide
                 ? {}
                 : {
                       width: "90%",
                       maxWidth: "1400px",
+                      textAlign: "left" as const,
+                      alignSelf: "center",
                       marginTop: "auto",
                       marginBottom: "auto",
-                      alignSelf: "center",
-                  }),
-        });
-        applyStyles("slide-stats", {
-            ...styles.slideStats,
-            ...(isCenteredSlide
-                ? {}
-                : {
-                      width: "95%",
-                      maxWidth: "1600px",
-                      marginTop: "auto",
-                      marginBottom: "auto",
-                      alignSelf: "center",
-                  }),
-        });
-        applyStyles("slide-keypoint", styles.slideKeypoint);
-        applyStyles("slide-image", styles.slideImage);
+                  };
 
-        // Apply layout styles
-        applyClassStyles("two-column", {
-            ...styles.twoColumn,
-            ...(isCenteredSlide
-                ? {}
-                : {
-                      width: "95%",
-                      maxWidth: "1600px",
-                      marginTop: "auto",
-                      marginBottom: "auto",
-                      alignSelf: "center",
-                  }),
-        });
-        applyClassStyles("column", styles.column);
+            applyStyles("slide-list", {
+                ...styles.slideList,
+                ...contentBlockStyle,
+                paddingLeft: "2rem",
+                paddingRight: "2rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+            });
+            applyStyles("slide-table", {
+                ...styles.slideTable,
+                ...contentBlockStyle,
+                marginLeft: "auto",
+                marginRight: "auto",
+            });
+            applyStyles("slide-quote", styles.slideQuote);
+            applyStyles("slide-description", {
+                ...styles.slideDescription,
+                ...contentBlockStyle,
+                display: "block",
+                textAlign: "center",
+            });
+            applyStyles("slide-highlight", {
+                ...styles.slideHighlight,
+                ...(isCenteredSlide
+                    ? {}
+                    : {
+                          width: "90%",
+                          maxWidth: "1400px",
+                          marginTop: "auto",
+                          marginBottom: "auto",
+                          alignSelf: "center",
+                      }),
+            });
+            applyStyles("slide-stats", {
+                ...styles.slideStats,
+                ...(isCenteredSlide
+                    ? {}
+                    : {
+                          width: "95%",
+                          maxWidth: "1600px",
+                          marginTop: "auto",
+                          marginBottom: "auto",
+                          alignSelf: "center",
+                      }),
+            });
+            applyStyles("slide-keypoint", styles.slideKeypoint);
+            applyStyles("slide-image", styles.slideImage);
 
-        // Apply table-specific styles
-        const tables = container.querySelectorAll("#slide-table");
-        tables.forEach((table) => {
-            const ths = table.querySelectorAll("th");
-            const tds = table.querySelectorAll("td");
+            // Layout styles
+            applyClassStyles("two-column", {
+                ...styles.twoColumn,
+                ...(isCenteredSlide
+                    ? {}
+                    : {
+                          width: "95%",
+                          maxWidth: "1600px",
+                          marginTop: "auto",
+                          marginBottom: "auto",
+                          alignSelf: "center",
+                      }),
+            });
+            applyClassStyles("column", styles.column);
 
-            ths.forEach((th) => {
-                Object.assign((th as HTMLElement).style, styles.slideTableTh);
+            // Table cell styles
+            container.querySelectorAll("#slide-table").forEach((table) => {
+                table.querySelectorAll("th").forEach((th) => {
+                    Object.assign((th as HTMLElement).style, styles.slideTableTh);
+                });
+                table.querySelectorAll("td").forEach((td) => {
+                    Object.assign((td as HTMLElement).style, styles.slideTableTd);
+                });
             });
 
-            tds.forEach((td) => {
-                Object.assign((td as HTMLElement).style, styles.slideTableTd);
+            // List item spacing
+            container.querySelectorAll("#slide-list li").forEach((li) => {
+                (li as HTMLElement).style.marginBottom = "0.5rem";
             });
-        });
+        };
 
-        // Apply list item styles
-        const listItems = container.querySelectorAll("#slide-list li");
-        listItems.forEach((li) => {
-            const htmlLi = li as HTMLElement;
-            htmlLi.style.marginBottom = "0.5rem"; // Add spacing between list items
-        });
+        applyAll();
+
+        // Re-apply whenever the injected HTML subtree changes. During generation a slide is
+        // first rendered from the streamed (partial) HTML and later replaced with the final
+        // parsed HTML; that replacement is a childList mutation, not a template/type change,
+        // so the dependency array alone would miss it and leave the slide unstyled. We watch
+        // childList/subtree only (NOT attributes) so our own inline-style writes don't
+        // retrigger the observer and cause an infinite loop.
+        const observer = new MutationObserver(() => applyAll());
+        observer.observe(container, { childList: true, subtree: true });
+
+        return () => observer.disconnect();
     }, [templateId, slideType]);
 
     const template = AVAILABLE_TEMPLATES.find((t) => t.id === templateId);
@@ -165,7 +179,7 @@ const TemplateApplier: React.FC<TemplateApplierProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`w-full h-full ${template?.backgroundClass || ""} ${className}`}
+            className={`template-applier w-full h-full ${template?.backgroundClass || ""} ${className}`}
         >
             {children}
         </div>
