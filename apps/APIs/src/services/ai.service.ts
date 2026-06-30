@@ -83,7 +83,8 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         detailLevel = "balanced",
         tonality = "professional",
         research?: ResearchOptions,
-        researchPayload?: ResearchPayload
+        researchPayload?: ResearchPayload,
+        userId?: string
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting generate presentation for: ${userPrompt.substring(0, 50)}... with ${slideCount} slides`
@@ -91,6 +92,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
 
         try {
             const systemPrompt = buildGenerationPrompt(detailLevel, tonality);
+            const generationMemoryContext = userId
+                ? await this.ragService.buildGenerationMemoryContextString(userId, userPrompt)
+                : "";
 
             const effectiveResearch: ResearchOptions | undefined =
                 research && typeof research === "object" ? research : undefined;
@@ -103,6 +107,13 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             if (researchPayload && Array.isArray(researchPayload.sources)) {
                 sources = researchPayload.sources;
                 researchSummary = researchPayload.summary ?? null;
+                if (sources.length) {
+                    sources = await this.ragService.rankSourcesBySemanticRelevance(
+                        userPrompt,
+                        sources,
+                        8
+                    );
+                }
             } else {
                 if (effectiveResearch?.enabled) {
                     yield {
@@ -119,6 +130,14 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                           maxResults: effectiveResearch.maxResults,
                       })
                     : [];
+
+                if (sources.length) {
+                    sources = await this.ragService.rankSourcesBySemanticRelevance(
+                        userPrompt,
+                        sources,
+                        8
+                    );
+                }
 
                 if (effectiveResearch?.enabled) {
                     yield {
@@ -170,6 +189,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
 
             const messages = [
                 { role: "system", content: systemPrompt },
+                ...(generationMemoryContext
+                    ? [{ role: "system", content: generationMemoryContext } as OpenRouterMessage]
+                    : []),
                 ...(researchMessage
                     ? [{ role: "system", content: researchMessage } as OpenRouterMessage]
                     : []),
@@ -449,7 +471,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 };
             }
 
-            const sources = effectiveResearch?.enabled
+            let sources = effectiveResearch?.enabled
                 ? await this.searchService.webSearch(feedback, {
                       enabled: true,
                       provider: "brave",
@@ -457,6 +479,14 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                       maxResults: effectiveResearch.maxResults,
                   })
                 : [];
+
+            if (sources.length) {
+                sources = await this.ragService.rankSourcesBySemanticRelevance(
+                    feedback,
+                    sources,
+                    8
+                );
+            }
 
             if (effectiveResearch?.enabled) {
                 yield {
@@ -549,7 +579,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 for (const line of lines) {
                     if (line.startsWith("data: ")) {
                         const data = line.slice(6);
-                        if (data === "[DONE]") enhancedSontinue;
+                        if (data === "[DONE]") continue;
 
                         try {
                             const parsed = JSON.parse(data);

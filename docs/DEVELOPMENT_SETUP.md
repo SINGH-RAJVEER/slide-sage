@@ -84,7 +84,7 @@ RESEND_FROM_EMAIL=onboarding@yourdomain.com
 OPEN_ROUTER_API_KEY=your-openrouter-key
 OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free
 OPEN_ROUTER_SEARCH_MODEL=google/gemma-4-26b-a4b-it:free
-EMBEDDING_MODEL=google/gemini-embedding-001
+EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
 ```
 
 Database and service URL variables (`DATABASE_URL`, `POSTGRES_USER`, etc.) are
@@ -236,20 +236,3 @@ Ensure `OPEN_ROUTER_API_KEY` is set in `.env` and that `OPEN_ROUTER_MODEL`,
 `OPEN_ROUTER_SEARCH_MODEL`, and `EMBEDDING_MODEL` point to models available to
 your OpenRouter account. The default chat model is `google/gemma-4-26b-a4b-it:free`,
 which is listed by OpenRouter with zero prompt and completion pricing.
-
-### Dependency installation failed
-
-```bash
-rm -rf node_modules
-bun install
-
-# Clear Bun cache if needed
-bun pm cache rm
-bun install
-```
-
-## Next Steps
-
-- Read [MONOREPO_STRUCTURE.md](MONOREPO_STRUCTURE.md) for the project layout.
-- Read [REQUEST_FLOWS.md](REQUEST_FLOWS.md) for end-to-end flow diagrams.
-- Read [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for a full variable reference.

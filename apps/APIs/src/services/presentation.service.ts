@@ -10,6 +10,7 @@ import type {
     ResearchOptions,
     ResearchPayload,
     Slide,
+    Source,
 } from "@slide-sage/types";
 import { AIService } from "./ai.service";
 import { RAGService } from "./rag.service";
@@ -33,6 +34,19 @@ export interface IteratePresentationParams {
     detailLevel?: string;
     tonality?: string;
     research?: ResearchOptions;
+}
+
+export interface StorePresentationMemoryParams {
+    presentationId: string;
+    userId: string;
+    prompt: string;
+    slides: Slide[];
+    title: string;
+    theme: string;
+    operation: "generation" | "iteration";
+    detailLevel?: string;
+    tonality?: string;
+    sources?: Source[];
 }
 
 export class PresentationService {
@@ -83,7 +97,8 @@ export class PresentationService {
                 detailLevel,
                 tonality,
                 research,
-                researchPayload
+                researchPayload,
+                params.userId
             )) {
                 yield event;
             }
@@ -244,6 +259,20 @@ export class PresentationService {
         } catch (error) {
             console.warn("Failed to store presentation embedding:", error);
             // Non-critical, continue without RAG
+        }
+    }
+
+    /**
+     * Store semantic memory for saved presentation state.
+     */
+    async storePresentationMemory(params: StorePresentationMemoryParams): Promise<void> {
+        try {
+            await this.ragService.storePresentationSemanticMemory(params);
+            console.log(
+                `Stored semantic memory for presentation ${params.presentationId} (${params.operation})`
+            );
+        } catch (error) {
+            console.warn("Failed to store presentation semantic memory:", error);
         }
     }
 

@@ -52,9 +52,18 @@ mock.module("@slide-sage/database", () => {
             getTonalityInfo: (tonality: string) => ({ tonality }),
         },
         db: {},
+        deckMemories: {},
+        exampleGenerations: {},
+        feedbackMemories: {},
         presentationEmbeddings: {},
+        promptEvents: {},
         ragContext: {},
         searchEmbeddings: {},
+        semanticCommands: {},
+        slideEmbeddings: {},
+        slideTemplates: {},
+        sourceChunks: {},
+        styleMemories: {},
     };
 });
 

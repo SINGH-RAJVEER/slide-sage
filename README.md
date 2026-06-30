@@ -295,7 +295,7 @@ JWT_SECRET_KEY=change-this-secret-key-in-production
 OPEN_ROUTER_API_KEY=your-openrouter-api-key
 OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free
 OPEN_ROUTER_SEARCH_MODEL=google/gemma-4-26b-a4b-it:free
-EMBEDDING_MODEL=google/gemini-embedding-001
+EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
 
 # Better Auth / OAuth
 BETTER_AUTH_SECRET=change-this-secret-key-in-production
@@ -313,7 +313,7 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 **Key Configuration Notes:**
 
 - `OPEN_ROUTER_API_KEY`: Required for slide generation, research summarization, and embeddings
-- `EMBEDDING_MODEL`: OpenRouter embedding model configured for 768 dimensions for RAG
+- `EMBEDDING_MODEL`: Free OpenRouter embedding model configured for 768 dimensions for RAG
 - See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for embedding model migration details
 
 ---

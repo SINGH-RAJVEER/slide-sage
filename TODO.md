@@ -3,7 +3,7 @@
 ## Features
 
 - Explore if it is better to directly render markdown from the model as a slide instead of having the model return correct json format
-- Port the download as pptx functionality to download as pdf
+- Add download as pdf option
 - Add option for user to choose the aspect ratio
 - Add a template creation page and marketplace
 - Add an option to use a locally hosted llm server for generation

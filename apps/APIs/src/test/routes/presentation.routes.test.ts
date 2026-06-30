@@ -21,7 +21,7 @@ const presentationService = {
     getPresentation: mock(),
     getUserPresentations: mock(),
     iteratePresentationStream: mock(),
-    storeIterationWithEmbedding: mock(),
+    storePresentationMemory: mock(),
 };
 
 const searchService = {
@@ -63,7 +63,7 @@ mock.module("../../services/presentation.service", () => ({
         getPresentation = presentationService.getPresentation;
         getUserPresentations = presentationService.getUserPresentations;
         iteratePresentationStream = presentationService.iteratePresentationStream;
-        storeIterationWithEmbedding = presentationService.storeIterationWithEmbedding;
+        storePresentationMemory = presentationService.storePresentationMemory;
     },
 }));
 
@@ -118,7 +118,7 @@ describe("presentation routes", () => {
         presentationService.getPresentation.mockReset();
         presentationService.getUserPresentations.mockReset();
         presentationService.iteratePresentationStream.mockReset();
-        presentationService.storeIterationWithEmbedding.mockReset();
+        presentationService.storePresentationMemory.mockReset();
         searchService.storeSearchWithEmbedding.mockReset();
         searchService.summarizeSourcesDetailed.mockReset();
         searchService.webSearch.mockReset();
@@ -134,7 +134,7 @@ describe("presentation routes", () => {
         presentationRepository.update.mockResolvedValue({});
         presentationService.generatePresentationStream.mockImplementation(successfulStream);
         presentationService.iteratePresentationStream.mockImplementation(successfulStream);
-        presentationService.storeIterationWithEmbedding.mockResolvedValue(undefined);
+        presentationService.storePresentationMemory.mockResolvedValue(undefined);
     });
 
     it("validates generation requests and insufficient points", async () => {
@@ -192,7 +192,16 @@ describe("presentation routes", () => {
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
         expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
-        expect(presentationService.storeIterationWithEmbedding).toHaveBeenCalled();
+        expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
+            expect.objectContaining({
+                presentationId: "presentation_1",
+                userId: currentUserId,
+                prompt: "Quarterly planning",
+                operation: "generation",
+                title: "Quarterly Plan",
+                theme: "modern",
+            })
+        );
     });
 
     it("researches presentation topics and summarizes sources", async () => {
@@ -226,6 +235,11 @@ describe("presentation routes", () => {
             freshness: "week",
             maxResults: 3,
         });
+        expect(searchService.storeSearchWithEmbedding).toHaveBeenCalledWith(
+            currentUserId,
+            "AI news",
+            sources
+        );
     });
 
     it("validates research requests", async () => {
@@ -260,6 +274,16 @@ describe("presentation routes", () => {
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
         expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
+        expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
+            expect.objectContaining({
+                presentationId: "presentation_1",
+                userId: currentUserId,
+                prompt: "Make it shorter\n\nTarget slide count: 2.",
+                operation: "iteration",
+                title: "Quarterly Plan",
+                theme: "modern",
+            })
+        );
     });
 
     it("validates iteration requests and insufficient points", async () => {

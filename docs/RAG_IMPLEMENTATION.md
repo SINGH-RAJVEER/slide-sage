@@ -1,402 +1,186 @@
-# RAG (Retrieval Augmented Generation) Implementation
+# RAG and Semantic Memory Implementation
 
-This document describes the RAG implementation using pgvector for the Slide Sage Presentation Generator.
+Slide Sage uses PostgreSQL, pgvector, and OpenRouter embeddings to retrieve semantic context for presentation generation and iteration.
 
-## Overview
+The important split is:
 
-The RAG system enhances the presentation generation and iteration process by:
+- Store exact presentation state as normal relational data and `jsonb`.
+- Store embeddings only for natural-language meaning: summaries, prompts, source chunks, templates, examples, style, and feedback.
+- Use normal indexes for exact lookup such as `user_id`, `presentation_id`, `slide_id`, timestamps, URLs, and JSON schema validation.
 
-1. **Storing historical context**: Embedding user searches, iteration prompts, and presentation content
-2. **Intelligent retrieval**: Finding semantically similar previous contexts when a user iterates
-3. **Context enrichment**: Including relevant previous contexts in LLM prompts to improve output quality
-4. **Consistency maintenance**: Ensuring presentations remain consistent across iterations
+## Core Service
 
-## Architecture
+`apps/APIs/src/services/rag.service.ts` owns embedding generation, semantic-memory storage, retrieval, and context formatting.
 
-### Components
+Key methods:
 
-#### 1. **RAGService** (`apps/APIs/src/services/rag.service.ts`)
-
-Core service for embedding management with the following responsibilities:
-
-- **Embedding Generation**: Uses OpenRouter to generate embeddings for text
-- **Storage**: Persists embeddings to pgvector-enabled PostgreSQL
-- **Retrieval**: Performs similarity searches using cosine distance
-- **Context Building**: Converts retrieved embeddings into LLM-ready context strings
-
-**Key Methods:**
-
-```typescript
-// Generate embeddings using OpenRouter
-async generateEmbedding(text: string): Promise<EmbeddingResult>
-
-// Store search queries as embeddings
-async storeSearchEmbedding(userId: string, searchQuery: string): Promise<SearchEmbedding | null>
-
-// Store presentation iterations as embeddings
-async storePresentationEmbedding(
-  presentationId: string,
-  userId: string,
-  iterationPrompt: string,
-  slides: Slide[]
-): Promise<PresentationEmbedding | null>
-
-// Retrieve similar contexts for a query
-async retrieveSimilarContexts(
-  userId: string,
-  presentationId: string,
-  query: string,
-  topK?: number,
-  similarityThreshold?: number
-): Promise<SimilarContext[]>
-
-// Build formatted context string for LLM
-async buildRagContextString(
-  userId: string,
-  presentationId: string,
-  query: string
-): Promise<string>
-
-// Cleanup old embeddings
-async cleanupOldEmbeddings(userId: string, daysToKeep?: number): Promise<number>
+```ts
+generateEmbedding(text)
+storeSearchEmbedding(userId, searchQuery)
+storeSourceChunks(userId, query, sources, presentationId?)
+storePresentationSemanticMemory(params)
+rankSourcesBySemanticRelevance(query, sources, limit)
+retrieveSimilarContexts(userId, presentationId, query, topK, similarityThreshold)
+buildRagContextString(userId, presentationId, query)
+buildGenerationMemoryContextString(userId, query)
+cleanupOldEmbeddings(userId, daysToKeep)
 ```
 
-#### 2. **Database Schema**
-
-Three new tables are created to support RAG:
-
-**`search_embeddings`**
-
-- Stores user search queries and their embeddings
-- Indexed by user_id and embedding (HNSW index)
-- Metadata includes query length and timestamp
-
-**`presentation_embeddings`**
-
-- Stores presentation iteration prompts and content embeddings
-- Linked to presentations and users
-- Metadata includes slide count and content length
-- Indexed by presentation_id, user_id, and embedding (HNSW index)
-
-**`rag_context`**
-
-- Audit trail of retrieved contexts used in LLM prompts
-- Tracks source type (search, iteration, presentation)
-- Records similarity scores for analytics
-- Indexed by presentation_id, user_id, and source_type
-
-#### 3. **Integration Points**
-
-**SearchService** (`apps/APIs/src/services/search.service.ts`)
-
-- `storeSearchWithEmbedding()`: Stores search queries after web search
-
-**PresentationService** (`apps/APIs/src/services/presentation.service.ts`)
-
-- `storeIterationWithEmbedding()`: Stores iteration prompts and content
-- `getRagContextForIteration()`: Retrieves RAG context for a specific query
-
-**AIService** (`apps/APIs/src/services/ai.service.ts`)
-
-- Enhanced `iteratePresentationStream()`: Includes RAG context in system prompts
-
-**Presentation Routes** (`apps/APIs/src/routes/presentation.routes.ts`)
-
-- `/generate-presentation-stream`: Stores initial topic as embedding
-- `/iterate-presentation-stream`: Stores and uses iteration embeddings
-- `/research-presentation`: Stores research queries as embeddings
-
-## Data Flow
-
-### Generation Flow
-
-```
-1. User creates presentation with topic
-   └─> Topic stored as embedding in presentation_embeddings
-
-2. Presentation saved to database
-
-3. Future iterations reference this embedding
-```
-
-### Iteration Flow
-
-```
-1. User provides iteration feedback
-   └─> Feedback query converted to embedding
-
-2. RAG Service searches for similar contexts:
-   ├─> Similar search queries from search_embeddings
-   └─> Similar iterations from presentation_embeddings
-
-3. Retrieved contexts formatted and prepended to LLM system prompt:
-   "## RELEVANT PREVIOUS CONTEXTS:
-    1. Previous Search (85% similarity): ..."
-
-4. LLM generates improved presentation using context
-
-5. New iteration stored as embedding for future reference
-   └─> Also stored in rag_context table for audit trail
-```
-
-### Retrieval Flow
-
-```
-1. Query received for iteration
-   └─> Generate embedding using OpenRouter
-
-2. Search in search_embeddings table:
-   - Use HNSW index for fast similarity search
-   - Filter by user_id (privacy/isolation)
-   - Apply similarity threshold (default 0.6)
-
-3. Search in presentation_embeddings table:
-   - Same HNSW index search
-   - Filter by user_id AND presentation_id
-   - Apply similarity threshold
-
-4. Combine results and sort by similarity
-   - Return top K results (default 5)
-
-5. Store retrieved contexts in rag_context for audit trail
-```
-
-## Configuration
-
-### Environment Variables
+Embeddings are generated through OpenRouter with:
 
 ```bash
-# OpenRouter Configuration
 OPEN_ROUTER_API_KEY=your-openrouter-key
-
-# Embedding Model Configuration
-EMBEDDING_MODEL=google/gemini-embedding-001
-
-# Database URL (existing configuration)
-DATABASE_URL=postgresql://user:password@localhost:5432/slidesage
+EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
+OPEN_ROUTER_EMBEDDINGS_URL=https://openrouter.ai/api/v1/embeddings
 ```
 
-### Supported Embedding Models
+The current schema stores 768-dimensional vectors.
 
-The system uses OpenRouter to access embedding models. Supported models include:
+## Tables
 
-| Model                       | Dimensions | Provider | Recommendation                           |
-| --------------------------- | ---------- | -------- | ---------------------------------------- |
-| `google/gemini-embedding-001` | 768      | Google   | Recommended default for current schema   |
-| `qwen/qwen3-embedding-0.6b` | varies     | Qwen     | Alternative if configured for 768 dims   |
-| `openai/text-embedding-3-small` | 1536   | OpenAI   | Alternative requiring schema migration   |
+Existing compatibility tables:
 
-**Note:** The database schema stores 768-dimensional vectors. If you use a model
-that returns a different dimension, run an appropriate database migration and
-update the RAG service dimensions setting.
+- `search_embeddings`: user search queries.
+- `presentation_embeddings`: coarse iteration prompt plus serialized slide summaries.
+- `rag_context`: audit trail of retrieved context used in prompts.
 
-### Tunable Parameters
+Semantic-memory tables:
 
-In `RAGService.retrieveSimilarContexts()`:
+- `slide_embeddings`: one row per slide summary, with the exact slide JSON stored separately in `slide_json`.
+- `deck_memories`: deck-level summaries such as title, prompt, theme, tone, detail level, and slide summaries.
+- `source_chunks`: embedded search-result chunks with URL, title, fetched timestamp, and chunk text.
+- `prompt_events`: user prompts and their nearest interpreted intent.
+- `slide_templates`: seeded global layout/template descriptions such as roadmap, comparison matrix, market size, and architecture.
+- `example_generations`: successful prompt-to-slide-JSON examples for few-shot retrieval.
+- `style_memories`: deck style summaries for theme, tone, detail level, and slide-type mix.
+- `feedback_memories`: applied iteration feedback.
+- `semantic_commands`: seeded common edit intents used to classify prompts semantically.
 
-```typescript
-topK = 5; // Number of contexts to retrieve
-similarityThreshold = 0.6; // Minimum similarity (0-1)
+All embedding columns use HNSW cosine indexes.
+
+## Generation Flow
+
+```txt
+1. User starts generation.
+2. AIService asks RAGService for generation memory:
+   - relevant slide templates
+   - similar example generations
+   - user style memories
+3. If web research is enabled, SearchService fetches live Brave results.
+4. RAGService ranks the fresh sources by embedding similarity.
+5. AIService generates the deck with memory and ranked research context.
+6. After the presentation is saved, PresentationService stores semantic memory:
+   - deck summary
+   - slide summaries
+   - prompt event
+   - style memory
+   - example generation
+   - source chunks, when sources exist
+   - legacy presentation embedding
 ```
 
-Adjust based on your needs:
+Live search is still required for latest information. Cached source chunks are retrieval aids only; they do not replace a freshness check.
 
-- **Higher topK**: More context, but potentially noisy
-- **Higher threshold**: Only highly relevant contexts, but may miss useful info
-- **Lower threshold**: More contexts, but may include irrelevant ones
+## Iteration Flow
 
-## Performance Considerations
-
-### Vector Index Strategy
-
-HNSW (Hierarchical Navigable Small World) indexes are used for fast similarity search:
-
-```sql
-CREATE INDEX CONCURRENTLY search_embeddings_embedding_idx
-ON search_embeddings USING hnsw (embedding vector_cosine_ops);
+```txt
+1. User sends feedback for an existing presentation.
+2. RAGService embeds the feedback and retrieves relevant memories:
+   - current slide summaries
+   - deck summary
+   - prompt history
+   - source chunks
+   - templates
+   - similar examples
+   - style memory
+   - feedback memory
+   - legacy search and iteration embeddings
+3. Retrieved context is formatted as "RELEVANT SEMANTIC MEMORY" and prepended to the model prompt.
+4. If research is enabled, fresh search results are ranked by embeddings before summarization and generation.
+5. After save, the current slide/deck/style/source memories are refreshed and the prompt/feedback/example history is preserved.
 ```
 
-**Performance characteristics:**
+Current-state memories are refreshed for the presentation so stale slide summaries do not compete with the latest deck. Historical prompt, feedback, and example rows are kept to preserve iteration history.
 
-- Index creation: ~50ms per 1000 vectors
-- Search: ~1-5ms for top-5 retrieval
-- Insert: ~0.5ms per embedding
+## Source Retrieval
 
-### Storage Optimization
+Search results are handled in two separate steps:
 
-**Vector dimensions**: 768 (gemini/text-embedding-004)
+1. Fresh retrieval with Brave Search.
+2. Semantic ranking and caching with embeddings.
 
-- 4 bytes per dimension (float32)
-- ~3 KB per embedding + metadata
-- 1M embeddings ≈ 3 GB
+This means prompts like "add latest market size statistics" still need live search enabled. Embeddings help choose the most relevant snippets and reuse recent chunks later when they are still appropriate.
 
-### Scaling Recommendations
+## Template and Intent Seeding
 
-| Users | Estimated Embeddings | Storage | Recommended Actions                     |
-| ----- | -------------------- | ------- | --------------------------------------- |
-| 100   | 20K                  | 60 MB   | No special action                       |
-| 1K    | 200K                 | 600 MB  | Set up cleanup job (30 days)            |
-| 10K   | 2M                   | 6 GB    | Archive old embeddings, partition table |
-| 100K  | 20M                  | 60 GB   | Implement sharding by user_id           |
+`RAGService` lazily seeds default templates and semantic commands the first time it needs them for the configured embedding model.
 
-## Usage Examples
+Default templates include:
 
-### Basic Usage
+- Problem slide
+- Solution slide
+- Market size slide
+- Competitive matrix
+- Timeline roadmap
+- Architecture diagram
+- Case study slide
+- SWOT analysis
 
-```typescript
-import { RAGService } from "./services/rag.service";
-import { PresentationService } from "./services/presentation.service";
+Default command intents include:
 
-const ragService = new RAGService();
-const presentationService = new PresentationService();
+- `make_shorter`
+- `increase_technical_depth`
+- `add_grounded_data`
+- `change_tone`
+- `simplify`
+- `change_layout`
+- `make_visual`
+- `insert_slide`
+- `delete_slide`
+- `reuse_style`
 
-// Store a search
-await ragService.storeSearchEmbedding(
-  "user-123",
-  "How to implement machine learning in Node.js",
-);
+## Migration
 
-// Store a presentation iteration
-await ragService.storePresentationEmbedding(
-  "pres-456",
-  "user-123",
-  "Make the content more technical",
-  slides,
-);
+The semantic-memory schema is added by:
 
-// Retrieve contexts
-const contexts = await ragService.retrieveSimilarContexts(
-  "user-123",
-  "pres-456",
-  "Make the presentation more engaging",
-  5,
-  0.6,
-);
-
-// Build RAG context for LLM
-const ragContext = await ragService.buildRagContextString(
-  "user-123",
-  "pres-456",
-  "Improve the design",
-);
+```txt
+packages/database/drizzle/0007_semantic_memory_vectors.sql
 ```
 
-### Integration in Iteration Flow
+Run database migrations before relying on the new memory paths:
 
-```typescript
-// This happens automatically in the iteration endpoint:
-// 1. User sends iteration feedback
-// 2. RAGService.buildRagContextString() retrieves similar contexts
-// 3. Contexts prepended to LLM system prompt
-// 4. LLM generates improved presentation
-// 5. New iteration stored as embedding
+```bash
+bun run --cwd packages/database db:migrate
 ```
 
-## API Responses
+## Cleanup
 
-When RAG is active, the iteration response includes:
+`RAGService.cleanupOldEmbeddings(userId, daysToKeep)` deletes old rows from all user-owned embedding tables:
 
-```json
-{
-  "event": "research",
-  "data": {
-    "status": "generating",
-    "rag_context_used": true,
-    "context_sources": 3
-  }
-}
-```
+- search embeddings
+- presentation embeddings
+- slide embeddings
+- deck memories
+- source chunks
+- prompt events
+- example generations
+- style memories
+- feedback memories
 
-## Monitoring & Analytics
-
-### Useful Queries
-
-**Check embedding storage:**
-
-```sql
-SELECT
-  'search_embeddings' as table_name,
-  COUNT(*) as count,
-  pg_size_pretty(pg_total_relation_size('search_embeddings')) as size
-FROM search_embeddings
-UNION ALL
-SELECT
-  'presentation_embeddings',
-  COUNT(*),
-  pg_size_pretty(pg_total_relation_size('presentation_embeddings'))
-FROM presentation_embeddings;
-```
-
-**Analyze retrieval effectiveness:**
-
-```sql
-SELECT
-  source_type,
-  AVG(similarity_score) as avg_similarity,
-  COUNT(*) as usage_count
-FROM rag_context
-GROUP BY source_type
-ORDER BY usage_count DESC;
-```
-
-**Check user embedding statistics:**
-
-```sql
-SELECT
-  user_id,
-  COUNT(DISTINCT presentation_id) as presentations_iterated,
-  COUNT(*) as total_embeddings,
-  MAX(created_at) as last_updated
-FROM presentation_embeddings
-GROUP BY user_id
-ORDER BY total_embeddings DESC
-LIMIT 10;
-```
-
-## Limitations & Future Work
-
-### Current Limitations
-
-1. **Embedding Model**: Fixed to single model per deployment (no multi-model support)
-2. **Multilingual**: Embeddings trained primarily on English
-3. **Real-time updates**: Index updates are not real-time
-4. **Cross-presentation**: Cannot retrieve context from other users' presentations
-
-### Future Enhancements
-
-- [ ] Fine-tuned embedding models specific to presentations
-- [ ] Multi-language support
-- [ ] Semantic caching for frequently used embeddings
-- [ ] Cross-user similarity recommendations
-- [ ] RAG effectiveness metrics dashboard
-- [ ] Custom similarity thresholds per user
-- [ ] Embedding versioning for model updates
-- [ ] Async embedding storage with queue
+Template and command seeds are global and are not removed by per-user cleanup.
 
 ## Troubleshooting
 
-### Common Issues
+If no semantic context is retrieved:
 
-**Issue**: "pgvector extension not found"
+- Confirm the migration has run.
+- Confirm `OPEN_ROUTER_API_KEY` is configured.
+- Confirm `EMBEDDING_MODEL` returns 768-dimensional vectors.
+- Lower the retrieval threshold temporarily.
+- Check `rag_context` for stored retrieval audits.
 
-```sql
-CREATE EXTENSION vector;
-```
+If latest research looks stale:
 
-**Issue**: No contexts retrieved
-
-- Check similarity_score values in rag_context table
-- Lower the similarityThreshold parameter
-- Ensure embeddings exist for the user
-
-**Issue**: Slow similarity searches
-
-- Run `VACUUM ANALYZE` on the embedding tables
-- Check HNSW index is created
-- Monitor index size growth
-
-## References
-
-- [pgvector Documentation](https://github.com/pgvector/pgvector)
-- [Groq API Documentation](https://console.groq.com/docs)
-- [Embeddings Best Practices](https://platform.openai.com/docs/guides/embeddings)
+- Enable web research on the request.
+- Do not rely on cached `source_chunks` alone for latest facts.
+- Check `retrieved_at` and `fetched_at` timestamps before reusing source context.

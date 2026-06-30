@@ -217,13 +217,19 @@ ${JSON.stringify(compactSources, null, 2)}`;
     /**
      * Store search query with RAG embedding for future reference
      */
-    async storeSearchWithEmbedding(userId: string, query: string): Promise<void> {
+    async storeSearchWithEmbedding(
+        userId: string,
+        query: string,
+        sources: Source[] = [],
+        presentationId?: string
+    ): Promise<void> {
         try {
             if (!this.ragService) {
                 this.ragService = new RAGService();
             }
 
             await this.ragService.storeSearchEmbedding(userId, query);
+            await this.ragService.storeSourceChunks(userId, query, sources, presentationId);
             console.log(`Stored search embedding for query: ${query.substring(0, 50)}...`);
         } catch (error) {
             console.warn("Failed to store search embedding:", error);

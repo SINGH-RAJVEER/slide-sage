@@ -28,6 +28,10 @@ streaming begins. If the authenticated user does not have enough points, it retu
 presentation record is created. After a successful save, the same estimate is deducted from
 `users.slide_tokens`.
 
+After a successful save, the API also stores semantic memory for future retrieval:
+slide summaries, deck summary, prompt event, style memory, source chunks when available, and a
+few-shot example of the generated deck. The exact deck JSON remains in `presentations.slides_data`.
+
 ### Headers
 
 ```bash
@@ -179,6 +183,8 @@ Example insufficient-points response:
 ## POST /api/research-presentation
 
 Run a research prepass before generation. Returns a summary and sources that can be passed to `research_payload`.
+The search query and returned source snippets are stored as embeddings for later retrieval, but live
+search is still required for latest-information prompts.
 
 ### Request Body
 
@@ -224,6 +230,11 @@ Iterate on an existing presentation with streaming.
 
 Iteration uses the same point estimate, `402` insufficient-points response, and saved-event
 `slide_tokens_remaining` payload as presentation generation.
+
+Before generating the iteration, the API retrieves semantic memory for the deck, including relevant
+slide summaries, prompt history, source chunks, templates, examples, style, and feedback. After a
+successful save, current slide/deck/style/source memories are refreshed and the prompt/feedback
+history is preserved.
 
 ### Request Body
 

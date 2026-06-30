@@ -1,4 +1,4 @@
--- Migration: Update embedding dimensions from 1536 to 768 for Gemini text-embedding-004
+-- Migration: Update embedding dimensions from 1536 to 768 for the configured OpenRouter embedding model
 -- This migration updates the vector dimensions in both search_embeddings and presentation_embeddings tables
 
 -- Step 1: Drop existing HNSW indexes (they depend on vector type)
@@ -18,4 +18,4 @@ CREATE INDEX search_embeddings_embedding_idx ON search_embeddings USING hnsw (em
 CREATE INDEX presentation_embeddings_embedding_idx ON presentation_embeddings USING hnsw (embedding vector_cosine_ops);
 
 -- Note: After running this migration, you will need to regenerate all embeddings
--- using the new Gemini text-embedding-004 model
+-- using the configured OpenRouter embedding model

@@ -228,16 +228,22 @@ presentations.post(
                             slidesData: finalData,
                         });
 
-                        // Store initial topic/prompt with RAG embedding
+                        // Store semantic memory for retrieval during future iterations.
                         try {
-                            await presentationService.storeIterationWithEmbedding(
+                            await presentationService.storePresentationMemory({
                                 presentationId,
                                 userId,
-                                topic,
-                                allSlides
-                            );
+                                prompt: topic,
+                                slides: allSlides,
+                                title: finalTitle,
+                                theme,
+                                operation: "generation",
+                                detailLevel: detail_level || "balanced",
+                                tonality: tonality || "professional",
+                                sources,
+                            });
                         } catch (error) {
-                            console.warn("Failed to store initial topic embedding:", error);
+                            console.warn("Failed to store presentation semantic memory:", error);
                         }
 
                         console.log(
@@ -314,7 +320,7 @@ presentations.post(
 
             // Store search embedding for RAG context
             try {
-                await searchService.storeSearchWithEmbedding(userId, String(topic));
+                await searchService.storeSearchWithEmbedding(userId, String(topic), sources);
             } catch (error) {
                 console.warn("Failed to store search embedding:", error);
             }
@@ -478,16 +484,22 @@ presentations.post(
                             slidesData: finalData,
                         });
 
-                        // Store iteration embedding for RAG context
+                        // Store semantic memory for future RAG context.
                         try {
-                            await presentationService.storeIterationWithEmbedding(
+                            await presentationService.storePresentationMemory({
                                 presentationId,
                                 userId,
-                                effectiveFeedback,
-                                allSlides
-                            );
+                                prompt: effectiveFeedback,
+                                slides: allSlides,
+                                title: finalTitle,
+                                theme,
+                                operation: "iteration",
+                                detailLevel: detailLevel || "balanced",
+                                tonality: tonality || "professional",
+                                sources,
+                            });
                         } catch (error) {
-                            console.warn("Failed to store iteration embedding:", error);
+                            console.warn("Failed to store presentation semantic memory:", error);
                         }
 
                         // Deduct the same slide-based estimate we checked against (consistent
