@@ -313,6 +313,7 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 **Key Configuration Notes:**
 
 - `OPEN_ROUTER_API_KEY`: Required for slide generation, research summarization, and embeddings
+- `EXA_API_KEY`: Required for web research source retrieval
 - `EMBEDDING_MODEL`: Free OpenRouter embedding model configured for 768 dimensions for RAG
 - See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for embedding model migration details
 

@@ -16,7 +16,6 @@ Key methods:
 
 ```ts
 generateEmbedding(text)
-storeSearchEmbedding(userId, searchQuery)
 storeSourceChunks(userId, query, sources, presentationId?)
 storePresentationSemanticMemory(params)
 rankSourcesBySemanticRelevance(query, sources, limit)
@@ -38,12 +37,6 @@ The current schema stores 768-dimensional vectors.
 
 ## Tables
 
-Existing compatibility tables:
-
-- `search_embeddings`: user search queries.
-- `presentation_embeddings`: coarse iteration prompt plus serialized slide summaries.
-- `rag_context`: audit trail of retrieved context used in prompts.
-
 Semantic-memory tables:
 
 - `slide_embeddings`: one row per slide summary, with the exact slide JSON stored separately in `slide_json`.
@@ -55,6 +48,7 @@ Semantic-memory tables:
 - `style_memories`: deck style summaries for theme, tone, detail level, and slide-type mix.
 - `feedback_memories`: applied iteration feedback.
 - `semantic_commands`: seeded common edit intents used to classify prompts semantically.
+- `rag_context`: audit trail of retrieved context used in prompts.
 
 All embedding columns use HNSW cosine indexes.
 
@@ -66,7 +60,7 @@ All embedding columns use HNSW cosine indexes.
    - relevant slide templates
    - similar example generations
    - user style memories
-3. If web research is enabled, SearchService fetches live Brave results.
+3. If web research is enabled, SearchService fetches live Exa results with highlights and summaries.
 4. RAGService ranks the fresh sources by embedding similarity.
 5. AIService generates the deck with memory and ranked research context.
 6. After the presentation is saved, PresentationService stores semantic memory:
@@ -76,7 +70,6 @@ All embedding columns use HNSW cosine indexes.
    - style memory
    - example generation
    - source chunks, when sources exist
-   - legacy presentation embedding
 ```
 
 Live search is still required for latest information. Cached source chunks are retrieval aids only; they do not replace a freshness check.
@@ -94,7 +87,6 @@ Live search is still required for latest information. Cached source chunks are r
    - similar examples
    - style memory
    - feedback memory
-   - legacy search and iteration embeddings
 3. Retrieved context is formatted as "RELEVANT SEMANTIC MEMORY" and prepended to the model prompt.
 4. If research is enabled, fresh search results are ranked by embeddings before summarization and generation.
 5. After save, the current slide/deck/style/source memories are refreshed and the prompt/feedback/example history is preserved.
@@ -106,7 +98,7 @@ Current-state memories are refreshed for the presentation so stale slide summari
 
 Search results are handled in two separate steps:
 
-1. Fresh retrieval with Brave Search.
+1. Fresh retrieval with Exa search.
 2. Semantic ranking and caching with embeddings.
 
 This means prompts like "add latest market size statistics" still need live search enabled. Embeddings help choose the most relevant snippets and reuse recent chunks later when they are still appropriate.

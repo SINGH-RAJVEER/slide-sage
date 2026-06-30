@@ -3,9 +3,7 @@ import {
     deckMemories,
     exampleGenerations,
     feedbackMemories,
-    presentationEmbeddings,
     promptEvents,
-    searchEmbeddings,
     semanticCommands,
     slideEmbeddings,
     slideTemplates,
@@ -15,71 +13,6 @@ import {
 import { and, cosineDistance, desc, eq, isNull, or, sql } from "drizzle-orm";
 import type { SimilarContext } from "./types";
 import { contextFromRow } from "./utils";
-
-export async function retrieveSearchContexts(
-    userId: string,
-    embedding: number[],
-    limit: number,
-    threshold: number
-): Promise<SimilarContext[]> {
-    const similarity = sql<number>`1 - (${cosineDistance(searchEmbeddings.embedding, embedding)})`;
-    const rows = await db
-        .select({
-            id: searchEmbeddings.id,
-            context: searchEmbeddings.searchQuery,
-            similarity,
-            metadata: searchEmbeddings.metadata,
-        })
-        .from(searchEmbeddings)
-        .where(and(eq(searchEmbeddings.userId, userId), sql`${similarity} > ${threshold}`))
-        .orderBy(desc(similarity))
-        .limit(limit);
-
-    return rows.map((row) =>
-        contextFromRow("search", row.id, row.context, row.similarity, row.metadata)
-    );
-}
-
-export async function retrieveIterationContexts(
-    userId: string,
-    presentationId: string,
-    embedding: number[],
-    limit: number,
-    threshold: number
-): Promise<SimilarContext[]> {
-    const similarity = sql<number>`1 - (${cosineDistance(
-        presentationEmbeddings.embedding,
-        embedding
-    )})`;
-    const rows = await db
-        .select({
-            id: presentationEmbeddings.id,
-            prompt: presentationEmbeddings.iterationPrompt,
-            content: presentationEmbeddings.presentationContent,
-            similarity,
-            metadata: presentationEmbeddings.metadata,
-        })
-        .from(presentationEmbeddings)
-        .where(
-            and(
-                eq(presentationEmbeddings.userId, userId),
-                eq(presentationEmbeddings.presentationId, presentationId),
-                sql`${similarity} > ${threshold}`
-            )
-        )
-        .orderBy(desc(similarity))
-        .limit(limit);
-
-    return rows.map((row) =>
-        contextFromRow(
-            "iteration",
-            row.id,
-            `${row.prompt}\n${row.content ?? ""}`.trim(),
-            row.similarity,
-            row.metadata
-        )
-    );
-}
 
 export async function retrieveSlideContexts(
     userId: string,

@@ -34,12 +34,38 @@ function parseResearchOptions(input: unknown): ResearchOptions | undefined {
             ? maxResultsRaw
             : undefined;
 
+    const includeDomains = parseStringList(value.includeDomains);
+    const excludeDomains = parseStringList(value.excludeDomains);
+    const startPublishedDate =
+        typeof value.startPublishedDate === "string" ? value.startPublishedDate : undefined;
+    const endPublishedDate =
+        typeof value.endPublishedDate === "string" ? value.endPublishedDate : undefined;
+    const maxAgeHoursRaw = value.maxAgeHours;
+    const maxAgeHours =
+        typeof maxAgeHoursRaw === "number" && Number.isFinite(maxAgeHoursRaw)
+            ? maxAgeHoursRaw
+            : undefined;
+
     return {
         enabled: true,
-        provider: "brave",
         freshness,
         maxResults,
+        includeDomains,
+        excludeDomains,
+        startPublishedDate,
+        endPublishedDate,
+        maxAgeHours,
     };
+}
+
+function parseStringList(input: unknown): string[] | undefined {
+    if (!Array.isArray(input)) return undefined;
+
+    const values = input
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter(Boolean);
+
+    return values.length ? values : undefined;
 }
 
 function parseResearchPayload(input: unknown): ResearchPayload | undefined {
@@ -60,6 +86,15 @@ function parseResearchPayload(input: unknown): ResearchPayload | undefined {
             title: typeof src.title === "string" ? src.title : undefined,
             snippet: typeof src.snippet === "string" ? src.snippet : undefined,
             retrieved_at: typeof src.retrieved_at === "string" ? src.retrieved_at : undefined,
+            published_date:
+                typeof src.published_date === "string"
+                    ? src.published_date
+                    : typeof src.publishedDate === "string"
+                      ? src.publishedDate
+                      : undefined,
+            author: typeof src.author === "string" ? src.author : undefined,
+            highlights: parseStringList(src.highlights),
+            summary: typeof src.summary === "string" ? src.summary : undefined,
         });
     }
 
@@ -320,9 +355,9 @@ presentations.post(
 
             // Store search embedding for RAG context
             try {
-                await searchService.storeSearchWithEmbedding(userId, String(topic), sources);
+                await searchService.storeSourceChunks(userId, String(topic), sources);
             } catch (error) {
-                console.warn("Failed to store search embedding:", error);
+                console.warn("Failed to store source chunks:", error);
             }
 
             const summaryResult = sources.length

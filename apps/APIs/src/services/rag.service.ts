@@ -3,7 +3,7 @@
  * Handles embedding generation, semantic memory storage, and retrieval.
  */
 
-import type { PresentationEmbedding, RagContext, SearchEmbedding } from "@slide-sage/database";
+import type { RagContext } from "@slide-sage/database";
 import type { Source } from "@slide-sage/types";
 import { DEFAULT_EMBEDDING_MODEL } from "./rag/defaults";
 import {
@@ -11,9 +11,7 @@ import {
     retrieveDeckContexts,
     retrieveExampleContexts,
     retrieveFeedbackContexts,
-    retrieveIterationContexts,
     retrievePromptContexts,
-    retrieveSearchContexts,
     retrieveSlideContexts,
     retrieveSourceContexts,
     retrieveStyleContexts,
@@ -30,10 +28,8 @@ import {
     storeDeckMemory,
     storeExampleGeneration,
     storeFeedbackMemory,
-    storePresentationEmbedding,
     storePromptEvent,
     storeRagContext,
-    storeSearchEmbedding,
     storeSlideMemories,
     storeSourceChunks,
     storeStyleMemory,
@@ -137,16 +133,6 @@ export class RAGService {
     }
 
     /**
-     * Store search query embedding for backwards-compatible RAG history.
-     */
-    async storeSearchEmbedding(
-        userId: string,
-        searchQuery: string
-    ): Promise<SearchEmbedding | null> {
-        return storeSearchEmbedding(this.generateEmbedding.bind(this), userId, searchQuery);
-    }
-
-    /**
      * Store source snippets/chunks from web search results.
      */
     async storeSourceChunks(
@@ -179,15 +165,6 @@ export class RAGService {
 
         await this.runMemoryTask("clear current presentation memory", () =>
             clearCurrentPresentationMemory(params.presentationId)
-        );
-        await this.runMemoryTask("legacy presentation embedding", () =>
-            storePresentationEmbedding(
-                embeddingGenerator,
-                params.presentationId,
-                params.userId,
-                normalizedPrompt,
-                params.slides
-            )
         );
         await this.runMemoryTask("prompt event", () =>
             storePromptEvent(embeddingGenerator, intentClassifier, normalizedParams)
@@ -222,24 +199,6 @@ export class RAGService {
                 )
             );
         }
-    }
-
-    /**
-     * Store presentation iteration embedding for legacy RAG compatibility.
-     */
-    async storePresentationEmbedding(
-        presentationId: string,
-        userId: string,
-        iterationPrompt: string,
-        slides: StorePresentationSemanticMemoryParams["slides"]
-    ): Promise<PresentationEmbedding | null> {
-        return storePresentationEmbedding(
-            this.generateEmbedding.bind(this),
-            presentationId,
-            userId,
-            iterationPrompt,
-            slides
-        );
     }
 
     /**
@@ -295,14 +254,6 @@ export class RAGService {
             const perTableLimit = Math.max(2, Math.ceil(topK / 2));
 
             const allContexts: SimilarContext[] = [
-                ...(await retrieveSearchContexts(userId, embedding, perTableLimit, 0.6)),
-                ...(await retrieveIterationContexts(
-                    userId,
-                    presentationId,
-                    embedding,
-                    perTableLimit,
-                    similarityThreshold
-                )),
                 ...(await retrieveSlideContexts(
                     userId,
                     presentationId,

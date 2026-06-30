@@ -51,7 +51,11 @@ export function buildSourceChunkText(query: string, source: Source): string {
     const lines = [
         `Search query: ${truncateText(query, 500)}`,
         source.title ? `Source title: ${source.title}` : "",
+        source.published_date ? `Published: ${source.published_date}` : "",
+        source.author ? `Author: ${source.author}` : "",
+        source.summary ? `Summary: ${source.summary}` : "",
         source.snippet ? `Snippet: ${source.snippet}` : "",
+        source.highlights?.length ? `Highlights: ${source.highlights.join(" ")}` : "",
         `URL: ${source.url}`,
         source.retrieved_at ? `Fetched at: ${source.retrieved_at}` : "",
     ].filter(Boolean);

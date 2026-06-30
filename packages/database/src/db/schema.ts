@@ -95,7 +95,7 @@ export const presentations = pgTable("presentations", {
     slidesData: jsonb("slides_data").notNull(),
     parentPresentationId: text("parent_presentation_id").references(
         // biome-ignore lint/suspicious/noExplicitAny: Drizzle circular reference
-        (): any => presentations.id,
+        (): any => presentations.id
     ),
 
     // Timestamps
@@ -161,65 +161,6 @@ export const payments = pgTable("payments", {
         .$onUpdate(() => new Date()),
 });
 
-// RAG Embeddings Tables
-
-// Search embeddings - stores user search queries and their embeddings
-export const searchEmbeddings = pgTable(
-    "search_embeddings",
-    {
-        id: text("id")
-            .primaryKey()
-            .$defaultFn(() => crypto.randomUUID()),
-        userId: text("user_id")
-            .notNull()
-            .references(() => users.id, { onDelete: "cascade" }),
-        searchQuery: text("search_query").notNull(),
-        embedding: vector("embedding", { dimensions: 768 }),
-        embeddingModel: varchar("embedding_model", { length: 100 }).notNull(),
-        metadata: jsonb("metadata"),
-        createdAt: timestamp("created_at").notNull().defaultNow(),
-    },
-    (table) => ({
-        userIdIdx: index("search_embeddings_user_id_idx").on(table.userId),
-        embeddingIdx: index("search_embeddings_embedding_idx").using(
-            "hnsw",
-            table.embedding.op("vector_cosine_ops"),
-        ),
-    }),
-);
-
-// Presentation iteration embeddings - stores presentation content and iteration prompts
-export const presentationEmbeddings = pgTable(
-    "presentation_embeddings",
-    {
-        id: text("id")
-            .primaryKey()
-            .$defaultFn(() => crypto.randomUUID()),
-        presentationId: text("presentation_id")
-            .notNull()
-            .references(() => presentations.id, { onDelete: "cascade" }),
-        userId: text("user_id")
-            .notNull()
-            .references(() => users.id, { onDelete: "cascade" }),
-        iterationPrompt: text("iteration_prompt").notNull(),
-        presentationContent: text("presentation_content"), // Serialized slides summary
-        embedding: vector("embedding", { dimensions: 768 }),
-        embeddingModel: varchar("embedding_model", { length: 100 }).notNull(),
-        metadata: jsonb("metadata"), // Can store slide count, theme, etc.
-        createdAt: timestamp("created_at").notNull().defaultNow(),
-    },
-    (table) => ({
-        presentationIdIdx: index("presentation_embeddings_presentation_id_idx").on(
-            table.presentationId,
-        ),
-        userIdIdx: index("presentation_embeddings_user_id_idx").on(table.userId),
-        embeddingIdx: index("presentation_embeddings_embedding_idx").using(
-            "hnsw",
-            table.embedding.op("vector_cosine_ops"),
-        ),
-    }),
-);
-
 // RAG context - stores retrieved contexts for presentations
 export const ragContext = pgTable(
     "rag_context",
@@ -233,8 +174,8 @@ export const ragContext = pgTable(
         userId: text("user_id")
             .notNull()
             .references(() => users.id, { onDelete: "cascade" }),
-        sourceType: varchar("source_type", { length: 50 }).notNull(), // 'search' | 'iteration' | 'presentation'
-        sourceId: text("source_id"), // Reference to search_embeddings or presentation_embeddings
+        sourceType: varchar("source_type", { length: 50 }).notNull(),
+        sourceId: text("source_id"),
         retrievedContext: text("retrieved_context").notNull(),
         similarityScore: real("similarity_score"), // Cosine similarity score
         metadata: jsonb("metadata"),
@@ -244,7 +185,7 @@ export const ragContext = pgTable(
         presentationIdIdx: index("rag_context_presentation_id_idx").on(table.presentationId),
         userIdIdx: index("rag_context_user_id_idx").on(table.userId),
         sourceTypeIdx: index("rag_context_source_type_idx").on(table.sourceType),
-    }),
+    })
 );
 
 export const slideEmbeddings = pgTable(
@@ -275,13 +216,13 @@ export const slideEmbeddings = pgTable(
         userIdIdx: index("slide_embeddings_user_id_idx").on(table.userId),
         presentationSlideIdx: index("slide_embeddings_presentation_slide_idx").on(
             table.presentationId,
-            table.slideIndex,
+            table.slideIndex
         ),
         embeddingIdx: index("slide_embeddings_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const deckMemories = pgTable(
@@ -309,9 +250,9 @@ export const deckMemories = pgTable(
         memoryTypeIdx: index("deck_memories_memory_type_idx").on(table.memoryType),
         embeddingIdx: index("deck_memories_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const sourceChunks = pgTable(
@@ -343,9 +284,9 @@ export const sourceChunks = pgTable(
         fetchedAtIdx: index("source_chunks_fetched_at_idx").on(table.fetchedAt),
         embeddingIdx: index("source_chunks_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const promptEvents = pgTable(
@@ -371,13 +312,13 @@ export const promptEvents = pgTable(
         presentationIdIdx: index("prompt_events_presentation_id_idx").on(table.presentationId),
         userIdIdx: index("prompt_events_user_id_idx").on(table.userId),
         interpretedIntentIdx: index("prompt_events_interpreted_intent_idx").on(
-            table.interpretedIntent,
+            table.interpretedIntent
         ),
         embeddingIdx: index("prompt_events_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const slideTemplates = pgTable(
@@ -400,9 +341,9 @@ export const slideTemplates = pgTable(
         slideTypeIdx: index("slide_templates_slide_type_idx").on(table.slideType),
         embeddingIdx: index("slide_templates_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const exampleGenerations = pgTable(
@@ -426,9 +367,9 @@ export const exampleGenerations = pgTable(
         userIdIdx: index("example_generations_user_id_idx").on(table.userId),
         embeddingIdx: index("example_generations_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const styleMemories = pgTable(
@@ -454,9 +395,9 @@ export const styleMemories = pgTable(
         userIdIdx: index("style_memories_user_id_idx").on(table.userId),
         embeddingIdx: index("style_memories_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const feedbackMemories = pgTable(
@@ -484,9 +425,9 @@ export const feedbackMemories = pgTable(
         outcomeIdx: index("feedback_memories_outcome_idx").on(table.outcome),
         embeddingIdx: index("feedback_memories_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const semanticCommands = pgTable(
@@ -508,33 +449,14 @@ export const semanticCommands = pgTable(
         routeIdx: index("semantic_commands_route_idx").on(table.route),
         embeddingIdx: index("semantic_commands_embedding_idx").using(
             "hnsw",
-            table.embedding.op("vector_cosine_ops"),
+            table.embedding.op("vector_cosine_ops")
         ),
-    }),
+    })
 );
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
     user: one(users, {
         fields: [payments.userId],
-        references: [users.id],
-    }),
-}));
-
-// Relations
-export const searchEmbeddingsRelations = relations(searchEmbeddings, ({ one }) => ({
-    user: one(users, {
-        fields: [searchEmbeddings.userId],
-        references: [users.id],
-    }),
-}));
-
-export const presentationEmbeddingsRelations = relations(presentationEmbeddings, ({ one }) => ({
-    presentation: one(presentations, {
-        fields: [presentationEmbeddings.presentationId],
-        references: [presentations.id],
-    }),
-    user: one(users, {
-        fields: [presentationEmbeddings.userId],
         references: [users.id],
     }),
 }));
@@ -634,10 +556,6 @@ export type Verification = typeof verifications.$inferSelect;
 export type NewVerification = typeof verifications.$inferInsert;
 export type Presentation = typeof presentations.$inferSelect;
 export type NewPresentation = typeof presentations.$inferInsert;
-export type SearchEmbedding = typeof searchEmbeddings.$inferSelect;
-export type NewSearchEmbedding = typeof searchEmbeddings.$inferInsert;
-export type PresentationEmbedding = typeof presentationEmbeddings.$inferSelect;
-export type NewPresentationEmbedding = typeof presentationEmbeddings.$inferInsert;
 export type RagContext = typeof ragContext.$inferSelect;
 export type NewRagContext = typeof ragContext.$inferInsert;
 export type SlideEmbedding = typeof slideEmbeddings.$inferSelect;

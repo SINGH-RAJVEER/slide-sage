@@ -25,7 +25,7 @@ const presentationService = {
 };
 
 const searchService = {
-    storeSearchWithEmbedding: mock(),
+    storeSourceChunks: mock(),
     summarizeSourcesDetailed: mock(),
     webSearch: mock(),
 };
@@ -69,7 +69,7 @@ mock.module("../../services/presentation.service", () => ({
 
 mock.module("../../services/search.service", () => ({
     SearchService: class {
-        storeSearchWithEmbedding = searchService.storeSearchWithEmbedding;
+        storeSourceChunks = searchService.storeSourceChunks;
         summarizeSourcesDetailed = searchService.summarizeSourcesDetailed;
         webSearch = searchService.webSearch;
     },
@@ -119,7 +119,7 @@ describe("presentation routes", () => {
         presentationService.getUserPresentations.mockReset();
         presentationService.iteratePresentationStream.mockReset();
         presentationService.storePresentationMemory.mockReset();
-        searchService.storeSearchWithEmbedding.mockReset();
+        searchService.storeSourceChunks.mockReset();
         searchService.summarizeSourcesDetailed.mockReset();
         searchService.webSearch.mockReset();
 
@@ -207,7 +207,7 @@ describe("presentation routes", () => {
     it("researches presentation topics and summarizes sources", async () => {
         const sources = [{ url: "https://example.com", title: "Source" }];
         searchService.webSearch.mockResolvedValue(sources);
-        searchService.storeSearchWithEmbedding.mockResolvedValue(undefined);
+        searchService.storeSourceChunks.mockResolvedValue(undefined);
         searchService.summarizeSourcesDetailed.mockResolvedValue({
             summary: "Useful facts",
             tokensUsed: 12,
@@ -218,7 +218,16 @@ describe("presentation routes", () => {
             method: "POST",
             body: JSON.stringify({
                 topic: "AI news",
-                research: { enabled: true, freshness: "week", maxResults: 3 },
+                research: {
+                    enabled: true,
+                    freshness: "week",
+                    maxResults: 3,
+                    includeDomains: ["example.com"],
+                    excludeDomains: ["spam.example"],
+                    startPublishedDate: "2026-01-01",
+                    endPublishedDate: "2026-06-30",
+                    maxAgeHours: 48,
+                },
             }),
         });
 
@@ -231,11 +240,15 @@ describe("presentation routes", () => {
         });
         expect(searchService.webSearch).toHaveBeenCalledWith("AI news", {
             enabled: true,
-            provider: "brave",
             freshness: "week",
             maxResults: 3,
+            includeDomains: ["example.com"],
+            excludeDomains: ["spam.example"],
+            startPublishedDate: "2026-01-01",
+            endPublishedDate: "2026-06-30",
+            maxAgeHours: 48,
         });
-        expect(searchService.storeSearchWithEmbedding).toHaveBeenCalledWith(
+        expect(searchService.storeSourceChunks).toHaveBeenCalledWith(
             currentUserId,
             "AI news",
             sources

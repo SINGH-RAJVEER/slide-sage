@@ -26,6 +26,10 @@ export interface Source {
     title?: string;
     snippet?: string;
     retrieved_at?: string;
+    published_date?: string;
+    author?: string;
+    highlights?: string[];
+    summary?: string;
 }
 
 export interface ResearchPayload {
@@ -37,9 +41,13 @@ export type ResearchFreshness = "day" | "week" | "month" | "year";
 
 export interface ResearchOptions {
     enabled: boolean;
-    provider?: "brave";
     freshness?: ResearchFreshness;
     maxResults?: number;
+    includeDomains?: string[];
+    excludeDomains?: string[];
+    startPublishedDate?: string;
+    endPublishedDate?: string;
+    maxAgeHours?: number;
 }
 
 export interface PresentationData {

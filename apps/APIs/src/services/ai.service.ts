@@ -125,9 +125,13 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 sources = effectiveResearch?.enabled
                     ? await this.searchService.webSearch(userPrompt, {
                           enabled: true,
-                          provider: "brave",
                           freshness: effectiveResearch.freshness,
                           maxResults: effectiveResearch.maxResults,
+                          includeDomains: effectiveResearch.includeDomains,
+                          excludeDomains: effectiveResearch.excludeDomains,
+                          startPublishedDate: effectiveResearch.startPublishedDate,
+                          endPublishedDate: effectiveResearch.endPublishedDate,
+                          maxAgeHours: effectiveResearch.maxAgeHours,
                       })
                     : [];
 
@@ -474,9 +478,13 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             let sources = effectiveResearch?.enabled
                 ? await this.searchService.webSearch(feedback, {
                       enabled: true,
-                      provider: "brave",
                       freshness: effectiveResearch.freshness,
                       maxResults: effectiveResearch.maxResults,
+                      includeDomains: effectiveResearch.includeDomains,
+                      excludeDomains: effectiveResearch.excludeDomains,
+                      startPublishedDate: effectiveResearch.startPublishedDate,
+                      endPublishedDate: effectiveResearch.endPublishedDate,
+                      maxAgeHours: effectiveResearch.maxAgeHours,
                   })
                 : [];
 

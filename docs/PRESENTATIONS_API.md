@@ -75,6 +75,9 @@ Content-Type: application/json
     - `enabled` (boolean): Enable/disable web research
     - `freshness` (optional): `day`, `week`, `month`, `year`
     - `maxResults` (optional): 1-10
+    - `includeDomains` / `excludeDomains` (optional): Domain filters for Exa search
+    - `startPublishedDate` / `endPublishedDate` (optional): ISO date filters for Exa search
+    - `maxAgeHours` (optional): Maximum age for fetched Exa result contents
 - `research_payload` (optional): Pre-fetched research summary and sources (usually from `/api/research-presentation`)
 
 ### Response (200 OK - SSE Stream)
@@ -209,7 +212,11 @@ search is still required for latest-information prompts.
             "url": "https://example.com",
             "title": "Example",
             "snippet": "Summary excerpt",
-            "retrieved_at": "2026-01-04T12:00:00Z"
+            "retrieved_at": "2026-01-04T12:00:00Z",
+            "published_date": "2026-01-03",
+            "author": "Example Author",
+            "summary": "Exa-generated page summary",
+            "highlights": ["Relevant Exa highlight"]
         }
     ],
     "tokens_used": 1200,

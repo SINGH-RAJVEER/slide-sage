@@ -12,3 +12,4 @@
 
 - Fix the fullscreen view
 - Pressing enter to add a topic does not work
+- Fix search retreval preview when the search tool is used: In the application, when i enable search and click generate, it leads to a page with no inforation loaded, and shows the info for a split second when i click generate again for the final presentation, make sure to give it a proper loading state and allow the user to view the actual information and listed sources in a complete way before they go on for further generation

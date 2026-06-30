@@ -41,7 +41,7 @@ Architecture overview for the SlideSage APIs service.
 |  packages/database (Drizzle ORM)                          |
 |  - users, accounts, sessions, verifications               |
 |  - presentations                                          |
-|  - search_embeddings, presentation_embeddings, rag_context|
+|  - slide_embeddings, deck_memories, source_chunks, rag_context|
 +-----------------------------------------------------------+
                             |
                             v

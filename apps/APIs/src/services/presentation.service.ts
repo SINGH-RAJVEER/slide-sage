@@ -238,31 +238,6 @@ export class PresentationService {
     }
 
     /**
-     * Store presentation iteration with RAG embedding
-     */
-    async storeIterationWithEmbedding(
-        presentationId: string,
-        userId: string,
-        feedback: string,
-        slides: Slide[]
-    ): Promise<void> {
-        try {
-            await this.ragService.storePresentationEmbedding(
-                presentationId,
-                userId,
-                feedback,
-                slides
-            );
-            console.log(
-                `Stored presentation embedding for iteration: ${feedback.substring(0, 50)}...`
-            );
-        } catch (error) {
-            console.warn("Failed to store presentation embedding:", error);
-            // Non-critical, continue without RAG
-        }
-    }
-
-    /**
      * Store semantic memory for saved presentation state.
      */
     async storePresentationMemory(params: StorePresentationMemoryParams): Promise<void> {

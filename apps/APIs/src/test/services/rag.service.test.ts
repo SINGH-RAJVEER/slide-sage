@@ -6,10 +6,8 @@ const tableNames = [
     "deck_memories",
     "example_generations",
     "feedback_memories",
-    "presentation_embeddings",
     "prompt_events",
     "rag_context",
-    "search_embeddings",
     "semantic_commands",
     "slide_embeddings",
     "slide_templates",
@@ -141,10 +139,8 @@ mock.module("@slide-sage/database", () => ({
     deckMemories: makeTable("deck_memories"),
     exampleGenerations: makeTable("example_generations"),
     feedbackMemories: makeTable("feedback_memories"),
-    presentationEmbeddings: makeTable("presentation_embeddings"),
     promptEvents: makeTable("prompt_events"),
     ragContext: makeTable("rag_context"),
-    searchEmbeddings: makeTable("search_embeddings"),
     semanticCommands: makeTable("semantic_commands"),
     slideEmbeddings: makeTable("slide_embeddings"),
     slideTemplates: makeTable("slide_templates"),
@@ -242,6 +238,10 @@ describe("RAGService semantic embeddings", () => {
                     title: "Market report",
                     snippet: "Market is growing",
                     retrieved_at: "2026-07-01T00:00:00.000Z",
+                    published_date: "2026-06-01T12:00:00.000Z",
+                    author: "Analyst",
+                    highlights: ["Market growth accelerated in 2026."],
+                    summary: "The market is growing quickly.",
                 },
             ],
         });
@@ -252,7 +252,6 @@ describe("RAGService semantic embeddings", () => {
             "style_memories",
             "source_chunks",
         ]);
-        expect(insertedRows.presentation_embeddings).toHaveLength(1);
         expect(insertedRows.prompt_events).toHaveLength(1);
         expect(insertedRows.deck_memories).toHaveLength(1);
         expect(insertedRows.slide_embeddings).toHaveLength(2);
@@ -283,8 +282,18 @@ describe("RAGService semantic embeddings", () => {
             userId: "user_1",
             sourceUrl: "https://example.com/report",
             title: "Market report",
+            publishedAt: new Date("2026-06-01T12:00:00.000Z"),
             embeddingModel: freeEmbeddingModel,
+            metadata: expect.objectContaining({
+                sourceIndex: 0,
+                query: "Create a market opportunity deck",
+                retrievedAt: "2026-07-01T00:00:00.000Z",
+            }),
         });
+        expect(insertedRows.source_chunks[0]?.chunkText).toContain("Author: Analyst");
+        expect(insertedRows.source_chunks[0]?.chunkText).toContain(
+            "Highlights: Market growth accelerated in 2026."
+        );
     });
 
     it("stores feedback memory for iteration embeddings", async () => {

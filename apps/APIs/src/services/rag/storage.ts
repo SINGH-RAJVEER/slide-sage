@@ -3,18 +3,14 @@ import {
     deckMemories,
     exampleGenerations,
     feedbackMemories,
-    type PresentationEmbedding,
-    presentationEmbeddings,
     promptEvents,
     type RagContext,
     ragContext,
-    type SearchEmbedding,
-    searchEmbeddings,
     slideEmbeddings,
     sourceChunks,
     styleMemories,
 } from "@slide-sage/database";
-import type { PresentationJSON, Slide, Source } from "@slide-sage/types";
+import type { PresentationJSON, Source } from "@slide-sage/types";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type {
     GenerateEmbedding,
@@ -29,38 +25,8 @@ import {
     getSlideId,
     normalizeText,
     parseDate,
-    serializeSlides,
     truncateText,
 } from "./utils";
-
-export async function storeSearchEmbedding(
-    generateEmbedding: GenerateEmbedding,
-    userId: string,
-    searchQuery: string
-): Promise<SearchEmbedding | null> {
-    try {
-        const { embedding, model } = await generateEmbedding(searchQuery);
-
-        const result = await db
-            .insert(searchEmbeddings)
-            .values({
-                userId,
-                searchQuery,
-                embedding,
-                embeddingModel: model,
-                metadata: {
-                    queryLength: searchQuery.length,
-                    timestamp: new Date().toISOString(),
-                },
-            })
-            .returning();
-
-        return result[0] || null;
-    } catch (error) {
-        console.error("Error storing search embedding:", error);
-        return null;
-    }
-}
 
 export async function storeSourceChunks(
     generateEmbedding: GenerateEmbedding,
@@ -82,7 +48,7 @@ export async function storeSourceChunks(
                 userId,
                 sourceUrl: source.url,
                 title: source.title,
-                publishedAt: undefined,
+                publishedAt: parseDate(source.published_date),
                 fetchedAt: parseDate(source.retrieved_at) ?? new Date(),
                 chunkText,
                 embedding,
@@ -96,42 +62,6 @@ export async function storeSourceChunks(
         } catch (error) {
             console.warn("Failed to store source chunk embedding:", error);
         }
-    }
-}
-
-export async function storePresentationEmbedding(
-    generateEmbedding: GenerateEmbedding,
-    presentationId: string,
-    userId: string,
-    iterationPrompt: string,
-    slides: Slide[]
-): Promise<PresentationEmbedding | null> {
-    try {
-        const presentationContent = serializeSlides(slides);
-        const combinedText = `${iterationPrompt}\n\n${presentationContent}`;
-        const { embedding, model } = await generateEmbedding(combinedText);
-
-        const result = await db
-            .insert(presentationEmbeddings)
-            .values({
-                presentationId,
-                userId,
-                iterationPrompt,
-                presentationContent,
-                embedding,
-                embeddingModel: model,
-                metadata: {
-                    slideCount: slides.length,
-                    timestamp: new Date().toISOString(),
-                    contentLength: presentationContent.length,
-                },
-            })
-            .returning();
-
-        return result[0] || null;
-    } catch (error) {
-        console.error("Error storing presentation embedding:", error);
-        return null;
     }
 }
 
@@ -357,8 +287,6 @@ export async function storeExampleGeneration(
 export async function cleanupOldEmbeddings(userId: string, cutoffDate: Date): Promise<number> {
     let deleted = 0;
 
-    deleted += await deleteOldRows(searchEmbeddings, userId, cutoffDate);
-    deleted += await deleteOldRows(presentationEmbeddings, userId, cutoffDate);
     deleted += await deleteOldRows(slideEmbeddings, userId, cutoffDate);
     deleted += await deleteOldRows(deckMemories, userId, cutoffDate);
     deleted += await deleteOldRows(sourceChunks, userId, cutoffDate);
@@ -372,8 +300,6 @@ export async function cleanupOldEmbeddings(userId: string, cutoffDate: Date): Pr
 
 async function deleteOldRows(
     table:
-        | typeof searchEmbeddings
-        | typeof presentationEmbeddings
         | typeof slideEmbeddings
         | typeof deckMemories
         | typeof sourceChunks
