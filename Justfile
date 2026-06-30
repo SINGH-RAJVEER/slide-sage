@@ -9,7 +9,7 @@ default:
 
 # Start all services and apps (postgres, apis, web)
 dev:
-    slidesage-dev-up
+    devenv shell slidesage-dev-up
 
 # ---- Database ----
 

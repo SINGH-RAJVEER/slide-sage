@@ -153,7 +153,6 @@ in
         pkgs.bun
         pkgs.process-compose
         postgres
-        python
         initDb
         stopDb
         devUp

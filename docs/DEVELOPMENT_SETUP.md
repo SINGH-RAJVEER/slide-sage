@@ -99,8 +99,9 @@ set automatically by `devenv.nix` for local development and do not need to be in
 just dev
 ```
 
-This runs `slidesage-dev-up`, a Nix-provided script that starts all services in
-a `process-compose` TUI:
+This enters the `devenv` shell and runs `slidesage-dev-up`, a Nix-provided
+script that starts all services in a `process-compose` TUI. You can run it from
+a normal project shell as long as `devenv` is installed:
 
 | Process | Port | Description |
 |---------|------|-------------|
