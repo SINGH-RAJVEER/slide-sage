@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { API_URL } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
 
 interface PresentationErrorPageProps {
@@ -36,7 +37,7 @@ export default function PresentationErrorPage({
         } else if (presentationId) {
             // Default delete behavior
             try {
-                const response = await fetch(`/api/presentations/${presentationId}`, {
+                const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
                     method: "DELETE",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,

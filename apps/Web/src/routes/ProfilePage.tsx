@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 
 interface UserProfile {
     id: string;
@@ -49,7 +50,7 @@ export default function ProfilePage() {
     const fetchProfile = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch("/api/profile", {
+            const res = await fetch(`${API_URL}/api/profile`, {
                 credentials: "include",
             });
 
@@ -102,7 +103,7 @@ export default function ProfilePage() {
         setSuccess(null);
 
         try {
-            const res = await fetch("/api/profile", {
+            const res = await fetch(`${API_URL}/api/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -132,7 +133,7 @@ export default function ProfilePage() {
         setSuccess(null);
 
         try {
-            const res = await fetch("/api/profile", {
+            const res = await fetch(`${API_URL}/api/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -174,7 +175,7 @@ export default function ProfilePage() {
         }
 
         try {
-            const res = await fetch("/api/profile", {
+            const res = await fetch(`${API_URL}/api/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -214,7 +215,7 @@ export default function ProfilePage() {
         }
 
         try {
-            const res = await fetch("/api/profile/avatar", {
+            const res = await fetch(`${API_URL}/api/profile/avatar`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
