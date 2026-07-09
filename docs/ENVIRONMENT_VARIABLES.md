@@ -52,7 +52,6 @@ These are referenced in compose templates (`${VAR}`) to parameterize container w
 | `APIS_PORT`            | `docker/dev/docker-compose.dev.yml`                                        | Host port mapping for APIs container in dev.                     | `8000`                 |
 | `WEB_PORT`             | `docker/dev/docker-compose.dev.yml`                                        | Host port mapping for Web container in dev.                      | `5173`                 |
 | `OPEN_ROUTER_API_KEY`  | `devenv.nix`, API runtime                                                | OpenRouter key for AI and embedding calls.                       | None                   |
-| `VITE_API_URL`         | `docker/prod/docker-compose.prod.yml`                                      | Frontend API base URL build/runtime value in production compose. | `/api`                 |
 | `NGINX_HTTP_PORT`      | `docker/prod/docker-compose.prod.yml`                                      | Host HTTP port mapping for nginx.                                | `80`                   |
 | `NGINX_HTTPS_PORT`     | `docker/prod/docker-compose.prod.yml`                                      | Host HTTPS port mapping for nginx.                               | `443`                  |
 
@@ -63,3 +62,4 @@ These are referenced in compose templates (`${VAR}`) to parameterize container w
 - OpenRouter is the only AI provider path in application code. Legacy proxy and direct-provider API key variables are not read.
 - OAuth redirect reliability depends on `BASE_URL` being a public HTTPS origin in production and matching your provider callback settings.
 - `CORS_ORIGIN` is still accepted as a legacy fallback, but `CORS_ORIGINS` is the canonical variable moving forward.
+- For Cloudflare Pages plus Workers, set `VITE_API_URL` in the Pages build environment to the Worker URL, and set `CORS_ORIGINS` / `BETTER_AUTH_TRUSTED_ORIGINS` in the Worker environment to the Pages URL.

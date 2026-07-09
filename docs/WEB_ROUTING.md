@@ -37,3 +37,14 @@ Protected routes are wrapped by `RequireSignedInLayout`, which redirects signed-
 - Routes (route-level components): apps/Web/src/routes/
 - Forgot password page: apps/Web/src/routes/ForgotPasswordPage.tsx
 - Reset password page: apps/Web/src/routes/ResetPasswordPage.tsx
+
+## Cloudflare Pages
+
+The app uses browser history routing, so direct visits to nested routes must fall back to `index.html`. Cloudflare Pages reads `apps/Web/public/_redirects` during the Vite build and publishes it to `dist/_redirects`.
+
+Use these Pages settings for the monorepo deployment:
+
+- Production branch: `main`
+- Build command: `bun run build:web`
+- Build output directory: `apps/Web/dist`
+- Build environment: `VITE_API_URL=https://<worker-host>`

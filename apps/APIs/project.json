@@ -15,7 +15,7 @@
         "deploy": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "bunx wrangler versions upload --config wrangler.jsonc",
+                "command": "bunx wrangler deploy --config wrangler.jsonc",
                 "cwd": "{projectRoot}"
             }
         },
