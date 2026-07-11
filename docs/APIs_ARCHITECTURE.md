@@ -1,146 +1,84 @@
-# APIs Architecture
+# Architecture
 
-Architecture overview for the SlideSage APIs service.
+## Workspace
 
-## Layer Architecture
+SlideSage is a Bun workspace orchestrated by Nx.
 
 ```text
-+-----------------------------------------------------------+
-| Hono Application                                          |
-|  +-----------------------------------------------------+  |
-|  | Middleware                                          |  |
-|  |  - CORS (credentials enabled)                       |  |
-|  |  - Logger                                           |  |
-|  |  - Auth (session cookie validation)                 |  |
-|  |  - Error handling                                   |  |
-|  +-----------------------------------------------------+  |
-|                            |                              |
-|  +-----------------------------------------------------+  |
-|  | Route Handlers                                      |  |
-|  |  - /api/auth (Better Auth + email OTPs)             |  |
-|  |  - /api/profile                                     |  |
-|  |  - /api (presentations + research)                  |  |
-|  |  - /api/billing (placeholder)                       |  |
-|  +-----------------------------------------------------+  |
-+-----------------------------------------------------------+
-                            |
-                            v
-+-----------------------------------------------------------+
-| Service Layer                                             |
-|  - PresentationService                                    |
-|  - AIService                                              |
-|  - SearchService                                          |
-|  - ProfileService                                         |
-|  - Better Auth (sessions, email verification/reset OTPs)  |
-|  - Resend (outbound auth emails)                          |
-+-----------------------------------------------------------+
-                            |
-                            v
-+-----------------------------------------------------------+
-| Data Layer                                                |
-|  packages/database (Drizzle ORM)                          |
-|  - users, accounts, sessions, verifications               |
-|  - presentations                                          |
-|  - slide_embeddings, deck_memories, source_chunks, rag_context|
-+-----------------------------------------------------------+
-                            |
-                            v
-+-----------------------------------------------------------+
-| PostgreSQL Database                                       |
-+-----------------------------------------------------------+
+apps/APIs       Hono routes and services
+apps/Web        React 19 application built by Vite
+packages/auth   Better Auth setup and Hono middleware
+packages/database
+                Drizzle schema, migrations, repositories, token accounting
+packages/types  Shared presentation and research contracts
 ```
 
-## Route Handler Layer
+Biome handles formatting and linting. Bun's test runner executes both API and web
+tests; API tests use isolation because modules hold database and auth state.
 
-### Auth Routes (email verification + Better Auth)
+## Runtime
 
-```typescript
-// apps/APIs/src/routes/auth.routes.ts
-const authRoutes = new Hono();
+The local stack is defined in `devenv.nix` and coordinated by process-compose:
 
-authRoutes.post("/sign-in/email", async (c) => {
-    // Compatibility shim for legacy password accounts, then delegate to Better Auth.
-});
-
-// Better Auth handles sign-up, email OTP verification, and password reset OTP routes:
-// POST /api/auth/sign-up/email
-// POST /api/auth/email-otp/send-verification-otp
-// POST /api/auth/email-otp/verify-email
-// POST /api/auth/email-otp/request-password-reset
-// POST /api/auth/email-otp/reset-password
-authRoutes.all("/*", (c) => createAuth(c.env).handler(c.req.raw));
+```text
+PostgreSQL ready -> Drizzle migrations complete -> API starts
+                                           Vite web starts
 ```
 
-### Presentation Routes (SSE streaming)
+PostgreSQL 17 includes pgvector. Local state is stored in
+`.devenv/state/postgres/`.
 
-```typescript
-// apps/APIs/src/routes/presentation.routes.ts
-presentations.post(
-  "/generate-presentation-stream",
-  authMiddleware,
-  async (c) => {
-    return stream(c, async (stream) => {
-      // SSE: created, theme, slide, complete, saved
-    });
-  },
-);
-```
+The production API entry point is `apps/APIs/src/index.ts`. It mounts:
 
-## Middleware Layer
+- Better Auth at `/api/auth`
+- Profile routes at `/api/profile`
+- Presentation and research routes at `/api`
+- Billing routes at `/api/billing`
 
-### Session-based Authentication
+Authenticated routes validate the Better Auth session cookie. Presentation
+generation and revision check the user's slide-token balance before opening an
+SSE stream.
 
-```typescript
-// packages/auth/src/middleware.ts
-const sessionCookie = getCookie(c, "better-auth.session_token");
-if (!sessionCookie) {
-  return c.json({ error: { message: "Unauthorized" } }, 401);
-}
-```
+## Presentation Flow
 
-Auth setup is abstracted into the shared `@slide-sage/auth` package (Better Auth client + middleware helpers), which is consumed by `apps/APIs`.
+1. The web app submits generation settings and optional research filters.
+2. Research uses Exa and OpenRouter summarization when enabled.
+3. RAG retrieves relevant deck, slide, style, feedback, template, and source
+   context from PostgreSQL.
+4. OpenRouter produces structured presentation events.
+5. The API streams `created`, generation progress, `saved`, or `error` events.
+6. The completed deck and its semantic memories are persisted through Drizzle.
+7. The web viewer renders the deck and exports it to PDF in the browser.
 
-## Database Layer
+Iteration follows the same path but uses an existing presentation and user
+feedback as context.
 
-The database schema lives in `packages/database/src/db/schema.ts` and aligns with better-auth.
+## Data
 
-```typescript
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  emailVerified: boolean("email_verified").notNull().default(false),
-  slideTokens: real("slide_tokens").notNull().default(50.0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+The Drizzle schema includes Better Auth tables, presentations, payments, and the
+semantic-memory tables:
 
-export const sessions = pgTable("sessions", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-});
-```
+- `rag_context`
+- `slide_embeddings`
+- `deck_memories`
+- `source_chunks`
+- `prompt_events`
+- `slide_templates`
+- `example_generations`
+- `style_memories`
+- `feedback_memories`
+- `semantic_commands`
 
-## Configuration
+Repository classes own persistence. Route handlers should validate HTTP input and
+translate service results, while AI, research, RAG, profile, and billing logic
+remain in services.
 
-For Docker runs, environment variables come from `docker/.env` through compose.
-For manual runs, the APIs service loads `.env` at the repo root.
+## Web Routing
 
-Key variables:
+React Router defines public authentication routes and a signed-in application
+area. Protected routes include `/`, `/profile`, `/generate`,
+`/generate/research`, `/presentations`, `/presentations/:presentationId`, and
+`/purchase`. Presentation-heavy pages are lazy-loaded.
 
-- `AUTH_SECRET`, `BASE_URL`
-- `DATABASE_URL`
-- `CORS_ORIGINS`
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-- `OPEN_ROUTER_API_KEY`
-- `OPEN_ROUTER_MODEL`, `OPEN_ROUTER_SEARCH_MODEL`, `EMBEDDING_MODEL`
-
-## Serving Model
-
-The APIs service is API-only and does not serve frontend static assets.
-
-- API routes are mounted under `/api/*`.
-- Unknown non-API routes return the standard JSON 404 response from Hono.
-- Frontend assets and SPA routing should be handled by the dedicated Web deployment/runtime.
-
-For request flow diagrams, see [REQUEST_FLOWS.md](REQUEST_FLOWS.md).
+The `/presentation` route is retained for an in-progress stream before a saved
+presentation ID is available.

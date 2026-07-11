@@ -1,65 +1,65 @@
-# Environment Variables Reference
+# Environment Variables
 
-This document lists the environment variables used by Slide Sage and where each one is consumed.
+Copy `.env.example` to `.env`. Devenv loads the root file, and the API also loads
+it directly when run outside the devenv process group.
 
-## Scope
+## Core
 
-- `apps/APIs`: backend runtime (Hono + Better Auth + AI/RAG services)
-- `apps/Web`: frontend build/runtime (Vite)
-- `packages/database`: shared DB client used by APIs
-- `devenv.nix`: local process orchestration and port/database wiring
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `AUTH_SECRET` | Production | Development placeholder | Signs Better Auth state; use a strong secret |
+| `BASE_URL` | No | `http://localhost:8000` | Public API and auth callback origin |
+| `PORT` | No | `8000` | API listen port |
+| `DATABASE_URL` | No locally | Local devenv database | PostgreSQL connection string |
+| `DATABASE_CONNECT_TIMEOUT` | No | Driver default | PostgreSQL connection timeout |
+| `CORS_ORIGINS` | No | Local Vite origins | Comma-separated allowed web origins |
+| `CORS_ORIGIN` | No | `http://localhost:5173` | Single-origin fallback |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | No | CORS origins | Comma-separated auth origins |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; the local value uses Vite's proxy |
+| `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
+| `NODE_ENV` | No | `development` in devenv | Enables development-only behavior such as logging unsent OTPs |
 
-## Application Runtime Variables
+Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
+`POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all
+`slidesage`, except `POSTGRES_PORT=5432`.
 
-These variables are read directly by application code (`process.env.*` or `import.meta.env.*`).
+## AI and Research
 
-| Variable               | Required                                | Used By                                                                                                                                                                                                                                                                                                                                              | Purpose                                                                                                               | Default/Fallback                                                      |
-| ---------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `DATABASE_URL`         | Yes                                     | `packages/database/drizzle.config.ts`, `packages/database/src/db/index.ts`                                                                                                                                                                                                                                                                                       | PostgreSQL connection string for migrations and runtime DB access. Runtime DB access uses plain connections for local hosts and TLS for remote hosts unless `sslmode=disable` or `ssl=false` is present. | `postgresql://slidesage:slidesage@localhost:5432/slidesage`           |
-| `DATABASE_CONNECT_TIMEOUT` | Optional                                | `packages/database/src/db/index.ts`                                                                                                                                                                                                                                                                                                                        | PostgreSQL runtime connection timeout in seconds. Keeps API requests from hanging indefinitely when the database host is unreachable. | `10`                                                                  |
-| `AUTH_SECRET`          | Yes (prod)                              | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Better Auth signing/encryption secret.                                                                                | `your-secret-key-change-in-production`                                |
-| `BASE_URL`             | Yes (prod, strongly recommended)        | `packages/auth/src/auth-client.ts`, `apps/APIs/src/routes/auth.routes.ts`                                                                                                                                                                                                                                                                           | Canonical public backend origin used for Better Auth base URL and OAuth callback URLs (for example `https://api.example.com`). | Fallback chain: `CF_PAGES_URL` -> `VERCEL_URL` -> `http://localhost:8000` |
-| `CORS_ORIGINS`         | Recommended                             | `apps/APIs/src/index.ts`, `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                         | Comma-separated allowlist for CORS and trusted auth origins. Required when frontend and API are on different origins. In Cloudflare Workers this is read from runtime bindings via `c.env`. | `http://localhost:5173,http://127.0.0.1:5173`                         |
-| `BETTER_AUTH_TRUSTED_ORIGINS` | Recommended for OAuth                  | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Comma-separated list of frontend origins Better Auth may redirect to after auth. Include local and deployed web origins when they differ from `BASE_URL`. | Falls back to `CORS_ORIGINS` / `CORS_ORIGIN`, then `http://localhost:5173` |
-| `CF_PAGES_URL`         | Optional                                | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Cloudflare Pages deployment URL used to auto-resolve auth base URL when `BASE_URL` is not set.                      | None                                                                  |
-| `VERCEL_URL`           | Optional                                | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Vercel deployment URL used to auto-resolve auth base URL when `BASE_URL` is not set.                                | None                                                                  |
-| `GOOGLE_CLIENT_ID`     | Optional (needed for Google OAuth)      | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Google OAuth client ID.                                                                                               | Empty string                                                          |
-| `GOOGLE_CLIENT_SECRET` | Optional (needed for Google OAuth)      | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Google OAuth client secret.                                                                                           | Empty string                                                          |
-| `GITHUB_CLIENT_ID`     | Optional (needed for GitHub OAuth)      | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | GitHub OAuth client ID.                                                                                               | Empty string                                                          |
-| `GITHUB_CLIENT_SECRET` | Optional (needed for GitHub OAuth)      | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | GitHub OAuth client secret.                                                                                           | Empty string                                                          |
-| `RESEND_API_KEY`       | Optional (needed for email sending)     | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Resend API key for verification and password reset OTP emails.                                                         | If unset, OTPs are logged                                             |
-| `RESEND_FROM_EMAIL`    | Optional                                | `packages/auth/src/auth-client.ts`                                                                                                                                                                                                                                                                                                                   | Sender address for outbound OTP emails.                                                                               | `onboarding@resend.dev`                                               |
-| `ADMIN_SECRET_HASH`    | Optional (script-only)                  | `apps/APIs/src/scripts/manage.ts`                                                                                                                                                                                                                                                                                                                    | Secret hash used by management script access checks.                                                                  | None                                                                  |
-| `OPEN_ROUTER_API_KEY`  | Required for AI/RAG                     | `apps/APIs/src/services/ai.service.ts`, `apps/APIs/src/services/search.service.ts`, `apps/APIs/src/services/rag.service.ts`                                                                                                                                                                                                                          | OpenRouter API key used for slide generation, research summarization, and embeddings.                                 | None                                                                  |
-| `OPEN_ROUTER_MODEL`    | Recommended                             | `apps/APIs/src/services/ai.service.ts`, `apps/APIs/src/services/search.service.ts`                                                                                                                                                                                                                                                                   | Primary OpenRouter model for slide generation and iteration.                                                          | `google/gemma-4-26b-a4b-it:free`                                      |
-| `OPEN_ROUTER_SEARCH_MODEL` | Optional                            | `apps/APIs/src/services/search.service.ts`                                                                                                                                                                                                                                                                                                           | OpenRouter model used for research/source summarization flows.                                                        | Falls back to `OPEN_ROUTER_MODEL`, then `google/gemma-4-26b-a4b-it:free` |
-| `OPEN_ROUTER_API_BASE` | Optional                                | `apps/APIs/src/services/ai.service.ts`, `apps/APIs/src/services/search.service.ts`                                                                                                                                                                                                                                                                   | Full OpenRouter-compatible chat completions endpoint override.                                                        | `https://openrouter.ai/api/v1/chat/completions`                       |
-| `OPEN_ROUTER_EMBEDDINGS_URL` | Optional                          | `apps/APIs/src/services/rag.service.ts`                                                                                                                                                                                                                                                                                                              | Full OpenRouter-compatible embeddings endpoint override.                                                              | `https://openrouter.ai/api/v1/embeddings`                             |
-| `EMBEDDING_MODEL`      | Recommended                             | `apps/APIs/src/services/rag.service.ts`                                                                                                                                                                                                                                                                                                              | Free OpenRouter embedding model used by RAG embedding generation. Must return 768 dimensions for the current schema.  | `nvidia/llama-nemotron-embed-vl-1b-v2:free`                           |
-| `EXA_API_KEY`          | Optional (needed for web research mode) | `apps/APIs/src/services/search.service.ts`                                                                                                                                                                                                                                                                                                           | Exa API token for external source retrieval with highlights and summaries.                                             | If unset, web search is skipped                                       |
-| `VITE_API_URL`         | Recommended                             | `apps/Web/vite.config.ts`, `apps/Web/src/lib/api.ts`, `apps/Web/src/lib/auth-client.ts`, frontend API callers | Browser-facing base URL used by frontend API requests. Leave empty to call same-origin `/api/*` through the Vite proxy; the auth client resolves that same-origin value to the browser origin because Better Auth requires an absolute base URL. | Empty string for same-origin web proxy; Vite proxy target defaults to `http://localhost:8000` |
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `OPEN_ROUTER_API_KEY` | Yes for generation | None | OpenRouter authentication |
+| `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it:free` | Generation model |
+| `OPEN_ROUTER_SEARCH_MODEL` | No | `OPEN_ROUTER_MODEL` | Research summarization model |
+| `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
+| `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
+| `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
+| `EXA_API_KEY` | For web research | None | Exa search authentication |
 
-## Docker Compose Variables
+## Authentication and Email
 
-These are referenced in compose templates (`${VAR}`) to parameterize container wiring.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `RESEND_API_KEY` | Production email | Sends verification and password-reset OTPs |
+| `RESEND_FROM_EMAIL` | No | Sender address; defaults to `onboarding@resend.dev` |
+| `GOOGLE_CLIENT_ID` | For Google OAuth | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | For Google OAuth | Google OAuth client secret |
+| `GITHUB_CLIENT_ID` | For GitHub OAuth | GitHub OAuth client ID |
+| `GITHUB_CLIENT_SECRET` | For GitHub OAuth | GitHub OAuth client secret |
 
-| Variable               | Used In                                                                    | Purpose                                                          | Default/Fallback       |
-| ---------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------- |
-| `POSTGRES_USER`        | `docker/dev/docker-compose.dev.yml`, `docker/prod/docker-compose.prod.yml` | PostgreSQL username and API DB URL interpolation.                | `slidesage`            |
-| `POSTGRES_PASSWORD`    | `docker/dev/docker-compose.dev.yml`, `docker/prod/docker-compose.prod.yml` | PostgreSQL password and API DB URL interpolation.                | `slidesage`            |
-| `POSTGRES_DB`          | `docker/dev/docker-compose.dev.yml`, `docker/prod/docker-compose.prod.yml` | PostgreSQL database name and API DB URL interpolation.           | `slidesage`            |
-| `POSTGRES_PORT`        | `docker/dev/docker-compose.dev.yml`                                        | Host port mapping for local Postgres access in dev.              | `5432`                 |
-| `APIS_PORT`            | `docker/dev/docker-compose.dev.yml`                                        | Host port mapping for APIs container in dev.                     | `8000`                 |
-| `WEB_PORT`             | `docker/dev/docker-compose.dev.yml`                                        | Host port mapping for Web container in dev.                      | `5173`                 |
-| `OPEN_ROUTER_API_KEY`  | `devenv.nix`, API runtime                                                | OpenRouter key for AI and embedding calls.                       | None                   |
-| `NGINX_HTTP_PORT`      | `docker/prod/docker-compose.prod.yml`                                      | Host HTTP port mapping for nginx.                                | `80`                   |
-| `NGINX_HTTPS_PORT`     | `docker/prod/docker-compose.prod.yml`                                      | Host HTTPS port mapping for nginx.                               | `443`                  |
+Without `RESEND_API_KEY`, development mode logs OTPs instead of sending email.
+OAuth callback URLs are `${BASE_URL}/api/auth/callback/google` and
+`${BASE_URL}/api/auth/callback/github`.
 
-## Notes
+When `BASE_URL` is unset in a deployment, auth can derive it from the
+platform-provided `CF_PAGES_URL` or `VERCEL_URL`.
 
-- Some variables are optional because the feature path itself is optional (for example OAuth, web research, or specific model providers).
-- Several variables have secure-looking development defaults in code; treat those defaults as local-only and always override in production.
-- OpenRouter is the only AI provider path in application code. Legacy proxy and direct-provider API key variables are not read.
-- OAuth redirect reliability depends on `BASE_URL` being a public HTTPS origin in production and matching your provider callback settings.
-- `CORS_ORIGIN` is still accepted as a legacy fallback, but `CORS_ORIGINS` is the canonical variable moving forward.
-- For Cloudflare Pages plus Workers, set `VITE_API_URL` in the Pages build environment to the Worker URL, and set `CORS_ORIGINS` / `BETTER_AUTH_TRUSTED_ORIGINS` in the Worker environment to the Pages URL.
+## Billing
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `RAZORPAY_KEY_ID` | For purchases | Public checkout key |
+| `RAZORPAY_KEY_SECRET` | For purchases | Creates orders and verifies payments |
+| `RAZORPAY_WEBHOOK_SECRET` | For webhooks | Verifies Razorpay webhook signatures |
+
+Do not commit `.env`. Keep secrets in the deployment platform's secret store in
+production.

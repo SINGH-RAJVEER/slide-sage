@@ -1,267 +1,81 @@
-# API Overview
+# API Reference
 
-General API information, standards, and reference for SlideSage application.
-
-## Base URL Configuration
-
-### Environment Variables
-
-- **Web**: `VITE_API_URL=http://localhost:8000`
-- **APIs**: Base URL configured via Hono routes
-
-### URL Structure
-
-```
-Development: http://localhost:8000
-Production:  https://your-domain.com
-```
-
-API routes are mounted under `/api` (for example `/api/presentations`), while the health check is `/`.
-
-## Authentication Standards
-
-### Session Cookie
-
-APIs use better-auth with HTTP-only cookies. Clients must send cookies when calling protected endpoints.
-
-```javascript
-fetch(`${API_URL}/api/presentations`, {
-  credentials: "include",
-});
-```
-
-## Request/Response Standards
-
-### HTTP Methods
-
-- `GET`: Retrieve data
-- `POST`: Create data
-- `PUT`: Update data
-- `DELETE`: Remove data
-
-### Content Types
-
-- `application/json`: Standard API requests/responses
-- `text/event-stream`: Server-Sent Events for streaming
-
-### Timestamp Format
-
-All timestamps use ISO 8601 format (UTC):
+The local API origin is `http://localhost:8000`. JSON errors use:
 
 ```json
-{
-  "created_at": "2026-01-04T12:00:00Z",
-  "updated_at": "2026-01-04T12:30:00Z"
-}
+{ "error": { "message": "Description" } }
 ```
 
-## Error Handling
+Authenticated requests use the Better Auth session cookie and must include
+credentials from the browser.
 
-### Standard Error Response
+## Health
 
-```json
-{
-  "error": {
-    "message": "Human-readable error message",
-    "details": {}
-  }
-}
-```
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/` | No | Returns `{ status: "ok", timestamp }` |
 
-### HTTP Status Codes
+## Authentication
 
-| Status | Meaning               | Use Cases                                       |
-| ------ | --------------------- | ----------------------------------------------- |
-| `200`  | OK                    | Successful request                              |
-| `201`  | Created               | Resource created successfully                   |
-| `400`  | Bad Request           | Validation failed, malformed input              |
-| `401`  | Unauthorized          | Missing or expired session cookie               |
-| `402`  | Payment Required      | Insufficient points for generation or iteration |
-| `403`  | Forbidden             | Access denied to resource                       |
-| `404`  | Not Found             | Resource doesn't exist                          |
-| `409`  | Conflict              | Duplicate data (email already exists)           |
-| `422`  | Unprocessable Entity  | Invalid data format or session validation error |
-| `500`  | Internal Server Error | Server-side error                               |
+Better Auth owns `/api/auth/*`, including email/password registration, email OTP,
+password reset, session, sign-out, and OAuth callbacks. Project-specific wrappers
+clear superseded OTP records and migrate legacy credential accounts during
+sign-in. See [AUTH_API.md](AUTH_API.md).
 
-### Client-Side Error Handling
+## Profile
 
-```javascript
-try {
-  const response = await fetch("/api/presentations", {
-    credentials: "include",
-  });
+| Method | Path | Body | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/profile` | None | Get the signed-in user's profile |
+| `PUT` | `/api/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update supplied profile fields |
+| `POST` | `/api/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error.message);
-  }
+All profile routes require authentication.
 
-  return await response.json();
-} catch (error) {
-  // Handle network errors or API errors
-  console.error("API Error:", error.message);
-  // Show user-friendly message
-}
-```
+## Presentations
 
-## Rate Limiting
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/generate-presentation-stream` | Generate and persist a deck over SSE |
+| `POST` | `/api/research-presentation` | Research and summarize sources before generation |
+| `POST` | `/api/iterate-presentation-stream` | Revise an existing deck over SSE |
+| `GET` | `/api/presentations` | List the user's decks |
+| `GET` | `/api/presentations/:id` | Get one owned deck |
+| `DELETE` | `/api/presentations/:id` | Delete one owned deck and its associated memory |
 
-Currently not implemented but planned for production:
+Generation requires `topic` and `slide_count`; it accepts `detail_level`,
+`tonality`, `research`, and an optional `research_payload`. Research options can
+include `freshness`, `maxResults`, included or excluded domains, publication date
+bounds, and `maxAgeHours`.
 
-- Per-user rate limits on generation endpoints
-- Token-based limits to prevent abuse
-- Exponential backoff for failed requests
+Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
+and slide-count fields are accepted for compatibility.
 
-## CORS Configuration
+Generation and iteration return `402` before streaming when the account lacks
+enough slide tokens. The response includes the remaining, required, and shortfall
+amounts.
 
-### Development Setup
+### Streaming
 
-```typescript
-// Hono CORS middleware
-app.use(
-  "*",
-  cors({
-    origin: ["http://localhost:5173"],
-    credentials: true,
-  }),
-);
-```
+Streaming endpoints respond with server-sent events over a POST response. The
+stream begins with `created` for new decks, forwards generation events such as
+theme and slide updates, and ends with `saved`. Failures use an `error` event.
+Clients should parse the response stream rather than use the browser
+`EventSource` API, which only supports GET.
 
-### Production Setup
+## Billing
 
-Configure via `CORS_ORIGINS` environment variable:
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/billing/balance` | Yes | Return `slide_tokens` |
+| `POST` | `/api/billing/checkout` | Yes | Create a Razorpay order |
+| `POST` | `/api/billing/verify` | Yes | Verify payment and grant tokens idempotently |
+| `POST` | `/api/billing/webhook` | Signature | Process `payment.captured` |
 
-```
-CORS_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
-```
+Checkout accepts `starter`, `pro`, `premium`, or `custom`. Custom quantities must
+be between 10 and 1000.
 
-For Cloudflare Workers, CORS is resolved from `c.env` at request time so the deployed Worker can use runtime variables instead of build-time `.env` values. Auth routes use the same runtime origin source for Better Auth trusted origins.
+## CORS
 
-## API Versioning
-
-Current version: **v1** (implicit in all endpoints)
-
-Future versions may include version in URL:
-
-```
-/api/v1/presentations
-/api/v2/presentations
-```
-
-## Health Check
-
-### Endpoint
-
-```
-GET /
-```
-
-### Response
-
-```json
-{
-  "status": "healthy",
-  "message": "SlideSage API is running",
-  "timestamp": "2026-01-04T12:00:00Z"
-}
-```
-
-### Usage
-
-```javascript
-// Check API health before making requests
-const healthResponse = await fetch("/");
-if (healthResponse.ok) {
-  // API is healthy, proceed with requests
-}
-```
-
-## Billing Endpoints
-
-Billing manages a single numeric points balance stored on `users.slide_tokens`.
-
-- `GET /api/billing/balance` returns `{ "slide_tokens": 50.0 }`.
-- `POST /api/billing/checkout` creates a Razorpay order for `starter`, `pro`, `premium`, or `custom`.
-- `POST /api/billing/verify` verifies a Razorpay payment and adds purchased points.
-- `POST /api/billing/webhook` marks captured payments as paid and adds points server-side.
-
-Presentation generation and iteration check the estimated point cost before streaming. If the user
-does not have enough points, the API returns `402` with `INSUFFICIENT_TOKENS`,
-`slide_tokens_remaining`, `slide_tokens_required`, and `slide_tokens_shortfall`.
-
-## Pagination
-
-Currently not implemented but planned for list endpoints:
-
-### Future Implementation
-
-```json
-{
-  "presentations": [...],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 50,
-    "hasNext": true,
-    "hasPrev": false
-  }
-}
-```
-
-### Query Parameters
-
-```
-GET /api/presentations?page=1&limit=20&sort=created_at&order=desc
-```
-
-## Validation Rules
-
-### Email Validation
-
-- Valid email format
-- Case-insensitive uniqueness
-- Maximum 254 characters
-
-### Password Requirements
-
-- Minimum 8 characters
-- At least 1 uppercase letter
-- At least 1 number
-- No common passwords
-
-### Input Sanitization
-
-- HTML tags stripped from text inputs
-- SQL injection prevention via parameterized queries
-- XSS prevention via output encoding
-
-## Security Headers
-
-### Response Headers
-
-```http
-Content-Security-Policy: default-src 'self'
-X-Frame-Options: DENY
-X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin
-```
-
-### HTTPS Enforcement
-
-- Production environments require HTTPS
-- HSTS headers for secure connections
-- No sensitive data in URLs
-
-## API Endpoints Summary
-
-| Category                              | Endpoints   | Description                                  |
-| ------------------------------------- | ----------- | -------------------------------------------- |
-| [Authentication](AUTH_API.md)         | 7 endpoints | User registration, login, profile management |
-| [Presentations](PRESENTATIONS_API.md) | 4 endpoints | Presentation CRUD and AI generation          |
-| Billing                               | 4 endpoints | Points balance and Razorpay checkout         |
-| Health Check                          | 1 endpoint  | Service health monitoring                    |
-
-For detailed endpoint documentation:
-
-- [Authentication API](AUTH_API.md)
-- [Presentations API](PRESENTATIONS_API.md)
+The API permits credentialed requests from `CORS_ORIGINS` or `CORS_ORIGIN`.
+Local defaults are `http://localhost:5173` and `http://127.0.0.1:5173`.

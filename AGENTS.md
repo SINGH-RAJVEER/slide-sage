@@ -4,9 +4,7 @@ Rules for AI agents in this repository.
 
 ## Package Manager
 
-- Always use `bun`.
-- Use `bun install`, `bun run <script>`, `bun add <package>`, etc.
-- Never use npm, yarn, or pnpm.
+- Always use `bun` as both the runtime and pacakge manager.
 
 ## Indentation
 
