@@ -190,9 +190,12 @@ export default function SignUpPage() {
                             <button
                                 type="button"
                                 onClick={handleGoogleSignUp}
-                                className="w-full rounded-lg bg-white px-4 py-3 font-semibold text-black transition duration-200 hover:bg-white/90 flex items-center justify-center gap-2"
+                                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 font-semibold text-black shadow-sm transition-[transform,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-white/90 active:scale-[0.97] active:bg-white/80 active:shadow-inner motion-reduce:active:scale-100"
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <svg
+                                    className="h-5 w-5 transition-transform duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] group-active:scale-90 motion-reduce:group-active:scale-100"
+                                    viewBox="0 0 24 24"
+                                >
                                     <title>Google</title>
                                     <path
                                         fill="currentColor"

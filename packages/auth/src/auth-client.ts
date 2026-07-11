@@ -138,6 +138,7 @@ function resolveBaseUrl(env: Env): string {
 }
 
 function resolveTrustedOrigins(env: Env): string[] {
+    const defaultOrigins = ["http://localhost:5173", "https://slide-sage.pages.dev"];
     const raw = [
         getEnvVar(env, "BETTER_AUTH_TRUSTED_ORIGINS"),
         getEnvVar(env, "CORS_ORIGINS"),
@@ -147,9 +148,9 @@ function resolveTrustedOrigins(env: Env): string[] {
         .join(",");
     const origins = raw
         .split(",")
-        .map((s) => s.trim().replace(/\/$/, ""))
+        .map((s) => s.trim().replace(/\/+$/, ""))
         .filter(Boolean);
-    return origins.length > 0 ? Array.from(new Set(origins)) : ["http://localhost:5173"];
+    return Array.from(new Set([...defaultOrigins, ...origins]));
 }
 
 let cachedAuth: ReturnType<typeof betterAuth> | null = null;

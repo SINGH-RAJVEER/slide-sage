@@ -30,6 +30,8 @@ Register these callback URLs with the providers:
 - `${BASE_URL}/api/auth/callback/google`
 - `${BASE_URL}/api/auth/callback/github`
 
+Google authentication buttons provide immediate press feedback while respecting reduced-motion preferences.
+
 For local development, `BASE_URL` defaults to `http://localhost:8000` and the
 trusted origin defaults to `http://localhost:5173`.
 
