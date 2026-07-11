@@ -29,16 +29,35 @@ describe("API app", () => {
         expect(await response.json()).toEqual({ error: { message: "Resource not found" } });
     });
 
-    it("applies CORS for configured allowed origins", async () => {
+    it("applies CORS for configured allowed origins with trailing slashes", async () => {
         const response = await server.fetch(
             new Request("http://localhost/", {
                 headers: { Origin: "https://app.example.com" },
             }),
-            { CORS_ORIGINS: "https://app.example.com" }
+            { CORS_ORIGINS: "https://app.example.com/" }
         );
 
         expect(response.status).toBe(200);
         expect(response.headers.get("access-control-allow-origin")).toBe("https://app.example.com");
+        expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+    });
+
+    it("allows the production Pages origin by default", async () => {
+        const response = await server.fetch(
+            new Request("http://localhost/", {
+                method: "OPTIONS",
+                headers: {
+                    Origin: "https://slide-sage.pages.dev",
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type",
+                },
+            })
+        );
+
+        expect(response.status).toBe(204);
+        expect(response.headers.get("access-control-allow-origin")).toBe(
+            "https://slide-sage.pages.dev"
+        );
         expect(response.headers.get("access-control-allow-credentials")).toBe("true");
     });
 });

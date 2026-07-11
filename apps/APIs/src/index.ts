@@ -13,7 +13,11 @@ if (typeof import.meta.url === "string" && import.meta.url.startsWith("file:")) 
 
 const app = new Hono();
 
-const DEFAULT_CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const DEFAULT_CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://slide-sage.pages.dev",
+];
 
 function resolveAllowedOrigins(env: Record<string, string | undefined>): string[] {
     const raw =
@@ -24,9 +28,9 @@ function resolveAllowedOrigins(env: Record<string, string | undefined>): string[
         "";
     const origins = raw
         .split(",")
-        .map((s) => s.trim())
+        .map((s) => s.trim().replace(/\/+$/, ""))
         .filter(Boolean);
-    return origins.length > 0 ? origins : DEFAULT_CORS_ORIGINS;
+    return Array.from(new Set([...DEFAULT_CORS_ORIGINS, ...origins]));
 }
 
 app.use("*", logger());
