@@ -43,6 +43,10 @@ Production uses `SameSite=None; Secure` authentication cookies because the
 Pages frontend and Worker API run on different HTTPS origins. Local HTTP
 development retains `SameSite=Lax` cookies.
 
+The frontend retries transient session lookup failures before treating a user
+as signed out, preventing route-guard loops during brief Worker or database
+startup failures.
+
 ## Primary Endpoints
 
 | Method | Path | Purpose |

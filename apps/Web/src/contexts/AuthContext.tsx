@@ -1,17 +1,9 @@
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
+import { fetchSessionWithRetry, type SessionUser } from "@/lib/session";
 
-interface User {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-    emailVerified: boolean;
-    slideTokens: number;
-    createdAt: Date;
-    updatedAt: Date;
-}
+export type User = SessionUser;
 
 interface AuthContextType {
     user: User | null;
@@ -40,27 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     const refreshSession = useCallback(async () => {
-        try {
-            const res = await fetch(`${API_URL}/api/auth/get-session`, {
-                credentials: "include",
-            });
-
-            if (res.ok) {
-                const contentType = res.headers.get("content-type") || "";
-
-                if (contentType.includes("application/json")) {
-                    const data = await res.json();
-                    setUser(data?.user || null);
-                } else {
-                    setUser(null);
-                }
-            } else {
-                setUser(null);
-            }
-        } catch (error) {
-            console.error("Failed to fetch session:", error);
-            setUser(null);
-        }
+        setUser(await fetchSessionWithRetry());
     }, []);
 
     // Fetch current user session on mount
