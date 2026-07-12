@@ -24,7 +24,7 @@ mock.module("drizzle-orm", () => ({
     eq: (left: unknown, right: unknown) => ({ left, right, op: "eq" }),
 }));
 
-mock.module("@slide-sage/auth", () => ({
+mock.module("../../services/auth", () => ({
     authMiddleware: async (
         c: { set: (key: string, value: string) => void },
         next: () => Promise<void>

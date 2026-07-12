@@ -1,4 +1,3 @@
-import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "@slide-sage/auth";
 import { PresentationRepository, UserRepository } from "@slide-sage/database";
 import type {
     PresentationJSON,
@@ -9,6 +8,7 @@ import type {
 } from "@slide-sage/types";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
+import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "../services/auth";
 import { PresentationService } from "../services/presentation.service";
 import { SearchService } from "../services/search.service";
 

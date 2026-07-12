@@ -12,7 +12,6 @@
         "format": "biome format --write ."
     },
     "dependencies": {
-        "@slide-sage/auth": "workspace:*",
         "@slide-sage/database": "workspace:*",
         "@slide-sage/types": "workspace:*",
         "better-auth": "^1.4.18",

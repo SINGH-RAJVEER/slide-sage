@@ -7,7 +7,7 @@ it directly when run outside the devenv process group.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `AUTH_SECRET` | Production | Development placeholder | Signs Better Auth state; use a strong secret |
+| `AUTH_SECRET` | Production | Local-only development secret | Signs Better Auth state; HTTPS deployments require at least 32 characters |
 | `BASE_URL` | No | `http://localhost:8000` | Public API and auth callback origin |
 | `PORT` | No | `8000` | API listen port |
 | `DATABASE_URL` | No locally | Local devenv database | PostgreSQL connection string |
@@ -15,7 +15,7 @@ it directly when run outside the devenv process group.
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
-| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses `https://api.slidesage.app`, while the local value uses Vite's proxy |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses `https://slidesage.app` with `/api/*` routed to the Worker, while the local value uses Vite's proxy |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
 | `NODE_ENV` | No | `development` in devenv | Enables development-only behavior such as logging unsent OTPs |
 
@@ -63,3 +63,9 @@ platform-provided `CF_PAGES_URL` or `VERCEL_URL`.
 
 Do not commit `.env`. Keep secrets in the deployment platform's secret store in
 production.
+
+For the Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL`, and other
+sensitive values with `wrangler secret put`. Keep `BASE_URL` and trusted origins
+as Worker variables or secrets appropriate to the environment. The API refuses
+to initialize authentication on an HTTPS base URL without a sufficiently strong
+`AUTH_SECRET`.

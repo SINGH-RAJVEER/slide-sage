@@ -19,6 +19,8 @@ just dev
 
 At minimum, replace `AUTH_SECRET` and set `OPEN_ROUTER_API_KEY` in `.env`.
 See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for optional services.
+The auth implementation is part of `apps/APIs`; there is no separate auth
+package to build or deploy.
 
 `just dev` performs the complete startup sequence:
 

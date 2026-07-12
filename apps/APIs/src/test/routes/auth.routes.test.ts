@@ -16,7 +16,7 @@ mock.module("better-auth/crypto", () => ({
     hashPassword: () => Promise.resolve("better-auth-hash"),
 }));
 
-mock.module("@slide-sage/auth", () => ({
+mock.module("../../services/auth", () => ({
     createAuth: () => ({
         handler: authHandler,
     }),

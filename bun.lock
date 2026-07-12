@@ -12,7 +12,6 @@
       "name": "slide-sage-apis",
       "version": "1.0.0",
       "dependencies": {
-        "@slide-sage/auth": "workspace:*",
         "@slide-sage/database": "workspace:*",
         "@slide-sage/types": "workspace:*",
         "better-auth": "^1.4.18",
@@ -72,21 +71,6 @@
         "lightningcss": "^1.30.2",
         "tailwindcss": "^4.0.0",
         "vitest": "^1.0.4",
-      },
-    },
-    "packages/auth": {
-      "name": "@slide-sage/auth",
-      "version": "1.0.0",
-      "dependencies": {
-        "@slide-sage/database": "workspace:*",
-        "better-auth": "^1.4.18",
-        "drizzle-orm": "^0.36.4",
-        "hono": "^4.6.14",
-        "resend": "^6.9.2",
-      },
-      "devDependencies": {
-        "@biomejs/biome": "^2.4.7",
-        "@types/bun": "latest",
       },
     },
     "packages/database": {
@@ -440,8 +424,6 @@
     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.57.1", "", { "os": "win32", "cpu": "x64" }, "sha512-mxRFDdHIWRxg3UfIIAwCm6NzvxG0jDX/wBN6KsQFTvKFqqg9vTrWUE68qEjHt19A5wwx5X5aUi2zuZT7YR0jrA=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.27.8", "", {}, "sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA=="],
-
-    "@slide-sage/auth": ["@slide-sage/auth@workspace:packages/auth"],
 
     "@slide-sage/database": ["@slide-sage/database@workspace:packages/database"],
 

@@ -1,8 +1,8 @@
-import { createAuth, type Env } from "@slide-sage/auth";
 import { accounts, db, users, verifications } from "@slide-sage/database";
 import { hashPassword as hashBetterAuthPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { createAuth, type Env } from "../services/auth";
 
 const authRoutes = new Hono();
 

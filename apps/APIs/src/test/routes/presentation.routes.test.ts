@@ -30,7 +30,7 @@ const searchService = {
     webSearch: mock(),
 };
 
-mock.module("@slide-sage/auth", () => ({
+mock.module("../../services/auth", () => ({
     authMiddleware: async (
         c: { set: (key: string, value: string) => void },
         next: () => Promise<void>

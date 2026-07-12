@@ -3,7 +3,17 @@
     "main": "src/index.ts",
     "compatibility_date": "2026-03-19",
     "compatibility_flags": ["nodejs_compat"],
+    "vars": {
+        "NODE_ENV": "production",
+        "BASE_URL": "https://slidesage.app",
+        "CORS_ORIGINS": "https://slidesage.app,https://slide-sage.pages.dev",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "https://slidesage.app,https://slide-sage.pages.dev"
+    },
     "routes": [
+        {
+            "pattern": "slidesage.app/api/*",
+            "zone_name": "slidesage.app"
+        },
         {
             "pattern": "api.slidesage.app",
             "custom_domain": true

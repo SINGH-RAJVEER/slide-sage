@@ -1,10 +1,10 @@
 import { db, users } from "@slide-sage/database";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
-import { createAuth } from "./auth-client";
+import { createAuth } from "./auth";
 
 async function getSessionFromCookie(
-    c: Context,
+    c: Context
 ): Promise<{ userId: string; sessionId: string } | null> {
     const auth = createAuth(c.env);
     const sessionData = await auth.api.getSession({
@@ -23,7 +23,7 @@ async function getSessionFromCookie(
 
 export async function authMiddleware(
     c: Context,
-    next: () => Promise<void>,
+    next: () => Promise<void>
 ): Promise<Response | undefined> {
     const auth = await getSessionFromCookie(c);
 
@@ -55,7 +55,7 @@ export function getCurrentSessionId(c: Context): string {
 
 export async function ensureUserInDbMiddleware(
     c: Context,
-    next: () => Promise<void>,
+    next: () => Promise<void>
 ): Promise<Response | undefined> {
     const userId = getCurrentUserId(c);
 

@@ -1,5 +1,5 @@
-import { authMiddleware, getCurrentUserId } from "@slide-sage/auth";
 import { Hono } from "hono";
+import { authMiddleware, getCurrentUserId } from "../services/auth";
 import { getUserProfile, updateUserAvatar, updateUserProfile } from "../services/profile.service";
 
 const profileRoutes = new Hono();

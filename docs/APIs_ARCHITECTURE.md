@@ -5,9 +5,8 @@
 SlideSage is a Bun workspace orchestrated by Nx.
 
 ```text
-apps/APIs       Hono routes and services
+apps/APIs       Hono routes, Better Auth, middleware, and services
 apps/Web        React 19 application built by Vite
-packages/auth   Better Auth setup and Hono middleware
 packages/database
                 Drizzle schema, migrations, repositories, token accounting
 packages/types  Shared presentation and research contracts
@@ -28,7 +27,10 @@ PostgreSQL ready -> Drizzle migrations complete -> API starts
 PostgreSQL 17 includes pgvector. Local state is stored in
 `.devenv/state/postgres/`.
 
-The production API entry point is `apps/APIs/src/index.ts`. It mounts:
+The production API entry point is `apps/APIs/src/index.ts`. Authentication is
+implemented in `apps/APIs/src/services/auth.ts` and its middleware companion, so
+the Worker deploy does not depend on a separate auth workspace package. The API
+mounts:
 
 - Better Auth at `/api/auth`
 - Profile routes at `/api/profile`

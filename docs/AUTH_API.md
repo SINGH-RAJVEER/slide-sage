@@ -4,13 +4,17 @@ SlideSage mounts Better Auth at `/api/auth`. It supports email and password,
 six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
+The Better Auth configuration and authorization middleware are owned by the API
+application in `apps/APIs/src/services`. They deploy as part of the same
+Cloudflare Worker bundle as the auth routes.
+
 ## Configuration
 
 Required production values:
 
 ```dotenv
-AUTH_SECRET=replace-with-a-strong-secret
-BASE_URL=https://api.slidesage.app
+AUTH_SECRET=replace-with-at-least-32-random-characters
+BASE_URL=https://slidesage.app
 BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://slide-sage.pages.dev
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL=SlideSage <auth@example.com>
@@ -30,18 +34,21 @@ Register these callback URLs with the providers:
 - `${BASE_URL}/api/auth/callback/google`
 - `${BASE_URL}/api/auth/callback/github`
 
-The production frontend uses `https://slidesage.app` and the API uses
-`https://api.slidesage.app`. Keeping both hosts under the same registrable
-domain ensures browsers treat authentication cookies as same-site.
+The production frontend and browser-facing API both use `https://slidesage.app`.
+Cloudflare routes `/api/*` to the Worker and serves all other paths from Pages,
+so authentication remains same-origin. `https://api.slidesage.app` remains
+available for direct API access.
 
-Google authentication buttons provide immediate press feedback while respecting reduced-motion preferences.
+Google and GitHub authentication buttons, along with the email sign-up action,
+provide immediate press feedback while respecting reduced-motion preferences.
 
 For local development, `BASE_URL` defaults to `http://localhost:8000` and the
 trusted origin defaults to `http://localhost:5173`.
 
-Production uses `SameSite=None; Secure` authentication cookies because the
-Pages frontend and Worker API run on different HTTPS origins. Local HTTP
-development retains `SameSite=Lax` cookies.
+Authentication cookies are HTTP-only and `SameSite=Lax`. HTTPS deployments also
+set `Secure`. The Worker rejects HTTPS auth initialization when `AUTH_SECRET` is
+missing or shorter than 32 characters, preventing deployment from silently using
+a development secret.
 
 The frontend retries transient session lookup failures before treating a user
 as signed out, preventing route-guard loops during brief Worker or database
