@@ -15,7 +15,7 @@ it directly when run outside the devenv process group.
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
-| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; accepts an absolute URL or bare hostname (HTTPS is inferred outside localhost), while the local value uses Vite's proxy |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses `https://api.slidesage.app`, while the local value uses Vite's proxy |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
 | `NODE_ENV` | No | `development` in devenv | Enables development-only behavior such as logging unsent OTPs |
 

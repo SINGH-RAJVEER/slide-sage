@@ -10,7 +10,7 @@ Required production values:
 
 ```dotenv
 AUTH_SECRET=replace-with-a-strong-secret
-BASE_URL=https://api.example.com
+BASE_URL=https://api.slidesage.app
 BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://slide-sage.pages.dev
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL=SlideSage <auth@example.com>
@@ -29,6 +29,10 @@ Register these callback URLs with the providers:
 
 - `${BASE_URL}/api/auth/callback/google`
 - `${BASE_URL}/api/auth/callback/github`
+
+The production frontend uses `https://slidesage.app` and the API uses
+`https://api.slidesage.app`. Keeping both hosts under the same registrable
+domain ensures browsers treat authentication cookies as same-site.
 
 Google authentication buttons provide immediate press feedback while respecting reduced-motion preferences.
 
