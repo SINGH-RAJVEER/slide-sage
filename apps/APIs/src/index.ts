@@ -17,6 +17,7 @@ const DEFAULT_CORS_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://slide-sage.pages.dev",
+    "https://slidesage.app",
 ];
 
 function resolveAllowedOrigins(env: Record<string, string | undefined>): string[] {
