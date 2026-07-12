@@ -138,7 +138,11 @@ function resolveBaseUrl(env: Env): string {
 }
 
 function resolveTrustedOrigins(env: Env): string[] {
-    const defaultOrigins = ["http://localhost:5173", "https://slide-sage.pages.dev"];
+    const defaultOrigins = [
+        "http://localhost:5173",
+        "https://slide-sage.pages.dev",
+        "https://slidesage.app",
+    ];
     const raw = [
         getEnvVar(env, "BETTER_AUTH_TRUSTED_ORIGINS"),
         getEnvVar(env, "CORS_ORIGINS"),
@@ -172,6 +176,7 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
 
     const baseUrl = resolveBaseUrl(env);
     const trustedOrigins = resolveTrustedOrigins(env);
+    const usesSecureCookies = baseUrl.startsWith("https://");
 
     cachedAuth = betterAuth({
         database: drizzleAdapter(db, {
@@ -216,6 +221,14 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
         baseURL: baseUrl,
         trustedOrigins,
         basePath: "/api/auth",
+        advanced: {
+            useSecureCookies: usesSecureCookies,
+            defaultCookieAttributes: {
+                httpOnly: true,
+                secure: usesSecureCookies,
+                sameSite: usesSecureCookies ? "none" : "lax",
+            },
+        },
         socialProviders: {
             google: {
                 clientId: getEnvVar(env, "GOOGLE_CLIENT_ID") || "",

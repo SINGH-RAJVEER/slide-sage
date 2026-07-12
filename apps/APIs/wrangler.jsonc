@@ -3,6 +3,12 @@
     "main": "src/index.ts",
     "compatibility_date": "2026-03-19",
     "compatibility_flags": ["nodejs_compat"],
+    "routes": [
+        {
+            "pattern": "api.slidesage.app",
+            "custom_domain": true
+        }
+    ],
     "observability": {
         "logs": {
             "enabled": true,

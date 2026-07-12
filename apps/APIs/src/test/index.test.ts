@@ -42,22 +42,22 @@ describe("API app", () => {
         expect(response.headers.get("access-control-allow-credentials")).toBe("true");
     });
 
-    it("allows the production Pages origin by default", async () => {
-        const response = await server.fetch(
-            new Request("http://localhost/", {
-                method: "OPTIONS",
-                headers: {
-                    Origin: "https://slide-sage.pages.dev",
-                    "Access-Control-Request-Method": "POST",
-                    "Access-Control-Request-Headers": "content-type",
-                },
-            })
-        );
+    it("allows the production frontend origins by default", async () => {
+        for (const origin of ["https://slide-sage.pages.dev", "https://slidesage.app"]) {
+            const response = await server.fetch(
+                new Request("http://localhost/", {
+                    method: "OPTIONS",
+                    headers: {
+                        Origin: origin,
+                        "Access-Control-Request-Method": "POST",
+                        "Access-Control-Request-Headers": "content-type",
+                    },
+                })
+            );
 
-        expect(response.status).toBe(204);
-        expect(response.headers.get("access-control-allow-origin")).toBe(
-            "https://slide-sage.pages.dev"
-        );
-        expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+            expect(response.status).toBe(204);
+            expect(response.headers.get("access-control-allow-origin")).toBe(origin);
+            expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+        }
     });
 });
