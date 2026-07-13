@@ -59,14 +59,20 @@ owning modules.
    context from PostgreSQL.
 4. OpenRouter produces structured presentation events.
 5. The API streams `created`, generation progress, `saved`, or `error` events.
-6. The completed deck and its semantic memories are persisted through Drizzle.
+6. A completed deck and its semantic memories are persisted through Drizzle. A
+   failed generation keeps the initial row and replaces its placeholder data with
+   an uncharged failed-state payload containing the prompt, options, error, and
+   any research sources collected before failure.
 7. The app-level streaming provider keeps consuming the response when the user
    navigates to another route. A persistent status control returns to the live
    viewer and reports generated-slide progress.
 8. The web app treats `saved`, rather than `complete`, as the persistence signal.
    It refreshes an open Presentations page after that event and links the completed
    status to the stored deck.
-9. The web viewer renders the deck and can export an editable PowerPoint file in
+9. Failed items are marked as ready to retry in Presentations. Clicking one loads
+   its detail and routes to the saved sources review when research is available,
+   or to the main generation form with its prompt and options preselected.
+10. The web viewer renders the deck and can export an editable PowerPoint file in
    the browser.
 
 ### Editable PowerPoint Export
@@ -136,5 +142,7 @@ presentation ID is available. Navigating between client routes does not cancel
 the active stream; only unmounting the application or explicitly stopping the
 operation aborts it. Starting another generation is disabled while one is active.
 Failed or empty generations open `/presentation-error`, which uses the signed-in
-application shell and offers routes back to the presentation library plus cleanup
-for an unfinished saved presentation.
+application shell and links back to the saved retry item in the presentation
+library. The global stopped-generation control automatically disappears after an
+eight-second cooldown, while the failed record remains available until retried or
+deleted.

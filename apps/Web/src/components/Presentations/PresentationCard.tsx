@@ -1,5 +1,5 @@
 import type { PresentationSummary } from "@slide-sage/types";
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, RotateCcw, Trash2 } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 interface PresentationCardProps {
     presentation: PresentationSummary;
     isDeleting: boolean;
+    isOpening: boolean;
     onCardClick: (id: string) => void;
     onDelete: (e: React.MouseEvent, id: string) => void;
     formatDate: (date: string) => string;
@@ -16,19 +17,30 @@ interface PresentationCardProps {
 export const PresentationCard: React.FC<PresentationCardProps> = ({
     presentation,
     isDeleting,
+    isOpening,
     onCardClick,
     onDelete,
     formatDate,
 }) => {
     return (
         <Card
-            className="group flex h-full cursor-pointer flex-col border border-white/10 bg-black/20 transition-colors hover:bg-white/5"
-            onClick={() => onCardClick(presentation.id)}
+            className={`group flex h-full cursor-pointer flex-col border bg-black/20 transition-colors hover:bg-white/5 ${
+                presentation.status === "failed" ? "border-red-300/20" : "border-white/10"
+            }`}
+            onClick={() => !isOpening && onCardClick(presentation.id)}
         >
             <CardHeader className="pb-3">
-                <CardTitle className="flex items-start justify-between text-lg text-white gap-2">
-                    <span className="flex-1 font-light opacity-90 line-clamp-2">
-                        {presentation.title}
+                <CardTitle className="flex items-start justify-between gap-2 text-lg text-white">
+                    <span className="min-w-0 flex-1">
+                        {presentation.status === "failed" && (
+                            <span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-red-300">
+                                {isOpening ? <Spinner /> : <RotateCcw className="h-3.5 w-3.5" />}
+                                Ready to retry
+                            </span>
+                        )}
+                        <span className="line-clamp-2 block font-light opacity-90">
+                            {presentation.title}
+                        </span>
                     </span>
                     <Button
                         variant="ghost"
@@ -45,7 +57,7 @@ export const PresentationCard: React.FC<PresentationCardProps> = ({
                 <p className="text-white/40 text-sm line-clamp-3 mt-auto font-light">
                     {presentation.prompt}
                 </p>
-                <div className="flex items-center gap-2 border-t border-white/10 pt-3 text-xs uppercase tracking-wider text-white/30">
+                <div className="flex items-center gap-2 border-t border-white/10 pt-3 text-xs uppercase text-white/30">
                     <Calendar className="h-3 w-3" />
                     <span>{formatDate(presentation.created_at)}</span>
                 </div>

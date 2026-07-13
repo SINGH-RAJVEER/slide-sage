@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { GenerationStatusIndicatorView } from "@/components/GenerationStatusIndicator";
 
 it("shows live slide progress and opens the active generation", () => {
@@ -43,4 +43,30 @@ it("reports when the presentation has been saved", () => {
         }),
     );
     expect(onActivate).toHaveBeenCalledTimes(1);
+});
+
+it("hides a stopped-generation message after its cooldown", async () => {
+    const view = render(
+        <GenerationStatusIndicatorView
+            status="error"
+            title="Generation stopped"
+            detail="The stream was interrupted"
+            autoDismissMs={20}
+            onActivate={() => {}}
+        />,
+    );
+
+    expect(
+        view.getByRole("button", {
+            name: "Generation stopped. The stream was interrupted",
+        }),
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+        expect(
+            view.queryByRole("button", {
+                name: "Generation stopped. The stream was interrupted",
+            }),
+        ).toBeNull();
+    });
 });

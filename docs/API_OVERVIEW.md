@@ -61,6 +61,15 @@ research context at one point per 1,000 AI tokens. The research endpoint returns
 `estimated_tokens` when slide count and generation options are supplied, allowing
 the review screen and final server-side charge to show the same estimate.
 
+Presentation summaries include `status` (`ready` or `failed`) and
+`has_research`. A failed generation remains in the presentation library with an
+empty slide list and a `failure.retry` object in `slides_data`. That object stores
+the original prompt, slide count, detail level, tonality, research setting, error
+message, and any sources collected before the failure. Failed generations are
+not charged. Clients fetch the full presentation on click, then open the saved
+sources on `/generate/research` when they exist or prefill `/generate` when they
+do not.
+
 ### Streaming
 
 Streaming endpoints respond with server-sent events over a POST response. The
@@ -68,9 +77,10 @@ stream begins with `created` for new decks, forwards generation events such as
 theme and slide updates, and ends with `saved`. The API sends SSE keepalive
 comments while OpenRouter is silent. A `retry` event means the current partial
 attempt must be discarded; its payload includes the next attempt, attempt limit,
-delay, and reason. Only a validated `complete` event is persisted and charged.
-Failures use an `error` event. Clients should parse the response stream rather
-than use the browser `EventSource` API, which only supports GET.
+delay, and reason. Only a validated `complete` event is charged and stored as a
+ready deck. Failures use an `error` event and persist retry metadata without
+partial slides. Clients should parse the response stream rather than use the
+browser `EventSource` API, which only supports GET.
 
 When a generation response does not specify a theme, Slide Sage uses the
 `corporate-blue` theme by default.

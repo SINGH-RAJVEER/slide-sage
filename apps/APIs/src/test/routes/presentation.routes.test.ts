@@ -209,7 +209,7 @@ describe("presentation routes", () => {
         );
     });
 
-    it("does not persist or charge for a partial generation that ends in error", async () => {
+    it("stores retry data and does not charge for a partial generation that ends in error", async () => {
         presentationService.generatePresentationStream.mockImplementation(async function* () {
             yield {
                 event: "slide",
@@ -229,18 +229,55 @@ describe("presentation routes", () => {
         const response = await app().request("/api/generate-presentation-stream", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic: "Failure handling", slide_count: 3 }),
+            body: JSON.stringify({
+                topic: "Failure handling",
+                slide_count: 3,
+                detail_level: "detailed",
+                tonality: "persuasive",
+                research_payload: {
+                    sources: [{ url: "https://example.com/research", title: "Research" }],
+                },
+            }),
         });
         const body = await text(response);
 
         expect(body).toContain("event: error");
         expect(body).not.toContain("event: saved");
-        expect(presentationRepository.update).not.toHaveBeenCalled();
+        expect(presentationRepository.update).toHaveBeenCalledTimes(1);
+        expect(presentationUpdates[0]).toEqual({
+            id: "presentation_1",
+            updates: {
+                title: "Failure handling",
+                slidesData: {
+                    title: "Failure handling",
+                    theme: "corporate-blue",
+                    slides: [],
+                    totalSlides: 0,
+                    status: "failed",
+                    failure: {
+                        message: "Upstream failed",
+                        retry: {
+                            prompt: "Failure handling",
+                            slide_count: 3,
+                            detail_level: "detailed",
+                            tonality: "persuasive",
+                            research_enabled: true,
+                            research_payload: {
+                                sources: [
+                                    {
+                                        url: "https://example.com/research",
+                                        title: "Research",
+                                    },
+                                ],
+                                estimated_tokens: 3,
+                            },
+                        },
+                    },
+                },
+            },
+        });
         expect(userRepository.deductTokens).not.toHaveBeenCalled();
-        expect(presentationService.deletePresentation).toHaveBeenCalledWith(
-            "presentation_1",
-            currentUserId
-        );
+        expect(presentationService.deletePresentation).not.toHaveBeenCalled();
     });
 
     it("clears partial slides when the AI retries generation", async () => {
@@ -420,6 +457,8 @@ describe("presentation routes", () => {
                     title: "Deck",
                     prompt: "Topic",
                     slide_count: 2,
+                    status: "ready",
+                    has_research: false,
                     created_at: createdAt.toISOString(),
                     updated_at: createdAt.toISOString(),
                 },

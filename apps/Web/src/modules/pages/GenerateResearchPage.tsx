@@ -14,6 +14,7 @@ interface ResearchRouteState {
     slideCount: number;
     detailLevel: string;
     tonality: string;
+    researchPayload?: ResearchPayload;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -28,10 +29,16 @@ export default function GenerateResearchPage() {
     const slideCount = routeState?.slideCount ?? 0;
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
+    const savedResearch = routeState?.researchPayload;
+    const hasSavedResearch = Boolean(savedResearch?.sources.length);
 
-    const [sources, setSources] = useState<Source[]>([]);
-    const [researchStatus, setResearchStatus] = useState<ResearchStatus>("loading");
-    const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
+    const [sources, setSources] = useState<Source[]>(() => savedResearch?.sources ?? []);
+    const [researchStatus, setResearchStatus] = useState<ResearchStatus>(() =>
+        hasSavedResearch ? "ready" : "loading",
+    );
+    const [estimatedTokens, setEstimatedTokens] = useState<number | null>(
+        savedResearch?.estimated_tokens ?? null,
+    );
     const [error, setError] = useState("");
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
@@ -62,6 +69,7 @@ export default function GenerateResearchPage() {
 
         const fetchResearch = async () => {
             if (!prompt || !slideCount) return;
+            if (hasSavedResearch && researchAttempt === 0) return;
 
             setResearchStatus("loading");
             setError("");
@@ -125,7 +133,7 @@ export default function GenerateResearchPage() {
 
         fetchResearch();
         return () => controller.abort();
-    }, [prompt, slideCount, researchAttempt]);
+    }, [prompt, slideCount, researchAttempt, hasSavedResearch]);
 
     useEffect(() => {
         if (isProceeding && streamingState.slides.length >= 1) {
@@ -150,6 +158,7 @@ export default function GenerateResearchPage() {
 
         const payload: ResearchPayload = {
             sources,
+            ...(estimatedTokens === null ? {} : { estimated_tokens: estimatedTokens }),
         };
 
         const success = await startStreaming(
@@ -167,6 +176,7 @@ export default function GenerateResearchPage() {
         }
     }, [
         detailLevel,
+        estimatedTokens,
         prompt,
         researchStatus,
         slideCount,

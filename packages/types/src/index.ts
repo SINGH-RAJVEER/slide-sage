@@ -73,10 +73,28 @@ export interface PresentationData {
     tokens_used?: number;
 }
 
+export type PresentationStatus = "ready" | "failed";
+
+export interface PresentationRetryOptions {
+    prompt: string;
+    slide_count: number;
+    detail_level: string;
+    tonality: string;
+    research_enabled: boolean;
+    research_payload?: ResearchPayload;
+}
+
+export interface PresentationFailure {
+    message: string;
+    retry: PresentationRetryOptions;
+}
+
 export interface PresentationJSON {
     title: string;
     theme: string;
     slides: Slide[];
+    status?: PresentationStatus;
+    failure?: PresentationFailure;
     totalSlides?: number;
     tokens_used?: number;
     sources?: Source[];
@@ -137,7 +155,12 @@ export interface StreamSavedEvent {
 
 export interface StreamErrorEvent {
     event: "error";
-    data: { error: string; details?: unknown; [key: string]: unknown };
+    data: {
+        error: string;
+        presentation_id?: string | number;
+        details?: unknown;
+        [key: string]: unknown;
+    };
 }
 
 export type PresentationStreamEvent =
@@ -181,6 +204,8 @@ export interface PresentationSummary {
     title: string;
     prompt: string;
     slide_count: number;
+    status: PresentationStatus;
+    has_research: boolean;
     created_at: string;
     updated_at: string;
 }

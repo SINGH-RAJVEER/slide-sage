@@ -1,22 +1,34 @@
+import type { PresentationRetryOptions } from "@slide-sage/types";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { GenerateForm, GenerateOptionsBar } from "@/components/Generate";
 import Header from "@/components/Header";
 import { useStreaming } from "@/modules/presentations";
 import { ROUTES } from "@/router/paths";
 
+interface GenerateRouteState {
+    retry?: PresentationRetryOptions;
+}
+
 export default function GeneratePPTPage() {
+    const location = useLocation();
+    const retry = (location.state as GenerateRouteState | null)?.retry;
+    const retryPrompt = retry?.prompt.trim() ?? "";
+    const retrySlideCount = retry?.slide_count.toString() ?? "5";
+    const presetSlideCounts = ["5", "10", "15", "20", "25", "30"];
     const [prompt, setPrompt] = useState("");
-    const [topics, setTopics] = useState<string[]>([]);
+    const [topics, setTopics] = useState<string[]>(() => (retryPrompt ? [retryPrompt] : []));
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [slideCount, setSlideCount] = useState("5");
-    const [slideCountMode, setSlideCountMode] = useState("preset");
-    const [customSlideCount, setCustomSlideCount] = useState("5");
-    const [detailLevel, setDetailLevel] = useState("balanced");
-    const [tonality, setTonality] = useState("professional");
-    const [useWebResearch, setUseWebResearch] = useState(false);
+    const [slideCount, setSlideCount] = useState(retrySlideCount);
+    const [slideCountMode, setSlideCountMode] = useState(
+        presetSlideCounts.includes(retrySlideCount) ? "preset" : "custom",
+    );
+    const [customSlideCount, setCustomSlideCount] = useState(retrySlideCount);
+    const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
+    const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
+    const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
 

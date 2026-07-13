@@ -8,6 +8,54 @@ import { StreamingProvider } from "@/modules/contexts/StreamingContext";
 import GenerateResearchPage from "@/modules/pages/GenerateResearchPage";
 
 describe("GenerateResearchPage", () => {
+    it("shows saved retry sources without repeating the research request", async () => {
+        const originalFetch = globalThis.fetch;
+        const fetchMock = mock(async () => new Response(null, { status: 500 }));
+        globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+        try {
+            const view = render(
+                <MemoryRouter
+                    initialEntries={[
+                        {
+                            pathname: "/generate/research",
+                            state: {
+                                prompt: "Saved research topic",
+                                slideCount: 7,
+                                detailLevel: "detailed",
+                                tonality: "persuasive",
+                                researchPayload: {
+                                    sources: [
+                                        {
+                                            url: "https://example.com/saved",
+                                            title: "Saved source",
+                                            snippet: "Stored with the failed presentation.",
+                                        },
+                                    ],
+                                    estimated_tokens: 8.4,
+                                },
+                            },
+                        },
+                    ]}
+                >
+                    <StreamingProvider>
+                        <Routes>
+                            <Route path="/generate/research" element={<GenerateResearchPage />} />
+                        </Routes>
+                    </StreamingProvider>
+                </MemoryRouter>,
+            );
+
+            await waitFor(() => expect(view.getByText("Saved source")).toBeInTheDocument());
+            expect(view.getByText("Stored with the failed presentation.")).toBeInTheDocument();
+            expect(view.getByText("Estimated 8.4 points")).toBeInTheDocument();
+            expect(view.getByText("Proceed to Generate").closest("button")).not.toBeDisabled();
+            expect(fetchMock).not.toHaveBeenCalled();
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
     it("keeps generation disabled while the Strict Mode replacement request is loading", async () => {
         const originalFetch = globalThis.fetch;
         let requestCount = 0;

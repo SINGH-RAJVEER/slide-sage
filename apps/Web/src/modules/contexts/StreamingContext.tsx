@@ -347,6 +347,11 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "error":
                                                 receivedError = true;
+                                                if (data.presentation_id) {
+                                                    publishPresentationUpdated(
+                                                        data.presentation_id,
+                                                    );
+                                                }
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     isStreaming: false,

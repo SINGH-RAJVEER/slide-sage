@@ -1,16 +1,19 @@
 import { AlertCircle, ArrowUpRight, Check, LoaderCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useStreaming } from "@/modules/contexts/StreamingContext";
 import { ROUTES } from "@/router/paths";
 
 type GenerationStatus = "active" | "complete" | "error";
 
+export const GENERATION_ERROR_COOLDOWN_MS = 8000;
+
 interface GenerationStatusIndicatorViewProps {
     status: GenerationStatus;
     title: string;
     detail: string;
     progress?: number;
+    autoDismissMs?: number;
     onActivate: () => void;
 }
 
@@ -26,10 +29,21 @@ export function GenerationStatusIndicatorView({
     title,
     detail,
     progress,
+    autoDismissMs,
     onActivate,
 }: GenerationStatusIndicatorViewProps) {
+    const [isVisible, setIsVisible] = useState(true);
     const Icon = status === "active" ? LoaderCircle : status === "complete" ? Check : AlertCircle;
     const normalizedProgress = Math.max(0, Math.min(progress ?? 0, 1));
+
+    useEffect(() => {
+        if (autoDismissMs === undefined) return;
+
+        const cooldown = window.setTimeout(() => setIsVisible(false), autoDismissMs);
+        return () => window.clearTimeout(cooldown);
+    }, [autoDismissMs]);
+
+    if (!isVisible) return null;
 
     return (
         <button
@@ -82,6 +96,9 @@ export default function GenerationStatusIndicator() {
         : ROUTES.presentations;
     const completionKey = streamingState.presentationId
         ? `${streamingState.presentationId}:${streamingState.slides.length}`
+        : null;
+    const errorKey = streamingState.error
+        ? `${streamingState.presentationId ?? "unsaved"}:${streamingState.error}`
         : null;
 
     if (streamingState.isStreaming) {
@@ -146,9 +163,11 @@ export default function GenerationStatusIndicator() {
     if (streamingState.error && location.pathname !== ROUTES.presentationError) {
         return (
             <GenerationStatusIndicatorView
+                key={errorKey}
                 status="error"
                 title="Generation stopped"
                 detail={streamingState.error}
+                autoDismissMs={GENERATION_ERROR_COOLDOWN_MS}
                 onActivate={() =>
                     navigate(ROUTES.presentationError, {
                         state: {

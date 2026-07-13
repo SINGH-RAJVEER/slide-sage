@@ -38,6 +38,7 @@ export default function PresentationsGridPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [openingId, setOpeningId] = useState<string | null>(null);
     const [presentationToDelete, setPresentationToDelete] = useState<string | null>(null);
     const [gridSize, setGridSize] = useState<2 | 3 | 4>(() => {
         const saved = localStorage.getItem("gridSize");
@@ -95,6 +96,7 @@ export default function PresentationsGridPage() {
 
     const handlePresentationClick = async (presentationId: string) => {
         try {
+            setOpeningId(presentationId);
             const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
                 credentials: "include",
             });
@@ -110,6 +112,27 @@ export default function PresentationsGridPage() {
             if ("error" in result) {
                 setError(result.error.message);
             } else {
+                const failedData = result.presentation.slides_data;
+                const retry =
+                    failedData.status === "failed" ? failedData.failure?.retry : undefined;
+
+                if (retry) {
+                    if (retry.research_payload?.sources.length) {
+                        navigate(ROUTES.research, {
+                            state: {
+                                prompt: retry.prompt,
+                                slideCount: retry.slide_count,
+                                detailLevel: retry.detail_level,
+                                tonality: retry.tonality,
+                                researchPayload: retry.research_payload,
+                            },
+                        });
+                    } else {
+                        navigate(ROUTES.generate, { state: { retry } });
+                    }
+                    return;
+                }
+
                 navigate(ROUTES.presentationById(result.presentation.id), {
                     state: {
                         presentation: result.presentation.slides_data,
@@ -119,6 +142,8 @@ export default function PresentationsGridPage() {
             }
         } catch (err) {
             setError(`Error: ${err instanceof Error ? err.message : err}`);
+        } finally {
+            setOpeningId(null);
         }
     };
 
@@ -292,6 +317,7 @@ export default function PresentationsGridPage() {
                                     key={presentation.id}
                                     presentation={presentation}
                                     isDeleting={deletingId === presentation.id}
+                                    isOpening={openingId === presentation.id}
                                     onCardClick={handlePresentationClick}
                                     onDelete={handleDeletePresentation}
                                     formatDate={formatDate}

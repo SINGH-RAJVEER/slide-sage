@@ -32,6 +32,7 @@ describe("PresentationErrorPage", () => {
         expect(view.getByRole("heading", { level: 1 })).toHaveTextContent(
             "We couldn't finish this presentation",
         );
+        expect(view.getByText("Generation unavailable")).toBeInTheDocument();
         expect(view.getByText("The generation stream was interrupted.")).toBeInTheDocument();
         expect(view.queryByText("Delete unfinished presentation")).toBeNull();
 
@@ -50,6 +51,8 @@ describe("PresentationErrorPage", () => {
                 <PresentationErrorPage presentationId={42} onDelete={onDelete} />
             </MemoryRouter>,
         );
+
+        expect(view.getByText("Saved for retry")).toBeInTheDocument();
 
         fireEvent.click(view.getByRole("button", { name: "Delete unfinished presentation" }));
 
