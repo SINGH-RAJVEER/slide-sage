@@ -59,9 +59,12 @@ amounts.
 
 Streaming endpoints respond with server-sent events over a POST response. The
 stream begins with `created` for new decks, forwards generation events such as
-theme and slide updates, and ends with `saved`. Failures use an `error` event.
-Clients should parse the response stream rather than use the browser
-`EventSource` API, which only supports GET.
+theme and slide updates, and ends with `saved`. The API sends SSE keepalive
+comments while OpenRouter is silent. A `retry` event means the current partial
+attempt must be discarded; its payload includes the next attempt, attempt limit,
+delay, and reason. Only a validated `complete` event is persisted and charged.
+Failures use an `error` event. Clients should parse the response stream rather
+than use the browser `EventSource` API, which only supports GET.
 
 ## Billing
 

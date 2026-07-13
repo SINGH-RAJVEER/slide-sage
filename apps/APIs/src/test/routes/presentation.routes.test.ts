@@ -182,6 +182,8 @@ describe("presentation routes", () => {
         const body = await text(response);
 
         expect(response.status).toBe(200);
+        expect(response.headers.get("content-type")).toContain("text/event-stream");
+        expect(response.headers.get("cache-control")).toBe("no-cache, no-transform");
         expect(body).toContain("event: created");
         expect(body).toContain("event: saved");
         expect(presentationRepository.create).toHaveBeenCalledWith(
@@ -202,6 +204,77 @@ describe("presentation routes", () => {
                 theme: "modern",
             })
         );
+    });
+
+    it("does not persist or charge for a partial generation that ends in error", async () => {
+        presentationService.generatePresentationStream.mockImplementation(async function* () {
+            yield {
+                event: "slide",
+                data: {
+                    slide: {
+                        id: "partial",
+                        type: "content",
+                        html: '<div id="slide-content">Partial</div>',
+                    },
+                    index: 0,
+                    title: "Partial",
+                },
+            };
+            yield { event: "error", data: { error: "Upstream failed" } };
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic: "Failure handling", slide_count: 3 }),
+        });
+        const body = await text(response);
+
+        expect(body).toContain("event: error");
+        expect(body).not.toContain("event: saved");
+        expect(presentationRepository.update).not.toHaveBeenCalled();
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
+        expect(presentationService.deletePresentation).toHaveBeenCalledWith(
+            "presentation_1",
+            currentUserId
+        );
+    });
+
+    it("clears partial slides when the AI retries generation", async () => {
+        presentationService.generatePresentationStream.mockImplementation(async function* () {
+            yield {
+                event: "slide",
+                data: {
+                    slide: {
+                        id: "discarded",
+                        type: "content",
+                        html: '<div id="slide-content">Discard me</div>',
+                    },
+                    index: 0,
+                    title: "Discarded",
+                },
+            };
+            yield {
+                event: "retry",
+                data: { attempt: 2, max_attempts: 3, delay_ms: 1, reason: "Disconnected" },
+            };
+            yield* successfulStream();
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic: "Retry handling", slide_count: 3 }),
+        });
+        const body = await text(response);
+
+        expect(body).toContain("event: retry");
+        expect(body).toContain("event: saved");
+        const finalUpdate = presentationUpdates[0]?.updates as {
+            slidesData?: { slides?: Array<{ id?: string }> };
+        };
+        expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
+        expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
     });
 
     it("researches presentation topics and summarizes sources", async () => {

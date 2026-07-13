@@ -39,6 +39,10 @@ Cloudflare routes `/api/*` to the Worker and serves all other paths from Pages,
 so authentication remains same-origin. `https://api.slidesage.app` remains
 available for direct API access.
 
+The production frontend ignores loopback `VITE_API_URL` values and uses the
+current site origin. This prevents local development configuration from being
+embedded as the authentication endpoint in a deployed browser bundle.
+
 Google and GitHub authentication buttons, along with the email sign-up action,
 provide immediate press feedback while respecting reduced-motion preferences.
 

@@ -8,6 +8,7 @@ export interface StreamChunk {
         delta?: {
             content?: string;
         };
+        finish_reason?: string | null;
     }>;
     usage?: {
         total_tokens?: number;
@@ -62,7 +63,7 @@ export class StreamProcessor {
             }
         }
 
-        if (this.chunkCount % 10 === 0) {
+        if (this.chunkCount % 100 === 0) {
             console.info(
                 `Processed ${this.chunkCount} chunks, accumulated ${this.accumulatedContent.length} characters`
             );

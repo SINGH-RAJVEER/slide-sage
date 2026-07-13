@@ -107,6 +107,16 @@ export interface StreamSlideEvent {
     };
 }
 
+export interface StreamRetryEvent {
+    event: "retry";
+    data: {
+        attempt: number;
+        max_attempts: number;
+        delay_ms: number;
+        reason: string;
+    };
+}
+
 export interface StreamCompleteEvent {
     event: "complete";
     data: PresentationJSON;
@@ -128,6 +138,7 @@ export type PresentationStreamEvent =
     | StreamMidwayspaceEvent
     | StreamResearchEvent
     | StreamThemeEvent
+    | StreamRetryEvent
     | StreamSlideEvent
     | StreamCompleteEvent
     | StreamSavedEvent

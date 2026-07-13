@@ -107,10 +107,27 @@ function parseResearchPayload(input: unknown): ResearchPayload | undefined {
     };
 }
 
+function positiveIntegerEnv(name: string, fallback: number): number {
+    const parsed = Number.parseInt(process.env[name] || "", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function sseFrame(event: string, data: unknown): string {
+    return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
 const presentations = new Hono();
 const presentationService = new PresentationService();
 const presentationRepo = new PresentationRepository();
 const searchService = new SearchService();
+
+async function deleteIncompletePresentation(presentationId: string, userId: string): Promise<void> {
+    try {
+        await presentationService.deletePresentation(presentationId, userId);
+    } catch (error) {
+        console.error(`Failed to delete incomplete presentation ${presentationId}:`, error);
+    }
+}
 
 // Generate presentation with streaming
 presentations.post(
@@ -164,11 +181,16 @@ presentations.post(
 
             const presentationId = presentation.id;
 
+            c.header("Content-Type", "text/event-stream; charset=utf-8");
+            c.header("Cache-Control", "no-cache, no-transform");
+            c.header("X-Accel-Buffering", "no");
             return stream(c, async (stream) => {
-                // Send presentation ID immediately
-                await stream.write("event: created\n");
-                await stream.write(
-                    `data: ${JSON.stringify({ presentation_id: presentationId })}\n\n`
+                await stream.write(sseFrame("created", { presentation_id: presentationId }));
+                const keepAlive = setInterval(
+                    () => {
+                        void stream.write(": keepalive\n\n").catch(() => undefined);
+                    },
+                    positiveIntegerEnv("SSE_KEEPALIVE_INTERVAL_MS", 10000)
                 );
 
                 try {
@@ -177,6 +199,8 @@ presentations.post(
                     let title = "Untitled Presentation";
                     let sources: Source[] | undefined;
                     let tokensUsed = 0;
+                    let generationCompleted = false;
+                    let generationFailed = false;
 
                     // Stream presentation generation
                     for await (const event of presentationService.generatePresentationStream({
@@ -198,6 +222,15 @@ presentations.post(
                             theme = eventData.theme || theme;
                         }
 
+                        if (eventType === "retry") {
+                            allSlides.length = 0;
+                            theme = "default";
+                            title = "Untitled Presentation";
+                            sources = undefined;
+                            tokensUsed = 0;
+                            generationCompleted = false;
+                        }
+
                         if (eventType === "slide") {
                             const slide = eventData.slide;
                             if (slide) {
@@ -209,6 +242,7 @@ presentations.post(
                         }
 
                         if (eventType === "complete") {
+                            generationCompleted = true;
                             if (eventData.slides) {
                                 allSlides.length = 0;
                                 allSlides.push(...eventData.slides);
@@ -225,12 +259,25 @@ presentations.post(
                             tokensUsed = eventData.tokens_used || 0;
                         }
 
-                        // Stream event to frontend
-                        await stream.write(`event: ${eventType}\n`);
-                        await stream.write(`data: ${JSON.stringify(eventData)}\n\n`);
+                        if (eventType === "error") {
+                            generationFailed = true;
+                        }
+
+                        await stream.write(sseFrame(eventType, eventData));
                     }
 
-                    // Save final presentation data
+                    if (generationFailed || !generationCompleted) {
+                        await deleteIncompletePresentation(presentationId, userId);
+                        if (!generationFailed) {
+                            await stream.write(
+                                sseFrame("error", {
+                                    error: "Presentation generation ended before completion. Please try again.",
+                                })
+                            );
+                        }
+                        return;
+                    }
+
                     if (allSlides.length > 0) {
                         const finalTitle = (() => {
                             const trimmed = typeof title === "string" ? title.trim() : "";
@@ -304,28 +351,29 @@ presentations.post(
                             );
                         }
 
-                        await stream.write("event: saved\n");
                         await stream.write(
-                            `data: ${JSON.stringify({
+                            sseFrame("saved", {
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
-                            })}\n\n`
+                            })
                         );
                     } else {
                         console.error(`No slides generated for presentation ${presentationId}`);
-                        await presentationService.deletePresentation(presentationId, userId);
-                        await stream.write("event: error\n");
+                        await deleteIncompletePresentation(presentationId, userId);
                         await stream.write(
-                            `data: ${JSON.stringify({ error: "Failed to generate presentation content" })}\n\n`
+                            sseFrame("error", {
+                                error: "Failed to generate presentation content",
+                            })
                         );
                     }
                 } catch (error: unknown) {
                     const message = error instanceof Error ? error.message : "Unknown error";
                     console.error("Error during generation:", error);
-                    await presentationService.deletePresentation(presentationId, userId);
-                    await stream.write("event: error\n");
-                    await stream.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+                    await deleteIncompletePresentation(presentationId, userId);
+                    await stream.write(sseFrame("error", { error: message }));
+                } finally {
+                    clearInterval(keepAlive);
                 }
             });
         } catch (error: unknown) {
@@ -440,13 +488,25 @@ presentations.post(
                 return String(feedback);
             })();
 
+            c.header("Content-Type", "text/event-stream; charset=utf-8");
+            c.header("Cache-Control", "no-cache, no-transform");
+            c.header("X-Accel-Buffering", "no");
             return stream(c, async (stream) => {
+                const keepAlive = setInterval(
+                    () => {
+                        void stream.write(": keepalive\n\n").catch(() => undefined);
+                    },
+                    positiveIntegerEnv("SSE_KEEPALIVE_INTERVAL_MS", 10000)
+                );
+
                 try {
                     const allSlides: Slide[] = [];
                     let theme = "default";
                     let title = "Updated Presentation";
                     let tokensUsed = 0;
                     let sources: Source[] | undefined;
+                    let iterationCompleted = false;
+                    let iterationFailed = false;
 
                     for await (const event of presentationService.iteratePresentationStream({
                         userId,
@@ -465,6 +525,15 @@ presentations.post(
                             theme = eventData.theme || theme;
                         }
 
+                        if (eventType === "retry") {
+                            allSlides.length = 0;
+                            theme = "default";
+                            title = "Updated Presentation";
+                            tokensUsed = 0;
+                            sources = undefined;
+                            iterationCompleted = false;
+                        }
+
                         if (eventType === "slide") {
                             const slide = eventData.slide;
                             if (slide) {
@@ -476,6 +545,7 @@ presentations.post(
                         }
 
                         if (eventType === "complete") {
+                            iterationCompleted = true;
                             if (eventData.slides) {
                                 allSlides.length = 0;
                                 allSlides.push(...eventData.slides);
@@ -492,8 +562,22 @@ presentations.post(
                             tokensUsed = eventData.tokens_used || 0;
                         }
 
-                        await stream.write(`event: ${eventType}\n`);
-                        await stream.write(`data: ${JSON.stringify(eventData)}\n\n`);
+                        if (eventType === "error") {
+                            iterationFailed = true;
+                        }
+
+                        await stream.write(sseFrame(eventType, eventData));
+                    }
+
+                    if (iterationFailed || !iterationCompleted) {
+                        if (!iterationFailed) {
+                            await stream.write(
+                                sseFrame("error", {
+                                    error: "Presentation update ended before completion. Please try again.",
+                                })
+                            );
+                        }
+                        return;
                     }
 
                     if (allSlides.length > 0) {
@@ -555,25 +639,26 @@ presentations.post(
                             );
                         }
 
-                        await stream.write("event: saved\n");
                         await stream.write(
-                            `data: ${JSON.stringify({
+                            sseFrame("saved", {
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
-                            })}\n\n`
+                            })
                         );
                     } else {
-                        await stream.write("event: error\n");
                         await stream.write(
-                            `data: ${JSON.stringify({ error: "Failed to iterate presentation content" })}\n\n`
+                            sseFrame("error", {
+                                error: "Failed to iterate presentation content",
+                            })
                         );
                     }
                 } catch (error: unknown) {
                     const message = error instanceof Error ? error.message : "Unknown error";
                     console.error("Error during iteration:", error);
-                    await stream.write("event: error\n");
-                    await stream.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+                    await stream.write(sseFrame("error", { error: message }));
+                } finally {
+                    clearInterval(keepAlive);
                 }
             });
         } catch (error: unknown) {

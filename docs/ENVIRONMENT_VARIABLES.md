@@ -15,7 +15,7 @@ it directly when run outside the devenv process group.
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
-| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses `https://slidesage.app` with `/api/*` routed to the Worker, while the local value uses Vite's proxy |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses same-origin `/api/*` routes, while the local value uses Vite's proxy |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
 | `NODE_ENV` | No | `development` in devenv | Enables development-only behavior such as logging unsent OTPs |
 
@@ -32,6 +32,13 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 | `OPEN_ROUTER_SEARCH_MODEL` | No | `OPEN_ROUTER_MODEL` | Research summarization model |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
+| `OPEN_ROUTER_MAX_ATTEMPTS` | No | `3` | Maximum full generation attempts for transient, interrupted, or invalid responses |
+| `OPEN_ROUTER_REQUEST_TIMEOUT_MS` | No | `180000` | Maximum wait for OpenRouter to return response headers per attempt |
+| `OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS` | No | `120000` | Maximum silence between OpenRouter stream chunks before retrying |
+| `OPEN_ROUTER_RETRY_BASE_DELAY_MS` | No | `1000` | Initial retry backoff delay |
+| `OPEN_ROUTER_RETRY_MAX_DELAY_MS` | No | `30000` | Maximum retry delay, including provider `Retry-After` values |
+| `OPEN_ROUTER_MAX_RESPONSE_BYTES` | No | `8388608` | Maximum streamed response size accepted per attempt |
+| `SSE_KEEPALIVE_INTERVAL_MS` | No | `10000` | Interval for downstream SSE keepalive comments during slow generation |
 | `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
 
@@ -63,6 +70,11 @@ platform-provided `CF_PAGES_URL` or `VERCEL_URL`.
 
 Do not commit `.env`. Keep secrets in the deployment platform's secret store in
 production.
+
+Leave `VITE_API_URL` unset for the `slidesage.app` production build so browser
+requests use same-origin `/api/*` routes. As a deployment safeguard, production
+builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back
+to same-origin routes instead.
 
 For the Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL`, and other
 sensitive values with `wrangler secret put`. Keep `BASE_URL` and trusted origins
