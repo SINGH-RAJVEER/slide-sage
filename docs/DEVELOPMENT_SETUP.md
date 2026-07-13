@@ -82,6 +82,8 @@ the web origin during the all-in-one devenv workflow.
 Full-screen route, session, and presentation loading states, including the
 router hydration fallback, use `apps/Web/src/components/ui/loading-screen.tsx`
 and the standard shadcn spinner in `apps/Web/src/components/ui/spinner.tsx`.
+The full-screen spinner uses the same solid white foreground as the rest of the
+application.
 
 The workspace uses the native TypeScript 7 compiler pinned in the root package.
 Run `bun run type-check` to check the API, web app, database package, and shared

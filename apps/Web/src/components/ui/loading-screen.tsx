@@ -12,7 +12,7 @@ export function LoadingScreen({ className, label = "Loading", ...props }: Loadin
             className={cn("fixed inset-0 z-50 grid min-h-dvh w-full place-items-center", className)}
             {...props}
         >
-            <Spinner aria-label={label} className="h-9 w-9" />
+            <Spinner aria-label={label} className="h-9 w-9 text-white" />
         </div>
     );
 }
