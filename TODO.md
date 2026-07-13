@@ -12,4 +12,4 @@
 
 - Fix the fullscreen view
 - In the deployment sign out button does not function properly
-- When checking presentations, the entire page shouldnt load
+- When checking presentations, the entire page shouldnt load, instead just the part with the actual presentations listing
