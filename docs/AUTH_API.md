@@ -45,6 +45,9 @@ embedded as the authentication endpoint in a deployed browser bundle.
 
 Google and GitHub authentication buttons, along with the email sign-up action,
 provide immediate press feedback while respecting reduced-motion preferences.
+Email sign-in includes a Remember me checkbox. It is enabled by default for a
+persistent session; clearing it limits the session cookie to the current browser
+session.
 
 For local development, `BASE_URL` defaults to `http://localhost:8000` and the
 trusted origin defaults to `http://localhost:5173`.

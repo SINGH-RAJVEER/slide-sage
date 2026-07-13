@@ -18,6 +18,7 @@ export default function SignInPage() {
     const { isSignedIn, refreshSession } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +52,7 @@ export default function SignInPage() {
             const { error } = await authClient.signIn.email({
                 email,
                 password,
-                rememberMe: true,
+                rememberMe,
             });
 
             if (error) {
@@ -137,6 +138,20 @@ export default function SignInPage() {
                                     required
                                 />
                             </div>
+
+                            <label
+                                htmlFor="remember-me"
+                                className="flex w-fit cursor-pointer items-center gap-2 text-sm text-white/70"
+                            >
+                                <input
+                                    id="remember-me"
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(event) => setRememberMe(event.target.checked)}
+                                    className="h-4 w-4 cursor-pointer rounded border-white/25 bg-white/10 accent-white"
+                                />
+                                Remember me
+                            </label>
 
                             {error ? (
                                 <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
