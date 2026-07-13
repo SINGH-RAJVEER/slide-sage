@@ -3,8 +3,14 @@
 import { describe, expect, it, mock } from "bun:test";
 import { render } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
+import type { User } from "@/contexts/AuthContext";
 
-const mockAuthState = {
+const mockAuthState: {
+    user: User | null;
+    loading: boolean;
+    isSignedIn: boolean;
+    signOut: () => Promise<void>;
+} = {
     user: null,
     loading: false,
     isSignedIn: false,

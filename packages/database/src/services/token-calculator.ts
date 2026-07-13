@@ -225,8 +225,8 @@ export class TokenCalculator {
 
         return {
             multiplier,
-            description: descriptions[detailLevel] || descriptions.balanced,
-            costFactor: costFactors[detailLevel] || costFactors.balanced,
+            description: descriptions[detailLevel] || descriptions["balanced"] || "",
+            costFactor: costFactors[detailLevel] || costFactors["balanced"] || "",
         };
     }
 
@@ -256,8 +256,8 @@ export class TokenCalculator {
 
         return {
             multiplier,
-            description: descriptions[tonality] || descriptions.professional,
-            costFactor: costFactors[tonality] || costFactors.professional,
+            description: descriptions[tonality] || descriptions["professional"] || "",
+            costFactor: costFactors[tonality] || costFactors["professional"] || "",
         };
     }
 

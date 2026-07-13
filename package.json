@@ -7,25 +7,32 @@
         "packages/*"
     ],
     "scripts": {
-        "build": "nx run-many -t build",
-        "build:web": "nx run slide-sage-web:build",
-        "deploy:apis": "nx run slide-sage-apis:deploy",
-        "dev": "nx run-many -t dev --parallel",
-        "dev:stream": "nx run-many -t dev --parallel --output-style=stream",
-        "dev:apis": "nx run slide-sage-apis:dev",
-        "dev:web": "nx run slide-sage-web:dev",
+        "build": "bun run build:web",
+        "build:web": "bun --cwd apps/Web build",
+        "deploy:apis": "bun --cwd apps/APIs deploy",
+        "dev": "just apps",
+        "dev:stream": "bun run dev",
+        "dev:apis": "bun --cwd apps/APIs dev",
+        "dev:web": "bun --cwd apps/Web dev",
         "test": "bun run test:apis && bun run test:web",
         "test:apis": "bun --cwd apps/APIs test",
         "test:web": "bun --cwd apps/Web test",
-        "lint": "nx run-many -t lint",
-        "lint:apis": "nx run slide-sage-apis:lint",
-        "lint:web": "nx run slide-sage-web:lint",
-        "format": "nx run-many -t format",
-        "format:apis": "nx run slide-sage-apis:format",
-        "format:web": "nx run slide-sage-web:format"
+        "type-check": "bun run type-check:apis && bun run type-check:web && bun run type-check:database && bun run type-check:types",
+        "type-check:apis": "bun node_modules/typescript/bin/tsc -p apps/APIs/tsconfig.json --tsBuildInfoFile node_modules/.cache/slide-sage-apis.tsbuildinfo",
+        "type-check:web": "bun node_modules/typescript/bin/tsc -p apps/Web/tsconfig.json --tsBuildInfoFile node_modules/.cache/slide-sage-web.tsbuildinfo",
+        "type-check:database": "bun node_modules/typescript/bin/tsc -p packages/database/tsconfig.json --tsBuildInfoFile node_modules/.cache/slide-sage-database.tsbuildinfo",
+        "type-check:types": "bun node_modules/typescript/bin/tsc -p packages/types/tsconfig.json --tsBuildInfoFile node_modules/.cache/slide-sage-types.tsbuildinfo",
+        "lint": "bun --cwd apps/APIs lint && bun --cwd apps/Web lint && bun --cwd packages/database lint && bun --cwd packages/types lint",
+        "lint:apis": "bun --cwd apps/APIs lint",
+        "lint:web": "bun --cwd apps/Web lint",
+        "format": "bun --cwd apps/APIs format && bun --cwd apps/Web format && bun --cwd packages/database format && bun --cwd packages/types format",
+        "format:apis": "bun --cwd apps/APIs format",
+        "format:web": "bun --cwd apps/Web format"
     },
     "devDependencies": {
-        "nx": "latest"
+        "@biomejs/biome": "^2.4.7",
+        "@types/bun": "1.3.13",
+        "typescript": "^7.0.2"
     },
     "trustedDependencies": [],
     "packageManager": "bun@1.3.10"

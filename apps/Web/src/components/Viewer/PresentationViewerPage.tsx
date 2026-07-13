@@ -51,8 +51,8 @@ export default function PresentationViewerPage() {
     const locationState = location.state as ViewerLocationState | undefined;
 
     const presentationIdFromParams = useMemo(() => {
-        return params.presentationId || undefined;
-    }, [params.presentationId]);
+        return params["presentationId"] || undefined;
+    }, [params["presentationId"]]);
 
     const isStreamingMode = locationState?.isStreaming === true;
 
@@ -174,9 +174,16 @@ export default function PresentationViewerPage() {
     useEffect(() => {
         if (!streamingState.isComplete || streamingState.isStreaming) return;
         const id = streamingState.presentationId ?? presentationId;
-        if (!id || params.presentationId) return;
+        if (!id || params["presentationId"]) return;
         navigate(ROUTES.presentationById(id), { replace: true });
-    }, [streamingState.isComplete, streamingState.isStreaming, streamingState.presentationId, presentationId, params.presentationId, navigate]);
+    }, [
+        streamingState.isComplete,
+        streamingState.isStreaming,
+        streamingState.presentationId,
+        presentationId,
+        params,
+        navigate,
+    ]);
 
     // Reset to first slide when streaming completes
     useEffect(() => {
@@ -270,6 +277,8 @@ export default function PresentationViewerPage() {
     if (!presentation) {
         return null;
     }
+
+    const activeSlide = presentation.slides[navigation.currentSlide];
 
     return (
         <div
@@ -372,12 +381,12 @@ export default function PresentationViewerPage() {
                     />
                 )}
 
-                {isFullscreenMode && (
+                {isFullscreenMode && activeSlide && (
                     <div className="flex-1 flex flex-col items-center justify-center overflow-auto">
                         <div className="ss-slide-stage">
                             <Card className="w-full h-full rounded-none bg-black flex items-center justify-center">
                                 <SlideRenderer
-                                    slide={presentation.slides[navigation.currentSlide]}
+                                    slide={activeSlide}
                                     currentTemplate={currentTemplate}
                                     isActive={true}
                                 />

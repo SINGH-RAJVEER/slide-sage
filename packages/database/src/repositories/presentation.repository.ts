@@ -20,6 +20,10 @@ export class PresentationRepository {
             })
             .returning();
 
+        if (!presentation) {
+            throw new Error("Failed to create presentation");
+        }
+
         return presentation;
     }
 
@@ -47,7 +51,7 @@ export class PresentationRepository {
             .from(presentations)
             .where(eq(presentations.userId, userId));
 
-        const total = Number(countResult.count);
+        const total = Number(countResult?.count ?? 0);
 
         // Get paginated results
         const userPresentations = await db

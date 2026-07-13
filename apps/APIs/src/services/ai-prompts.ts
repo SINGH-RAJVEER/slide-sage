@@ -1,6 +1,6 @@
 // AI Service Prompts and Configuration
 
-const DETAIL_LEVEL_GUIDE: Record<string, { description: string; example: string }> = {
+const DETAIL_LEVEL_GUIDE = {
     brief: {
         description:
             "Brief - Minimal content with key highlights only. Focus on visual impact and headlines.",
@@ -30,9 +30,9 @@ const DETAIL_LEVEL_GUIDE: Record<string, { description: string; example: string 
         example:
             "Use 6+ bullet points or paragraphs. Extensive text (25+ words). Deep analysis, context, and footnotes.",
     },
-};
+} satisfies Record<string, { description: string; example: string }>;
 
-const TONALITY_GUIDE: Record<string, { description: string; example: string }> = {
+const TONALITY_GUIDE = {
     professional: {
         description:
             "Professional - Business-appropriate, objective, and polished. Trustworthy and authoritative.",
@@ -56,7 +56,7 @@ const TONALITY_GUIDE: Record<string, { description: string; example: string }> =
         example:
             'Use strong calls-to-action, rhetorical questions, and benefit-driven language. Focus on the "why" and the value proposition.',
     },
-};
+} satisfies Record<string, { description: string; example: string }>;
 
 // Base system prompt template for presentation generation
 const GENERATION_SYSTEM_PROMPT_TEMPLATE = `
@@ -337,8 +337,14 @@ IMPORTANT NOTE ON CONTEXT:
 `;
 
 export function buildGenerationPrompt(detailLevel = "balanced", tonality = "professional"): string {
-    const selectedDetail = DETAIL_LEVEL_GUIDE[detailLevel] || DETAIL_LEVEL_GUIDE.balanced;
-    const selectedTonality = TONALITY_GUIDE[tonality] || TONALITY_GUIDE.professional;
+    const selectedDetail =
+        detailLevel in DETAIL_LEVEL_GUIDE
+            ? DETAIL_LEVEL_GUIDE[detailLevel as keyof typeof DETAIL_LEVEL_GUIDE]
+            : DETAIL_LEVEL_GUIDE.balanced;
+    const selectedTonality =
+        tonality in TONALITY_GUIDE
+            ? TONALITY_GUIDE[tonality as keyof typeof TONALITY_GUIDE]
+            : TONALITY_GUIDE.professional;
 
     return GENERATION_SYSTEM_PROMPT_TEMPLATE.replace(
         "{detail_description}",
@@ -356,8 +362,14 @@ export function buildIterationPrompt(
     detailLevel = "balanced",
     tonality = "professional"
 ): string {
-    const selectedDetail = DETAIL_LEVEL_GUIDE[detailLevel] || DETAIL_LEVEL_GUIDE.balanced;
-    const selectedTonality = TONALITY_GUIDE[tonality] || TONALITY_GUIDE.professional;
+    const selectedDetail =
+        detailLevel in DETAIL_LEVEL_GUIDE
+            ? DETAIL_LEVEL_GUIDE[detailLevel as keyof typeof DETAIL_LEVEL_GUIDE]
+            : DETAIL_LEVEL_GUIDE.balanced;
+    const selectedTonality =
+        tonality in TONALITY_GUIDE
+            ? TONALITY_GUIDE[tonality as keyof typeof TONALITY_GUIDE]
+            : TONALITY_GUIDE.professional;
 
     const basePrompt = ITERATION_SYSTEM_PROMPT_TEMPLATE.replace(
         "{detail_description}",

@@ -52,7 +52,7 @@ Run commands inside `devenv shell`.
 | `just test` | Run API and web tests |
 | `just lint` | Run Biome checks |
 | `just format` | Format the repository |
-| `bun run build` | Build all applications with Nx |
+| `bun run build` | Build the web application with Bun and Vite |
 
 ## Repository
 
@@ -69,7 +69,7 @@ devenv.nix      Local toolchain and service orchestration
 Justfile        Common development commands
 ```
 
-The workspace uses Bun, Nx, TypeScript, Biome, PostgreSQL 17 with pgvector,
+The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector,
 OpenRouter, Exa, Better Auth, Resend, and Razorpay.
 
 ## Documentation

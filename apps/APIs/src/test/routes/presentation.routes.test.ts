@@ -399,6 +399,7 @@ describe("presentation routes", () => {
                 {
                     id: "presentation_1",
                     title: "Deck",
+                    prompt: "Topic",
                     slidesData: { slides: [{ id: "slide_1" }, { id: "slide_2" }] },
                     createdAt,
                     updatedAt: createdAt,
@@ -414,6 +415,7 @@ describe("presentation routes", () => {
                 {
                     id: "presentation_1",
                     title: "Deck",
+                    prompt: "Topic",
                     slide_count: 2,
                     created_at: createdAt.toISOString(),
                     updated_at: createdAt.toISOString(),

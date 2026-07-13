@@ -1,3 +1,4 @@
+import type { ChartOptions } from "chart.js";
 import {
     ArcElement,
     BarElement,
@@ -13,6 +14,7 @@ import {
 } from "chart.js";
 import type React from "react";
 import { Bar, Doughnut, Line, Pie, PolarArea, Radar } from "react-chartjs-2";
+import type { ChartConfig } from "@/modules/types/presentation";
 
 // Register Chart.js components
 ChartJS.register(
@@ -28,26 +30,8 @@ ChartJS.register(
     Legend,
 );
 
-interface ChartData {
-    type: "bar" | "line" | "pie" | "doughnut" | "radar" | "polarArea";
-    data: {
-        labels: string[];
-        datasets: Array<{
-            label: string;
-            data: number[];
-            backgroundColor?: string | string[];
-            borderColor?: string | string[];
-            borderWidth?: number;
-            fill?: boolean;
-        }>;
-    };
-    options?: Record<string, unknown>;
-    title?: string;
-    description?: string;
-}
-
 interface ChartRendererProps {
-    chartConfig: ChartData;
+    chartConfig: ChartConfig;
     className?: string;
     textColor?: string;
     isActive?: boolean;
@@ -84,7 +68,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
                 color: textColor,
                 font: {
                     size: 18,
-                    weight: "bold",
+                    weight: "bold" as const,
                 },
             },
             tooltip: {
@@ -133,19 +117,29 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 
         switch (chartConfig.type) {
             case "bar":
-                return <Bar {...commonProps} />;
+                return <Bar {...commonProps} options={mergedOptions as ChartOptions<"bar">} />;
             case "line":
-                return <Line {...commonProps} />;
+                return <Line {...commonProps} options={mergedOptions as ChartOptions<"line">} />;
             case "pie":
-                return <Pie {...commonProps} />;
+                return <Pie {...commonProps} options={mergedOptions as ChartOptions<"pie">} />;
             case "doughnut":
-                return <Doughnut {...commonProps} />;
+                return (
+                    <Doughnut
+                        {...commonProps}
+                        options={mergedOptions as ChartOptions<"doughnut">}
+                    />
+                );
             case "radar":
-                return <Radar {...commonProps} />;
+                return <Radar {...commonProps} options={mergedOptions as ChartOptions<"radar">} />;
             case "polarArea":
-                return <PolarArea {...commonProps} />;
+                return (
+                    <PolarArea
+                        {...commonProps}
+                        options={mergedOptions as ChartOptions<"polarArea">}
+                    />
+                );
             default:
-                return <Bar {...commonProps} />;
+                return <Bar {...commonProps} options={mergedOptions as ChartOptions<"bar">} />;
         }
     };
 

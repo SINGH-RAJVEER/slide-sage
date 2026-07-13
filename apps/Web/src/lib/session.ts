@@ -19,7 +19,7 @@ function wait(delayMs: number): Promise<void> {
 
 export async function fetchSessionWithRetry(
     fetchSession: typeof fetch = fetch,
-    retryDelaysMs = SESSION_RETRY_DELAYS_MS
+    retryDelaysMs = SESSION_RETRY_DELAYS_MS,
 ): Promise<SessionUser | null> {
     let lastError: unknown;
 

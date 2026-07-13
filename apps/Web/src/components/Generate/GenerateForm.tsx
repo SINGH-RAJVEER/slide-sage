@@ -1,6 +1,6 @@
-import { Loader2 } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { TopicInput } from "./TopicInput";
 
 interface GenerateFormProps {
@@ -11,6 +11,7 @@ interface GenerateFormProps {
     estimatedTokens: number;
     onPromptChange: (value: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onSubmitPrompt: () => void;
     onRemoveTopic: (topic: string) => void;
     onEditTopic: (index: number, value: string) => void;
     onAddTopic: (topic: string) => void;
@@ -36,6 +37,7 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
     estimatedTokens,
     onPromptChange,
     onKeyDown,
+    onSubmitPrompt,
     onRemoveTopic,
     onEditTopic,
     onAddTopic,
@@ -72,6 +74,7 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
                 topics={topics}
                 onPromptChange={onPromptChange}
                 onKeyDown={onKeyDown}
+                onSubmitPrompt={onSubmitPrompt}
                 onRemoveTopic={onRemoveTopic}
                 onEditTopic={onEditTopic}
                 disabled={loading}
@@ -86,7 +89,7 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
                     <span className="flex items-center gap-2 text-sm font-semibold">
                         {loading ? (
                             <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Spinner />
                                 Creating...
                             </>
                         ) : (

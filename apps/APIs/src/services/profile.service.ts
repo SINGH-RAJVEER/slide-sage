@@ -1,30 +1,28 @@
 import { accounts, db, users } from "@slide-sage/database";
+import type { UpdateProfileRequest, UserProfile } from "@slide-sage/types";
 import { and, eq } from "drizzle-orm";
-
-type ProfileUser = Pick<
-    typeof users.$inferSelect,
-    | "id"
-    | "name"
-    | "email"
-    | "image"
-    | "emailVerified"
-    | "slideTokens"
-    | "createdAt"
->;
 
 type EditableProfileFields = Partial<Pick<typeof users.$inferInsert, "name" | "email" | "image">>;
 
-type ProfileMutationResult = {
-    success: boolean;
-    error?: string;
-    user?: ProfileUser;
-};
+type ProfileMutationResult =
+    | { success: true; user: UserProfile }
+    | { success: false; error: string };
 
-type AvatarMutationResult = {
-    success: boolean;
-    error?: string;
-    user?: Pick<typeof users.$inferSelect, "id" | "image">;
-};
+type AvatarMutationResult =
+    | { success: true; user: Pick<UserProfile, "id" | "image"> }
+    | { success: false; error: string };
+
+function toUserProfile(user: typeof users.$inferSelect): UserProfile {
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        emailVerified: user.emailVerified,
+        slideTokens: user.slideTokens,
+        createdAt: user.createdAt.toISOString(),
+    };
+}
 
 /**
  * Hash password using SHA-256
@@ -40,7 +38,7 @@ async function hashPassword(password: string): Promise<string> {
 /**
  * Get user profile
  */
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<ProfileMutationResult> {
     try {
         const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
@@ -50,15 +48,7 @@ export async function getUserProfile(userId: string) {
 
         return {
             success: true,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                image: user.image,
-                emailVerified: user.emailVerified,
-                slideTokens: user.slideTokens,
-                createdAt: user.createdAt,
-            },
+            user: toUserProfile(user),
         };
     } catch (error) {
         console.error("Get profile error:", error);
@@ -74,12 +64,7 @@ export async function getUserProfile(userId: string) {
  */
 export async function updateUserProfile(
     userId: string,
-    data: {
-        name?: string;
-        email?: string;
-        currentPassword?: string;
-        newPassword?: string;
-    }
+    data: UpdateProfileRequest
 ): Promise<ProfileMutationResult> {
     try {
         const user = await db.query.users.findFirst({
@@ -131,15 +116,7 @@ export async function updateUserProfile(
             if (data.newPassword) {
                 return {
                     success: true,
-                    user: {
-                        id: user.id,
-                        name: user.name,
-                        email: user.email,
-                        image: user.image,
-                        emailVerified: user.emailVerified,
-                        slideTokens: user.slideTokens,
-                        createdAt: user.createdAt,
-                    },
+                    user: toUserProfile(user),
                 };
             }
 
@@ -149,23 +126,14 @@ export async function updateUserProfile(
         // Update user
         const result = await db.update(users).set(updates).where(eq(users.id, userId)).returning();
 
-        if (!result || result.length === 0) {
+        const updatedUser = result[0];
+        if (!updatedUser) {
             return { success: false, error: "Failed to update profile" };
         }
 
-        const updatedUser = result[0];
-
         return {
             success: true,
-            user: {
-                id: updatedUser.id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                image: updatedUser.image,
-                emailVerified: updatedUser.emailVerified,
-                slideTokens: updatedUser.slideTokens,
-                createdAt: updatedUser.createdAt,
-            },
+            user: toUserProfile(updatedUser),
         };
     } catch (error) {
         console.error("Update profile error:", error);
@@ -194,11 +162,10 @@ export async function updateUserAvatar(
             .where(eq(users.id, userId))
             .returning();
 
-        if (!result || result.length === 0) {
+        const updatedUser = result[0];
+        if (!updatedUser) {
             return { success: false, error: "Failed to update avatar" };
         }
-
-        const updatedUser = result[0];
 
         return {
             success: true,

@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useAuth } from "@/contexts/AuthContext";
 
 function buildRedirectUrl(location: ReturnType<typeof useLocation>) {
@@ -12,11 +13,7 @@ export default function RequireSignedInLayout() {
     const { isSignedIn, loading } = useAuth();
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-transparent flex items-center justify-center">
-                <div className="text-white">Loading...</div>
-            </div>
-        );
+        return <LoadingScreen label="Checking session" />;
     }
 
     return <>{isSignedIn ? <Outlet /> : <Navigate to={buildRedirectUrl(location)} replace />}</>;

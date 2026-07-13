@@ -43,8 +43,9 @@ The production frontend ignores loopback `VITE_API_URL` values and uses the
 current site origin. This prevents local development configuration from being
 embedded as the authentication endpoint in a deployed browser bundle.
 
-Google and GitHub authentication buttons, along with the email sign-up action,
-provide immediate press feedback while respecting reduced-motion preferences.
+Google and GitHub authentication buttons, along with the email sign-up and
+sign-in actions, provide immediate press feedback while respecting
+reduced-motion preferences.
 Email sign-in includes a Remember me checkbox. It is enabled by default for a
 persistent session; clearing it limits the session cookie to the current browser
 session.

@@ -16,7 +16,8 @@ const tableNames = [
 ] as const;
 
 type TableName = (typeof tableNames)[number];
-type InsertedRows = Record<TableName, unknown[]>;
+type InsertedRow = Record<string, unknown>;
+type InsertedRows = Record<TableName, InsertedRow[]>;
 
 type TableRef = {
     __name: TableName;
@@ -28,7 +29,9 @@ type ColumnRef = {
     op: (operator: string) => { table: TableName; column: string; operator: string };
 };
 
-const insertedRows = Object.fromEntries(tableNames.map((name) => [name, []])) as InsertedRows;
+const insertedRows = Object.fromEntries(
+    tableNames.map((name) => [name, [] as InsertedRow[]])
+) as InsertedRows;
 
 const deletedTables: TableName[] = [];
 
@@ -94,11 +97,8 @@ const db = {
         const name = getTableName(table);
         return {
             values: (value: unknown) => {
-                if (Array.isArray(value)) {
-                    insertedRows[name].push(...value);
-                } else {
-                    insertedRows[name].push(value);
-                }
+                const rows = (Array.isArray(value) ? value : [value]) as InsertedRow[];
+                insertedRows[name].push(...rows);
 
                 return {
                     returning: () => Promise.resolve([{ id: `${name}_1` }]),
@@ -168,20 +168,20 @@ function stubEmbeddingGeneration(service: InstanceType<typeof RAGService>): void
 describe("RAGService semantic embeddings", () => {
     beforeEach(() => {
         resetRows();
-        process.env.EMBEDDING_MODEL = freeEmbeddingModel;
-        process.env.OPEN_ROUTER_API_KEY = "test-openrouter-key";
-        process.env.OPEN_ROUTER_EMBEDDINGS_URL = "https://openrouter.ai/api/v1/embeddings";
-        globalThis.fetch = mock();
+        process.env["EMBEDDING_MODEL"] = freeEmbeddingModel;
+        process.env["OPEN_ROUTER_API_KEY"] = "test-openrouter-key";
+        process.env["OPEN_ROUTER_EMBEDDINGS_URL"] = "https://openrouter.ai/api/v1/embeddings";
+        globalThis.fetch = mock() as unknown as typeof fetch;
     });
 
     it("uses the free OpenRouter embedding model and 768 dimensions in embedding requests", async () => {
-        const fetchMock = mock(async () => {
+        const fetchMock = mock(async (_input: string | URL | Request, _init?: RequestInit) => {
             return new Response(JSON.stringify({ data: [{ embedding: [0.1, 0.2, 0.3] }] }), {
                 status: 200,
                 headers: { "Content-Type": "application/json" },
             });
         });
-        globalThis.fetch = fetchMock as typeof fetch;
+        globalThis.fetch = fetchMock as unknown as typeof fetch;
 
         const service = new RAGService();
         const result = await service.generateEmbedding("investor pitch deck");
@@ -194,6 +194,7 @@ describe("RAGService semantic embeddings", () => {
             model: string;
             dimensions: number;
             input: string;
+            encoding_format: string;
         };
 
         expect(body).toEqual({
@@ -290,8 +291,8 @@ describe("RAGService semantic embeddings", () => {
                 retrievedAt: "2026-07-01T00:00:00.000Z",
             }),
         });
-        expect(insertedRows.source_chunks[0]?.chunkText).toContain("Author: Analyst");
-        expect(insertedRows.source_chunks[0]?.chunkText).toContain(
+        expect(insertedRows.source_chunks[0]?.["chunkText"]).toContain("Author: Analyst");
+        expect(insertedRows.source_chunks[0]?.["chunkText"]).toContain(
             "Highlights: Market growth accelerated in 2026."
         );
     });

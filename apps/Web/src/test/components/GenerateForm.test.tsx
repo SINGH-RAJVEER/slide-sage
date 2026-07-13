@@ -13,6 +13,7 @@ function renderGenerateForm(overrides: Partial<React.ComponentProps<typeof Gener
         estimatedTokens: 0,
         onPromptChange: mock(),
         onKeyDown: mock(),
+        onSubmitPrompt: mock(),
         onRemoveTopic: mock(),
         onEditTopic: mock(),
         onAddTopic: mock(),
@@ -52,6 +53,7 @@ describe("GenerateForm", () => {
                 estimatedTokens={4.5}
                 onPromptChange={mock()}
                 onKeyDown={mock()}
+                onSubmitPrompt={mock()}
                 onRemoveTopic={mock()}
                 onEditTopic={mock()}
                 onAddTopic={mock()}
@@ -102,5 +104,17 @@ describe("GenerateForm", () => {
 
         expect(getByText("Creating...")).toBeInTheDocument();
         expect(getByText("Creating...").closest("button")).toBeDisabled();
+    });
+
+    it("submits the current prompt when Enter is pressed", () => {
+        const onSubmitPrompt = mock();
+        const { getByPlaceholderText } = renderGenerateForm({
+            prompt: "Customer retention strategy",
+            onSubmitPrompt,
+        });
+
+        fireEvent.submit(getByPlaceholderText("What's on your mind ?").closest("form")!);
+
+        expect(onSubmitPrompt).toHaveBeenCalledTimes(1);
     });
 });

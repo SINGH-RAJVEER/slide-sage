@@ -62,25 +62,18 @@ export default function GeneratePPTPage() {
         return () => window.removeEventListener("keydown", handleGlobalKeyDown);
     }, []);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
+    const getTopicsWithPrompt = () => {
+        const nextPrompt = prompt.trim();
+        if (!nextPrompt || topics.includes(nextPrompt)) return topics;
+        return [...topics, nextPrompt];
+    };
 
-            if (e.shiftKey) {
-                if (prompt.trim() && !topics.includes(prompt.trim())) {
-                    setTopics([...topics, prompt.trim()]);
-                }
-                if (topics.length > 0 || prompt.trim()) {
-                    setTimeout(() => handleGenerate(), 0);
-                }
-                return;
-            }
-
-            if (prompt.trim() && !topics.includes(prompt.trim())) {
-                setTopics([...topics, prompt.trim()]);
-            }
-            setPrompt("");
+    const handleSubmitPrompt = () => {
+        const nextTopics = getTopicsWithPrompt();
+        if (nextTopics !== topics) {
+            setTopics(nextTopics);
         }
+        setPrompt("");
     };
 
     const handleRemoveTopic = (topicToRemove: string) => {
@@ -97,8 +90,8 @@ export default function GeneratePPTPage() {
         setTopics((prev) => prev.map((topic, i) => (i === index ? value : topic)));
     };
 
-    const handleGenerateInternal = async () => {
-        if (topics.length === 0) return;
+    const handleGenerateInternal = async (selectedTopics = topics) => {
+        if (selectedTopics.length === 0) return;
 
         setLoading(true);
         setError("");
@@ -109,7 +102,7 @@ export default function GeneratePPTPage() {
         if (useWebResearch) {
             navigate(ROUTES.research, {
                 state: {
-                    prompt: topics.join(", "),
+                    prompt: selectedTopics.join(", "),
                     slideCount: count,
                     detailLevel,
                     tonality,
@@ -119,7 +112,7 @@ export default function GeneratePPTPage() {
         }
 
         const success = await startStreaming(
-            topics.join(", "),
+            selectedTopics.join(", "),
             count,
             detailLevel,
             tonality,
@@ -131,10 +124,26 @@ export default function GeneratePPTPage() {
         }
     };
 
-    const handleGenerate = useDebouncedCallback(handleGenerateInternal, {
+    const debouncedGenerate = useDebouncedCallback(handleGenerateInternal, {
         wait: 500,
         leading: true,
     });
+
+    const handleGenerate = () => {
+        debouncedGenerate(topics);
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key !== "Enter" || !event.shiftKey) return;
+
+        event.preventDefault();
+        const nextTopics = getTopicsWithPrompt();
+        if (nextTopics.length === 0) return;
+
+        setTopics(nextTopics);
+        setPrompt("");
+        debouncedGenerate(nextTopics);
+    };
 
     const calculateEstimatedTokens = () => {
         const count =
@@ -196,6 +205,7 @@ export default function GeneratePPTPage() {
                             estimatedTokens={calculateEstimatedTokens()}
                             onPromptChange={setPrompt}
                             onKeyDown={handleKeyDown}
+                            onSubmitPrompt={handleSubmitPrompt}
                             onRemoveTopic={handleRemoveTopic}
                             onEditTopic={handleEditTopic}
                             onAddTopic={handleAddTopic}

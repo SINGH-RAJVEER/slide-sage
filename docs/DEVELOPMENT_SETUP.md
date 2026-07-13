@@ -39,6 +39,7 @@ Run these from the repository root inside `devenv shell`.
 | Command | Action |
 | --- | --- |
 | `just dev` | Start the complete development stack |
+| `just apps` | Start the API and web development servers in parallel |
 | `just apis` | Start the API with watch mode |
 | `just web` | Start Vite |
 | `just db-shell` | Connect to the local database with `psql` |
@@ -53,8 +54,18 @@ Run these from the repository root inside `devenv shell`.
 | `just lint-fix` | Apply safe Biome fixes |
 | `just format` | Format the repository |
 
-Root Bun scripts also expose Nx tasks such as `bun run build`, `bun run dev`,
-and app-specific build, test, lint, and format commands.
+The repository is a native Bun workspace. Root scripts run package commands
+directly through Bun without a separate monorepo task runner.
+
+| Command | Action |
+| --- | --- |
+| `bun run dev` | Run `just apps` |
+| `bun run build` | Build the web application |
+| `bun run deploy:apis` | Deploy the API with Wrangler |
+| `bun run test` | Run API and web tests |
+| `bun run type-check` | Type-check all workspace projects |
+| `bun run lint` | Lint every workspace package |
+| `bun run format` | Format every workspace package |
 
 ## Local URLs
 
@@ -67,6 +78,14 @@ and app-specific build, test, lint, and format commands.
 
 Vite proxies API requests to port `8000`. `VITE_API_URL` therefore defaults to
 the web origin during the all-in-one devenv workflow.
+
+Full-screen route, session, and presentation loading states, including the
+router hydration fallback, use `apps/Web/src/components/ui/loading-screen.tsx`
+and the standard shadcn spinner in `apps/Web/src/components/ui/spinner.tsx`.
+
+The workspace uses the native TypeScript 7 compiler pinned in the root package.
+Run `bun run type-check` to check the API, web app, database package, and shared
+types with their project-specific configurations.
 
 ## Resetting PostgreSQL
 

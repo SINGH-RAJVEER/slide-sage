@@ -1,7 +1,6 @@
 node_modules/
 .env
 .turbo
-.nx
 
 # nix
 .devenv/

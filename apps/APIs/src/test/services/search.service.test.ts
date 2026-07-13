@@ -25,7 +25,7 @@ describe("SearchService", () => {
     beforeEach(() => {
         exaSearch.mockReset();
         exaApiKeys.length = 0;
-        delete process.env.EXA_API_KEY;
+        delete process.env["EXA_API_KEY"];
     });
 
     it("skips web search when Exa is not configured", async () => {
@@ -39,7 +39,7 @@ describe("SearchService", () => {
     });
 
     it("searches Exa with highlights, summaries, filters, and normalized source metadata", async () => {
-        process.env.EXA_API_KEY = "exa_test_key";
+        process.env["EXA_API_KEY"] = "exa_test_key";
         exaSearch.mockResolvedValue({
             results: [
                 {

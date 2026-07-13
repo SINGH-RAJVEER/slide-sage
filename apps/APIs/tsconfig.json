@@ -5,7 +5,6 @@
         "jsx": "preserve",
         "allowJs": true,
         "types": ["bun"],
-        "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"]
         }

@@ -222,7 +222,11 @@ function removeTrailingCommas(input: string): string {
 
         if (!inString && ch === ",") {
             let j = i + 1;
-            while (j < input.length && /\s/.test(input[j])) j++;
+            while (j < input.length) {
+                const whitespace = input[j];
+                if (!whitespace || !/\s/.test(whitespace)) break;
+                j++;
+            }
 
             const next = input[j];
             if (next === "}" || next === "]") continue;

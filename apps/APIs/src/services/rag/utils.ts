@@ -26,8 +26,9 @@ export function buildSlideSummary(slide: Slide, index: number): { title: string;
     const slideRecord = slide as Slide & Record<string, unknown>;
     const html = typeof slideRecord.html === "string" ? slideRecord.html : "";
     const title = extractSlideTitle(slideRecord, html) || `Slide ${index + 1}`;
-    const notes = typeof slideRecord.notes === "string" ? slideRecord.notes : "";
-    const explicitContent = typeof slideRecord.content === "string" ? slideRecord.content : "";
+    const notes = typeof slideRecord["notes"] === "string" ? slideRecord["notes"] : "";
+    const explicitContent =
+        typeof slideRecord["content"] === "string" ? slideRecord["content"] : "";
     const htmlText = html ? stripHtml(html) : "";
     const chartSummary =
         "chartConfig" in slide ? truncateText(JSON.stringify(slide.chartConfig), 700) : "";
@@ -68,9 +69,9 @@ export function serializeSlides(slides: Slide[]): string {
 }
 
 export function getSlideId(slide: Slide, index: number): string {
-    const slideRecord = slide as Record<string, unknown>;
-    return typeof slideRecord.id === "string" && slideRecord.id.trim()
-        ? slideRecord.id.trim()
+    const slideRecord = slide as unknown as Record<string, unknown>;
+    return typeof slideRecord["id"] === "string" && slideRecord["id"].trim()
+        ? slideRecord["id"].trim()
         : `slide-${index + 1}`;
 }
 
@@ -177,8 +178,8 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 function extractSlideTitle(slide: Record<string, unknown>, html: string): string {
-    if (typeof slide.title === "string" && slide.title.trim()) {
-        return truncateText(slide.title.trim(), 180);
+    if (typeof slide["title"] === "string" && slide["title"].trim()) {
+        return truncateText(slide["title"].trim(), 180);
     }
 
     const headingMatch = html.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);

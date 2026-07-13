@@ -29,7 +29,7 @@ interface StreamingContextValue {
     ) => Promise<boolean>;
     startIterating: (
         prompt: string,
-        parentPresentationId: number,
+        parentPresentationId: string,
         slideCount: number,
         detailLevel: string,
         tonality: string,
@@ -412,7 +412,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
     const startIterating = useCallback(
         async (
             prompt: string,
-            parentPresentationId: number,
+            parentPresentationId: string,
             slideCount: number,
             detailLevel: string,
             tonality: string,

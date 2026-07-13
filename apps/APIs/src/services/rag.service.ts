@@ -66,7 +66,7 @@ export class RAGService {
     private defaultSemanticCommandsSeeded = false;
 
     constructor() {
-        this.embeddingModel = process.env.EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL;
+        this.embeddingModel = process.env["EMBEDDING_MODEL"] || DEFAULT_EMBEDDING_MODEL;
     }
 
     /**
@@ -85,20 +85,21 @@ export class RAGService {
                 dimensions: 768,
             };
 
-            const apiKey = process.env.OPEN_ROUTER_API_KEY;
+            const apiKey = process.env["OPEN_ROUTER_API_KEY"];
             if (!apiKey) {
                 throw new Error("OPEN_ROUTER_API_KEY is not set");
             }
 
             const embeddingsUrl =
-                process.env.OPEN_ROUTER_EMBEDDINGS_URL || "https://openrouter.ai/api/v1/embeddings";
+                process.env["OPEN_ROUTER_EMBEDDINGS_URL"] ||
+                "https://openrouter.ai/api/v1/embeddings";
 
             const response = await fetch(embeddingsUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${apiKey}`,
-                    "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                    "HTTP-Referer": process.env["BASE_URL"] || "http://localhost:8000",
                     "X-OpenRouter-Title": "Slide Sage",
                 },
                 body: JSON.stringify(requestBody),

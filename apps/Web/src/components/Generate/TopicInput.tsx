@@ -7,6 +7,7 @@ interface TopicInputProps {
     topics: string[];
     onPromptChange: (value: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onSubmitPrompt: () => void;
     onRemoveTopic: (topic: string) => void;
     onEditTopic: (index: number, value: string) => void;
     disabled: boolean;
@@ -17,6 +18,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({
     topics,
     onPromptChange,
     onKeyDown,
+    onSubmitPrompt,
     onRemoveTopic,
     onEditTopic,
     disabled,
@@ -63,7 +65,13 @@ export const TopicInput: React.FC<TopicInputProps> = ({
                     ))}
             </div>
 
-            <div className="w-full relative mx-auto max-w-xl">
+            <form
+                className="w-full relative mx-auto max-w-xl"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    onSubmitPrompt();
+                }}
+            >
                 <Input
                     id="prompt"
                     placeholder={
@@ -76,7 +84,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({
                     disabled={disabled}
                     autoFocus
                 />
-            </div>
+            </form>
 
             {topics.length === 0 && !prompt.trim() && (
                 <p className="absolute top-[calc(100%+2rem)] text-center text-sm text-white/45 w-full">

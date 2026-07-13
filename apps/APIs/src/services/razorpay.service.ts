@@ -1,15 +1,17 @@
 import crypto from "node:crypto";
+import type { BillingCheckoutResponse, BillingPackName } from "@slide-sage/types";
 import Razorpay from "razorpay";
 
-export type PackName = "starter" | "pro" | "premium" | "custom";
-
-const PACKS: Record<Exclude<PackName, "custom">, { tokens: number; amountPaise: number }> = {
+const PACKS: Record<Exclude<BillingPackName, "custom">, { tokens: number; amountPaise: number }> = {
     starter: { tokens: 10, amountPaise: 5000 },
     pro: { tokens: 100, amountPaise: 45000 },
     premium: { tokens: 250, amountPaise: 100000 },
 };
 
-export function resolvePackPrice(pack: PackName, quantity?: number): { tokens: number; amountPaise: number } {
+export function resolvePackPrice(
+    pack: BillingPackName,
+    quantity?: number
+): { tokens: number; amountPaise: number } {
     if (pack !== "custom") {
         return PACKS[pack];
     }
@@ -23,8 +25,8 @@ export function resolvePackPrice(pack: PackName, quantity?: number): { tokens: n
 }
 
 export function createRazorpayClient(): Razorpay {
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keyId = process.env["RAZORPAY_KEY_ID"];
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
 
     if (!keyId || !keySecret) {
         throw new Error("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set");
@@ -35,10 +37,14 @@ export function createRazorpayClient(): Razorpay {
 
 export async function createOrder(
     userId: string,
-    pack: PackName,
-    quantity?: number,
-): Promise<{ orderId: string; amount: number; currency: string; tokens: number; keyId: string }> {
+    pack: BillingPackName,
+    quantity?: number
+): Promise<BillingCheckoutResponse> {
     const { tokens, amountPaise } = resolvePackPrice(pack, quantity);
+    const keyId = process.env["RAZORPAY_KEY_ID"];
+    if (!keyId) {
+        throw new Error("RAZORPAY_KEY_ID must be set");
+    }
     const rzp = createRazorpayClient();
 
     const order = await rzp.orders.create({
@@ -53,16 +59,16 @@ export async function createOrder(
         amount: amountPaise,
         currency: "INR",
         tokens,
-        keyId: process.env.RAZORPAY_KEY_ID!,
+        keyId,
     };
 }
 
 export function verifyPaymentSignature(
     orderId: string,
     paymentId: string,
-    signature: string,
+    signature: string
 ): boolean {
-    const secret = process.env.RAZORPAY_KEY_SECRET;
+    const secret = process.env["RAZORPAY_KEY_SECRET"];
     if (!secret) throw new Error("RAZORPAY_KEY_SECRET not set");
 
     const expected = crypto
@@ -74,13 +80,10 @@ export function verifyPaymentSignature(
 }
 
 export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const secret = process.env["RAZORPAY_WEBHOOK_SECRET"];
     if (!secret) throw new Error("RAZORPAY_WEBHOOK_SECRET not set");
 
-    const expected = crypto
-        .createHmac("sha256", secret)
-        .update(rawBody)
-        .digest("hex");
+    const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
 
     return expected === signature;
 }

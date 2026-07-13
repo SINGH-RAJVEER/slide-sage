@@ -1,6 +1,9 @@
 import { PresentationRepository, UserRepository } from "@slide-sage/database";
 import type {
     PresentationJSON,
+    PresentationResponse,
+    PresentationSummary,
+    PresentationsResponse,
     ResearchOptions,
     ResearchPayload,
     Slide,
@@ -12,10 +15,38 @@ import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "../s
 import { PresentationService } from "../services/presentation.service";
 import { SearchService } from "../services/search.service";
 
+interface ResearchOptionsInput {
+    enabled?: unknown;
+    freshness?: unknown;
+    maxResults?: unknown;
+    includeDomains?: unknown;
+    excludeDomains?: unknown;
+    startPublishedDate?: unknown;
+    endPublishedDate?: unknown;
+    maxAgeHours?: unknown;
+}
+
+interface ResearchSourceInput {
+    url?: unknown;
+    title?: unknown;
+    snippet?: unknown;
+    retrieved_at?: unknown;
+    published_date?: unknown;
+    publishedDate?: unknown;
+    author?: unknown;
+    highlights?: unknown;
+    summary?: unknown;
+}
+
+interface ResearchPayloadInput {
+    sources?: unknown;
+    summary?: unknown;
+}
+
 function parseResearchOptions(input: unknown): ResearchOptions | undefined {
     if (!input || typeof input !== "object") return undefined;
 
-    const value = input as Record<string, unknown>;
+    const value = input as ResearchOptionsInput;
     const enabled = Boolean(value.enabled);
     if (!enabled) return { enabled: false };
 
@@ -71,14 +102,14 @@ function parseStringList(input: unknown): string[] | undefined {
 function parseResearchPayload(input: unknown): ResearchPayload | undefined {
     if (!input || typeof input !== "object") return undefined;
 
-    const value = input as Record<string, unknown>;
+    const value = input as ResearchPayloadInput;
     const sourcesRaw = value.sources;
     if (!Array.isArray(sourcesRaw)) return undefined;
 
     const sources: Source[] = [];
     for (const source of sourcesRaw) {
         if (!source || typeof source !== "object") continue;
-        const src = source as Record<string, unknown>;
+        const src = source as ResearchSourceInput;
         const url = typeof src.url === "string" ? src.url.trim() : "";
         if (!url) continue;
         sources.push({
@@ -675,18 +706,19 @@ presentations.get("/presentations", authMiddleware, async (c) => {
 
         const result = await presentationService.getUserPresentations(userId);
 
-        const presentationsData = result.presentations.map((p) => {
+        const presentationsData: PresentationSummary[] = result.presentations.map((p) => {
             const slidesData = p.slidesData as PresentationJSON;
             return {
                 id: p.id,
                 title: p.title,
+                prompt: p.prompt,
                 slide_count: slidesData?.slides?.length || 0,
-                created_at: p.createdAt,
-                updated_at: p.updatedAt,
+                created_at: p.createdAt.toISOString(),
+                updated_at: p.updatedAt.toISOString(),
             };
         });
 
-        return c.json({ presentations: presentationsData }, 200);
+        return c.json({ presentations: presentationsData } satisfies PresentationsResponse, 200);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return c.json({ error: { message } }, 400);
@@ -711,11 +743,11 @@ presentations.get("/presentations/:id", authMiddleware, async (c) => {
                     id: presentation.id,
                     title: presentation.title,
                     prompt: presentation.prompt,
-                    slides_data: presentation.slidesData,
-                    created_at: presentation.createdAt,
-                    updated_at: presentation.updatedAt,
+                    slides_data: presentation.slidesData as PresentationJSON,
+                    created_at: presentation.createdAt.toISOString(),
+                    updated_at: presentation.updatedAt.toISOString(),
                 },
-            },
+            } satisfies PresentationResponse,
             200
         );
     } catch (error: unknown) {

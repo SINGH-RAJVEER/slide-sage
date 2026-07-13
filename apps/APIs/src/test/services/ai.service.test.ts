@@ -84,22 +84,22 @@ async function collectGenerationEvents(service: InstanceType<typeof AIService>) 
 
 describe("AIService resilient presentation generation", () => {
     beforeEach(() => {
-        process.env.OPEN_ROUTER_API_KEY = "test-key";
-        process.env.OPEN_ROUTER_MAX_ATTEMPTS = "3";
-        process.env.OPEN_ROUTER_RETRY_BASE_DELAY_MS = "1";
-        process.env.OPEN_ROUTER_RETRY_MAX_DELAY_MS = "1";
-        process.env.OPEN_ROUTER_REQUEST_TIMEOUT_MS = "100";
-        process.env.OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS = "100";
+        process.env["OPEN_ROUTER_API_KEY"] = "test-key";
+        process.env["OPEN_ROUTER_MAX_ATTEMPTS"] = "3";
+        process.env["OPEN_ROUTER_RETRY_BASE_DELAY_MS"] = "1";
+        process.env["OPEN_ROUTER_RETRY_MAX_DELAY_MS"] = "1";
+        process.env["OPEN_ROUTER_REQUEST_TIMEOUT_MS"] = "100";
+        process.env["OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS"] = "100";
     });
 
     afterEach(() => {
         globalThis.fetch = originalFetch;
-        delete process.env.OPEN_ROUTER_API_KEY;
-        delete process.env.OPEN_ROUTER_MAX_ATTEMPTS;
-        delete process.env.OPEN_ROUTER_RETRY_BASE_DELAY_MS;
-        delete process.env.OPEN_ROUTER_RETRY_MAX_DELAY_MS;
-        delete process.env.OPEN_ROUTER_REQUEST_TIMEOUT_MS;
-        delete process.env.OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS;
+        delete process.env["OPEN_ROUTER_API_KEY"];
+        delete process.env["OPEN_ROUTER_MAX_ATTEMPTS"];
+        delete process.env["OPEN_ROUTER_RETRY_BASE_DELAY_MS"];
+        delete process.env["OPEN_ROUTER_RETRY_MAX_DELAY_MS"];
+        delete process.env["OPEN_ROUTER_REQUEST_TIMEOUT_MS"];
+        delete process.env["OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS"];
     });
 
     it("retries a transient HTTP failure and completes from a fragmented stream", async () => {
