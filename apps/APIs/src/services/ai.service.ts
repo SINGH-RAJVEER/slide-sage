@@ -306,6 +306,10 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                     ...parsedContent,
                     slides,
                     title: processor.titleExtracted || parsedTitle || options.fallbackTitle,
+                    theme:
+                        typeof parsedContent["theme"] === "string"
+                            ? parsedContent["theme"]
+                            : "default",
                     totalSlides: slides.length,
                     research_tokens_used: options.researchTokens,
                     tokens_used: processor.currentTotalTokensUsed + options.researchTokens,
@@ -486,7 +490,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.OPEN_ROUTER_MODEL || "google/gemma-4-26b-a4b-it:free";
+            const model = process.env["OPEN_ROUTER_MODEL"] || "google/gemma-4-26b-a4b-it:free";
 
             if (effectiveResearch?.enabled && !researchPayload) {
                 yield { event: "research", data: { status: "generating" } };
@@ -630,7 +634,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 },
             ];
 
-            const model = process.env.OPEN_ROUTER_MODEL || "google/gemma-4-26b-a4b-it:free";
+            const model = process.env["OPEN_ROUTER_MODEL"] || "google/gemma-4-26b-a4b-it:free";
 
             if (effectiveResearch?.enabled) {
                 yield { event: "research", data: { status: "generating" } };

@@ -21,16 +21,16 @@ describe("AuthProvider", () => {
                         updatedAt: new Date().toISOString(),
                     },
                 }),
-                { headers: { "Content-Type": "application/json" } }
+                { headers: { "Content-Type": "application/json" } },
             );
         });
-        const user = await fetchSessionWithRetry(fetchMock as typeof fetch, [0, 0, 0]);
+        const user = await fetchSessionWithRetry(fetchMock as unknown as typeof fetch, [0, 0, 0]);
 
         expect(user?.email).toBe("test@example.com");
         expect(fetchMock).toHaveBeenCalledTimes(2);
         expect(fetchMock).toHaveBeenLastCalledWith(
             expect.stringContaining("/api/auth/get-session"),
-            { credentials: "include" }
+            { credentials: "include" },
         );
     });
 });

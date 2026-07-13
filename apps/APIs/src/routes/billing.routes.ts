@@ -1,10 +1,16 @@
 import { db, payments, UserRepository } from "@slide-sage/database";
+import type {
+    BillingBalanceResponse,
+    BillingCheckoutRequest,
+    BillingCheckoutResponse,
+    BillingVerifyRequest,
+    BillingVerifyResponse,
+} from "@slide-sage/types";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware, getCurrentUserId } from "../services/auth";
 import {
     createOrder,
-    type PackName,
     resolvePackPrice,
     verifyPaymentSignature,
     verifyWebhookSignature,
@@ -19,7 +25,7 @@ billing.get("/balance", authMiddleware, async (c) => {
 
         return c.json({
             slide_tokens: user.slideTokens,
-        });
+        } satisfies BillingBalanceResponse);
     } catch (error) {
         console.error("Balance error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Internal server error" } }, 500);
@@ -30,7 +36,7 @@ billing.post("/checkout", authMiddleware, async (c) => {
     try {
         const userId = getCurrentUserId(c);
         const body = await c.req.json().catch(() => ({}));
-        const { pack, quantity } = body as { pack?: PackName; quantity?: number };
+        const { pack, quantity } = body as Partial<BillingCheckoutRequest>;
 
         if (!pack || !["starter", "pro", "premium", "custom"].includes(pack)) {
             return c.json({ error: { message: "Invalid pack" } }, 400);
@@ -59,7 +65,7 @@ billing.post("/checkout", authMiddleware, async (c) => {
             currency: order.currency,
             tokens: order.tokens,
             keyId: order.keyId,
-        });
+        } satisfies BillingCheckoutResponse);
     } catch (error) {
         console.error("Checkout error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Failed to create order" } }, 500);
@@ -70,11 +76,8 @@ billing.post("/verify", authMiddleware, async (c) => {
     try {
         const userId = getCurrentUserId(c);
         const body = await c.req.json().catch(() => ({}));
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body as {
-            razorpay_order_id?: string;
-            razorpay_payment_id?: string;
-            razorpay_signature?: string;
-        };
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+            body as Partial<BillingVerifyRequest>;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             return c.json({ error: { message: "Missing payment details" } }, 400);
@@ -112,7 +115,7 @@ billing.post("/verify", authMiddleware, async (c) => {
                 success: true,
                 tokens_awarded: payment.tokensGranted,
                 new_balance: user?.slideTokens ?? 0,
-            });
+            } satisfies BillingVerifyResponse);
         }
 
         await db
@@ -126,7 +129,7 @@ billing.post("/verify", authMiddleware, async (c) => {
             success: true,
             tokens_awarded: payment.tokensGranted,
             new_balance: updatedUser.slideTokens,
-        });
+        } satisfies BillingVerifyResponse);
     } catch (error) {
         console.error("Verify error:", error instanceof Error ? error.message : String(error));
         return c.json({ error: { message: "Payment verification failed" } }, 500);

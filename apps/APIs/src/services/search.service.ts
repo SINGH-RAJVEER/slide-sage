@@ -23,7 +23,7 @@ export class SearchService {
     async webSearch(query: string, options: ResearchOptions): Promise<Source[]> {
         if (!options.enabled) return [];
 
-        const apiKey = process.env.EXA_API_KEY;
+        const apiKey = process.env["EXA_API_KEY"];
         if (!apiKey) {
             console.warn("Web research enabled but EXA_API_KEY is not set; skipping search.");
             return [];
@@ -179,24 +179,25 @@ ${JSON.stringify(compactSources, null, 2)}`;
             const formattedPrompt = `${systemPrompt}\n\n${userPromptText}`;
             const tokensEstimated = this.estimateTokens(formattedPrompt);
 
-            const apiKey = process.env.OPEN_ROUTER_API_KEY;
+            const apiKey = process.env["OPEN_ROUTER_API_KEY"];
             if (!apiKey) {
                 throw new Error("OPEN_ROUTER_API_KEY is not set");
             }
 
             const model =
-                process.env.OPEN_ROUTER_SEARCH_MODEL ||
-                process.env.OPEN_ROUTER_MODEL ||
+                process.env["OPEN_ROUTER_SEARCH_MODEL"] ||
+                process.env["OPEN_ROUTER_MODEL"] ||
                 "google/gemma-4-26b-a4b-it:free";
 
             const response = await fetch(
-                process.env.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions",
+                process.env["OPEN_ROUTER_API_BASE"] ||
+                    "https://openrouter.ai/api/v1/chat/completions",
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${apiKey}`,
-                        "HTTP-Referer": process.env.BASE_URL || "http://localhost:8000",
+                        "HTTP-Referer": process.env["BASE_URL"] || "http://localhost:8000",
                         "X-OpenRouter-Title": "Slide Sage",
                     },
                     body: JSON.stringify({

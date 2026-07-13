@@ -1,8 +1,9 @@
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 import { useStreaming } from "@/modules/presentations";
 import type { ResearchPayload, Source } from "@/modules/types/presentation";
@@ -14,6 +15,8 @@ interface ResearchRouteState {
     detailLevel: string;
     tonality: string;
 }
+
+type ResearchStatus = "loading" | "ready" | "error";
 
 export default function GenerateResearchPage() {
     const location = useLocation();
@@ -30,17 +33,18 @@ export default function GenerateResearchPage() {
     const [sources, setSources] = useState<Source[]>([]);
     const [tokensUsed, setTokensUsed] = useState<number | null>(null);
     const [tokensEstimated, setTokensEstimated] = useState<number | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [researchStatus, setResearchStatus] = useState<ResearchStatus>("loading");
     const [error, setError] = useState("");
     const [isProceeding, setIsProceeding] = useState(false);
-    const [showAllSources, setShowAllSources] = useState(false);
+    const [researchAttempt, setResearchAttempt] = useState(0);
+    const requestIdRef = useRef(0);
 
     const hasSummary = Boolean(summary && summary.trim().length > 0);
     const summaryLines =
         hasSummary && summary ? summary.split("\n").filter((line) => line.trim().length > 0) : [];
 
-    const visibleSources = showAllSources ? sources : sources.slice(0, 4);
     const hasSources = sources.length > 0;
+    const isLoading = researchStatus === "loading";
 
     const getSourceLabel = (url: string) => {
         try {
@@ -60,15 +64,18 @@ export default function GenerateResearchPage() {
         }
     }, [navigate, prompt, slideCount]);
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: researchAttempt intentionally retriggers failed requests.
     useEffect(() => {
         const controller = new AbortController();
+        const requestId = ++requestIdRef.current;
 
         const fetchResearch = async () => {
             if (!prompt || !slideCount) return;
 
-            setLoading(true);
+            setResearchStatus("loading");
             setError("");
-            setShowAllSources(false);
+            setSummary(null);
+            setSources([]);
             setTokensUsed(null);
             setTokensEstimated(null);
 
@@ -96,8 +103,9 @@ export default function GenerateResearchPage() {
                             : errorData.error?.message ||
                               errorData.message ||
                               "Failed to fetch research";
+                    if (controller.signal.aborted || requestId !== requestIdRef.current) return;
                     setError(errorMessage);
-                    setLoading(false);
+                    setResearchStatus("error");
                     return;
                 }
 
@@ -105,24 +113,32 @@ export default function GenerateResearchPage() {
                     tokens_used?: number;
                     tokens_estimated?: number;
                 };
+                if (controller.signal.aborted || requestId !== requestIdRef.current) return;
+
                 setSummary(typeof data.summary === "string" ? data.summary : null);
                 setSources(Array.isArray(data.sources) ? data.sources : []);
                 setTokensUsed(typeof data.tokens_used === "number" ? data.tokens_used : null);
                 setTokensEstimated(
                     typeof data.tokens_estimated === "number" ? data.tokens_estimated : null,
                 );
+                setResearchStatus("ready");
             } catch (err: unknown) {
-                if (err instanceof Error && err.name === "AbortError") return;
+                if (
+                    controller.signal.aborted ||
+                    requestId !== requestIdRef.current ||
+                    (err instanceof Error && err.name === "AbortError")
+                ) {
+                    return;
+                }
                 const message = err instanceof Error ? err.message : String(err);
                 setError(message);
-            } finally {
-                setLoading(false);
+                setResearchStatus("error");
             }
         };
 
         fetchResearch();
         return () => controller.abort();
-    }, [prompt, slideCount]);
+    }, [prompt, slideCount, researchAttempt]);
 
     useEffect(() => {
         if (isProceeding && streamingState.slides.length >= 1) {
@@ -176,22 +192,26 @@ export default function GenerateResearchPage() {
                             </h2>
                         </div>
 
-                        {/* Error State */}
-                        {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-8 py-6 rounded-2xl backdrop-blur-sm text-center font-light text-lg">
-                                {error}
+                        {researchStatus === "error" && (
+                            <div className="flex flex-col items-center gap-4 rounded-lg border border-red-500/20 bg-red-500/10 px-6 py-5 text-center text-red-200">
+                                <p>{error}</p>
+                                <Button
+                                    type="button"
+                                    onClick={() => setResearchAttempt((attempt) => attempt + 1)}
+                                    className="h-10 rounded-md border border-red-200/20 bg-transparent px-4 text-red-100 hover:bg-red-200/10"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    Retry research
+                                </Button>
                             </div>
                         )}
 
-                        {/* Main Content Grid */}
                         <div className="space-y-6">
                             <div className="space-y-5 rounded-xl border border-white/10 bg-black/20 p-6 md:p-8">
                                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
                                     <h3 className="flex items-center gap-2 text-xl font-semibold text-white/90">
                                         Synopsis
-                                        {loading && (
-                                            <Loader2 className="h-4 w-4 animate-spin text-white/50" />
-                                        )}
+                                        {isLoading && <Spinner className="text-white/50" />}
                                     </h3>
                                 </div>
 
@@ -210,8 +230,8 @@ export default function GenerateResearchPage() {
                                     </div>
                                 ) : (
                                     <div className="text-base text-white/45 italic">
-                                        {loading
-                                            ? "Synthesizing research data..."
+                                        {isLoading
+                                            ? "Searching, reading, and synthesizing relevant sources..."
                                             : "No summary available."}
                                     </div>
                                 )}
@@ -220,55 +240,74 @@ export default function GenerateResearchPage() {
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xl font-semibold text-white/90">Sources</h3>
-                                    {sources.length > 4 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowAllSources((prev) => !prev)}
-                                            className="text-sm text-white/50 hover:text-white/80 transition-colors"
-                                        >
-                                            {showAllSources
-                                                ? "Show less"
-                                                : `Show all (${sources.length})`}
-                                        </button>
+                                    {hasSources && (
+                                        <span className="text-sm text-white/45">
+                                            {sources.length}{" "}
+                                            {sources.length === 1 ? "source" : "sources"}
+                                        </span>
                                     )}
                                 </div>
 
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid gap-4 md:grid-cols-2">
                                     {hasSources &&
-                                        visibleSources.map((source) => (
+                                        sources.map((source) => (
                                             <a
                                                 key={source.url}
                                                 href={source.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="group rounded-lg border border-white/10 bg-black/20 p-5 transition-colors hover:bg-white/5"
+                                                className="group flex min-w-0 flex-col rounded-lg border border-white/10 bg-black/20 p-5 transition-colors hover:border-white/20 hover:bg-white/5"
                                             >
-                                                <h4 className="mb-2 line-clamp-1 text-base font-medium text-white/90 transition-colors group-hover:text-white">
-                                                    {source.title || getSourceLabel(source.url)}
-                                                </h4>
-                                                <p className="mb-4 line-clamp-2 text-sm text-white/60">
-                                                    {source.snippet ||
+                                                <div className="mb-3 flex items-start justify-between gap-3">
+                                                    <h4 className="text-base font-medium leading-snug text-white/90 transition-colors group-hover:text-white">
+                                                        {source.title || getSourceLabel(source.url)}
+                                                    </h4>
+                                                    <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
+                                                </div>
+                                                <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-white/65">
+                                                    {source.summary ||
+                                                        source.snippet ||
                                                         "No preview available for this source."}
                                                 </p>
-                                                <p className="text-xs text-white/30 truncate">
-                                                    {source.url}
-                                                </p>
+                                                {source.highlights &&
+                                                    source.highlights.length > 0 && (
+                                                        <ul className="mb-4 space-y-2 text-sm leading-relaxed text-white/55">
+                                                            {source.highlights.map((highlight) => (
+                                                                <li
+                                                                    key={highlight}
+                                                                    className="flex gap-2"
+                                                                >
+                                                                    <span className="text-white/30">
+                                                                        -
+                                                                    </span>
+                                                                    <span>{highlight}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/35">
+                                                    <span>{getSourceLabel(source.url)}</span>
+                                                    {source.author && <span>{source.author}</span>}
+                                                    {source.published_date && (
+                                                        <span>{source.published_date}</span>
+                                                    )}
+                                                </div>
                                             </a>
                                         ))}
 
-                                    {!loading && !hasSources && (
+                                    {researchStatus === "ready" && !hasSources && (
                                         <div className="md:col-span-2 rounded-lg border border-white/10 bg-black/10 p-6 text-center text-white/45">
                                             No sources found. Try a different phrasing or a broader
                                             topic.
                                         </div>
                                     )}
 
-                                    {loading &&
+                                    {isLoading &&
                                         sources.length === 0 &&
-                                        [1, 2].map((i) => (
+                                        [1, 2, 3, 4].map((i) => (
                                             <div
                                                 key={i}
-                                                className="rounded-lg border border-white/10 bg-black/10 p-6 animate-pulse"
+                                                className="animate-pulse rounded-lg border border-white/10 bg-black/10 p-6"
                                             >
                                                 <div className="h-6 w-3/4 bg-white/5 rounded mb-4" />
                                                 <div className="h-4 w-full bg-white/5 rounded mb-2" />
@@ -282,13 +321,13 @@ export default function GenerateResearchPage() {
                         <div className="flex justify-center pt-2 pb-6">
                             <Button
                                 onClick={handleProceed}
-                                disabled={loading || isProceeding || Boolean(error)}
+                                disabled={researchStatus !== "ready" || isProceeding}
                                 className="group h-11 rounded-md border border-white/20 bg-white/10 px-6 text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <span className="flex items-center gap-2 text-sm font-semibold">
                                     {isProceeding ? (
                                         <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <Spinner />
                                             Processing...
                                         </>
                                     ) : (

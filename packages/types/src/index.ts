@@ -1,7 +1,19 @@
 export interface ChartConfig {
-    type: string;
-    data: Record<string, unknown>;
+    type: "bar" | "line" | "pie" | "doughnut" | "radar" | "polarArea";
+    data: {
+        labels: string[];
+        datasets: Array<{
+            label?: string;
+            data: number[];
+            backgroundColor?: string | string[];
+            borderColor?: string | string[];
+            borderWidth?: number;
+            fill?: boolean;
+        }>;
+    };
     options?: Record<string, unknown>;
+    title?: string;
+    description?: string;
     [key: string]: unknown;
 }
 
@@ -160,4 +172,97 @@ export interface StreamChunk {
     usage?: {
         total_tokens?: number;
     };
+}
+
+export interface ApiErrorResponse {
+    error: {
+        message: string;
+        code?: string;
+    };
+}
+
+export interface PresentationSummary {
+    id: string;
+    title: string;
+    prompt: string;
+    slide_count: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PresentationsResponse {
+    presentations: PresentationSummary[];
+}
+
+export interface SavedPresentation {
+    id: string;
+    title: string;
+    prompt: string;
+    slides_data: PresentationJSON;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PresentationResponse {
+    presentation: SavedPresentation;
+}
+
+export interface UserProfile {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+    emailVerified: boolean;
+    slideTokens: number;
+    createdAt: string;
+}
+
+export interface ProfileResponse {
+    user: UserProfile;
+}
+
+export interface UpdateProfileRequest {
+    name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+}
+
+export interface UpdateAvatarRequest {
+    imageUrl: string;
+}
+
+export interface ProfileAvatarResponse {
+    user: Pick<UserProfile, "id" | "image">;
+}
+
+export type BillingPackName = "starter" | "pro" | "premium" | "custom";
+
+export interface BillingBalanceResponse {
+    slide_tokens: number;
+}
+
+export interface BillingCheckoutRequest {
+    pack: BillingPackName;
+    quantity?: number;
+}
+
+export interface BillingCheckoutResponse {
+    orderId: string;
+    amount: number;
+    currency: string;
+    tokens: number;
+    keyId: string;
+}
+
+export interface BillingVerifyRequest {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+}
+
+export interface BillingVerifyResponse {
+    success: true;
+    tokens_awarded: number;
+    new_balance: number;
 }

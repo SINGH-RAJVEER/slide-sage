@@ -40,7 +40,7 @@ describe("OpenRouter streaming utilities", () => {
         }
 
         expect(chunks).toHaveLength(1);
-        expect(chunks[0].choices?.[0]?.delta?.content).toBe("Deck café");
+        expect(chunks[0]?.choices?.[0]?.delta?.content).toBe("Deck café");
     });
 
     it("allows delayed chunks that arrive before the idle timeout", async () => {
@@ -72,7 +72,7 @@ describe("OpenRouter streaming utilities", () => {
             chunks.push(chunk);
         }
 
-        expect(chunks[0].choices?.[0]?.delta?.content).toBe("ok");
+        expect(chunks[0]?.choices?.[0]?.delta?.content).toBe("ok");
     });
 
     it("fails a stream that remains idle past the configured timeout", async () => {

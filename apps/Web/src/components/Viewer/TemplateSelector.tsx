@@ -19,6 +19,11 @@ interface TemplateSelectorProps {
 }
 
 const getTemplatePreviewColors = (templateId: string) => {
+    const fallbackColors = {
+        primary: "bg-white",
+        secondary: "bg-blue-900",
+        accent: "bg-blue-600",
+    };
     const colorMap: Record<string, { primary: string; secondary: string; accent: string }> = {
         "modern-dark": {
             primary: "bg-slate-900",
@@ -52,7 +57,7 @@ const getTemplatePreviewColors = (templateId: string) => {
         },
     };
 
-    return colorMap[templateId] || colorMap["corporate-blue"];
+    return colorMap[templateId] ?? fallbackColors;
 };
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({

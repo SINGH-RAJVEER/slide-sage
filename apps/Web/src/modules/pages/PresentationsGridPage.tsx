@@ -1,4 +1,9 @@
-import { Loader2 } from "lucide-react";
+import type {
+    ApiErrorResponse,
+    PresentationResponse,
+    PresentationSummary,
+    PresentationsResponse,
+} from "@slide-sage/types";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,29 +22,22 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
-
-interface Presentation {
-    id: number;
-    title: string;
-    prompt: string;
-    created_at: string;
-    updated_at: string;
-}
 
 interface SearchFilters {
     query: string;
 }
 
 export default function PresentationsGridPage() {
-    const [presentations, setPresentations] = useState<Presentation[]>([]);
-    const [filteredPresentations, setFilteredPresentations] = useState<Presentation[]>([]);
+    const [presentations, setPresentations] = useState<PresentationSummary[]>([]);
+    const [filteredPresentations, setFilteredPresentations] = useState<PresentationSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [deletingId, setDeletingId] = useState<number | null>(null);
-    const [presentationToDelete, setPresentationToDelete] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [presentationToDelete, setPresentationToDelete] = useState<string | null>(null);
     const [gridSize, setGridSize] = useState<2 | 3 | 4>(() => {
         const saved = localStorage.getItem("gridSize");
         return saved ? (parseInt(saved, 10) as 2 | 3 | 4) : 3;
@@ -58,13 +56,13 @@ export default function PresentationsGridPage() {
                 return;
             }
 
-            const result = await response.json();
+            const result = (await response.json()) as PresentationsResponse | ApiErrorResponse;
 
             // New API format: {presentations: [...]} or {error: {message: "..."}}
-            if (result.error) {
-                setError(typeof result.error === "object" ? result.error.message : result.error);
+            if ("error" in result) {
+                setError(result.error.message);
             } else {
-                const presentationsList = result.presentations || [];
+                const presentationsList = result.presentations;
                 setPresentations(presentationsList);
                 setFilteredPresentations(presentationsList);
             }
@@ -83,7 +81,7 @@ export default function PresentationsGridPage() {
         localStorage.setItem("gridSize", gridSize.toString());
     }, [gridSize]);
 
-    const handlePresentationClick = async (presentationId: number) => {
+    const handlePresentationClick = async (presentationId: string) => {
         try {
             const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
                 credentials: "include",
@@ -94,27 +92,25 @@ export default function PresentationsGridPage() {
                 return;
             }
 
-            const result = await response.json();
+            const result = (await response.json()) as PresentationResponse | ApiErrorResponse;
 
             // New API format: {presentation: {...}} or {error: {message: "..."}}
-            if (result.error) {
-                setError(typeof result.error === "object" ? result.error.message : result.error);
-            } else if (result.presentation) {
+            if ("error" in result) {
+                setError(result.error.message);
+            } else {
                 navigate(ROUTES.presentationById(result.presentation.id), {
                     state: {
-                        presentation: result.presentation.slides_data || result.presentation.slides,
+                        presentation: result.presentation.slides_data,
                         presentationId: result.presentation.id,
                     },
                 });
-            } else {
-                setError("Failed to load presentation");
             }
         } catch (err) {
             setError(`Error: ${err instanceof Error ? err.message : err}`);
         }
     };
 
-    const handleDeletePresentation = (e: React.MouseEvent, presentationId: number) => {
+    const handleDeletePresentation = (e: React.MouseEvent, presentationId: string) => {
         e.stopPropagation();
         setPresentationToDelete(presentationId);
     };
@@ -160,7 +156,9 @@ export default function PresentationsGridPage() {
 
         const fullDateMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
         if (fullDateMatch) {
-            const [year, month, day] = fullDateMatch.slice(1).map(Number);
+            const year = Number(fullDateMatch[1]);
+            const month = Number(fullDateMatch[2]);
+            const day = Number(fullDateMatch[3]);
             const start = new Date(year, month - 1, day, 0, 0, 0, 0);
             const end = new Date(year, month - 1, day, 23, 59, 59, 999);
             return { start, end };
@@ -168,7 +166,8 @@ export default function PresentationsGridPage() {
 
         const monthMatch = trimmed.match(/^(\d{4})-(\d{2})$/);
         if (monthMatch) {
-            const [year, month] = monthMatch.slice(1).map(Number);
+            const year = Number(monthMatch[1]);
+            const month = Number(monthMatch[2]);
             const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
             const end = new Date(year, month, 0, 23, 59, 59, 999);
             return { start, end };
@@ -230,14 +229,7 @@ export default function PresentationsGridPage() {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-transparent">
-                <Header />
-                <div className="p-4 md:p-8 flex items-center justify-center min-h-[calc(100vh-64px)]">
-                    <Spinner className="h-12 w-12" />
-                </div>
-            </div>
-        );
+        return <LoadingScreen label="Loading presentations" />;
     }
 
     return (
@@ -326,7 +318,7 @@ export default function PresentationsGridPage() {
                         >
                             {deletingId !== null ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Spinner className="mr-2" />
                                     Deleting...
                                 </>
                             ) : (

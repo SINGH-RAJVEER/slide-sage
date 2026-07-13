@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
-import { Spinner } from "@/components/ui/spinner";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { API_URL } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
 
@@ -43,14 +42,7 @@ export default function HomePage() {
     }, [loading, hasPresentations, navigate]);
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-transparent">
-                <Header />
-                <div className="p-4 md:p-8 flex items-center justify-center min-h-[calc(100vh-64px)]">
-                    <Spinner className="h-12 w-12" />
-                </div>
-            </div>
-        );
+        return <LoadingScreen label="Loading presentations" />;
     }
 
     // Navigation effect will replace this route with the target page.

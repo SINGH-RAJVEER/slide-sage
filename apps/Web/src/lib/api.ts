@@ -23,4 +23,4 @@ export function resolveApiUrl(value: string | undefined, isProduction: boolean):
     }
 }
 
-export const API_URL = resolveApiUrl(import.meta.env.VITE_API_URL, import.meta.env.PROD);
+export const API_URL = resolveApiUrl(import.meta.env["VITE_API_URL"], import.meta.env.PROD);

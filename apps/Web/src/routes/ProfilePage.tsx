@@ -1,18 +1,17 @@
+import type {
+    ApiErrorResponse,
+    ProfileAvatarResponse,
+    ProfileResponse,
+    UpdateAvatarRequest,
+    UpdateProfileRequest,
+    UserProfile,
+} from "@slide-sage/types";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
-
-interface UserProfile {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-    emailVerified: boolean;
-    slideTokens: number;
-    createdAt: string;
-}
 
 export default function ProfilePage() {
     const navigate = useNavigate();
@@ -58,7 +57,7 @@ export default function ProfilePage() {
                 throw new Error("Failed to load profile");
             }
 
-            const data = await res.json();
+            const data = (await res.json()) as ProfileResponse;
             setProfile(data.user);
             setNewName(data.user.name || "");
             setNewEmail(data.user.email);
@@ -107,15 +106,15 @@ export default function ProfilePage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ name: newName }),
+                body: JSON.stringify({ name: newName } satisfies UpdateProfileRequest),
             });
 
             if (!res.ok) {
-                const data = await res.json();
+                const data = (await res.json()) as ApiErrorResponse;
                 throw new Error(data.error?.message || "Failed to update name");
             }
 
-            const data = await res.json();
+            const data = (await res.json()) as ProfileResponse;
             setProfile(data.user);
             setEditingName(false);
             setSuccess("Name updated successfully");
@@ -137,15 +136,15 @@ export default function ProfilePage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ email: newEmail }),
+                body: JSON.stringify({ email: newEmail } satisfies UpdateProfileRequest),
             });
 
             if (!res.ok) {
-                const data = await res.json();
+                const data = (await res.json()) as ApiErrorResponse;
                 throw new Error(data.error?.message || "Failed to update email");
             }
 
-            const data = await res.json();
+            const data = (await res.json()) as ProfileResponse;
             setProfile(data.user);
             setEditingEmail(false);
             setSuccess("Email updated successfully");
@@ -182,11 +181,11 @@ export default function ProfilePage() {
                 body: JSON.stringify({
                     currentPassword,
                     newPassword,
-                }),
+                } satisfies UpdateProfileRequest),
             });
 
             if (!res.ok) {
-                const data = await res.json();
+                const data = (await res.json()) as ApiErrorResponse;
                 throw new Error(data.error?.message || "Failed to update password");
             }
 
@@ -219,16 +218,20 @@ export default function ProfilePage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ imageUrl: imageUrl.trim() }),
+                body: JSON.stringify({
+                    imageUrl: imageUrl.trim(),
+                } satisfies UpdateAvatarRequest),
             });
 
             if (!res.ok) {
-                const data = await res.json();
+                const data = (await res.json()) as ApiErrorResponse;
                 throw new Error(data.error?.message || "Failed to update avatar");
             }
 
-            const data = await res.json();
-            setProfile(data.user);
+            const data = (await res.json()) as ProfileAvatarResponse;
+            setProfile((currentProfile) =>
+                currentProfile ? { ...currentProfile, ...data.user } : currentProfile,
+            );
             setSuccess("Avatar updated successfully");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to update avatar");
@@ -238,14 +241,7 @@ export default function ProfilePage() {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-transparent flex flex-col">
-                <Header />
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="text-white/60">Loading profile...</div>
-                </div>
-            </div>
-        );
+        return <LoadingScreen label="Loading profile" />;
     }
 
     if (!profile) {

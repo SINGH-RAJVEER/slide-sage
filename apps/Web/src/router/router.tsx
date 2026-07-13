@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import RequireSignedInLayout from "@/router/RequireSignedInLayout";
 import ForgotPasswordPage from "@/routes/ForgotPasswordPage";
 import HomePage from "@/routes/HomePage";
@@ -21,6 +22,7 @@ function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise
 export const router = createBrowserRouter([
     {
         errorElement: <RouteErrorPage />,
+        hydrateFallbackElement: <LoadingScreen label="Loading page" />,
         children: [
             { path: "sign-in/*", element: <SignInPage /> },
             { path: "sign-up/*", element: <SignUpPage /> },

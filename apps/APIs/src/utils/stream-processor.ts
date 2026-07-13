@@ -35,32 +35,14 @@ export class StreamProcessor {
         this.chunkCount++;
         let chunkContent = "";
 
-        // Try to extract usage from final chunk
-        if (typeof chunk === "object" && chunk !== null) {
-            if (chunk.usage) {
-                this.totalTokensUsed = chunk.usage.total_tokens || 0;
-                console.info(`Token usage detected: ${this.totalTokensUsed}`);
-            }
+        if (chunk.usage) {
+            this.totalTokensUsed = chunk.usage.total_tokens || 0;
+            console.info(`Token usage detected: ${this.totalTokensUsed}`);
+        }
 
-            const choices = chunk.choices || [];
-            if (choices.length > 0) {
-                const delta = choices[0].delta || {};
-                chunkContent = delta.content || "";
-            }
-        } else {
-            try {
-                // Check for usage in the chunk object
-                if (chunk?.usage) {
-                    this.totalTokensUsed = chunk.usage.total_tokens || 0;
-                    console.info(`Token usage detected: ${this.totalTokensUsed}`);
-                }
-
-                if (chunk?.choices?.[0]?.delta?.content) {
-                    chunkContent = chunk.choices[0].delta.content;
-                }
-            } catch (e) {
-                console.warn("Error extracting chunk content:", e);
-            }
+        const choice = chunk.choices?.[0];
+        if (choice?.delta?.content) {
+            chunkContent = choice.delta.content;
         }
 
         if (this.chunkCount % 100 === 0) {
@@ -105,9 +87,10 @@ export class StreamProcessor {
         const cleanContent = this.getCleanContent();
         const themeMatch = cleanContent.match(/"theme"\s*:\s*"([^"]*)"/);
 
-        if (themeMatch) {
+        const theme = themeMatch?.[1];
+        if (theme !== undefined) {
             this.themeYielded = true;
-            return themeMatch[1];
+            return theme;
         }
 
         return null;
@@ -202,22 +185,24 @@ export class StreamProcessor {
             return this.titleExtracted;
         }
 
-        if (slide.title && typeof slide.title === "string") {
-            this.titleExtracted = slide.title;
-        } else if (slide.html && typeof slide.html === "string") {
-            const html = slide.html;
+        if (slide["title"] && typeof slide["title"] === "string") {
+            this.titleExtracted = slide["title"];
+        } else if (slide["html"] && typeof slide["html"] === "string") {
+            const html = slide["html"];
 
             // Try to find title with id="slide-title"
             const titleMatch = html.match(
                 /<h[12][^>]*id=["']slide-title["'][^>]*>([^<]+)<\/h[12]>/
             );
-            if (titleMatch) {
-                this.titleExtracted = titleMatch[1].trim();
+            const title = titleMatch?.[1];
+            if (title !== undefined) {
+                this.titleExtracted = title.trim();
             } else {
                 // Fallback to any h1/h2
                 const headerMatch = html.match(/<h[12][^>]*>([^<]+)<\/h[12]>/);
-                if (headerMatch) {
-                    this.titleExtracted = headerMatch[1].trim();
+                const header = headerMatch?.[1];
+                if (header !== undefined) {
+                    this.titleExtracted = header.trim();
                 }
             }
         }

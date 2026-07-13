@@ -1,3 +1,12 @@
+import type {
+    ApiErrorResponse,
+    BillingBalanceResponse,
+    BillingCheckoutRequest,
+    BillingCheckoutResponse,
+    BillingPackName,
+    BillingVerifyRequest,
+    BillingVerifyResponse,
+} from "@slide-sage/types";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/Header";
@@ -6,24 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
-
-type BillingBalance = {
-    slide_tokens: number;
-};
-
-type CheckoutResponse = {
-    orderId: string;
-    amount: number;
-    currency: string;
-    tokens: number;
-    keyId: string;
-};
-
-type VerifyResponse = {
-    success: boolean;
-    tokens_awarded: number;
-    new_balance: number;
-};
 
 declare global {
     interface Window {
@@ -64,9 +55,9 @@ function loadRazorpayScript(): Promise<void> {
 export default function PurchaseTokensPage() {
     const { refreshSession } = useAuth();
     const [customAmount, setCustomAmount] = useState<string>("");
-    const [selectedOption, setSelectedOption] = useState<string | null>(null);
+    const [selectedOption, setSelectedOption] = useState<BillingPackName | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [balance, setBalance] = useState<BillingBalance | null>(null);
+    const [balance, setBalance] = useState<BillingBalanceResponse | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const processingRef = useRef(false);
@@ -83,7 +74,7 @@ export default function PurchaseTokensPage() {
                 credentials: "include",
             });
             if (!res.ok) return;
-            const data = (await res.json()) as BillingBalance;
+            const data = (await res.json()) as BillingBalanceResponse;
             setBalance(data);
         } catch {
             // ignore
@@ -100,7 +91,7 @@ export default function PurchaseTokensPage() {
         }
     }, [fetchBalance, status]);
 
-    const handlePurchase = async (amount: number, option: string) => {
+    const handlePurchase = async (amount: number, option: BillingPackName) => {
         if (processingRef.current) return;
         processingRef.current = true;
         setIsProcessing(true);
@@ -118,15 +109,17 @@ export default function PurchaseTokensPage() {
                 body: JSON.stringify({
                     pack: option,
                     quantity: option === "custom" ? amount : undefined,
-                }),
+                } satisfies BillingCheckoutRequest),
             });
 
-            const data = await res.json().catch(() => ({}));
+            const data = (await res.json().catch(() => ({}))) as
+                | BillingCheckoutResponse
+                | ApiErrorResponse;
             if (!res.ok) {
-                throw new Error(data?.error?.message || "Failed to start checkout");
+                throw new Error("error" in data ? data.error.message : "Failed to start checkout");
             }
 
-            const order = data as CheckoutResponse;
+            const order = data as BillingCheckoutResponse;
 
             await new Promise<void>((resolve, reject) => {
                 const rzp = new window.Razorpay({
@@ -147,10 +140,10 @@ export default function PurchaseTokensPage() {
                                     razorpay_order_id: response.razorpay_order_id,
                                     razorpay_payment_id: response.razorpay_payment_id,
                                     razorpay_signature: response.razorpay_signature,
-                                }),
+                                } satisfies BillingVerifyRequest),
                             });
 
-                            const verifyData = (await verifyRes.json()) as VerifyResponse;
+                            const verifyData = (await verifyRes.json()) as BillingVerifyResponse;
 
                             if (!verifyRes.ok || !verifyData.success) {
                                 reject(new Error("Payment verification failed"));

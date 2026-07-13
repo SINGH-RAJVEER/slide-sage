@@ -1,5 +1,5 @@
-import { Loader2 } from "lucide-react";
 import type React from "react";
+import { Spinner } from "@/components/ui/spinner";
 import type { Slide } from "@/modules/types/presentation";
 
 export const ViewerThumbnails: React.FC<{
@@ -51,7 +51,7 @@ export const ViewerThumbnails: React.FC<{
                         }}
                         className="w-20 h-14 border-2 border-dashed border-blue-400/50 rounded-xl flex-shrink-0 overflow-hidden backdrop-blur-sm bg-blue-500/10 flex items-center justify-center"
                     >
-                        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                        <Spinner className="size-5 text-blue-400" />
                     </div>
                 )}
             </div>

@@ -11,6 +11,26 @@ default:
 dev:
     devenv shell slidesage-dev-up
 
+# Start the API and Web development servers in parallel
+apps:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set -m
+    pids=()
+    cleanup() {
+        trap - EXIT INT TERM
+        for pid in "${pids[@]}"; do
+            kill -- "-$pid" 2>/dev/null || true
+        done
+        wait "${pids[@]}" 2>/dev/null || true
+    }
+    trap cleanup EXIT INT TERM
+    bun --cwd apps/APIs dev &
+    pids+=("$!")
+    bun --cwd apps/Web dev &
+    pids+=("$!")
+    wait -n "${pids[@]}"
+
 # ---- Database ----
 
 # Open a psql shell to the local dev database
@@ -37,11 +57,11 @@ db-studio:
 
 # Run the API server only
 apis:
-    cd apps/APIs && bun --watch src/index.ts
+    bun --cwd apps/APIs dev
 
 # Run the Web dev server only
 web:
-    cd apps/Web && bunx vite
+    bun --cwd apps/Web dev
 
 # ---- Code quality ----
 

@@ -103,10 +103,7 @@ export async function requestOpenRouterStream(
     }
 }
 
-async function readWithTimeout(
-    reader: ReadableStreamDefaultReader<Uint8Array>,
-    timeoutMs: number
-): Promise<ReadableStreamReadResult<Uint8Array>> {
+async function readWithTimeout(reader: ReadableStreamDefaultReader<Uint8Array>, timeoutMs: number) {
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
     try {

@@ -1,3 +1,9 @@
+import type {
+    ProfileAvatarResponse,
+    ProfileResponse,
+    UpdateAvatarRequest,
+    UpdateProfileRequest,
+} from "@slide-sage/types";
 import { Hono } from "hono";
 import { authMiddleware, getCurrentUserId } from "../services/auth";
 import { getUserProfile, updateUserAvatar, updateUserProfile } from "../services/profile.service";
@@ -20,7 +26,7 @@ profileRoutes.get("/", async (c) => {
             return c.json({ error: { message: result.error } }, 400);
         }
 
-        return c.json({ user: result.user });
+        return c.json({ user: result.user } satisfies ProfileResponse);
     } catch (error) {
         console.error("Profile route error:", error);
         return c.json({ error: { message: "Internal server error" } }, 500);
@@ -34,7 +40,7 @@ profileRoutes.get("/", async (c) => {
 profileRoutes.put("/", async (c) => {
     try {
         const userId = getCurrentUserId(c);
-        const body = await c.req.json().catch(() => ({}));
+        const body = (await c.req.json().catch(() => ({}))) as UpdateProfileRequest;
 
         const { name, email, currentPassword, newPassword } = body;
 
@@ -53,7 +59,7 @@ profileRoutes.put("/", async (c) => {
             return c.json({ error: { message: result.error } }, 400);
         }
 
-        return c.json({ user: result.user });
+        return c.json({ user: result.user } satisfies ProfileResponse);
     } catch (error) {
         console.error("Update profile error:", error);
         return c.json({ error: { message: "Internal server error" } }, 500);
@@ -67,7 +73,7 @@ profileRoutes.put("/", async (c) => {
 profileRoutes.post("/avatar", async (c) => {
     try {
         const userId = getCurrentUserId(c);
-        const body = await c.req.json().catch(() => ({}));
+        const body = (await c.req.json().catch(() => ({}))) as Partial<UpdateAvatarRequest>;
 
         const { imageUrl } = body;
 
@@ -81,7 +87,7 @@ profileRoutes.post("/avatar", async (c) => {
             return c.json({ error: { message: result.error } }, 400);
         }
 
-        return c.json({ user: result.user });
+        return c.json({ user: result.user } satisfies ProfileAvatarResponse);
     } catch (error) {
         console.error("Update avatar error:", error);
         return c.json({ error: { message: "Internal server error" } }, 500);

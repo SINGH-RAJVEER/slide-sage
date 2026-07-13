@@ -31,7 +31,11 @@ export class UserRepository {
      */
     static async create(userData: NewUser): Promise<User> {
         const result = await db.insert(users).values(userData).returning();
-        return result[0];
+        const user = result[0];
+        if (!user) {
+            throw new Error("Failed to create user");
+        }
+        return user;
     }
 
     /**

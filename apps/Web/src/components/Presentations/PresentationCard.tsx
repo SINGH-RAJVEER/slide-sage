@@ -1,21 +1,15 @@
-import { Calendar, Loader2, Trash2 } from "lucide-react";
+import type { PresentationSummary } from "@slide-sage/types";
+import { Calendar, Trash2 } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface Presentation {
-    id: number;
-    title: string;
-    prompt: string;
-    created_at: string;
-    updated_at: string;
-}
+import { Spinner } from "@/components/ui/spinner";
 
 interface PresentationCardProps {
-    presentation: Presentation;
+    presentation: PresentationSummary;
     isDeleting: boolean;
-    onCardClick: (id: number) => void;
-    onDelete: (e: React.MouseEvent, id: number) => void;
+    onCardClick: (id: string) => void;
+    onDelete: (e: React.MouseEvent, id: string) => void;
     formatDate: (date: string) => string;
 }
 
@@ -43,11 +37,7 @@ export const PresentationCard: React.FC<PresentationCardProps> = ({
                         onClick={(e) => onDelete(e, presentation.id)}
                         disabled={isDeleting}
                     >
-                        {isDeleting ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Trash2 className="h-4 w-4" />
-                        )}
+                        {isDeleting ? <Spinner /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                 </CardTitle>
             </CardHeader>

@@ -12,18 +12,12 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "moduleDetection": "force",
-        "downlevelIteration": true,
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
         "noEmit": true,
 
         "strict": true,
 
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["./apps/*"],
-            "@pkg/*": ["./packages/*"]
-        },
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "allowUnusedLabels": false,

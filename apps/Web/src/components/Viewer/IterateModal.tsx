@@ -1,4 +1,4 @@
-import { ChevronDown, Globe, Loader2 } from "lucide-react";
+import { ChevronDown, Globe } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,6 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 interface IterateModalProps {
@@ -348,7 +349,7 @@ export default function IterateModal({
                         >
                             {isStreaming ? (
                                 <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                    <Spinner className="mr-2 size-5" />
                                     Generating...
                                 </>
                             ) : (

@@ -1,3 +1,4 @@
+import { createDatabase, runWithDatabase } from "@slide-sage/database";
 import { config as loadEnv } from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -22,10 +23,10 @@ const DEFAULT_CORS_ORIGINS = [
 
 function resolveAllowedOrigins(env: Record<string, string | undefined>): string[] {
     const raw =
-        env?.CORS_ORIGINS ??
-        env?.CORS_ORIGIN ??
-        process.env.CORS_ORIGINS ??
-        process.env.CORS_ORIGIN ??
+        env["CORS_ORIGINS"] ??
+        env["CORS_ORIGIN"] ??
+        process.env["CORS_ORIGINS"] ??
+        process.env["CORS_ORIGIN"] ??
         "";
     const origins = raw
         .split(",")
@@ -36,7 +37,7 @@ function resolveAllowedOrigins(env: Record<string, string | undefined>): string[
 
 app.use("*", logger());
 app.use("*", async (c, next) => {
-    const allowed = resolveAllowedOrigins(c.env);
+    const allowed = resolveAllowedOrigins((c.env ?? {}) as Record<string, string | undefined>);
     const corsHandler = cors({
         origin: (origin) => (allowed.includes(origin) ? origin : null),
         credentials: true,
@@ -65,11 +66,20 @@ app.notFound((c) => {
     return c.json({ error: { message: "Resource not found" } }, 404);
 });
 
-const port = Number.parseInt(process.env.PORT || "8000", 10);
+const port = Number.parseInt(process.env["PORT"] || "8000", 10);
 
 console.log(`Server started on port ${port}...`);
 
 export default {
     port,
-    fetch: app.fetch,
+    fetch(...args: Parameters<typeof app.fetch>) {
+        const env = (args[1] ?? {}) as Record<string, string | undefined>;
+        const connectionString =
+            env["DATABASE_URL"] ??
+            process.env["DATABASE_URL"] ??
+            "postgresql://slidesage:slidesage@localhost:5432/slidesage";
+        const { db } = createDatabase(connectionString);
+
+        return runWithDatabase(db, () => app.fetch(...args));
+    },
 };

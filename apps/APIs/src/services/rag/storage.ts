@@ -314,5 +314,5 @@ async function deleteOldRows(
         .delete(table)
         .where(and(eq(table.userId, userId), sql`${table.createdAt} < ${cutoffDate}`));
 
-    return result.rowCount || 0;
+    return result.count || 0;
 }
