@@ -45,7 +45,6 @@ export interface Source {
 }
 
 export interface ResearchPayload {
-    summary?: string | null;
     sources: Source[];
 }
 
@@ -96,17 +95,11 @@ export interface StreamThemeEvent {
     data: { theme: string };
 }
 
-export interface StreamMidwayspaceEvent {
-    event: "midwayspace";
-    data: { summary: string | null; sources: Source[] };
-}
-
 export interface StreamResearchEvent {
     event: "research";
     data: {
-        status: "searching" | "sourced" | "summarizing" | "ready" | "generating";
+        status: "searching" | "ready" | "generating";
         sources?: Source[];
-        summary?: string | null;
     };
 }
 
@@ -147,7 +140,6 @@ export interface StreamErrorEvent {
 export type PresentationStreamEvent =
     | StreamStartEvent
     | StreamCreatedEvent
-    | StreamMidwayspaceEvent
     | StreamResearchEvent
     | StreamThemeEvent
     | StreamRetryEvent

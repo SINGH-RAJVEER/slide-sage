@@ -37,7 +37,7 @@ All profile routes require authentication.
 | Method | Path | Description |
 | --- | --- | --- |
 | `POST` | `/api/generate-presentation-stream` | Generate and persist a deck over SSE |
-| `POST` | `/api/research-presentation` | Research and summarize sources before generation |
+| `POST` | `/api/research-presentation` | Find sources before generation |
 | `POST` | `/api/iterate-presentation-stream` | Revise an existing deck over SSE |
 | `GET` | `/api/presentations` | List the user's decks |
 | `GET` | `/api/presentations/:id` | Get one owned deck |
@@ -46,7 +46,8 @@ All profile routes require authentication.
 Generation requires `topic` and `slide_count`; it accepts `detail_level`,
 `tonality`, `research`, and an optional `research_payload`. Research options can
 include `freshness`, `maxResults`, included or excluded domains, publication date
-bounds, and `maxAgeHours`.
+bounds, and `maxAgeHours`. The research endpoint and payload contain source
+records only.
 
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.

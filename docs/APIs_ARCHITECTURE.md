@@ -53,8 +53,8 @@ owning modules.
 
 1. The web app submits generation settings and optional research filters.
 2. When research is enabled, the web app waits on a dedicated preview state while
-   Exa sources and the OpenRouter synopsis load. The complete preview remains
-   visible for review, and generation stays disabled until that request finishes.
+   Exa sources load. The source preview remains visible for review, and generation
+   stays disabled until that request finishes.
 3. RAG retrieves relevant deck, slide, style, feedback, template, and source
    context from PostgreSQL.
 4. OpenRouter produces structured presentation events.

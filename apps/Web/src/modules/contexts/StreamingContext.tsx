@@ -16,9 +16,8 @@ export interface StreamingState {
     presentationId?: string;
     error?: string;
     isComplete: boolean;
-    researchSummary?: string;
     researchSources?: Source[];
-    researchStatus?: "idle" | "searching" | "sourced" | "summarizing" | "ready" | "generating";
+    researchStatus?: "idle" | "searching" | "ready" | "generating";
 }
 
 interface StreamingContextValue {
@@ -52,7 +51,6 @@ const initialState: StreamingState = {
     totalSlides: 0,
     requestedSlides: 0,
     isComplete: false,
-    researchSummary: undefined,
     researchSources: undefined,
     researchStatus: "idle",
 };
@@ -262,19 +260,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                         data.status || prev.researchStatus,
                                                     researchSources:
                                                         data.sources ?? prev.researchSources,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                }));
-                                                break;
-
-                                            case "midwayspace":
-                                                setStreamingState((prev) => ({
-                                                    ...prev,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                    researchSources:
-                                                        data.sources ?? prev.researchSources,
-                                                    researchStatus: "ready",
                                                 }));
                                                 break;
 
@@ -592,19 +577,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                         data.status || prev.researchStatus,
                                                     researchSources:
                                                         data.sources ?? prev.researchSources,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                }));
-                                                break;
-
-                                            case "midwayspace":
-                                                setStreamingState((prev) => ({
-                                                    ...prev,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                    researchSources:
-                                                        data.sources ?? prev.researchSources,
-                                                    researchStatus: "ready",
                                                 }));
                                                 break;
 

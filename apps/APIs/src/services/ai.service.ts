@@ -43,16 +43,9 @@ export class AIService {
         console.log("AI Service initialized");
     }
 
-    private buildResearchSystemMessage(
-        sources: Source[],
-        originalQuery: string,
-        summary?: string | null
-    ): string {
+    private buildResearchSystemMessage(sources: Source[], originalQuery: string): string {
         const trimmedQuery = String(originalQuery ?? "").trim();
         const cappedSources = sources.slice(0, 8);
-        const summaryBlock = summary
-            ? `\nRESEARCH SUMMARY (from a secondary model):\n${summary.trim()}\n`
-            : "";
 
         return `WEB RESEARCH MODE IS ENABLED.
 
@@ -66,7 +59,6 @@ Rules:
 
 User topic: ${trimmedQuery || "(not provided)"}
 
-${summaryBlock}
 RESEARCH SOURCES (JSON):
 ${JSON.stringify(cappedSources, null, 2)}`;
     }
@@ -148,7 +140,6 @@ ${JSON.stringify(cappedSources, null, 2)}`;
         messages: OpenRouterMessage[];
         expectedSlideCount?: number;
         fallbackTitle: string;
-        researchTokens: number;
         sources: Source[];
         operation: "generation" | "iteration";
     }): AsyncGenerator<PresentationStreamEvent, void, unknown> {
@@ -311,8 +302,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                             ? parsedContent["theme"]
                             : "corporate-blue",
                     totalSlides: slides.length,
-                    research_tokens_used: options.researchTokens,
-                    tokens_used: processor.currentTotalTokensUsed + options.researchTokens,
+                    tokens_used: processor.currentTotalTokensUsed,
                 };
                 if (options.sources.length) {
                     presentation.sources = options.sources;
@@ -385,13 +375,9 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 research && typeof research === "object" ? research : undefined;
 
             let sources: Source[] = [];
-            let researchSummary: string | null = null;
-            let researchTokensUsed = 0;
-            let researchTokensEstimated = 0;
 
             if (researchPayload && Array.isArray(researchPayload.sources)) {
                 sources = researchPayload.sources;
-                researchSummary = researchPayload.summary ?? null;
                 if (sources.length) {
                     sources = await this.ragService.rankSourcesBySemanticRelevance(
                         userPrompt,
@@ -431,50 +417,14 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 if (effectiveResearch?.enabled) {
                     yield {
                         event: "research",
-                        data: { status: "sourced", sources },
-                    };
-                }
-
-                if (effectiveResearch?.enabled && sources.length === 0) {
-                    yield {
-                        event: "research",
-                        data: { status: "ready" },
-                    };
-                }
-
-                if (sources.length) {
-                    if (effectiveResearch?.enabled) {
-                        yield {
-                            event: "research",
-                            data: { status: "summarizing" },
-                        };
-                    }
-                }
-
-                if (sources.length) {
-                    const summaryResult = await this.searchService.summarizeSourcesDetailed(
-                        userPrompt,
-                        sources
-                    );
-                    researchSummary = summaryResult.summary;
-                    researchTokensUsed = summaryResult.tokensUsed;
-                    researchTokensEstimated = summaryResult.tokensEstimated;
-                } else {
-                    researchSummary = null;
-                }
-
-                if (sources.length) {
-                    yield {
-                        event: "midwayspace",
-                        data: { summary: researchSummary, sources },
+                        data: { status: "ready", sources },
                     };
                 }
             }
 
-            const researchMessage =
-                sources.length || researchSummary
-                    ? this.buildResearchSystemMessage(sources, userPrompt, researchSummary)
-                    : null;
+            const researchMessage = sources.length
+                ? this.buildResearchSystemMessage(sources, userPrompt)
+                : null;
 
             const messages = [
                 { role: "system", content: systemPrompt },
@@ -496,14 +446,11 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 yield { event: "research", data: { status: "generating" } };
             }
             yield { event: "start", data: { status: "generating" } };
-            const effectiveResearchTokens =
-                researchTokensUsed > 0 ? researchTokensUsed : researchTokensEstimated;
             yield* this.streamStructuredPresentation({
                 model,
                 messages,
                 expectedSlideCount: slideCount,
                 fallbackTitle: "Untitled Presentation",
-                researchTokens: effectiveResearchTokens,
                 sources,
                 operation: "generation",
             });
@@ -578,49 +525,12 @@ ${JSON.stringify(cappedSources, null, 2)}`;
             if (effectiveResearch?.enabled) {
                 yield {
                     event: "research",
-                    data: { status: "sourced", sources },
-                };
-            }
-
-            if (effectiveResearch?.enabled && sources.length === 0) {
-                yield {
-                    event: "research",
-                    data: { status: "ready" },
-                };
-            }
-
-            if (sources.length) {
-                if (effectiveResearch?.enabled) {
-                    yield {
-                        event: "research",
-                        data: { status: "summarizing" },
-                    };
-                }
-            }
-
-            let researchTokensUsed = 0;
-            let researchTokensEstimated = 0;
-
-            let researchSummary: string | null = null;
-            if (sources.length) {
-                const summaryResult = await this.searchService.summarizeSourcesDetailed(
-                    feedback,
-                    sources
-                );
-                researchSummary = summaryResult.summary;
-                researchTokensUsed = summaryResult.tokensUsed;
-                researchTokensEstimated = summaryResult.tokensEstimated;
-            }
-
-            if (sources.length) {
-                yield {
-                    event: "midwayspace",
-                    data: { summary: researchSummary, sources },
+                    data: { status: "ready", sources },
                 };
             }
 
             const researchMessage = sources.length
-                ? this.buildResearchSystemMessage(sources, feedback, researchSummary)
+                ? this.buildResearchSystemMessage(sources, feedback)
                 : null;
 
             const messages = [
@@ -640,13 +550,10 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                 yield { event: "research", data: { status: "generating" } };
             }
             yield { event: "start", data: { status: "iterating" } };
-            const effectiveResearchTokens =
-                researchTokensUsed > 0 ? researchTokensUsed : researchTokensEstimated;
             yield* this.streamStructuredPresentation({
                 model,
                 messages,
                 fallbackTitle: "Updated Presentation",
-                researchTokens: effectiveResearchTokens,
                 sources,
                 operation: "iteration",
             });

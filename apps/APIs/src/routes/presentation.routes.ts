@@ -40,7 +40,6 @@ interface ResearchSourceInput {
 
 interface ResearchPayloadInput {
     sources?: unknown;
-    summary?: unknown;
 }
 
 function parseResearchOptions(input: unknown): ResearchOptions | undefined {
@@ -129,13 +128,7 @@ function parseResearchPayload(input: unknown): ResearchPayload | undefined {
         });
     }
 
-    const summaryRaw = value.summary;
-    const summary = typeof summaryRaw === "string" ? summaryRaw : null;
-
-    return {
-        summary,
-        sources,
-    };
+    return { sources };
 }
 
 function positiveIntegerEnv(name: string, fallback: number): number {
@@ -439,19 +432,7 @@ presentations.post(
                 console.warn("Failed to store source chunks:", error);
             }
 
-            const summaryResult = sources.length
-                ? await searchService.summarizeSourcesDetailed(String(topic), sources)
-                : { summary: null, tokensUsed: 0, tokensEstimated: 0 };
-
-            return c.json(
-                {
-                    summary: summaryResult.summary,
-                    sources,
-                    tokens_used: summaryResult.tokensUsed,
-                    tokens_estimated: summaryResult.tokensEstimated,
-                },
-                200
-            );
+            return c.json({ sources }, 200);
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             return c.json({ error: { message } }, 400);

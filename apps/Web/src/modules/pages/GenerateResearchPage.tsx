@@ -29,19 +29,12 @@ export default function GenerateResearchPage() {
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
 
-    const [summary, setSummary] = useState<string | null>(null);
     const [sources, setSources] = useState<Source[]>([]);
-    const [tokensUsed, setTokensUsed] = useState<number | null>(null);
-    const [tokensEstimated, setTokensEstimated] = useState<number | null>(null);
     const [researchStatus, setResearchStatus] = useState<ResearchStatus>("loading");
     const [error, setError] = useState("");
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
     const requestIdRef = useRef(0);
-
-    const hasSummary = Boolean(summary && summary.trim().length > 0);
-    const summaryLines =
-        hasSummary && summary ? summary.split("\n").filter((line) => line.trim().length > 0) : [];
 
     const hasSources = sources.length > 0;
     const isLoading = researchStatus === "loading";
@@ -70,10 +63,7 @@ export default function GenerateResearchPage() {
 
             setResearchStatus("loading");
             setError("");
-            setSummary(null);
             setSources([]);
-            setTokensUsed(null);
-            setTokensEstimated(null);
 
             try {
                 const response = await fetch(`${API_URL}/api/research-presentation`, {
@@ -105,18 +95,10 @@ export default function GenerateResearchPage() {
                     return;
                 }
 
-                const data = (await response.json()) as ResearchPayload & {
-                    tokens_used?: number;
-                    tokens_estimated?: number;
-                };
+                const data = (await response.json()) as ResearchPayload;
                 if (controller.signal.aborted || requestId !== requestIdRef.current) return;
 
-                setSummary(typeof data.summary === "string" ? data.summary : null);
                 setSources(Array.isArray(data.sources) ? data.sources : []);
-                setTokensUsed(typeof data.tokens_used === "number" ? data.tokens_used : null);
-                setTokensEstimated(
-                    typeof data.tokens_estimated === "number" ? data.tokens_estimated : null,
-                );
                 setResearchStatus("ready");
             } catch (err: unknown) {
                 if (
@@ -149,7 +131,6 @@ export default function GenerateResearchPage() {
         setError("");
 
         const payload: ResearchPayload = {
-            summary,
             sources,
         };
 
@@ -203,114 +184,79 @@ export default function GenerateResearchPage() {
                         )}
 
                         <div className="space-y-6">
-                            <div className="space-y-5 rounded-xl border border-white/10 bg-black/20 p-6 md:p-8">
-                                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                                    <h3 className="flex items-center gap-2 text-xl font-semibold text-white/90">
-                                        Synopsis
-                                        {isLoading && <Spinner className="text-white/50" />}
-                                    </h3>
-                                </div>
-
-                                {(tokensUsed !== null || tokensEstimated !== null) && (
-                                    <p className="text-sm font-light text-white/40">
-                                        Search tokens: {tokensUsed !== null ? tokensUsed : "?"} used{" "}
-                                        / {tokensEstimated !== null ? tokensEstimated : "?"} est
-                                    </p>
-                                )}
-
-                                {hasSummary ? (
-                                    <div className="space-y-3 text-base leading-relaxed text-white/80">
-                                        {summaryLines.map((line) => (
-                                            <p key={line}>{line}</p>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-base text-white/45 italic">
-                                        {isLoading
-                                            ? "Searching, reading, and synthesizing relevant sources..."
-                                            : "No summary available."}
-                                    </div>
+                            <div className="flex items-center justify-between">
+                                <h3 className="flex items-center gap-2 text-xl font-semibold text-white/90">
+                                    Sources
+                                    {isLoading && <Spinner className="text-white/50" />}
+                                </h3>
+                                {hasSources && (
+                                    <span className="text-sm text-white/45">
+                                        {sources.length}{" "}
+                                        {sources.length === 1 ? "source" : "sources"}
+                                    </span>
                                 )}
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-semibold text-white/90">Sources</h3>
-                                    {hasSources && (
-                                        <span className="text-sm text-white/45">
-                                            {sources.length}{" "}
-                                            {sources.length === 1 ? "source" : "sources"}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    {hasSources &&
-                                        sources.map((source) => (
-                                            <a
-                                                key={source.url}
-                                                href={source.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="group flex min-w-0 flex-col rounded-lg border border-white/10 bg-black/20 p-5 transition-colors hover:border-white/20 hover:bg-white/5"
-                                            >
-                                                <div className="mb-3 flex items-start justify-between gap-3">
-                                                    <h4 className="text-base font-medium leading-snug text-white/90 transition-colors group-hover:text-white">
-                                                        {source.title || getSourceLabel(source.url)}
-                                                    </h4>
-                                                    <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
-                                                </div>
-                                                <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-white/65">
-                                                    {source.summary ||
-                                                        source.snippet ||
-                                                        "No preview available for this source."}
-                                                </p>
-                                                {source.highlights &&
-                                                    source.highlights.length > 0 && (
-                                                        <ul className="mb-4 space-y-2 text-sm leading-relaxed text-white/55">
-                                                            {source.highlights.map((highlight) => (
-                                                                <li
-                                                                    key={highlight}
-                                                                    className="flex gap-2"
-                                                                >
-                                                                    <span className="text-white/30">
-                                                                        -
-                                                                    </span>
-                                                                    <span>{highlight}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/35">
-                                                    <span>{getSourceLabel(source.url)}</span>
-                                                    {source.author && <span>{source.author}</span>}
-                                                    {source.published_date && (
-                                                        <span>{source.published_date}</span>
-                                                    )}
-                                                </div>
-                                            </a>
-                                        ))}
-
-                                    {researchStatus === "ready" && !hasSources && (
-                                        <div className="md:col-span-2 rounded-lg border border-white/10 bg-black/10 p-6 text-center text-white/45">
-                                            No sources found. Try a different phrasing or a broader
-                                            topic.
-                                        </div>
-                                    )}
-
-                                    {isLoading &&
-                                        sources.length === 0 &&
-                                        [1, 2, 3, 4].map((i) => (
-                                            <div
-                                                key={i}
-                                                className="animate-pulse rounded-lg border border-white/10 bg-black/10 p-6"
-                                            >
-                                                <div className="h-6 w-3/4 bg-white/5 rounded mb-4" />
-                                                <div className="h-4 w-full bg-white/5 rounded mb-2" />
-                                                <div className="h-4 w-2/3 bg-white/5 rounded" />
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {hasSources &&
+                                    sources.map((source) => (
+                                        <a
+                                            key={source.url}
+                                            href={source.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex min-w-0 flex-col rounded-lg border border-white/10 bg-black/20 p-5 transition-colors hover:border-white/20 hover:bg-white/5"
+                                        >
+                                            <div className="mb-3 flex items-start justify-between gap-3">
+                                                <h4 className="text-base font-medium leading-snug text-white/90 transition-colors group-hover:text-white">
+                                                    {source.title || getSourceLabel(source.url)}
+                                                </h4>
+                                                <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
                                             </div>
-                                        ))}
-                                </div>
+                                            <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-white/65">
+                                                {source.summary ||
+                                                    source.snippet ||
+                                                    "No preview available for this source."}
+                                            </p>
+                                            {source.highlights && source.highlights.length > 0 && (
+                                                <ul className="mb-4 space-y-2 text-sm leading-relaxed text-white/55">
+                                                    {source.highlights.map((highlight) => (
+                                                        <li key={highlight} className="flex gap-2">
+                                                            <span className="text-white/30">-</span>
+                                                            <span>{highlight}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                            <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/35">
+                                                <span>{getSourceLabel(source.url)}</span>
+                                                {source.author && <span>{source.author}</span>}
+                                                {source.published_date && (
+                                                    <span>{source.published_date}</span>
+                                                )}
+                                            </div>
+                                        </a>
+                                    ))}
+
+                                {researchStatus === "ready" && !hasSources && (
+                                    <div className="md:col-span-2 rounded-lg border border-white/10 bg-black/10 p-6 text-center text-white/45">
+                                        No sources found. Try a different phrasing or a broader
+                                        topic.
+                                    </div>
+                                )}
+
+                                {isLoading &&
+                                    sources.length === 0 &&
+                                    [1, 2, 3, 4].map((i) => (
+                                        <div
+                                            key={i}
+                                            className="animate-pulse rounded-lg border border-white/10 bg-black/10 p-6"
+                                        >
+                                            <div className="h-6 w-3/4 bg-white/5 rounded mb-4" />
+                                            <div className="h-4 w-full bg-white/5 rounded mb-2" />
+                                            <div className="h-4 w-2/3 bg-white/5 rounded" />
+                                        </div>
+                                    ))}
                             </div>
                         </div>
 

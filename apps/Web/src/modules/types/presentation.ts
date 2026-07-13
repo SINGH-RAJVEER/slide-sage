@@ -17,7 +17,6 @@ export type {
     StreamCreatedEvent,
     StreamErrorEvent,
     StreamEvent,
-    StreamMidwayspaceEvent,
     StreamResearchEvent,
     StreamSavedEvent,
     StreamSlideEvent,
@@ -34,7 +33,6 @@ export interface StreamingPresentationState {
     totalSlides?: number;
     presentationId?: number;
     error?: string;
-    researchSummary?: string;
     researchSources?: Source[];
-    researchStatus?: "idle" | "searching" | "sourced" | "summarizing" | "ready" | "generating";
+    researchStatus?: "idle" | "searching" | "ready" | "generating";
 }

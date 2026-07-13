@@ -29,7 +29,6 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 | --- | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | Yes for generation | None | OpenRouter authentication |
 | `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it:free` | Generation model |
-| `OPEN_ROUTER_SEARCH_MODEL` | No | `OPEN_ROUTER_MODEL` | Research summarization model |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
 | `OPEN_ROUTER_MAX_ATTEMPTS` | No | `3` | Maximum full generation attempts for transient, interrupted, or invalid responses |

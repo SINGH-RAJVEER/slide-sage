@@ -2,12 +2,6 @@ import type { ResearchOptions, Source } from "@slide-sage/types";
 import Exa from "exa-js";
 import { RAGService } from "./rag.service";
 
-export interface SearchSummaryResult {
-    summary: string | null;
-    tokensUsed: number;
-    tokensEstimated: number;
-}
-
 interface ExaSearchResult {
     url: string;
     title?: string | null;
@@ -148,100 +142,6 @@ export class SearchService {
 
         date.setDate(date.getDate() - daysBack);
         return date.toISOString().slice(0, 10);
-    }
-
-    async summarizeSourcesDetailed(query: string, sources: Source[]): Promise<SearchSummaryResult> {
-        if (!sources.length) {
-            return { summary: null, tokensUsed: 0, tokensEstimated: 0 };
-        }
-
-        try {
-            const trimmedQuery = this.normalizeQuery(query);
-            const compactSources = sources.slice(0, 8).map((source) => ({
-                url: source.url,
-                title: source.title,
-                snippet: source.snippet,
-                published_date: source.published_date,
-                author: source.author,
-                highlights: source.highlights?.slice(0, 4),
-                summary: source.summary,
-                retrieved_at: source.retrieved_at,
-            }));
-
-            const systemPrompt =
-                "You are a research summarizer. Produce a compact, factual summary of the provided web results for the user's topic. Keep it concise and actionable. Use 4-7 bullet points max. Do not invent facts. If sources are thin, say so.";
-
-            const userPromptText = `User topic: ${trimmedQuery || "(not provided)"}
-
-Sources (JSON):
-${JSON.stringify(compactSources, null, 2)}`;
-
-            const formattedPrompt = `${systemPrompt}\n\n${userPromptText}`;
-            const tokensEstimated = this.estimateTokens(formattedPrompt);
-
-            const apiKey = process.env["OPEN_ROUTER_API_KEY"];
-            if (!apiKey) {
-                throw new Error("OPEN_ROUTER_API_KEY is not set");
-            }
-
-            const model =
-                process.env["OPEN_ROUTER_SEARCH_MODEL"] ||
-                process.env["OPEN_ROUTER_MODEL"] ||
-                "google/gemma-4-26b-a4b-it:free";
-
-            const response = await fetch(
-                process.env["OPEN_ROUTER_API_BASE"] ||
-                    "https://openrouter.ai/api/v1/chat/completions",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${apiKey}`,
-                        "HTTP-Referer": process.env["BASE_URL"] || "http://localhost:8000",
-                        "X-OpenRouter-Title": "Slide Sage",
-                    },
-                    body: JSON.stringify({
-                        model,
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: userPromptText },
-                        ],
-                        temperature: 0.2,
-                        max_tokens: 500,
-                    }),
-                }
-            );
-
-            if (!response.ok) {
-                const body = await response.text();
-                throw new Error(
-                    `OpenRouter summarization failed: ${response.status} ${response.statusText} - ${body}`
-                );
-            }
-
-            const result = await response.json();
-
-            const summary =
-                typeof result.choices?.[0]?.message?.content === "string"
-                    ? result.choices[0].message.content.trim()
-                    : "";
-
-            const tokensUsed = result.usage?.total_tokens || 0;
-
-            return {
-                summary: summary || null,
-                tokensUsed,
-                tokensEstimated,
-            };
-        } catch (error) {
-            console.warn("OpenRouter summarization failed:", error);
-            return { summary: null, tokensUsed: 0, tokensEstimated: 0 };
-        }
-    }
-
-    private estimateTokens(text: string): number {
-        // Rough estimation: ~4 characters per token (OpenAI's guideline)
-        return Math.ceil(text.length / 4);
     }
 
     private normalizeQuery(query: string): string {

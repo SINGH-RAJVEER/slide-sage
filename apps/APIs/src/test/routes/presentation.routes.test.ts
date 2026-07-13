@@ -26,7 +26,6 @@ const presentationService = {
 
 const searchService = {
     storeSourceChunks: mock(),
-    summarizeSourcesDetailed: mock(),
     webSearch: mock(),
 };
 
@@ -70,7 +69,6 @@ mock.module("../../services/presentation.service", () => ({
 mock.module("../../services/search.service", () => ({
     SearchService: class {
         storeSourceChunks = searchService.storeSourceChunks;
-        summarizeSourcesDetailed = searchService.summarizeSourcesDetailed;
         webSearch = searchService.webSearch;
     },
 }));
@@ -120,7 +118,6 @@ describe("presentation routes", () => {
         presentationService.iteratePresentationStream.mockReset();
         presentationService.storePresentationMemory.mockReset();
         searchService.storeSourceChunks.mockReset();
-        searchService.summarizeSourcesDetailed.mockReset();
         searchService.webSearch.mockReset();
 
         presentationService.calculateEstimatedTokens.mockReturnValue(3);
@@ -175,7 +172,6 @@ describe("presentation routes", () => {
                 tonality: "professional",
                 research_payload: {
                     sources: [{ url: " https://example.com ", title: "Example" }],
-                    summary: "Summary",
                 },
             }),
         });
@@ -277,15 +273,10 @@ describe("presentation routes", () => {
         expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
     });
 
-    it("researches presentation topics and summarizes sources", async () => {
+    it("researches presentation topics and returns sources", async () => {
         const sources = [{ url: "https://example.com", title: "Source" }];
         searchService.webSearch.mockResolvedValue(sources);
         searchService.storeSourceChunks.mockResolvedValue(undefined);
-        searchService.summarizeSourcesDetailed.mockResolvedValue({
-            summary: "Useful facts",
-            tokensUsed: 12,
-            tokensEstimated: 15,
-        });
 
         const response = await app().request("/api/research-presentation", {
             method: "POST",
@@ -305,12 +296,7 @@ describe("presentation routes", () => {
         });
 
         expect(response.status).toBe(200);
-        expect(await json(response)).toEqual({
-            summary: "Useful facts",
-            sources,
-            tokens_used: 12,
-            tokens_estimated: 15,
-        });
+        expect(await json(response)).toEqual({ sources });
         expect(searchService.webSearch).toHaveBeenCalledWith("AI news", {
             enabled: true,
             freshness: "week",

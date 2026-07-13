@@ -59,14 +59,11 @@ describe("GenerateResearchPage", () => {
 
             await waitFor(() => expect(requestCount).toBe(2));
             expect(view.getByText("Proceed to Generate").closest("button")).toBeDisabled();
-            expect(
-                view.getByText("Searching, reading, and synthesizing relevant sources..."),
-            ).toBeInTheDocument();
+            expect(view.getByText("Sources")).toBeInTheDocument();
 
             resolveResearch?.(
                 new Response(
                     JSON.stringify({
-                        summary: "Storage demand is increasing.",
                         sources: [
                             {
                                 url: "https://example.com/storage",
@@ -74,8 +71,6 @@ describe("GenerateResearchPage", () => {
                                 snippet: "A complete source preview.",
                             },
                         ],
-                        tokens_used: 12,
-                        tokens_estimated: 14,
                     }),
                     {
                         status: 200,
@@ -85,9 +80,8 @@ describe("GenerateResearchPage", () => {
             );
 
             await waitFor(() => {
-                expect(view.getByText("Storage demand is increasing.")).toBeInTheDocument();
+                expect(view.getByText("Battery storage outlook")).toBeInTheDocument();
             });
-            expect(view.getByText("Battery storage outlook")).toBeInTheDocument();
             expect(view.getByText("A complete source preview.")).toBeInTheDocument();
             expect(view.getByText("Proceed to Generate").closest("button")).not.toBeDisabled();
         } finally {
