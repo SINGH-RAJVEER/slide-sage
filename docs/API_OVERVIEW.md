@@ -47,14 +47,19 @@ Generation requires `topic` and `slide_count`; it accepts `detail_level`,
 `tonality`, `research`, and an optional `research_payload`. Research options can
 include `freshness`, `maxResults`, included or excluded domains, publication date
 bounds, and `maxAgeHours`. The research endpoint and payload contain source
-records only.
+records only. The web client presents those records in a compact source table
+with a dedicated outbound link for each result. The research review fills the
+available workspace and supports Enter as a shortcut to begin generation.
 
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
 
 Generation and iteration return `402` before streaming when the account lacks
 enough slide tokens. The response includes the remaining, required, and shortfall
-amounts.
+amounts. Generation estimates add the input-token cost of the exact serialized
+research context at one point per 1,000 AI tokens. The research endpoint returns
+`estimated_tokens` when slide count and generation options are supplied, allowing
+the review screen and final server-side charge to show the same estimate.
 
 ### Streaming
 

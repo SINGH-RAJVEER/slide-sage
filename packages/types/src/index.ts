@@ -46,7 +46,10 @@ export interface Source {
 
 export interface ResearchPayload {
     sources: Source[];
+    estimated_tokens?: number;
 }
+
+export { buildResearchSystemMessage, estimateMessageInputTokens } from "./research-context";
 
 export type ResearchFreshness = "day" | "week" | "month" | "year";
 

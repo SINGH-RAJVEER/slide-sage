@@ -178,7 +178,9 @@ presentations.post(
             const estimatedTokens = presentationService.calculateEstimatedTokens(
                 slide_count,
                 detail_level || "balanced",
-                tonality || "professional"
+                tonality || "professional",
+                String(topic),
+                researchPayload
             );
             const { sufficient, user, shortfall } = await UserRepository.hasSufficientTokens(
                 userId,
@@ -432,7 +434,25 @@ presentations.post(
                 console.warn("Failed to store source chunks:", error);
             }
 
-            return c.json({ sources }, 200);
+            const requestedSlideCount = Number(body?.slide_count ?? body?.slideCount);
+            const estimatedTokens =
+                Number.isFinite(requestedSlideCount) && requestedSlideCount > 0
+                    ? presentationService.calculateEstimatedTokens(
+                          requestedSlideCount,
+                          body?.detail_level ?? body?.detailLevel ?? "balanced",
+                          body?.tonality ?? "professional",
+                          String(topic),
+                          { sources }
+                      )
+                    : undefined;
+
+            return c.json(
+                {
+                    sources,
+                    ...(estimatedTokens === undefined ? {} : { estimated_tokens: estimatedTokens }),
+                },
+                200
+            );
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error";
             return c.json({ error: { message } }, 400);

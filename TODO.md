@@ -7,6 +7,7 @@
 - Add option for user to choose the aspect ratio
 - Add a template creation page and marketplace
 - Add an option to use a locally hosted llm server for generation
+- Find a way to implement images in the presentations
 
 ## Issues
 

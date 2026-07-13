@@ -1,5 +1,5 @@
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,12 @@ export default function GenerateResearchPage() {
 
     const [sources, setSources] = useState<Source[]>([]);
     const [researchStatus, setResearchStatus] = useState<ResearchStatus>("loading");
+    const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
     const [error, setError] = useState("");
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
     const requestIdRef = useRef(0);
+    const isProceedingRef = useRef(false);
 
     const hasSources = sources.length > 0;
     const isLoading = researchStatus === "loading";
@@ -64,6 +66,7 @@ export default function GenerateResearchPage() {
             setResearchStatus("loading");
             setError("");
             setSources([]);
+            setEstimatedTokens(null);
 
             try {
                 const response = await fetch(`${API_URL}/api/research-presentation`, {
@@ -77,6 +80,9 @@ export default function GenerateResearchPage() {
                         research: {
                             enabled: true,
                         },
+                        slide_count: slideCount,
+                        detail_level: detailLevel,
+                        tonality,
                     }),
                     signal: controller.signal,
                 });
@@ -99,6 +105,9 @@ export default function GenerateResearchPage() {
                 if (controller.signal.aborted || requestId !== requestIdRef.current) return;
 
                 setSources(Array.isArray(data.sources) ? data.sources : []);
+                setEstimatedTokens(
+                    typeof data.estimated_tokens === "number" ? data.estimated_tokens : null,
+                );
                 setResearchStatus("ready");
             } catch (err: unknown) {
                 if (
@@ -124,9 +133,18 @@ export default function GenerateResearchPage() {
         }
     }, [isProceeding, navigate, streamingState.slides.length]);
 
-    const handleProceed = async () => {
-        if (!prompt || !slideCount || streamingState.isStreaming) return;
+    const handleProceed = useCallback(async () => {
+        if (
+            !prompt ||
+            !slideCount ||
+            researchStatus !== "ready" ||
+            streamingState.isStreaming ||
+            isProceedingRef.current
+        ) {
+            return;
+        }
 
+        isProceedingRef.current = true;
         setIsProceeding(true);
         setError("");
 
@@ -144,9 +162,49 @@ export default function GenerateResearchPage() {
         );
 
         if (!success) {
+            isProceedingRef.current = false;
             setIsProceeding(false);
         }
-    };
+    }, [
+        detailLevel,
+        prompt,
+        researchStatus,
+        slideCount,
+        sources,
+        startStreaming,
+        streamingState.isStreaming,
+        tonality,
+    ]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (
+                event.key !== "Enter" ||
+                event.repeat ||
+                event.shiftKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.altKey
+            ) {
+                return;
+            }
+
+            const target = event.target;
+            if (
+                target instanceof HTMLElement &&
+                (target.isContentEditable ||
+                    target.closest("a, button, input, textarea, select") !== null)
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            void handleProceed();
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleProceed]);
 
     return (
         <div className="h-screen overflow-hidden bg-transparent flex flex-col">
@@ -161,12 +219,17 @@ export default function GenerateResearchPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </button>
 
-                <div className="mx-auto w-full max-w-4xl px-4 py-12 md:px-6">
+                <div className="mx-auto w-full max-w-7xl px-4 py-10 md:px-8 lg:px-12">
                     <div className="space-y-8">
                         <div className="text-center">
                             <h2 className="text-3xl font-semibold text-white md:text-4xl">
                                 Research Insights
                             </h2>
+                            {estimatedTokens !== null && (
+                                <p className="mt-3 text-lg font-medium text-white/60">
+                                    Estimated {estimatedTokens.toFixed(1)} points
+                                </p>
+                            )}
                         </div>
 
                         {researchStatus === "error" && (
@@ -197,70 +260,146 @@ export default function GenerateResearchPage() {
                                 )}
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {hasSources &&
-                                    sources.map((source) => (
-                                        <a
-                                            key={source.url}
-                                            href={source.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="group flex min-w-0 flex-col rounded-lg border border-white/10 bg-black/20 p-5 transition-colors hover:border-white/20 hover:bg-white/5"
-                                        >
-                                            <div className="mb-3 flex items-start justify-between gap-3">
-                                                <h4 className="text-base font-medium leading-snug text-white/90 transition-colors group-hover:text-white">
-                                                    {source.title || getSourceLabel(source.url)}
-                                                </h4>
-                                                <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
-                                            </div>
-                                            <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-white/65">
-                                                {source.summary ||
-                                                    source.snippet ||
-                                                    "No preview available for this source."}
-                                            </p>
-                                            {source.highlights && source.highlights.length > 0 && (
-                                                <ul className="mb-4 space-y-2 text-sm leading-relaxed text-white/55">
-                                                    {source.highlights.map((highlight) => (
-                                                        <li key={highlight} className="flex gap-2">
-                                                            <span className="text-white/30">-</span>
-                                                            <span>{highlight}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                            <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/35">
-                                                <span>{getSourceLabel(source.url)}</span>
-                                                {source.author && <span>{source.author}</span>}
-                                                {source.published_date && (
-                                                    <span>{source.published_date}</span>
-                                                )}
-                                            </div>
-                                        </a>
-                                    ))}
+                            <div className="overflow-x-auto rounded-md border border-white/10 bg-black/15">
+                                <table
+                                    className="w-full min-w-[880px] table-fixed text-left"
+                                    aria-label="Research sources"
+                                >
+                                    <colgroup>
+                                        <col className="w-[28%]" />
+                                        <col className="w-[48%]" />
+                                        <col className="w-[17%]" />
+                                        <col className="w-[7%]" />
+                                    </colgroup>
+                                    <thead>
+                                        <tr className="border-b border-white/10 bg-white/[0.025]">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                            >
+                                                Source
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                            >
+                                                Research note
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                            >
+                                                Details
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                className="sticky right-0 bg-background/95 px-3 py-3"
+                                            >
+                                                <span className="sr-only">Open source</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/[0.07]">
+                                        {hasSources &&
+                                            sources.map((source) => {
+                                                const sourceTitle =
+                                                    source.title || getSourceLabel(source.url);
 
-                                {researchStatus === "ready" && !hasSources && (
-                                    <div className="md:col-span-2 rounded-lg border border-white/10 bg-black/10 p-6 text-center text-white/45">
-                                        No sources found. Try a different phrasing or a broader
-                                        topic.
-                                    </div>
-                                )}
+                                                return (
+                                                    <tr
+                                                        key={source.url}
+                                                        className="group/row transition-colors hover:bg-white/[0.035]"
+                                                    >
+                                                        <td className="px-5 py-5 align-top">
+                                                            <p className="break-words text-sm font-medium leading-5 text-white/90">
+                                                                {sourceTitle}
+                                                            </p>
+                                                            <p className="mt-1 truncate text-xs text-white/35">
+                                                                {getSourceLabel(source.url)}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-5 py-5 align-top">
+                                                            <p className="line-clamp-4 whitespace-pre-line text-sm leading-6 text-white/60">
+                                                                {source.summary ||
+                                                                    source.snippet ||
+                                                                    "No preview available for this source."}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-5 py-5 align-top text-xs leading-5 text-white/45">
+                                                            {source.author ||
+                                                            source.published_date ? (
+                                                                <div className="space-y-0.5">
+                                                                    {source.author && (
+                                                                        <p className="truncate text-white/60">
+                                                                            {source.author}
+                                                                        </p>
+                                                                    )}
+                                                                    {source.published_date && (
+                                                                        <p>
+                                                                            {source.published_date}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-white/30">
+                                                                    Not listed
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="sticky right-0 bg-background/95 px-3 py-5 text-center align-top transition-colors group-hover/row:bg-[#121214]">
+                                                            <a
+                                                                href={source.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                aria-label={`Open source: ${sourceTitle}`}
+                                                                title="Open source"
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-white/45 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                                                            >
+                                                                <ExternalLink className="h-4 w-4" />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
 
-                                {isLoading &&
-                                    sources.length === 0 &&
-                                    [1, 2, 3, 4].map((i) => (
-                                        <div
-                                            key={i}
-                                            className="animate-pulse rounded-lg border border-white/10 bg-black/10 p-6"
-                                        >
-                                            <div className="h-6 w-3/4 bg-white/5 rounded mb-4" />
-                                            <div className="h-4 w-full bg-white/5 rounded mb-2" />
-                                            <div className="h-4 w-2/3 bg-white/5 rounded" />
-                                        </div>
-                                    ))}
+                                        {researchStatus === "ready" && !hasSources && (
+                                            <tr>
+                                                <td
+                                                    colSpan={4}
+                                                    className="px-6 py-10 text-center text-sm text-white/45"
+                                                >
+                                                    No sources found. Try a different phrasing or a
+                                                    broader topic.
+                                                </td>
+                                            </tr>
+                                        )}
+
+                                        {isLoading &&
+                                            sources.length === 0 &&
+                                            [1, 2, 3, 4].map((i) => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-4 py-5">
+                                                        <div className="mb-2 h-4 w-4/5 rounded bg-white/5" />
+                                                        <div className="h-3 w-2/5 rounded bg-white/5" />
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="mb-2 h-3 w-full rounded bg-white/5" />
+                                                        <div className="h-3 w-3/4 rounded bg-white/5" />
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="h-3 w-2/3 rounded bg-white/5" />
+                                                    </td>
+                                                    <td className="sticky right-0 bg-background/95 px-3 py-5">
+                                                        <div className="mx-auto h-8 w-8 rounded-md bg-white/5" />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
-                        <div className="flex justify-center pt-2 pb-6">
+                        <div className="flex flex-col items-center gap-4 pb-6 pt-2">
                             <Button
                                 onClick={handleProceed}
                                 disabled={
@@ -284,6 +423,9 @@ export default function GenerateResearchPage() {
                                     )}
                                 </span>
                             </Button>
+                            <p className="text-center text-sm text-white/45">
+                                Press <span className="text-white/50">Enter</span> to generate
+                            </p>
                         </div>
                     </div>
                 </div>

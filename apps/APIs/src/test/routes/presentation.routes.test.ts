@@ -189,6 +189,13 @@ describe("presentation routes", () => {
             { slides: [], theme: "corporate-blue", title: "Generating..." }
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            3,
+            "balanced",
+            "professional",
+            "Quarterly planning",
+            { sources: [{ url: "https://example.com", title: "Example" }] }
+        );
         expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
         expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -282,6 +289,9 @@ describe("presentation routes", () => {
             method: "POST",
             body: JSON.stringify({
                 topic: "AI news",
+                slide_count: 6,
+                detail_level: "detailed",
+                tonality: "persuasive",
                 research: {
                     enabled: true,
                     freshness: "week",
@@ -296,7 +306,7 @@ describe("presentation routes", () => {
         });
 
         expect(response.status).toBe(200);
-        expect(await json(response)).toEqual({ sources });
+        expect(await json(response)).toEqual({ sources, estimated_tokens: 3 });
         expect(searchService.webSearch).toHaveBeenCalledWith("AI news", {
             enabled: true,
             freshness: "week",
@@ -311,6 +321,13 @@ describe("presentation routes", () => {
             currentUserId,
             "AI news",
             sources
+        );
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            6,
+            "detailed",
+            "persuasive",
+            "AI news",
+            { sources }
         );
     });
 

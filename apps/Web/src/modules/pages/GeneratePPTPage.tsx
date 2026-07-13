@@ -154,7 +154,7 @@ export default function GeneratePPTPage() {
         } else if (detailLevel === "detailed") {
             baseTokenPerSlide = 2.0;
         } else if (detailLevel === "comprehensive") {
-            baseTokenPerSlide = 3.0;
+            baseTokenPerSlide = 2.5;
         }
 
         let tonalityMultiplier = 1.0;

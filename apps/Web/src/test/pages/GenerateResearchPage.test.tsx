@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { StreamingProvider } from "@/modules/contexts/StreamingContext";
@@ -71,6 +71,7 @@ describe("GenerateResearchPage", () => {
                                 snippet: "A complete source preview.",
                             },
                         ],
+                        estimated_tokens: 5.8,
                     }),
                     {
                         status: 200,
@@ -82,8 +83,26 @@ describe("GenerateResearchPage", () => {
             await waitFor(() => {
                 expect(view.getByText("Battery storage outlook")).toBeInTheDocument();
             });
+            expect(view.getByRole("table", { name: "Research sources" })).toBeInTheDocument();
             expect(view.getByText("A complete source preview.")).toBeInTheDocument();
+            expect(view.getByText("Estimated 5.8 points")).toBeInTheDocument();
+            const sourceLink = view.getByRole("link", {
+                name: "Open source: Battery storage outlook",
+            });
+            expect(sourceLink).toHaveAttribute("href", "https://example.com/storage");
+            expect(sourceLink).toHaveAttribute("target", "_blank");
             expect(view.getByText("Proceed to Generate").closest("button")).not.toBeDisabled();
+            expect(view.getByText("Enter").parentElement).toHaveTextContent(
+                "Press Enter to generate",
+            );
+
+            fireEvent.keyDown(sourceLink, { key: "Enter" });
+            expect(requestCount).toBe(2);
+
+            fireEvent.keyDown(window, { key: "Enter" });
+
+            await waitFor(() => expect(requestCount).toBe(3));
+            expect(view.getByText("Processing...")).toBeInTheDocument();
         } finally {
             globalThis.fetch = originalFetch;
         }

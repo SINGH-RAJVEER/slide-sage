@@ -118,6 +118,12 @@ Repository classes own persistence. Route handlers should validate HTTP input an
 translate service results, while AI, research, RAG, profile, and billing logic
 remain in services.
 
+`apps/APIs/src/services/ai.service.ts` is the stable presentation-AI facade. Its
+supporting `services/ai/` modules separately own message construction, research
+source resolution, presentation-content normalization, and resilient OpenRouter
+stream orchestration. Keep provider transport and retry behavior out of the
+facade so generation and iteration share one streaming implementation.
+
 ## Web Routing
 
 React Router defines public authentication routes and a signed-in application
@@ -129,3 +135,6 @@ The `/presentation` route is retained for an in-progress stream before a saved
 presentation ID is available. Navigating between client routes does not cancel
 the active stream; only unmounting the application or explicitly stopping the
 operation aborts it. Starting another generation is disabled while one is active.
+Failed or empty generations open `/presentation-error`, which uses the signed-in
+application shell and offers routes back to the presentation library plus cleanup
+for an unfinished saved presentation.

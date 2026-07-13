@@ -1,3 +1,5 @@
+import { estimateMessageInputTokens } from "@slide-sage/types";
+
 /*
  * Token Calculator Service
  * Handles token estimation and calculation for presentation generation
@@ -7,6 +9,7 @@ export interface TokenCalculationParams {
     slideCount: number;
     detailLevel: string;
     tonality: string;
+    researchContext?: string;
 }
 
 export interface TokenEstimate {
@@ -14,6 +17,8 @@ export interface TokenEstimate {
     baseTokensPerSlide: number;
     detailMultiplier: number;
     tonalityMultiplier: number;
+    researchInputTokens: number;
+    researchTokenCost: number;
 }
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Utility is intentionally static-only.
@@ -42,20 +47,24 @@ export class TokenCalculator {
      * Calculate estimated tokens required for presentation generation
      */
     static calculateEstimatedTokens(params: TokenCalculationParams): TokenEstimate {
-        const { slideCount, detailLevel, tonality } = params;
+        const { slideCount, detailLevel, tonality, researchContext = "" } = params;
 
         const detailMultiplier = TokenCalculator.DETAIL_MULTIPLIERS[detailLevel] || 1.0;
         const tonalityMultiplier = TokenCalculator.TONALITY_MULTIPLIERS[tonality] || 1.0;
         const baseTokensPerSlide = TokenCalculator.BASE_TOKEN_PER_SLIDE * detailMultiplier;
 
-        // Calculate total estimated tokens
-        const estimatedTokens = slideCount * baseTokensPerSlide * tonalityMultiplier;
+        const baseEstimatedTokens = slideCount * baseTokensPerSlide * tonalityMultiplier;
+        const researchInputTokens = estimateMessageInputTokens(researchContext);
+        const researchTokenCost = researchInputTokens / 1000;
+        const estimatedTokens = baseEstimatedTokens + researchTokenCost;
 
         return {
             estimatedTokens: Math.round(estimatedTokens * 10) / 10, // Round to 1 decimal place
             baseTokensPerSlide,
             detailMultiplier,
             tonalityMultiplier,
+            researchInputTokens,
+            researchTokenCost,
         };
     }
 
@@ -90,7 +99,7 @@ export class TokenCalculator {
             concise: "20% less tokens",
             balanced: "Standard cost",
             detailed: "2x more tokens",
-            comprehensive: "3x more tokens",
+            comprehensive: "2.5x more tokens",
         };
 
         return {

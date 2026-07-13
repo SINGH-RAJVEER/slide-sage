@@ -1,13 +1,12 @@
-import { AlertCircle, Home, Trash2 } from "lucide-react";
+import { ArrowLeft, CircleAlert, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_URL } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
 
 interface PresentationErrorPageProps {
-    presentationId?: number;
+    presentationId?: number | string;
     error?: string;
     onDelete?: () => void;
 }
@@ -20,7 +19,6 @@ export default function PresentationErrorPage({
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Get data from route state or props
     const presentationId = location.state?.presentationId || propPresentationId;
     const error =
         location.state?.error ||
@@ -35,13 +33,10 @@ export default function PresentationErrorPage({
         if (onDelete) {
             onDelete();
         } else if (presentationId) {
-            // Default delete behavior
             try {
                 const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
                     method: "DELETE",
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
+                    credentials: "include",
                 });
 
                 if (response.ok) {
@@ -54,59 +49,73 @@ export default function PresentationErrorPage({
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="flex min-h-screen flex-col bg-transparent">
             <Header />
-            <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
-                <Card className="max-w-2xl w-full bg-white/10 backdrop-blur-md border-white/20 text-white shadow-2xl">
-                    <CardHeader className="text-center">
-                        <div className="flex justify-center mb-4">
-                            <div className="rounded-full bg-red-500/20 p-3">
-                                <AlertCircle className="h-12 w-12 text-red-500" />
-                            </div>
-                        </div>
-                        <CardTitle className="text-2xl text-white">Presentation Error</CardTitle>
-                        <CardDescription className="text-base mt-2 text-white/70">
-                            {error}
-                        </CardDescription>
-                    </CardHeader>
+            <main className="flex flex-1 items-center px-6 py-12 md:px-10 md:py-16">
+                <section
+                    aria-labelledby="presentation-error-title"
+                    className="mx-auto w-full max-w-3xl"
+                >
+                    <div className="flex items-center gap-2 text-sm font-medium text-red-300">
+                        <CircleAlert className="h-4 w-4" aria-hidden="true" />
+                        <span>Generation stopped</span>
+                    </div>
 
-                    <CardContent className="space-y-4">
-                        <div className="bg-white/5 p-4 rounded-lg border border-white/10">
-                            <h3 className="font-semibold text-sm text-white/90 mb-2">
-                                What could have happened?
-                            </h3>
-                            <ul className="text-sm text-white/60 space-y-1 list-disc list-inside">
-                                <li>The AI service failed to generate content</li>
-                                <li>Network connection was interrupted during generation</li>
-                                <li>The presentation generation timed out</li>
-                                <li>Invalid API key or insufficient quota</li>
-                            </ul>
-                        </div>
+                    <div className="mt-5 max-w-2xl">
+                        <h1
+                            id="presentation-error-title"
+                            className="text-3xl font-semibold text-white md:text-4xl"
+                        >
+                            We couldn&apos;t finish this presentation
+                        </h1>
+                        <p className="mt-4 text-base leading-7 text-white/60 md:text-lg">{error}</p>
+                    </div>
 
-                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <div className="mt-10 rounded-lg border border-white/10 bg-black/20 p-5 md:p-6">
+                        <h2 className="text-sm font-semibold text-white/90">What you can do</h2>
+                        <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/55 md:grid-cols-2">
+                            <li className="flex gap-3">
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
+                                Return to your presentations and try generating the deck again.
+                            </li>
+                            <li className="flex gap-3">
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
+                                Check your connection if generation stopped before any slides
+                                appeared.
+                            </li>
+                            <li className="flex gap-3">
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
+                                Try a shorter topic or fewer slides if the request timed out.
+                            </li>
+                            <li className="flex gap-3">
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
+                                Remove the unfinished presentation if you no longer need it.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <Button
+                            onClick={handleGoHome}
+                            className="h-11 bg-white px-5 text-[#151c2a] hover:bg-white/90"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            My Presentations
+                        </Button>
+
+                        {presentationId && (
                             <Button
-                                onClick={handleGoHome}
-                                variant="outline"
-                                className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+                                onClick={handleDelete}
+                                variant="ghost"
+                                className="h-11 px-5 text-red-300 hover:bg-red-500/10 hover:text-red-200"
                             >
-                                <Home className="mr-2 h-4 w-4" />
-                                My Presentations
+                                <Trash2 className="h-4 w-4" />
+                                Delete unfinished presentation
                             </Button>
-
-                            {presentationId && (
-                                <Button
-                                    onClick={handleDelete}
-                                    variant="destructive"
-                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white"
-                                >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete & Return
-                                </Button>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                        )}
+                    </div>
+                </section>
+            </main>
         </div>
     );
 }

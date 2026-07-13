@@ -5,12 +5,13 @@
 
 import type { Presentation } from "@slide-sage/database";
 import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
-import type {
-    PresentationStreamEvent,
-    ResearchOptions,
-    ResearchPayload,
-    Slide,
-    Source,
+import {
+    buildResearchSystemMessage,
+    type PresentationStreamEvent,
+    type ResearchOptions,
+    type ResearchPayload,
+    type Slide,
+    type Source,
 } from "@slide-sage/types";
 import { AIService } from "./ai.service";
 import { RAGService } from "./rag.service";
@@ -64,12 +65,18 @@ export class PresentationService {
     calculateEstimatedTokens(
         slideCount: number,
         detailLevel = "balanced",
-        tonality = "professional"
+        tonality = "professional",
+        topic = "",
+        researchPayload?: ResearchPayload
     ): number {
+        const researchContext = researchPayload?.sources.length
+            ? buildResearchSystemMessage(researchPayload.sources, topic)
+            : undefined;
         const estimate = TokenCalculator.calculateEstimatedTokens({
             slideCount,
             detailLevel,
             tonality,
+            researchContext,
         });
         return estimate.estimatedTokens;
     }
