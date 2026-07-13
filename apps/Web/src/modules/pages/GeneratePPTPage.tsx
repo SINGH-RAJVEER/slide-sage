@@ -18,11 +18,7 @@ export default function GeneratePPTPage() {
     const [tonality, setTonality] = useState("professional");
     const [useWebResearch, setUseWebResearch] = useState(false);
     const navigate = useNavigate();
-    const { streamingState, startStreaming, resetStreaming } = useStreaming();
-
-    useEffect(() => {
-        resetStreaming();
-    }, [resetStreaming]);
+    const { streamingState, startStreaming } = useStreaming();
 
     useEffect(() => {
         if (streamingState.slides.length >= 1 && loading) {
@@ -91,7 +87,7 @@ export default function GeneratePPTPage() {
     };
 
     const handleGenerateInternal = async (selectedTopics = topics) => {
-        if (selectedTopics.length === 0) return;
+        if (selectedTopics.length === 0 || streamingState.isStreaming) return;
 
         setLoading(true);
         setError("");
@@ -200,7 +196,7 @@ export default function GeneratePPTPage() {
                         <GenerateForm
                             prompt={prompt}
                             topics={topics}
-                            loading={loading}
+                            loading={loading || streamingState.isStreaming}
                             error={error}
                             estimatedTokens={calculateEstimatedTokens()}
                             onPromptChange={setPrompt}

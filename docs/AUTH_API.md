@@ -39,9 +39,14 @@ Cloudflare routes `/api/*` to the Worker and serves all other paths from Pages,
 so authentication remains same-origin. `https://api.slidesage.app` remains
 available for direct API access.
 
-The production frontend ignores loopback `VITE_API_URL` values and uses the
-current site origin. This prevents local development configuration from being
-embedded as the authentication endpoint in a deployed browser bundle.
+When the frontend runs on `slidesage.app` or `www.slidesage.app`, it always uses
+the current site origin for API requests, even if the Pages build contains an
+external `VITE_API_URL`. Cloudflare Pages preview domains retain the configured
+API origin. This keeps production session cookies on the same host while
+preserving preview deployments.
+The web build script also pins `NODE_ENV=production` so production bundles use
+React's production runtime and Vite's production environment flags even when the
+calling shell defaults to development.
 
 Google and GitHub authentication buttons, along with the email sign-up and
 sign-in actions, provide immediate press feedback while respecting
@@ -61,6 +66,10 @@ a development secret.
 The frontend retries transient session lookup failures before treating a user
 as signed out, preventing route-guard loops during brief Worker or database
 startup failures.
+
+Sign-out invalidates pending session refreshes before clearing the Better Auth
+session. This prevents an older session response from restoring the signed-out
+user in the frontend.
 
 ## Primary Endpoints
 

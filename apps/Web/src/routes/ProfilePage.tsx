@@ -7,15 +7,11 @@ import type {
     UserProfile,
 } from "@slide-sage/types";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 
 export default function ProfilePage() {
-    const navigate = useNavigate();
-    const { isSignedIn } = useAuth();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -37,13 +33,6 @@ export default function ProfilePage() {
     const [uploadingImage, setUploadingImage] = useState(false);
 
     const [savingProfile, setSavingProfile] = useState(false);
-
-    // Redirect if not signed in
-    useEffect(() => {
-        if (!isSignedIn) {
-            navigate("/sign-in");
-        }
-    }, [isSignedIn, navigate]);
 
     // Fetch profile on mount
     const fetchProfile = useCallback(async () => {

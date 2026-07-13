@@ -207,7 +207,7 @@ export function usePresentationData({
                 if (fetchedSlides.length > 0 && pres.title !== "Generating...") {
                     setPresentation({
                         title: pres.title || slidesData.title,
-                        theme: slidesData.theme || "default",
+                        theme: slidesData.theme || "corporate-blue",
                         slides: fetchedSlides,
                         totalSlides: slidesData.totalSlides || fetchedSlides.length || 0,
                     });

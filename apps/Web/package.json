@@ -8,7 +8,7 @@
     "scripts": {
         "dev": "bunx --bun vite",
         "prebuild": "bun install --no-frozen-lockfile",
-        "build": "bunx --bun vite build",
+        "build": "NODE_ENV=production bunx --bun vite build",
         "preview": "bunx --bun vite preview",
         "test": "bun test",
         "test:watch": "bun test --watch",
@@ -30,9 +30,8 @@
         "chart.js": "^4.5.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
-        "html-to-image": "^1.11.13",
-        "jspdf": "^3.0.1",
         "lucide-react": "^0.514.0",
+        "pptxgenjs": "^4.0.1",
         "react": "^19",
         "react-chartjs-2": "^5.3.0",
         "react-dom": "^19",
@@ -56,6 +55,7 @@
         "babel-plugin-react-compiler": "^1.0.0",
         "happy-dom": "^20.1.0",
         "jsdom": "^23.0.1",
+        "jszip": "^3.10.1",
         "lightningcss": "^1.30.2",
         "tailwindcss": "^4.0.0",
         "vitest": "^1.0.4"

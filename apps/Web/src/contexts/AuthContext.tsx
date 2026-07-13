@@ -1,6 +1,5 @@
 import type React from "react";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { API_URL } from "@/lib/api";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { fetchSessionWithRetry, type SessionUser } from "@/lib/session";
 
 export type User = SessionUser;
@@ -30,9 +29,18 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const sessionRequestId = useRef(0);
+    const signingOut = useRef(false);
 
     const refreshSession = useCallback(async () => {
-        setUser(await fetchSessionWithRetry());
+        if (signingOut.current) return;
+
+        const requestId = ++sessionRequestId.current;
+        const nextUser = await fetchSessionWithRetry();
+
+        if (!signingOut.current && requestId === sessionRequestId.current) {
+            setUser(nextUser);
+        }
     }, []);
 
     // Fetch current user session on mount
@@ -82,15 +90,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const signOut = async () => {
+        signingOut.current = true;
+        sessionRequestId.current += 1;
+
         try {
-            await fetch(`${API_URL}/api/auth/sign-out`, {
-                method: "POST",
-                credentials: "include",
-            });
+            const { authClient } = await import("@/lib/auth-client");
+            const { error } = await authClient.signOut();
+            if (error) throw new Error(error.message || "Sign out failed");
+
             setUser(null);
-            window.location.href = "/sign-in";
+            window.location.replace("/sign-in");
         } catch (error) {
+            signingOut.current = false;
             console.error("Sign out failed:", error);
+            throw error;
         }
     };
 

@@ -40,4 +40,29 @@ describe("resolveApiUrl", () => {
         expect(resolveApiUrl("https://api.slidesage.app", true)).toBe("https://api.slidesage.app");
         expect(resolveApiUrl("/backend", true)).toBe("/backend");
     });
+
+    it("uses same-origin API routes on the production custom domain", () => {
+        expect(
+            resolveApiUrl("https://api.slidesage.app", true, "https://slidesage.app/profile"),
+        ).toBe("");
+        expect(
+            resolveApiUrl("https://api.slidesage.app", true, "https://www.slidesage.app/profile"),
+        ).toBe("");
+    });
+
+    it("uses same-origin API routes on the custom domain despite an incorrect build mode", () => {
+        expect(resolveApiUrl("http://localhost:8000", false, "https://slidesage.app/sign-in")).toBe(
+            "",
+        );
+    });
+
+    it("keeps the deployed API origin for Cloudflare Pages previews", () => {
+        expect(
+            resolveApiUrl(
+                "https://api.slidesage.app",
+                true,
+                "https://slide-sage.pages.dev/profile",
+            ),
+        ).toBe("https://api.slidesage.app");
+    });
 });

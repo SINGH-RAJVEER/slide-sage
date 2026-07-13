@@ -60,7 +60,29 @@ owning modules.
 4. OpenRouter produces structured presentation events.
 5. The API streams `created`, generation progress, `saved`, or `error` events.
 6. The completed deck and its semantic memories are persisted through Drizzle.
-7. The web viewer renders the deck and exports it to PDF in the browser.
+7. The app-level streaming provider keeps consuming the response when the user
+   navigates to another route. A persistent status control returns to the live
+   viewer and reports generated-slide progress.
+8. The web app treats `saved`, rather than `complete`, as the persistence signal.
+   It refreshes an open Presentations page after that event and links the completed
+   status to the stored deck.
+9. The web viewer renders the deck and can export an editable PowerPoint file in
+   the browser.
+
+### Editable PowerPoint Export
+
+The viewer passes the complete presentation model to the browser-side PPTX
+builder. Export does not depend on mounted carousel slides and does not capture
+slide screenshots. HTML slide semantics are mapped to native PowerPoint text
+boxes, lists, tables, shapes, and images. Chart slides become native PowerPoint
+charts with their category and series data retained for editing.
+
+The export uses a widescreen 16:9 layout and maps each Slide Sage theme to a
+PowerPoint-safe color and font palette. Images are embedded when the browser can
+fetch them; a failed or cross-origin image becomes an editable labeled
+placeholder so it does not abort the deck. PowerPoint has no polar-area chart
+type, so those charts are exported as editable radar charts. The downloaded file
+uses the presentation title and the `.pptx` extension.
 
 The Cloudflare Worker creates its Postgres.js client inside each request and
 keeps Drizzle access scoped to that invocation. Database clients must not be
@@ -104,4 +126,6 @@ area. Protected routes include `/`, `/profile`, `/generate`,
 `/purchase`. Presentation-heavy pages are lazy-loaded.
 
 The `/presentation` route is retained for an in-progress stream before a saved
-presentation ID is available.
+presentation ID is available. Navigating between client routes does not cancel
+the active stream; only unmounting the application or explicitly stopping the
+operation aborts it. Starting another generation is disabled while one is active.

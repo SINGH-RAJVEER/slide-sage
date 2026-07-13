@@ -207,7 +207,7 @@ export async function storeStyleMemory(
     const slideTypes = Array.from(new Set(params.slides.map((slide) => slide.type))).join(", ");
     const content = [
         `Deck style memory for "${params.title}".`,
-        `Theme: ${params.theme || "default"}.`,
+        `Theme: ${params.theme || "corporate-blue"}.`,
         `Tone: ${params.tonality || "professional"}.`,
         `Detail level: ${params.detailLevel || "balanced"}.`,
         `Slide types: ${slideTypes || "content"}.`,

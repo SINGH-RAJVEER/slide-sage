@@ -13,7 +13,7 @@ export function buildDeckSummary(params: StorePresentationSemanticMemoryParams):
     return [
         `Deck title: ${params.title || "Untitled Presentation"}`,
         `User prompt: ${normalizeText(params.prompt)}`,
-        `Theme: ${params.theme || "default"}`,
+        `Theme: ${params.theme || "corporate-blue"}`,
         `Tone: ${params.tonality || "professional"}`,
         `Detail level: ${params.detailLevel || "balanced"}`,
         `Slide count: ${params.slides.length}`,

@@ -206,7 +206,7 @@ presentations.post(
             // Create initial presentation record
             const presentation = await presentationRepo.create(userId, "Generating...", topic, {
                 slides: [],
-                theme: "default",
+                theme: "corporate-blue",
                 title: "Generating...",
             });
 
@@ -226,7 +226,7 @@ presentations.post(
 
                 try {
                     const allSlides: Slide[] = [];
-                    let theme = "default";
+                    let theme = "corporate-blue";
                     let title = "Untitled Presentation";
                     let sources: Source[] | undefined;
                     let tokensUsed = 0;
@@ -255,7 +255,7 @@ presentations.post(
 
                         if (eventType === "retry") {
                             allSlides.length = 0;
-                            theme = "default";
+                            theme = "corporate-blue";
                             title = "Untitled Presentation";
                             sources = undefined;
                             tokensUsed = 0;
@@ -532,7 +532,7 @@ presentations.post(
 
                 try {
                     const allSlides: Slide[] = [];
-                    let theme = "default";
+                    let theme = "corporate-blue";
                     let title = "Updated Presentation";
                     let tokensUsed = 0;
                     let sources: Source[] | undefined;
@@ -558,7 +558,7 @@ presentations.post(
 
                         if (eventType === "retry") {
                             allSlides.length = 0;
-                            theme = "default";
+                            theme = "corporate-blue";
                             title = "Updated Presentation";
                             tokensUsed = 0;
                             sources = undefined;

@@ -344,7 +344,7 @@ export default function PresentationViewerPage() {
 
                 {showControls && !isFullscreenMode && (
                     <ViewerNavigationControls
-                        title={presentation.title}
+                        presentation={presentation}
                         currentSlide={navigation.currentSlide}
                         totalSlides={presentation.slides.length}
                         onFirst={() => {

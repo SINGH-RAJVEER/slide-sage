@@ -25,6 +25,7 @@ import {
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
+import { PRESENTATIONS_UPDATED_EVENT } from "@/lib/presentation-events";
 import { ROUTES } from "@/router/paths";
 
 interface SearchFilters {
@@ -44,9 +45,9 @@ export default function PresentationsGridPage() {
     });
     const navigate = useNavigate();
 
-    const fetchPresentations = useCallback(async () => {
+    const fetchPresentations = useCallback(async (background = false) => {
         try {
-            setLoading(true);
+            if (!background) setLoading(true);
             const response = await fetch(`${API_URL}/api/presentations`, {
                 credentials: "include",
             });
@@ -69,12 +70,23 @@ export default function PresentationsGridPage() {
         } catch (err) {
             setError(`Error: ${err instanceof Error ? err.message : err}`);
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
     useEffect(() => {
         void fetchPresentations();
+    }, [fetchPresentations]);
+
+    useEffect(() => {
+        const handlePresentationsUpdated = () => {
+            void fetchPresentations(true);
+        };
+
+        window.addEventListener(PRESENTATIONS_UPDATED_EVENT, handlePresentationsUpdated);
+        return () => {
+            window.removeEventListener(PRESENTATIONS_UPDATED_EVENT, handlePresentationsUpdated);
+        };
     }, [fetchPresentations]);
 
     useEffect(() => {
