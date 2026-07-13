@@ -21,7 +21,7 @@ type ResearchStatus = "loading" | "ready" | "error";
 export default function GenerateResearchPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { streamingState, startStreaming, resetStreaming } = useStreaming();
+    const { streamingState, startStreaming } = useStreaming();
 
     const routeState = location.state as ResearchRouteState | null;
     const prompt = routeState?.prompt?.trim() ?? "";
@@ -53,10 +53,6 @@ export default function GenerateResearchPage() {
             return url;
         }
     };
-
-    useEffect(() => {
-        resetStreaming();
-    }, [resetStreaming]);
 
     useEffect(() => {
         if (!prompt || !slideCount) {
@@ -147,7 +143,7 @@ export default function GenerateResearchPage() {
     }, [isProceeding, navigate, streamingState.slides.length]);
 
     const handleProceed = async () => {
-        if (!prompt || !slideCount) return;
+        if (!prompt || !slideCount || streamingState.isStreaming) return;
 
         setIsProceeding(true);
         setError("");
@@ -321,7 +317,11 @@ export default function GenerateResearchPage() {
                         <div className="flex justify-center pt-2 pb-6">
                             <Button
                                 onClick={handleProceed}
-                                disabled={researchStatus !== "ready" || isProceeding}
+                                disabled={
+                                    researchStatus !== "ready" ||
+                                    isProceeding ||
+                                    streamingState.isStreaming
+                                }
                                 className="group h-11 rounded-md border border-white/20 bg-white/10 px-6 text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <span className="flex items-center gap-2 text-sm font-semibold">

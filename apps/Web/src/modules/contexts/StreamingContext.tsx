@@ -1,14 +1,18 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_URL } from "@/lib/api";
+import { publishPresentationUpdated } from "@/lib/presentation-events";
 import type { PresentationData, ResearchPayload, Slide, Source } from "../types/presentation";
 
-interface StreamingState {
+export interface StreamingState {
     isStreaming: boolean;
     slides: Slide[];
     theme: string;
     title: string;
     totalSlides: number;
+    requestedSlides: number;
+    operation?: "generation" | "iteration";
+    prompt?: string;
     presentationId?: string;
     error?: string;
     isComplete: boolean;
@@ -43,9 +47,10 @@ interface StreamingContextValue {
 const initialState: StreamingState = {
     isStreaming: false,
     slides: [],
-    theme: "default",
+    theme: "corporate-blue",
     title: "Untitled Presentation",
     totalSlides: 0,
+    requestedSlides: 0,
     isComplete: false,
     researchSummary: undefined,
     researchSources: undefined,
@@ -67,8 +72,16 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
     const [streamingState, setStreamingState] = useState<StreamingState>(initialState);
     const abortControllerRef = useRef<AbortController | null>(null);
     const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+    const activeStreamRef = useRef(false);
+
+    const releaseActiveStream = useCallback(() => {
+        activeStreamRef.current = false;
+        abortControllerRef.current = null;
+        readerRef.current = null;
+    }, []);
 
     const resetStreaming = useCallback(() => {
+        if (activeStreamRef.current) return;
         setStreamingState(initialState);
     }, []);
 
@@ -78,11 +91,12 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             abortControllerRef.current = null;
         }
         if (readerRef.current) {
-            readerRef.current.cancel();
+            void readerRef.current.cancel();
             readerRef.current = null;
         }
+        releaseActiveStream();
         setStreamingState((prev) => ({ ...prev, isStreaming: false }));
-    }, []);
+    }, [releaseActiveStream]);
 
     const getPresentation = useCallback((): PresentationData | null => {
         if (streamingState.slides.length === 0) return null;
@@ -103,10 +117,16 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             researchEnabled = false,
             researchPayload?: ResearchPayload,
         ): Promise<boolean> => {
+            if (activeStreamRef.current) return false;
+            activeStreamRef.current = true;
+
             // Reset state
             setStreamingState({
                 ...initialState,
                 isStreaming: true,
+                requestedSlides: slideCount,
+                operation: "generation",
+                prompt,
                 researchStatus: researchEnabled && !researchPayload ? "searching" : "idle",
             });
 
@@ -134,6 +154,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                 // Handle 401 Unauthorized - token might be expired
                 if (response.status === 401) {
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -143,6 +164,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (response.status === 422) {
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -153,6 +175,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                 if (response.status === 402) {
                     const errorData = await response.json();
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -174,6 +197,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                               errorData.message ||
                               "Failed to generate presentation";
 
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -184,6 +208,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                 const reader = response.body?.getReader();
                 if (!reader) {
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -272,7 +297,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     slides: [],
-                                                    theme: "default",
+                                                    theme: "corporate-blue",
                                                     title: "Untitled Presentation",
                                                     totalSlides: 0,
                                                     isComplete: false,
@@ -326,6 +351,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                     "Presentation saved:",
                                                     data.presentation_id,
                                                 );
+                                                publishPresentationUpdated(data.presentation_id);
                                                 publishPointsBalance(data.slide_tokens_remaining);
                                                 break;
 
@@ -387,6 +413,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                 error: `Streaming error: ${message}`,
                             }));
                         }
+                    } finally {
+                        releaseActiveStream();
                     }
                 };
 
@@ -394,6 +422,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 processStream();
                 return true;
             } catch (err: unknown) {
+                releaseActiveStream();
                 const isAbort = err instanceof Error && err.name === "AbortError";
                 if (!isAbort) {
                     const message = err instanceof Error ? err.message : String(err);
@@ -406,7 +435,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 return false;
             }
         },
-        [],
+        [releaseActiveStream],
     );
 
     const startIterating = useCallback(
@@ -418,10 +447,17 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             tonality: string,
             researchEnabled = false,
         ): Promise<boolean> => {
+            if (activeStreamRef.current) return false;
+            activeStreamRef.current = true;
+
             // Reset state
             setStreamingState({
                 ...initialState,
                 isStreaming: true,
+                requestedSlides: slideCount,
+                operation: "iteration",
+                prompt,
+                presentationId: parentPresentationId,
                 researchStatus: researchEnabled ? "searching" : "idle",
             });
 
@@ -449,6 +485,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                 // Handle 401 Unauthorized - token might be expired
                 if (response.status === 401) {
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -458,6 +495,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (response.status === 422) {
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -468,6 +506,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                 if (response.status === 402) {
                     const errorData = await response.json();
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -488,6 +527,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                             : errorData.error?.message ||
                               errorData.message ||
                               "Failed to iterate presentation";
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -498,6 +538,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                 const reader = response.body?.getReader();
                 if (!reader) {
+                    releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
@@ -578,7 +619,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     slides: [],
-                                                    theme: "default",
+                                                    theme: "corporate-blue",
                                                     title: "Updated Presentation",
                                                     totalSlides: 0,
                                                     isComplete: false,
@@ -632,6 +673,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 console.log(
                                                     "Iteration saved to presentation:",
                                                     data.presentation_id,
+                                                );
+                                                publishPresentationUpdated(
+                                                    data.presentation_id || parentPresentationId,
                                                 );
                                                 publishPointsBalance(data.slide_tokens_remaining);
                                                 break;
@@ -696,6 +740,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                 error: `Streaming error: ${message}`,
                             }));
                         }
+                    } finally {
+                        releaseActiveStream();
                     }
                 };
 
@@ -703,6 +749,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 processStream();
                 return true;
             } catch (err: unknown) {
+                releaseActiveStream();
                 const isAbort = err instanceof Error && err.name === "AbortError";
                 if (!isAbort) {
                     const message = err instanceof Error ? err.message : String(err);
@@ -715,7 +762,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 return false;
             }
         },
-        [],
+        [releaseActiveStream],
     );
 
     // Cleanup on unmount

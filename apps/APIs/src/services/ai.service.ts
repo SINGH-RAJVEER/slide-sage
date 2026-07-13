@@ -309,7 +309,7 @@ ${JSON.stringify(cappedSources, null, 2)}`;
                     theme:
                         typeof parsedContent["theme"] === "string"
                             ? parsedContent["theme"]
-                            : "default",
+                            : "corporate-blue",
                     totalSlides: slides.length,
                     research_tokens_used: options.researchTokens,
                     tokens_used: processor.currentTotalTokensUsed + options.researchTokens,

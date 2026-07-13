@@ -190,7 +190,7 @@ describe("presentation routes", () => {
             currentUserId,
             "Generating...",
             "Quarterly planning",
-            { slides: [], theme: "default", title: "Generating..." }
+            { slides: [], theme: "corporate-blue", title: "Generating..." }
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
         expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     DropdownMenu,
@@ -14,6 +15,18 @@ export default function Header() {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [signingOut, setSigningOut] = useState(false);
+
+    const handleSignOut = async () => {
+        if (signingOut) return;
+
+        setSigningOut(true);
+        try {
+            await signOut();
+        } catch {
+            setSigningOut(false);
+        }
+    };
 
     const getUserInitials = () => {
         const trimmedName = user?.name?.trim();
@@ -148,10 +161,11 @@ export default function Header() {
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-white/10 my-1" />
                                     <DropdownMenuItem
-                                        onClick={() => signOut()}
+                                        disabled={signingOut}
+                                        onSelect={() => void handleSignOut()}
                                         className="cursor-pointer rounded-lg my-1 mx-1 px-3 py-2 text-sm text-red-400 hover:text-red-300 focus:bg-red-500/10 focus:text-red-300 transition-colors outline-none"
                                     >
-                                        Sign Out
+                                        {signingOut ? "Signing out..." : "Sign Out"}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

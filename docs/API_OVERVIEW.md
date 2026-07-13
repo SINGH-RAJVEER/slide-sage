@@ -66,6 +66,9 @@ delay, and reason. Only a validated `complete` event is persisted and charged.
 Failures use an `error` event. Clients should parse the response stream rather
 than use the browser `EventSource` API, which only supports GET.
 
+When a generation response does not specify a theme, Slide Sage uses the
+`corporate-blue` theme by default.
+
 ## Billing
 
 | Method | Path | Auth | Description |
