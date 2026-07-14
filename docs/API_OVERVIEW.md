@@ -68,7 +68,12 @@ the original prompt, slide count, detail level, tonality, research setting, erro
 message, and any sources collected before the failure. Failed generations are
 not charged. Clients fetch the full presentation on click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they
-do not.
+do not. The same retry action is available directly from `/presentation-error`,
+so users do not need to return to the presentation library first.
+Retry requests send the failed presentation ID as `retry_presentation_id`. The
+API verifies that the row belongs to the current user and is still marked
+`failed`, then updates that row through subsequent failures until a successful
+generation replaces it. A retry therefore never adds another failed card.
 
 ### Streaming
 

@@ -1,8 +1,12 @@
+import type { ApiErrorResponse, PresentationResponse } from "@slide-sage/types";
 import { ArrowLeft, CircleAlert, RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
+import { getPresentationRetryDestination } from "@/lib/presentation-retry";
 import { ROUTES } from "@/router/paths";
 
 interface PresentationErrorPageProps {
@@ -18,6 +22,8 @@ export default function PresentationErrorPage({
 }: PresentationErrorPageProps = {}) {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isRetrying, setIsRetrying] = useState(false);
+    const [retryError, setRetryError] = useState("");
 
     const presentationId = location.state?.presentationId || propPresentationId;
     const error =
@@ -28,6 +34,49 @@ export default function PresentationErrorPage({
 
     const handleGoHome = () => {
         navigate(ROUTES.presentations);
+    };
+
+    const handleRetry = async () => {
+        if (!presentationId || isRetrying) return;
+
+        setIsRetrying(true);
+        setRetryError("");
+
+        try {
+            const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+                credentials: "include",
+            });
+            const result = (await response.json()) as PresentationResponse | ApiErrorResponse;
+
+            if (response.status === 401) {
+                setRetryError("Your session expired. Please sign in again.");
+                return;
+            }
+
+            if ("error" in result) {
+                setRetryError(result.error.message);
+                return;
+            }
+
+            const destination = getPresentationRetryDestination(
+                result.presentation.slides_data,
+                result.presentation.id,
+            );
+            if (!destination) {
+                setRetryError("The saved retry settings are unavailable.");
+                return;
+            }
+
+            navigate(destination.to, { state: destination.state });
+        } catch (retryRequestError) {
+            setRetryError(
+                retryRequestError instanceof Error
+                    ? retryRequestError.message
+                    : "Unable to open this retry.",
+            );
+        } finally {
+            setIsRetrying(false);
+        }
     };
 
     const handleDelete = async () => {
@@ -83,8 +132,7 @@ export default function PresentationErrorPage({
                         <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/55 md:grid-cols-2">
                             <li className="flex gap-3">
                                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
-                                Open this failed item from Presentations to retry it with the same
-                                settings.
+                                Retry here with the same saved prompt and generation settings.
                             </li>
                             <li className="flex gap-3">
                                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
@@ -103,9 +151,21 @@ export default function PresentationErrorPage({
                     </div>
 
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        {presentationId && (
+                            <Button
+                                onClick={handleRetry}
+                                disabled={isRetrying}
+                                className="h-11 bg-white px-5 text-[#151c2a] hover:bg-white/90"
+                            >
+                                {isRetrying ? <Spinner /> : <RotateCcw className="h-4 w-4" />}
+                                {isRetrying ? "Opening retry..." : "Retry presentation"}
+                            </Button>
+                        )}
+
                         <Button
                             onClick={handleGoHome}
-                            className="h-11 bg-white px-5 text-[#151c2a] hover:bg-white/90"
+                            variant="ghost"
+                            className="h-11 border border-white/10 px-5 text-white/70 hover:bg-white/5 hover:text-white"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             My Presentations
@@ -122,6 +182,12 @@ export default function PresentationErrorPage({
                             </Button>
                         )}
                     </div>
+
+                    {retryError && (
+                        <p className="mt-4 text-sm text-red-300" role="alert">
+                            {retryError}
+                        </p>
+                    )}
                 </section>
             </main>
         </div>

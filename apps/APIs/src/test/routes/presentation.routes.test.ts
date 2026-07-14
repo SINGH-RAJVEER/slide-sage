@@ -209,6 +209,72 @@ describe("presentation routes", () => {
         );
     });
 
+    it("reuses the same failed presentation row across retries", async () => {
+        presentationService.getPresentation.mockResolvedValue({
+            id: "failed_presentation",
+            slidesData: {
+                title: "Failed deck",
+                theme: "corporate-blue",
+                slides: [],
+                status: "failed",
+            },
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic: "Retry the same deck",
+                slide_count: 3,
+                retry_presentation_id: "failed_presentation",
+            }),
+        });
+        const body = await text(response);
+
+        expect(body).toContain('event: created\ndata: {"presentation_id":"failed_presentation"}');
+        expect(body).toContain("event: saved");
+        expect(presentationRepository.create).not.toHaveBeenCalled();
+        expect(presentationService.getPresentation).toHaveBeenCalledWith(
+            "failed_presentation",
+            currentUserId
+        );
+        expect(presentationUpdates[0]).toEqual(
+            expect.objectContaining({
+                id: "failed_presentation",
+                updates: expect.objectContaining({ prompt: "Retry the same deck" }),
+            })
+        );
+    });
+
+    it("does not allow a completed presentation row to be retried", async () => {
+        presentationService.getPresentation.mockResolvedValue({
+            id: "ready_presentation",
+            slidesData: {
+                title: "Ready deck",
+                theme: "corporate-blue",
+                slides: [{ id: "slide_1" }],
+                status: "ready",
+            },
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic: "Do not overwrite",
+                slide_count: 3,
+                retry_presentation_id: "ready_presentation",
+            }),
+        });
+
+        expect(response.status).toBe(409);
+        expect(await json(response)).toEqual({
+            error: { message: "Only failed presentations can be retried" },
+        });
+        expect(presentationRepository.create).not.toHaveBeenCalled();
+        expect(presentationService.generatePresentationStream).not.toHaveBeenCalled();
+    });
+
     it("stores retry data and does not charge for a partial generation that ends in error", async () => {
         presentationService.generatePresentationStream.mockImplementation(async function* () {
             yield {
@@ -248,6 +314,7 @@ describe("presentation routes", () => {
             id: "presentation_1",
             updates: {
                 title: "Failure handling",
+                prompt: "Failure handling",
                 slidesData: {
                     title: "Failure handling",
                     theme: "corporate-blue",
@@ -267,6 +334,12 @@ describe("presentation routes", () => {
                                     {
                                         url: "https://example.com/research",
                                         title: "Research",
+                                        snippet: undefined,
+                                        retrieved_at: undefined,
+                                        published_date: undefined,
+                                        author: undefined,
+                                        highlights: undefined,
+                                        summary: undefined,
                                     },
                                 ],
                                 estimated_tokens: 3,

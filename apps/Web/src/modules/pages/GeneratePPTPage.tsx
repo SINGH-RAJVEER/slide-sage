@@ -9,11 +9,13 @@ import { ROUTES } from "@/router/paths";
 
 interface GenerateRouteState {
     retry?: PresentationRetryOptions;
+    retryPresentationId?: string;
 }
 
 export default function GeneratePPTPage() {
     const location = useLocation();
     const retry = (location.state as GenerateRouteState | null)?.retry;
+    const retryPresentationId = (location.state as GenerateRouteState | null)?.retryPresentationId;
     const retryPrompt = retry?.prompt.trim() ?? "";
     const retrySlideCount = retry?.slide_count.toString() ?? "5";
     const presetSlideCounts = ["5", "10", "15", "20", "25", "30"];
@@ -114,6 +116,7 @@ export default function GeneratePPTPage() {
                     slideCount: count,
                     detailLevel,
                     tonality,
+                    retryPresentationId,
                 },
             });
             return;
@@ -125,6 +128,8 @@ export default function GeneratePPTPage() {
             detailLevel,
             tonality,
             false,
+            undefined,
+            retryPresentationId,
         );
 
         if (!success) {

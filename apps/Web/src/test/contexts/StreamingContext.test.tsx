@@ -18,7 +18,15 @@ function StreamingStarter({ onNavigateAway }: { onNavigateAway: () => void }) {
             <button
                 type="button"
                 onClick={() => {
-                    void startStreaming("Background generation", 2, "balanced", "professional");
+                    void startStreaming(
+                        "Background generation",
+                        2,
+                        "balanced",
+                        "professional",
+                        false,
+                        undefined,
+                        "failed_presentation",
+                    );
                 }}
             >
                 Start
@@ -51,10 +59,12 @@ it("continues processing and publishes the saved deck after the initiating page 
     const originalFetch = globalThis.fetch;
     const encoder = new TextEncoder();
     let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+    let requestBody = "";
     const presentationUpdated = mock((_event: Event) => {});
 
     window.addEventListener(PRESENTATIONS_UPDATED_EVENT, presentationUpdated);
-    globalThis.fetch = mock(async () => {
+    globalThis.fetch = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        requestBody = String(init?.body ?? "");
         const body = new ReadableStream<Uint8Array>({
             start(controller) {
                 streamController = controller;
@@ -75,6 +85,9 @@ it("continues processing and publishes the saved deck after the initiating page 
 
         fireEvent.click(view.getByRole("button", { name: "Start" }));
         await waitFor(() => expect(view.getByText("streaming")).toBeInTheDocument());
+        expect(JSON.parse(requestBody)).toMatchObject({
+            retry_presentation_id: "failed_presentation",
+        });
         fireEvent.click(view.getByRole("button", { name: "Navigate away" }));
 
         await act(async () => {

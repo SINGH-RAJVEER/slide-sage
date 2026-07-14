@@ -214,6 +214,7 @@ async function markPresentationFailed({
     try {
         await presentationRepo.update(presentationId, {
             title: failedTitle,
+            prompt,
             slidesData: failedData,
         });
     } catch (error) {
@@ -236,6 +237,7 @@ presentations.post(
             const researchPayload = parseResearchPayload(
                 body?.research_payload ?? body?.researchPayload
             );
+            const retryPresentationId = body?.retry_presentation_id ?? body?.retryPresentationId;
 
             if (!topic || !slide_count) {
                 return c.json({ error: { message: "Missing required fields" } }, 400);
@@ -266,14 +268,28 @@ presentations.post(
                 );
             }
 
-            // Create initial presentation record
-            const presentation = await presentationRepo.create(userId, "Generating...", topic, {
-                slides: [],
-                theme: "corporate-blue",
-                title: "Generating...",
-            });
-
-            const presentationId = presentation.id;
+            let presentationId: string;
+            if (retryPresentationId) {
+                const failedPresentation = await presentationService.getPresentation(
+                    String(retryPresentationId),
+                    userId
+                );
+                const failedData = failedPresentation.slidesData as PresentationJSON;
+                if (failedData.status !== "failed") {
+                    return c.json(
+                        { error: { message: "Only failed presentations can be retried" } },
+                        409
+                    );
+                }
+                presentationId = failedPresentation.id;
+            } else {
+                const presentation = await presentationRepo.create(userId, "Generating...", topic, {
+                    slides: [],
+                    theme: "corporate-blue",
+                    title: "Generating...",
+                });
+                presentationId = presentation.id;
+            }
 
             c.header("Content-Type", "text/event-stream; charset=utf-8");
             c.header("Cache-Control", "no-cache, no-transform");
@@ -445,6 +461,7 @@ presentations.post(
                         // Update the existing presentation with final data
                         await presentationRepo.update(presentationId, {
                             title: finalTitle,
+                            prompt: String(topic),
                             slidesData: finalData,
                         });
 

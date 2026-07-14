@@ -26,6 +26,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 import { PRESENTATIONS_UPDATED_EVENT } from "@/lib/presentation-events";
+import { getPresentationRetryDestination } from "@/lib/presentation-retry";
 import { ROUTES } from "@/router/paths";
 
 interface SearchFilters {
@@ -112,24 +113,13 @@ export default function PresentationsGridPage() {
             if ("error" in result) {
                 setError(result.error.message);
             } else {
-                const failedData = result.presentation.slides_data;
-                const retry =
-                    failedData.status === "failed" ? failedData.failure?.retry : undefined;
+                const retryDestination = getPresentationRetryDestination(
+                    result.presentation.slides_data,
+                    result.presentation.id,
+                );
 
-                if (retry) {
-                    if (retry.research_payload?.sources.length) {
-                        navigate(ROUTES.research, {
-                            state: {
-                                prompt: retry.prompt,
-                                slideCount: retry.slide_count,
-                                detailLevel: retry.detail_level,
-                                tonality: retry.tonality,
-                                researchPayload: retry.research_payload,
-                            },
-                        });
-                    } else {
-                        navigate(ROUTES.generate, { state: { retry } });
-                    }
+                if (retryDestination) {
+                    navigate(retryDestination.to, { state: retryDestination.state });
                     return;
                 }
 

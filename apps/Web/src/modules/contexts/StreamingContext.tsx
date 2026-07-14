@@ -29,6 +29,7 @@ interface StreamingContextValue {
         tonality: string,
         researchEnabled?: boolean,
         researchPayload?: ResearchPayload,
+        retryPresentationId?: string,
     ) => Promise<boolean>;
     startIterating: (
         prompt: string,
@@ -114,6 +115,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             tonality: string,
             researchEnabled = false,
             researchPayload?: ResearchPayload,
+            retryPresentationId?: string,
         ): Promise<boolean> => {
             if (activeStreamRef.current) return false;
             activeStreamRef.current = true;
@@ -125,6 +127,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 requestedSlides: slideCount,
                 operation: "generation",
                 prompt,
+                presentationId: retryPresentationId,
                 researchStatus: researchEnabled && !researchPayload ? "searching" : "idle",
             });
 
@@ -146,6 +149,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                             enabled: Boolean(researchEnabled),
                         },
                         research_payload: researchPayload,
+                        retry_presentation_id: retryPresentationId,
                     }),
                     signal: abortControllerRef.current.signal,
                 });

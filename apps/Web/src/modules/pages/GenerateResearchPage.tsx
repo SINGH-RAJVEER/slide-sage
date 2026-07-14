@@ -15,6 +15,7 @@ interface ResearchRouteState {
     detailLevel: string;
     tonality: string;
     researchPayload?: ResearchPayload;
+    retryPresentationId?: string;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -30,6 +31,7 @@ export default function GenerateResearchPage() {
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
     const savedResearch = routeState?.researchPayload;
+    const retryPresentationId = routeState?.retryPresentationId;
     const hasSavedResearch = Boolean(savedResearch?.sources.length);
 
     const [sources, setSources] = useState<Source[]>(() => savedResearch?.sources ?? []);
@@ -168,6 +170,7 @@ export default function GenerateResearchPage() {
             tonality,
             false,
             payload,
+            retryPresentationId,
         );
 
         if (!success) {
@@ -179,6 +182,7 @@ export default function GenerateResearchPage() {
         estimatedTokens,
         prompt,
         researchStatus,
+        retryPresentationId,
         slideCount,
         sources,
         startStreaming,
