@@ -10,10 +10,13 @@ import type { ViewerLocationState } from "@/hooks/usePresentationData";
 import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { API_URL } from "@/lib/api";
+import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
+import { applySlideLayout } from "@/lib/slide-layout";
 // Import directly from source modules (not the @/modules/presentations barrel) to avoid a
 // circular dependency: the barrel re-exports this very page, which under circular evaluation
 // left the AVAILABLE_TEMPLATES binding unestablished (ReferenceError at render).
 import { useStreaming } from "@/modules/contexts/StreamingContext";
+import { isChartSlide, isLegacyHtmlSlide, type SlideLayout } from "@/modules/types/presentation";
 import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
 import { useTemplate } from "@/modules/useTemplate";
 import { ROUTES } from "@/router/paths";
@@ -279,6 +282,32 @@ export default function PresentationViewerPage() {
     }
 
     const activeSlide = presentation.slides[navigation.currentSlide];
+    const activeContentSlide =
+        activeSlide && !isChartSlide(activeSlide)
+            ? isLegacyHtmlSlide(activeSlide)
+                ? adaptLegacyHtmlSlide(activeSlide)
+                : activeSlide
+            : undefined;
+
+    const handleTemplateChange = (templateId: string) => {
+        changeTemplate(templateId);
+        setPresentation((current) => (current ? { ...current, theme: templateId } : current));
+    };
+
+    const handleLayoutChange = (layout: SlideLayout) => {
+        setPresentation((current) => {
+            if (!current) return current;
+            const selected = current.slides[navigation.currentSlide];
+            if (!selected || isChartSlide(selected)) return current;
+
+            const contentSlide = isLegacyHtmlSlide(selected)
+                ? adaptLegacyHtmlSlide(selected)
+                : selected;
+            const slides = [...current.slides];
+            slides[navigation.currentSlide] = applySlideLayout(contentSlide, layout);
+            return { ...current, slides };
+        });
+    };
 
     return (
         <div
@@ -303,7 +332,10 @@ export default function PresentationViewerPage() {
                         onBack={() =>
                             navigate(isStreamingMode ? ROUTES.generate : ROUTES.presentations)
                         }
-                        onTemplateChange={changeTemplate}
+                        onTemplateChange={handleTemplateChange}
+                        selectedLayout={activeContentSlide?.layout}
+                        onLayoutChange={handleLayoutChange}
+                        layoutDisabled={!activeContentSlide}
                         onIterate={() => setShowIterateModal(true)}
                         intervalMode={intervalMode}
                         slideInterval={slideInterval}

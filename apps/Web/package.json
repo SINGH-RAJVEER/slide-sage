@@ -10,8 +10,8 @@
         "prebuild": "bun install --no-frozen-lockfile",
         "build": "NODE_ENV=production bunx --bun vite build",
         "preview": "bunx --bun vite preview",
-        "test": "bun test",
-        "test:watch": "bun test --watch",
+        "test": "bun test --isolate",
+        "test:watch": "bun test --watch --isolate",
         "lint": "bunx --bun biome check .",
         "lint:fix": "bunx --bun biome check --write .",
         "format": "bunx --bun biome format --write ."

@@ -1,5 +1,5 @@
 import type { ApiErrorResponse, PresentationResponse } from "@slide-sage/types";
-import { ArrowLeft, CircleAlert, RotateCcw, Trash2 } from "lucide-react";
+import { CircleAlert, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -31,10 +31,6 @@ export default function PresentationErrorPage({
         propError ||
         "This presentation has no content or failed to generate.";
     const StatusIcon = presentationId ? RotateCcw : CircleAlert;
-
-    const handleGoHome = () => {
-        navigate(ROUTES.presentations);
-    };
 
     const handleRetry = async () => {
         if (!presentationId || isRetrying) return;
@@ -161,15 +157,6 @@ export default function PresentationErrorPage({
                                 {isRetrying ? "Opening retry..." : "Retry presentation"}
                             </Button>
                         )}
-
-                        <Button
-                            onClick={handleGoHome}
-                            variant="ghost"
-                            className="h-11 border border-white/10 px-5 text-white/70 hover:bg-white/5 hover:text-white"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            My Presentations
-                        </Button>
 
                         {presentationId && (
                             <Button

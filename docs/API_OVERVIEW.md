@@ -44,7 +44,9 @@ All profile routes require authentication.
 | `DELETE` | `/api/presentations/:id` | Delete one owned deck and its associated memory |
 
 Generation requires `topic` and `slide_count`; it accepts `detail_level`,
-`tonality`, `research`, and an optional `research_payload`. Research options can
+`tonality`, `theme`, `layout_preference`, `research`, and an optional
+`research_payload`. `theme` accepts a built-in theme ID. `layout_preference`
+accepts `auto`, `content`, `two-column`, `image-led`, or `data-led`. Research options can
 include `freshness`, `maxResults`, included or excluded domains, publication date
 bounds, and `maxAgeHours`. The research endpoint and payload contain source
 records only. The web client presents those records in a compact source table
@@ -64,12 +66,15 @@ the review screen and final server-side charge to show the same estimate.
 Presentation summaries include `status` (`ready` or `failed`) and
 `has_research`. A failed generation remains in the presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
-the original prompt, slide count, detail level, tonality, research setting, error
-message, and any sources collected before the failure. Failed generations are
+the original prompt, slide count, detail level, tonality, theme, layout
+preference, research setting, error message, and any sources collected before
+the failure. Failed generations are
 not charged. Clients fetch the full presentation on click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they
 do not. The same retry action is available directly from `/presentation-error`,
-so users do not need to return to the presentation library first.
+so users do not need to return to the presentation library first. That error
+page keeps recovery focused on retrying or deleting the unfinished presentation
+and does not show a separate presentations-list action.
 Retry requests send the failed presentation ID as `retry_presentation_id`. The
 API verifies that the row belongs to the current user and is still marked
 `failed`, then updates that row through subsequent failures until a successful
@@ -87,8 +92,10 @@ ready deck. Failures use an `error` event and persist retry metadata without
 partial slides. Clients should parse the response stream rather than use the
 browser `EventSource` API, which only supports GET.
 
-When a generation response does not specify a theme, Slide Sage uses the
-`corporate-blue` theme by default.
+The API validates the requested theme and layout preference before generation.
+Invalid or omitted values fall back to the `corporate-blue` theme and `auto`
+layout preference. Generated image placeholders contain descriptive text but no
+URL; grounded image blocks require HTTPS URLs.
 
 ## Billing
 

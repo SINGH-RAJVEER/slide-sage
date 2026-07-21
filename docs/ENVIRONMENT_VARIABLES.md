@@ -28,7 +28,7 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | Yes for generation | None | OpenRouter authentication |
-| `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it:free` | Generation model |
+| `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it` | Generation model; the default is a paid OpenRouter endpoint for production reliability |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
 | `OPEN_ROUTER_MAX_ATTEMPTS` | No | `3` | Maximum full generation attempts for transient, interrupted, or invalid responses |
@@ -37,9 +37,12 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 | `OPEN_ROUTER_RETRY_BASE_DELAY_MS` | No | `1000` | Initial retry backoff delay |
 | `OPEN_ROUTER_RETRY_MAX_DELAY_MS` | No | `30000` | Maximum retry delay, including provider `Retry-After` values |
 | `OPEN_ROUTER_MAX_RESPONSE_BYTES` | No | `8388608` | Maximum streamed response size accepted per attempt |
+| `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | `32768` | Maximum output-token budget; generation scales the request up to this limit based on slide count |
 | `SSE_KEEPALIVE_INTERVAL_MS` | No | `10000` | Interval for downstream SSE keepalive comments during slow generation |
 | `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
+
+Presentation requests use OpenRouter strict JSON Schema output and require a provider that supports the requested parameters. OpenRouter provider fallback remains enabled so transient provider outages can route to another compatible endpoint. The default model incurs OpenRouter usage charges; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required.
 
 ## Authentication and Email
 

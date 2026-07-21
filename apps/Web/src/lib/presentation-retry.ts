@@ -16,6 +16,8 @@ export function getPresentationRetryDestination(
                 slideCount: retry.slide_count,
                 detailLevel: retry.detail_level,
                 tonality: retry.tonality,
+                theme: retry.theme ?? "corporate-blue",
+                layoutPreference: retry.layout_preference ?? "auto",
                 researchPayload: retry.research_payload,
                 retryPresentationId: presentationId,
             },

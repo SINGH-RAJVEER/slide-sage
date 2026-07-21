@@ -7,11 +7,13 @@ import type { Presentation } from "@slide-sage/database";
 import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
 import {
     buildResearchSystemMessage,
+    type PresentationLayoutPreference,
     type PresentationStreamEvent,
     type ResearchOptions,
     type ResearchPayload,
     type Slide,
     type Source,
+    type ThemeId,
 } from "@slide-sage/types";
 import { AIService } from "./ai.service";
 import { RAGService } from "./rag.service";
@@ -25,6 +27,8 @@ export interface GeneratePresentationParams {
     tonality?: string;
     research?: ResearchOptions;
     researchPayload?: ResearchPayload;
+    theme?: ThemeId;
+    layoutPreference?: PresentationLayoutPreference;
 }
 
 export interface IteratePresentationParams {
@@ -94,6 +98,8 @@ export class PresentationService {
             tonality = "professional",
             research,
             researchPayload,
+            theme = "corporate-blue",
+            layoutPreference = "auto",
         } = params;
 
         try {
@@ -105,7 +111,9 @@ export class PresentationService {
                 tonality,
                 research,
                 researchPayload,
-                params.userId
+                params.userId,
+                theme,
+                layoutPreference
             )) {
                 yield event;
             }

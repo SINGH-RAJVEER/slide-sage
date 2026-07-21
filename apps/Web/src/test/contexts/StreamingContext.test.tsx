@@ -87,6 +87,8 @@ it("continues processing and publishes the saved deck after the initiating page 
         await waitFor(() => expect(view.getByText("streaming")).toBeInTheDocument());
         expect(JSON.parse(requestBody)).toMatchObject({
             retry_presentation_id: "failed_presentation",
+            theme: "corporate-blue",
+            layout_preference: "auto",
         });
         fireEvent.click(view.getByRole("button", { name: "Navigate away" }));
 

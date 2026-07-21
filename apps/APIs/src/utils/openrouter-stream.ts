@@ -9,6 +9,8 @@ export interface OpenRouterRequestOptions {
     model: string;
     messages: OpenRouterMessage[];
     requestTimeoutMs: number;
+    maxTokens: number;
+    responseFormat: Record<string, unknown>;
 }
 
 export interface OpenRouterStreamOptions {
@@ -70,6 +72,12 @@ export async function requestOpenRouterStream(
                 messages: options.messages,
                 stream: true,
                 stream_options: { include_usage: true },
+                max_tokens: options.maxTokens,
+                response_format: options.responseFormat,
+                provider: {
+                    allow_fallbacks: true,
+                    require_parameters: true,
+                },
             }),
             signal: controller.signal,
         });

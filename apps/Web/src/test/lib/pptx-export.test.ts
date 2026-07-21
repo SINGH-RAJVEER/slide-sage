@@ -11,19 +11,26 @@ const presentation: PresentationData = {
         {
             id: "content-slide",
             type: "content",
-            html: `
-                <div id="slide-content" class="layout-content">
-                    <h2 id="slide-title">Editable Quarterly Review</h2>
-                    <ul id="slide-list">
-                        <li>Revenue increased by 24 percent</li>
-                        <li>Customer retention reached 91 percent</li>
-                    </ul>
-                    <table id="slide-table">
-                        <thead><tr><th>Quarter</th><th>Revenue</th></tr></thead>
-                        <tbody><tr><td>Q2</td><td>$1.4M</td></tr></tbody>
-                    </table>
-                </div>
-            `,
+            layout: "content",
+            title: "Editable Quarterly Review",
+            subtitle: "",
+            blocks: [
+                {
+                    type: "bullets",
+                    region: "main",
+                    items: [
+                        "Revenue increased by 24 percent",
+                        "Customer retention reached 91 percent",
+                    ],
+                    ordered: false,
+                },
+                {
+                    type: "table",
+                    region: "main",
+                    headers: ["Quarter", "Revenue"],
+                    rows: [["Q2", "$1.4M"]],
+                },
+            ],
         },
         {
             id: "chart-slide",
@@ -92,5 +99,41 @@ describe("editable PPTX export", () => {
 
         expect(chart).toContain("<c:radarChart>");
         expect(chart).toContain("Quality");
+    });
+
+    test("keeps image placeholders as editable labeled shapes", async () => {
+        const pptx = await buildEditablePptx({
+            ...presentation,
+            totalSlides: 1,
+            slides: [
+                {
+                    id: "visual",
+                    type: "content",
+                    layout: "image-right",
+                    title: "Product workflow",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "paragraph",
+                            region: "main",
+                            text: "A concise explanation",
+                        },
+                        {
+                            type: "image-placeholder",
+                            region: "right",
+                            alt: "Annotated product workflow screenshot",
+                            caption: "Add the final product capture",
+                        },
+                    ],
+                },
+            ],
+        });
+        const output = await pptx.write({ outputType: "arraybuffer" });
+        const archive = await JSZip.loadAsync(output as ArrayBuffer);
+        const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
+
+        expect(slide).toContain("Annotated product workflow screenshot");
+        expect(slide).toContain("Add the final product capture");
+        expect(slide).toContain("Image placeholder");
     });
 });

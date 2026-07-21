@@ -7,7 +7,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SlideLayoutSelector } from "@/components/Viewer/SlideLayoutSelector";
 import TemplateSelector from "@/components/Viewer/TemplateSelector";
+import type { SlideLayout } from "@/modules/types/presentation";
 
 interface ViewerHeaderControlsProps {
     title?: string;
@@ -15,6 +17,9 @@ interface ViewerHeaderControlsProps {
     currentTemplate: string;
     onBack: () => void;
     onTemplateChange: (templateId: string) => void;
+    selectedLayout?: SlideLayout;
+    onLayoutChange: (layout: SlideLayout) => void;
+    layoutDisabled: boolean;
     onIterate: () => void;
 
     intervalMode: "preset" | "custom";
@@ -38,6 +43,9 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
     currentTemplate,
     onBack,
     onTemplateChange,
+    selectedLayout,
+    onLayoutChange,
+    layoutDisabled,
     onIterate,
     intervalMode,
     slideInterval,
@@ -53,10 +61,10 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
 }) => {
     return (
         <div
-            className="relative flex items-center justify-between px-6 py-4 flex-shrink-0"
+            className="grid flex-shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-4 lg:px-6"
             style={{ minHeight: 48, fontSize: "1rem" }}
         >
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-4">
                 <Button
                     onClick={onBack}
                     className="bg-transparent hover:bg-white/5 text-white/40 hover:text-white transition-all duration-300 rounded-full p-2 h-10 w-10 border-none shadow-none"
@@ -64,16 +72,21 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
                 {title && (
-                    <span className="text-white/60 text-lg font-light tracking-wide select-none hidden md:block">
+                    <span className="hidden truncate text-lg font-light tracking-wide text-white/60 select-none 2xl:block">
                         {title}
                     </span>
                 )}
             </div>
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
                 <TemplateSelector
                     selectedTemplate={currentTemplate}
                     onTemplateChange={onTemplateChange}
+                />
+                <SlideLayoutSelector
+                    selectedLayout={selectedLayout}
+                    onLayoutChange={onLayoutChange}
+                    disabled={layoutDisabled}
                 />
                 {canIterate && (
                     <Button
@@ -87,7 +100,7 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
                 )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2">
                 {intervalMode === "preset" ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

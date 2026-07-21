@@ -9,36 +9,174 @@ import {
     resolveResearchSources,
     shouldSearchForResearch,
 } from "../../services/ai/research-sources";
+import { buildGenerationPrompt, buildIterationPrompt } from "../../services/ai-prompts";
 
 describe("AI presentation content", () => {
-    it("normalizes HTML wrappers and duplicate slide IDs", () => {
+    it("normalizes structured blocks, layout regions, and duplicate slide IDs", () => {
         const slides = normalizePresentationSlides({
             slides: [
-                { id: "duplicate", type: "content", html: "<h1>First</h1>" },
                 {
-                    id: "duplicate",
+                    id: "slide-2",
                     type: "content",
-                    html: '<div id="slide-content"><h2>Second</h2></div>',
+                    layout: "content",
+                    title: "First",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "bullets",
+                            region: "right",
+                            items: ["One", "Two"],
+                            ordered: false,
+                            ignored: "not retained",
+                        },
+                    ],
+                },
+                {
+                    id: "slide-2",
+                    type: "content",
+                    layout: "two-column",
+                    title: "Second",
+                    subtitle: "Details",
+                    blocks: [{ type: "paragraph", region: "main", text: "Left column" }],
                 },
             ],
         });
 
-        expect(slides.map((slide) => slide.id)).toEqual(["duplicate", "slide-2"]);
+        expect(slides.map((slide) => slide.id)).toEqual(["slide-2", "slide-2-2"]);
         const firstSlide = slides[0];
         const secondSlide = slides[1];
-        expect(firstSlide && "html" in firstSlide ? firstSlide.html : "").toBe(
-            '<div id="slide-content"><h1>First</h1></div>'
-        );
-        expect(secondSlide && "html" in secondSlide ? secondSlide.html : "").toContain(
-            "<h2>Second</h2>"
-        );
+        expect(firstSlide?.type).toBe("content");
+        expect(firstSlide?.type === "content" ? firstSlide.blocks : []).toEqual([
+            { type: "bullets", region: "main", items: ["One", "Two"], ordered: false },
+        ]);
+        expect(secondSlide?.type === "content" ? secondSlide.blocks[0]?.region : "").toBe("left");
     });
 
     it("converts invalid chart output into renderable content", () => {
         const slide = processSlide({ id: "chart", type: "chart" }, 0);
 
         expect(slide?.type).toBe("content");
-        expect(slide && "html" in slide ? slide.html : "").toContain("Data Visualization");
+        expect(slide?.type === "content" ? slide.title : "").toBe("Data Visualization");
+        expect(slide?.type === "content" ? slide.blocks[0] : null).toEqual({
+            type: "paragraph",
+            region: "main",
+            text: "Chart data unavailable",
+        });
+    });
+
+    it("keeps chart data while dropping arbitrary model-controlled options", () => {
+        const slide = processSlide(
+            {
+                id: "chart",
+                type: "chart",
+                chartConfig: {
+                    type: "bar",
+                    title: "Revenue",
+                    description: "Quarterly revenue",
+                    data: {
+                        labels: ["Q1", "Q2"],
+                        datasets: [{ label: "Revenue", data: [10, 12] }],
+                    },
+                    options: { plugins: { tooltip: { external: "model-controlled" } } },
+                },
+            },
+            0
+        );
+
+        expect(slide?.type).toBe("chart");
+        expect(slide?.type === "chart" ? slide.chartConfig.options : null).toEqual({});
+    });
+
+    it("normalizes image placeholders without requiring a remote URL", () => {
+        const slide = processSlide(
+            {
+                id: "visual",
+                type: "content",
+                layout: "image-right",
+                title: "Product workflow",
+                subtitle: "",
+                blocks: [
+                    {
+                        type: "image-placeholder",
+                        region: "right",
+                        alt: "Annotated product workflow screenshot",
+                        caption: "Add the final product capture",
+                        ignored: "discarded",
+                    },
+                ],
+            },
+            0
+        );
+
+        expect(slide?.type === "content" ? slide.blocks[0] : null).toEqual({
+            type: "image-placeholder",
+            region: "right",
+            alt: "Annotated product workflow screenshot",
+            caption: "Add the final product capture",
+        });
+    });
+
+    it("rejects executable markup and unsafe image protocols", () => {
+        expect(
+            processSlide(
+                {
+                    id: "unsafe",
+                    type: "content",
+                    layout: "content",
+                    title: "<script>alert(1)</script>",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "image",
+                            region: "main",
+                            url: "javascript:alert(1)",
+                            alt: "Unsafe",
+                            caption: "",
+                        },
+                        {
+                            type: "paragraph",
+                            region: "main",
+                            text: "<img src=x onerror=alert(1)>",
+                        },
+                    ],
+                },
+                0
+            )
+        ).toEqual({
+            id: "unsafe",
+            type: "content",
+            layout: "content",
+            title: "<script>alert(1)</script>",
+            subtitle: "",
+            blocks: [
+                {
+                    type: "paragraph",
+                    region: "main",
+                    text: "<img src=x onerror=alert(1)>",
+                },
+            ],
+        });
+    });
+});
+
+describe("AI presentation prompts", () => {
+    it("requires content-only schema V2 output for generation and iteration", () => {
+        const generationPrompt = buildGenerationPrompt(
+            "balanced",
+            "professional",
+            "nature-green",
+            "image-led"
+        );
+        const iterationPrompt = buildIterationPrompt("Improve the comparison");
+
+        expect(generationPrompt).toContain('Set "schemaVersion" to 2');
+        expect(generationPrompt).toContain("Never return HTML, Markdown, CSS, JSX, JavaScript");
+        expect(generationPrompt).toContain('"type": "content"');
+        expect(generationPrompt).toContain('theme to exactly "nature-green"');
+        expect(generationPrompt).toContain("Prefer image-right layouts");
+        expect(generationPrompt).toContain("image-placeholder");
+        expect(iterationPrompt).toContain("Always output schema version 2");
+        expect(iterationPrompt).toContain("Improve the comparison");
     });
 });
 

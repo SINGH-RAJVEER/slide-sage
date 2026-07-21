@@ -1,12 +1,15 @@
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { API_URL } from "@/lib/api";
 import { useStreaming } from "@/modules/presentations";
-import type { ResearchPayload, Source } from "@/modules/types/presentation";
+import type {
+    PresentationLayoutPreference,
+    ResearchPayload,
+    ThemeId,
+} from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
 
 interface ResearchRouteState {
@@ -14,6 +17,8 @@ interface ResearchRouteState {
     slideCount: number;
     detailLevel: string;
     tonality: string;
+    theme: ThemeId;
+    layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     retryPresentationId?: string;
 }
@@ -23,29 +28,41 @@ type ResearchStatus = "loading" | "ready" | "error";
 export default function GenerateResearchPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { streamingState, startStreaming } = useStreaming();
+    const { streamingState, researchPreviewState, startResearchPreview, startStreaming } =
+        useStreaming();
 
     const routeState = location.state as ResearchRouteState | null;
     const prompt = routeState?.prompt?.trim() ?? "";
     const slideCount = routeState?.slideCount ?? 0;
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
+    const theme = routeState?.theme ?? "corporate-blue";
+    const layoutPreference = routeState?.layoutPreference ?? "auto";
     const savedResearch = routeState?.researchPayload;
     const retryPresentationId = routeState?.retryPresentationId;
-    const hasSavedResearch = Boolean(savedResearch?.sources.length);
 
-    const [sources, setSources] = useState<Source[]>(() => savedResearch?.sources ?? []);
-    const [researchStatus, setResearchStatus] = useState<ResearchStatus>(() =>
-        hasSavedResearch ? "ready" : "loading",
-    );
-    const [estimatedTokens, setEstimatedTokens] = useState<number | null>(
-        savedResearch?.estimated_tokens ?? null,
-    );
-    const [error, setError] = useState("");
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
-    const requestIdRef = useRef(0);
     const isProceedingRef = useRef(false);
+
+    const researchRequest = useMemo(
+        () => ({
+            prompt,
+            slideCount,
+            detailLevel,
+            tonality,
+        }),
+        [detailLevel, prompt, slideCount, tonality],
+    );
+    const sources = researchPreviewState.sources;
+    const estimatedTokens = researchPreviewState.estimatedTokens;
+    const error = researchPreviewState.error ?? "";
+    const researchStatus: ResearchStatus =
+        researchPreviewState.status === "ready"
+            ? "ready"
+            : researchPreviewState.status === "error"
+              ? "error"
+              : "loading";
 
     const hasSources = sources.length > 0;
     const isLoading = researchStatus === "loading";
@@ -64,78 +81,10 @@ export default function GenerateResearchPage() {
         }
     }, [navigate, prompt, slideCount]);
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: researchAttempt intentionally retriggers failed requests.
     useEffect(() => {
-        const controller = new AbortController();
-        const requestId = ++requestIdRef.current;
-
-        const fetchResearch = async () => {
-            if (!prompt || !slideCount) return;
-            if (hasSavedResearch && researchAttempt === 0) return;
-
-            setResearchStatus("loading");
-            setError("");
-            setSources([]);
-            setEstimatedTokens(null);
-
-            try {
-                const response = await fetch(`${API_URL}/api/research-presentation`, {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        topic: prompt,
-                        research: {
-                            enabled: true,
-                        },
-                        slide_count: slideCount,
-                        detail_level: detailLevel,
-                        tonality,
-                    }),
-                    signal: controller.signal,
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    const errorMessage =
-                        typeof errorData.error === "string"
-                            ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
-                              "Failed to fetch research";
-                    if (controller.signal.aborted || requestId !== requestIdRef.current) return;
-                    setError(errorMessage);
-                    setResearchStatus("error");
-                    return;
-                }
-
-                const data = (await response.json()) as ResearchPayload;
-                if (controller.signal.aborted || requestId !== requestIdRef.current) return;
-
-                setSources(Array.isArray(data.sources) ? data.sources : []);
-                setEstimatedTokens(
-                    typeof data.estimated_tokens === "number" ? data.estimated_tokens : null,
-                );
-                setResearchStatus("ready");
-            } catch (err: unknown) {
-                if (
-                    controller.signal.aborted ||
-                    requestId !== requestIdRef.current ||
-                    (err instanceof Error && err.name === "AbortError")
-                ) {
-                    return;
-                }
-                const message = err instanceof Error ? err.message : String(err);
-                setError(message);
-                setResearchStatus("error");
-            }
-        };
-
-        fetchResearch();
-        return () => controller.abort();
-    }, [prompt, slideCount, researchAttempt, hasSavedResearch]);
+        if (!prompt || !slideCount) return;
+        void startResearchPreview(researchRequest, savedResearch, researchAttempt > 0);
+    }, [prompt, slideCount, researchAttempt, researchRequest, savedResearch, startResearchPreview]);
 
     useEffect(() => {
         if (isProceeding && streamingState.slides.length >= 1) {
@@ -156,7 +105,6 @@ export default function GenerateResearchPage() {
 
         isProceedingRef.current = true;
         setIsProceeding(true);
-        setError("");
 
         const payload: ResearchPayload = {
             sources,
@@ -171,6 +119,8 @@ export default function GenerateResearchPage() {
             false,
             payload,
             retryPresentationId,
+            theme,
+            layoutPreference,
         );
 
         if (!success) {
@@ -183,6 +133,8 @@ export default function GenerateResearchPage() {
         prompt,
         researchStatus,
         retryPresentationId,
+        theme,
+        layoutPreference,
         slideCount,
         sources,
         startStreaming,

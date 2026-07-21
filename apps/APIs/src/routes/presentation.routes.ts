@@ -1,13 +1,18 @@
 import { PresentationRepository, UserRepository } from "@slide-sage/database";
-import type {
-    PresentationJSON,
-    PresentationResponse,
-    PresentationSummary,
-    PresentationsResponse,
-    ResearchOptions,
-    ResearchPayload,
-    Slide,
-    Source,
+import {
+    PRESENTATION_LAYOUT_PREFERENCES,
+    PRESENTATION_SCHEMA_VERSION,
+    type PresentationJSON,
+    type PresentationLayoutPreference,
+    type PresentationResponse,
+    type PresentationSummary,
+    type PresentationsResponse,
+    type ResearchOptions,
+    type ResearchPayload,
+    type Slide,
+    type Source,
+    THEME_IDS,
+    type ThemeId,
 } from "@slide-sage/types";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
@@ -143,6 +148,21 @@ function positiveIntegerEnv(name: string, fallback: number): number {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+const THEME_ID_SET = new Set<string>(THEME_IDS);
+const LAYOUT_PREFERENCE_SET = new Set<string>(PRESENTATION_LAYOUT_PREFERENCES);
+
+function parseTheme(value: unknown): ThemeId {
+    return typeof value === "string" && THEME_ID_SET.has(value)
+        ? (value as ThemeId)
+        : "corporate-blue";
+}
+
+function parseLayoutPreference(value: unknown): PresentationLayoutPreference {
+    return typeof value === "string" && LAYOUT_PREFERENCE_SET.has(value)
+        ? (value as PresentationLayoutPreference)
+        : "auto";
+}
+
 function sseFrame(event: string, data: unknown): string {
     return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
@@ -159,6 +179,8 @@ interface FailedPresentationInput {
     detailLevel: string;
     tonality: string;
     researchEnabled: boolean;
+    theme: ThemeId;
+    layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     sources?: Source[];
     estimatedTokens: number;
@@ -172,6 +194,8 @@ async function markPresentationFailed({
     detailLevel,
     tonality,
     researchEnabled,
+    theme,
+    layoutPreference,
     researchPayload,
     sources,
     estimatedTokens,
@@ -186,8 +210,9 @@ async function markPresentationFailed({
             ? Math.floor(parsedSlideCount)
             : 5;
     const failedData: PresentationJSON = {
+        schemaVersion: PRESENTATION_SCHEMA_VERSION,
         title: failedTitle,
-        theme: "corporate-blue",
+        theme,
         slides: [],
         totalSlides: 0,
         status: "failed",
@@ -199,6 +224,8 @@ async function markPresentationFailed({
                 detail_level: detailLevel,
                 tonality,
                 research_enabled: researchEnabled,
+                theme,
+                layout_preference: layoutPreference,
                 ...(retrySources?.length
                     ? {
                           research_payload: {
@@ -233,6 +260,10 @@ presentations.post(
             const body = await c.req.json();
 
             const { topic, slide_count, detail_level, tonality } = body;
+            const preferredTheme = parseTheme(body?.theme);
+            const layoutPreference = parseLayoutPreference(
+                body?.layout_preference ?? body?.layoutPreference
+            );
             const research = parseResearchOptions(body?.research);
             const researchPayload = parseResearchPayload(
                 body?.research_payload ?? body?.researchPayload
@@ -284,8 +315,9 @@ presentations.post(
                 presentationId = failedPresentation.id;
             } else {
                 const presentation = await presentationRepo.create(userId, "Generating...", topic, {
+                    schemaVersion: PRESENTATION_SCHEMA_VERSION,
                     slides: [],
-                    theme: "corporate-blue",
+                    theme: preferredTheme,
                     title: "Generating...",
                 });
                 presentationId = presentation.id;
@@ -306,7 +338,7 @@ presentations.post(
 
                 try {
                     const allSlides: Slide[] = [];
-                    let theme = "corporate-blue";
+                    let theme: string = preferredTheme;
                     let title = "Untitled Presentation";
                     let sources: Source[] | undefined = retainedSources;
                     let tokensUsed = 0;
@@ -326,6 +358,8 @@ presentations.post(
                             detailLevel: detail_level || "balanced",
                             tonality: tonality || "professional",
                             researchEnabled: Boolean(research?.enabled || sources?.length),
+                            theme: preferredTheme,
+                            layoutPreference,
                             researchPayload,
                             sources,
                             estimatedTokens,
@@ -343,6 +377,8 @@ presentations.post(
                         tonality: tonality || "professional",
                         research,
                         researchPayload,
+                        theme: preferredTheme,
+                        layoutPreference,
                     })) {
                         const eventType = event.event || "data";
                         // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
@@ -355,7 +391,7 @@ presentations.post(
 
                         if (eventType === "retry") {
                             allSlides.length = 0;
-                            theme = "corporate-blue";
+                            theme = preferredTheme;
                             title = "Untitled Presentation";
                             tokensUsed = 0;
                             generationCompleted = false;
@@ -446,6 +482,7 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
+                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
                             slides: allSlides,
                             theme,
                             title: finalTitle,
@@ -534,6 +571,8 @@ presentations.post(
                         detailLevel: detail_level || "balanced",
                         tonality: tonality || "professional",
                         researchEnabled: Boolean(research?.enabled || retainedSources?.length),
+                        theme: preferredTheme,
+                        layoutPreference,
                         researchPayload,
                         sources: retainedSources,
                         estimatedTokens,
@@ -763,9 +802,11 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
+                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
                             slides: allSlides,
                             theme,
                             title: finalTitle,
+                            status: "ready",
                             totalSlides: allSlides.length,
                             tokens_used: tokensUsed,
                         };

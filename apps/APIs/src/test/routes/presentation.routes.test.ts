@@ -170,6 +170,8 @@ describe("presentation routes", () => {
                 slide_count: 3,
                 detail_level: "balanced",
                 tonality: "professional",
+                theme: "nature-green",
+                layout_preference: "image-led",
                 research_payload: {
                     sources: [{ url: " https://example.com ", title: "Example" }],
                 },
@@ -186,9 +188,20 @@ describe("presentation routes", () => {
             currentUserId,
             "Generating...",
             "Quarterly planning",
-            { slides: [], theme: "corporate-blue", title: "Generating..." }
+            {
+                schemaVersion: 2,
+                slides: [],
+                theme: "nature-green",
+                title: "Generating...",
+            }
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
+        expect(presentationService.generatePresentationStream).toHaveBeenCalledWith(
+            expect.objectContaining({
+                theme: "nature-green",
+                layoutPreference: "image-led",
+            })
+        );
         expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
             3,
             "balanced",
@@ -316,6 +329,7 @@ describe("presentation routes", () => {
                 title: "Failure handling",
                 prompt: "Failure handling",
                 slidesData: {
+                    schemaVersion: 2,
                     title: "Failure handling",
                     theme: "corporate-blue",
                     slides: [],
@@ -329,6 +343,8 @@ describe("presentation routes", () => {
                             detail_level: "detailed",
                             tonality: "persuasive",
                             research_enabled: true,
+                            theme: "corporate-blue",
+                            layout_preference: "auto",
                             research_payload: {
                                 sources: [
                                     {
@@ -384,8 +400,9 @@ describe("presentation routes", () => {
         expect(body).toContain("event: retry");
         expect(body).toContain("event: saved");
         const finalUpdate = presentationUpdates[0]?.updates as {
-            slidesData?: { slides?: Array<{ id?: string }> };
+            slidesData?: { schemaVersion?: number; slides?: Array<{ id?: string }> };
         };
+        expect(finalUpdate.slidesData?.schemaVersion).toBe(2);
         expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
         expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
     });

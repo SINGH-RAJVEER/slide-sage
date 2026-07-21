@@ -1,7 +1,10 @@
 import { Globe } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
+import type { PresentationLayoutPreference, ThemeId } from "@/modules/types/presentation";
 import { DetailLevelSelector } from "./DetailLevelSelector";
+import { GenerationThemeSelector } from "./GenerationThemeSelector";
+import { LayoutPreferenceSelector } from "./LayoutPreferenceSelector";
 import { SlideCountSelector } from "./SlideCountSelector";
 import { TonalitySelector } from "./TonalitySelector";
 
@@ -12,12 +15,16 @@ interface GenerateOptionsBarProps {
     slideCountMode: string;
     slideCount: string;
     customSlideCount: string;
+    theme: ThemeId;
+    layoutPreference: PresentationLayoutPreference;
     onDetailLevelChange: (level: string) => void;
     onTonalityChange: (tonality: string) => void;
     onUseWebResearchChange: (enabled: boolean) => void;
     onSlideCountModeChange: (mode: string) => void;
     onSlideCountChange: (count: string) => void;
     onCustomSlideCountChange: (count: string) => void;
+    onThemeChange: (theme: ThemeId) => void;
+    onLayoutPreferenceChange: (preference: PresentationLayoutPreference) => void;
 }
 
 export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
@@ -27,16 +34,20 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
     slideCountMode,
     slideCount,
     customSlideCount,
+    theme,
+    layoutPreference,
     onDetailLevelChange,
     onTonalityChange,
     onUseWebResearchChange,
     onSlideCountModeChange,
     onSlideCountChange,
     onCustomSlideCountChange,
+    onThemeChange,
+    onLayoutPreferenceChange,
 }) => {
     return (
         <div className="mb-2 w-full flex items-center justify-center">
-            <div className="w-fit flex flex-nowrap items-center justify-center gap-3 rounded-lg border border-white/10 bg-black/20 px-4 py-3 whitespace-nowrap overflow-x-auto custom-scrollbar">
+            <div className="flex w-fit max-w-full flex-nowrap items-center justify-start gap-3 overflow-x-auto whitespace-nowrap rounded-lg border border-white/10 bg-black/20 px-4 py-3 custom-scrollbar xl:justify-center">
                 <div className="flex items-center gap-2 shrink-0">
                     <Button
                         type="button"
@@ -60,6 +71,11 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
                     onDetailLevelChange={onDetailLevelChange}
                 />
                 <TonalitySelector tonality={tonality} onTonalityChange={onTonalityChange} />
+                <GenerationThemeSelector theme={theme} onThemeChange={onThemeChange} />
+                <LayoutPreferenceSelector
+                    layoutPreference={layoutPreference}
+                    onLayoutPreferenceChange={onLayoutPreferenceChange}
+                />
                 <SlideCountSelector
                     slideCountMode={slideCountMode}
                     slideCount={slideCount}

@@ -90,7 +90,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 </div>
                             )}
                             <span className="truncate">
-                                {currentTemplate?.name || "Select Template"}
+                                {currentTemplate?.name || "Select Theme"}
                             </span>
                         </div>
                         <ChevronDown className="w-4 h-4 opacity-30 group-hover:opacity-50" />
@@ -103,7 +103,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 >
                     <DropdownMenuLabel className="text-white/40 text-xs font-medium uppercase tracking-wider flex items-center gap-2 px-2 py-2">
                         <Sparkles className="w-3 h-3" />
-                        Choose Template
+                        Choose Theme
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-white/5 mx-2" />
 

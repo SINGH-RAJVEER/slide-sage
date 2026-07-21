@@ -1,4 +1,10 @@
-import type { PresentationStreamEvent, ResearchOptions, ResearchPayload } from "@slide-sage/types";
+import type {
+    PresentationLayoutPreference,
+    PresentationStreamEvent,
+    ResearchOptions,
+    ResearchPayload,
+    ThemeId,
+} from "@slide-sage/types";
 import { streamStructuredPresentation } from "./ai/openrouter-presentation-stream";
 import { buildGenerationMessages, buildIterationMessages } from "./ai/presentation-messages";
 import {
@@ -10,7 +16,7 @@ import { buildGenerationPrompt, buildIterationPrompt } from "./ai-prompts";
 import { RAGService } from "./rag.service";
 import { SearchService } from "./search.service";
 
-const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it:free";
+const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it";
 
 export class AIService {
     private searchService = new SearchService();
@@ -27,14 +33,21 @@ export class AIService {
         tonality = "professional",
         research?: ResearchOptions,
         researchPayload?: ResearchPayload,
-        userId?: string
+        userId?: string,
+        theme: ThemeId = "corporate-blue",
+        layoutPreference: PresentationLayoutPreference = "auto"
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting generate presentation for: ${userPrompt.substring(0, 50)}... with ${slideCount} slides`
         );
 
         try {
-            const systemPrompt = buildGenerationPrompt(detailLevel, tonality);
+            const systemPrompt = buildGenerationPrompt(
+                detailLevel,
+                tonality,
+                theme,
+                layoutPreference
+            );
             const generationMemoryContext = userId
                 ? await this.ragService.buildGenerationMemoryContextString(userId, userPrompt)
                 : "";
@@ -77,6 +90,8 @@ export class AIService {
                 fallbackTitle: "Untitled Presentation",
                 sources,
                 operation: "generation",
+                preferredTheme: theme,
+                layoutPreference,
             });
         } catch (error) {
             console.error("Error during generation:", error);

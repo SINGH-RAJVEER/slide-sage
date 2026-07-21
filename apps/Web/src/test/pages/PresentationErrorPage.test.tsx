@@ -14,7 +14,7 @@ function RouteStateProbe() {
 }
 
 describe("PresentationErrorPage", () => {
-    it("shows the routed error and returns to presentations", async () => {
+    it("shows the routed error without a presentations shortcut", async () => {
         const { default: PresentationErrorPage } = await import(
             "@/modules/pages/PresentationErrorPage"
         );
@@ -29,7 +29,6 @@ describe("PresentationErrorPage", () => {
             >
                 <Routes>
                     <Route path="/presentation-error" element={<PresentationErrorPage />} />
-                    <Route path="/presentations" element={<div>Presentation library</div>} />
                 </Routes>
             </MemoryRouter>,
         );
@@ -41,10 +40,7 @@ describe("PresentationErrorPage", () => {
         expect(view.getByText("The generation stream was interrupted.")).toBeInTheDocument();
         expect(view.queryByText("Delete unfinished presentation")).toBeNull();
         expect(view.queryByText("Retry presentation")).toBeNull();
-
-        fireEvent.click(view.getByRole("button", { name: "My Presentations" }));
-
-        expect(view.getByText("Presentation library")).toBeInTheDocument();
+        expect(view.queryByRole("button", { name: "My Presentations" })).toBeNull();
     });
 
     it("reopens a saved failure for retry from the error page", async () => {

@@ -1,4 +1,10 @@
-import type { Slide, Source } from "@slide-sage/types";
+import {
+    isContentSlide,
+    isLegacyHtmlSlide,
+    type Slide,
+    type SlideBlock,
+    type Source,
+} from "@slide-sage/types";
 import type {
     MemorySourceType,
     SimilarContext,
@@ -23,24 +29,19 @@ export function buildDeckSummary(params: StorePresentationSemanticMemoryParams):
 }
 
 export function buildSlideSummary(slide: Slide, index: number): { title: string; summary: string } {
-    const slideRecord = slide as Slide & Record<string, unknown>;
-    const html = typeof slideRecord.html === "string" ? slideRecord.html : "";
-    const title = extractSlideTitle(slideRecord, html) || `Slide ${index + 1}`;
-    const notes = typeof slideRecord["notes"] === "string" ? slideRecord["notes"] : "";
-    const explicitContent =
-        typeof slideRecord["content"] === "string" ? slideRecord["content"] : "";
-    const htmlText = html ? stripHtml(html) : "";
-    const chartSummary =
-        "chartConfig" in slide ? truncateText(JSON.stringify(slide.chartConfig), 700) : "";
-    const content = truncateText(
-        [explicitContent, htmlText, chartSummary, notes].filter(Boolean).join(" "),
-        1200
-    );
+    const title = getSlideTitle(slide) || `Slide ${index + 1}`;
+    const layout = isContentSlide(slide) ? slide.layout : slide.type;
+    const content = isContentSlide(slide)
+        ? slide.blocks.map(serializeBlock).filter(Boolean).join(" ")
+        : isLegacyHtmlSlide(slide)
+          ? stripHtml(slide.html)
+          : truncateText(JSON.stringify(slide.chartConfig), 700);
     const summary = [
         `Slide ${index + 1}`,
         `Title: ${title}`,
         `Type: ${slide.type || "content"}`,
-        content ? `Content: ${content}` : "",
+        `Layout: ${layout}`,
+        content ? `Content: ${truncateText(content, 1200)}` : "",
     ]
         .filter(Boolean)
         .join("\n");
@@ -177,14 +178,38 @@ export function cosineSimilarity(a: number[], b: number[]): number {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function extractSlideTitle(slide: Record<string, unknown>, html: string): string {
-    if (typeof slide["title"] === "string" && slide["title"].trim()) {
-        return truncateText(slide["title"].trim(), 180);
-    }
+function getSlideTitle(slide: Slide): string {
+    if (isContentSlide(slide)) return truncateText(slide.title, 180);
+    if (!isLegacyHtmlSlide(slide)) return truncateText(slide.chartConfig.title || "", 180);
 
-    const headingMatch = html.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
+    const headingMatch = slide.html.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
     const heading = headingMatch?.[1] ? stripHtml(headingMatch[1]) : "";
     return truncateText(heading.trim(), 180);
+}
+
+function serializeBlock(block: SlideBlock): string {
+    switch (block.type) {
+        case "paragraph":
+            return `[${block.region}] ${block.text}`;
+        case "bullets":
+            return `[${block.region}] ${block.items.join("; ")}`;
+        case "table":
+            return `[${block.region}] ${[block.headers, ...block.rows]
+                .map((row) => row.join(" | "))
+                .join("; ")}`;
+        case "image":
+            return `[${block.region}] Image: ${block.alt} ${block.caption}`;
+        case "image-placeholder":
+            return `[${block.region}] Image placeholder: ${block.alt} ${block.caption}`;
+        case "quote":
+            return `[${block.region}] Quote: ${block.text} ${block.attribution}`;
+        case "callout":
+            return `[${block.region}] ${block.heading}: ${block.text}`;
+        case "stats":
+            return `[${block.region}] ${block.items
+                .map((item) => `${item.value} ${item.label}`)
+                .join("; ")}`;
+    }
 }
 
 function stripHtml(html: string): string {

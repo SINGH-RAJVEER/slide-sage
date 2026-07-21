@@ -10,7 +10,7 @@ import {
     sourceChunks,
     styleMemories,
 } from "@slide-sage/database";
-import type { PresentationJSON, Source } from "@slide-sage/types";
+import { PRESENTATION_SCHEMA_VERSION, type PresentationJSON, type Source } from "@slide-sage/types";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type {
     GenerateEmbedding,
@@ -262,6 +262,7 @@ export async function storeExampleGeneration(
     const content = `${params.prompt}\n\n${summary}`;
     const { embedding, model } = await generateEmbedding(content);
     const outputJson: PresentationJSON = {
+        schemaVersion: PRESENTATION_SCHEMA_VERSION,
         title: params.title,
         theme: params.theme,
         slides: params.slides,
