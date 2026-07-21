@@ -178,6 +178,7 @@ const TemplateApplier: React.FC<TemplateApplierProps> = ({
 
     return (
         <div
+            data-pdf-slide
             ref={containerRef}
             className={`template-applier w-full h-full ${template?.backgroundClass || ""} ${className}`}
         >

@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import DownloadPptxButton from "@/components/Viewer/DownloadPptxButton";
+import DownloadMenu from "@/components/Viewer/DownloadMenu";
 import type { PresentationData } from "@/modules/types/presentation";
 
 interface ViewerNavigationControlsProps {
@@ -33,7 +33,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
             style={{ minHeight: 36, fontSize: "0.95rem" }}
         >
             <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                <DownloadPptxButton presentation={presentation} />
+                <DownloadMenu presentation={presentation} />
             </div>
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2">

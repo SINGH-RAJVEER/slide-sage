@@ -75,7 +75,7 @@ owning modules.
 10. The web viewer renders the deck and can export an editable PowerPoint file in
    the browser.
 
-### Editable PowerPoint Export
+### Presentation Downloads
 
 The viewer passes the complete presentation model to the browser-side PPTX
 builder. Export does not depend on mounted carousel slides and does not capture
@@ -89,6 +89,11 @@ fetch them; a failed or cross-origin image becomes an editable labeled
 placeholder so it does not abort the deck. PowerPoint has no polar-area chart
 type, so those charts are exported as editable radar charts. The downloaded file
 uses the presentation title and the `.pptx` extension.
+
+The viewer's Download menu also exports PDF. It captures each rendered slide
+after fonts and theme styles are applied, then writes the captures in presentation
+order to widescreen 16:9 pages. This preserves charts and current viewer styling,
+and names the file from the presentation title.
 
 The Cloudflare Worker creates its Postgres.js client inside each request and
 keeps Drizzle access scoped to that invocation. Database clients must not be
