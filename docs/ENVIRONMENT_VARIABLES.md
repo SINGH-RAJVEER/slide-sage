@@ -1,7 +1,6 @@
 # Environment Variables
 
-Copy `.env.example` to `.env`. Devenv loads the root file, and the API also loads
-it directly when run outside the devenv process group.
+Copy `.env.example` to `.env`. API development script passes it to Bun with `--env-file` when run outside the devenv process group.
 
 ## Core
 

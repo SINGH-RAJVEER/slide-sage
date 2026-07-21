@@ -1,5 +1,4 @@
 import { createDatabase, runWithDatabase } from "@slide-sage/database";
-import { config as loadEnv } from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -7,10 +6,6 @@ import authRoutes from "./routes/auth.routes";
 import billingRoutes from "./routes/billing.routes";
 import presentationRoutes from "./routes/presentation.routes";
 import profileRoutes from "./routes/profile.routes";
-
-if (typeof import.meta.url === "string" && import.meta.url.startsWith("file:")) {
-    loadEnv({ path: new URL("../../../.env", import.meta.url), override: false });
-}
 
 const app = new Hono();
 
