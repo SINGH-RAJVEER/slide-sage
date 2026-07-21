@@ -5,8 +5,7 @@
 - Nix with flakes enabled
 - [devenv](https://devenv.sh/getting-started/)
 
-Bun, PostgreSQL 17 with pgvector, process-compose, and `just` are supplied by
-`devenv.nix`.
+Bun, PostgreSQL 17 with pgvector, and `just` are supplied by `devenv.nix`.
 
 ## First Run
 
@@ -24,13 +23,13 @@ package to build or deploy.
 
 `just dev` performs the complete startup sequence:
 
-1. Initializes PostgreSQL under `.devenv/state/postgres/` when needed.
-2. Creates the `slidesage` role, database, and `vector` extension.
-3. Applies Drizzle migrations.
+1. Starts devenv's PostgreSQL service under `.devenv/state/postgres/`.
+2. Ensures the `slidesage` role, database, and `vector` extension exist.
+3. Applies Drizzle migrations after PostgreSQL is ready.
 4. Starts the API on port `8000` and Vite on port `5173`.
 
-Stop the foreground process with `Ctrl+C`. The process trap stops the local
-PostgreSQL instance.
+Stop the foreground process with `Ctrl+C`. Devenv stops the managed PostgreSQL
+instance with the API and web processes.
 
 ## Common Commands
 
@@ -94,7 +93,7 @@ types with their project-specific configurations.
 This permanently deletes local development data:
 
 ```bash
-slidesage-stop-db
+devenv processes down
 rm -rf .devenv/state/postgres
 ```
 

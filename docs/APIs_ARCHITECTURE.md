@@ -18,7 +18,8 @@ tests; API tests use isolation because modules hold database and auth state.
 
 ## Runtime
 
-The local stack is defined in `devenv.nix` and coordinated by process-compose:
+The local stack is defined and coordinated by devenv's native service, task, and
+process management:
 
 ```text
 PostgreSQL ready -> Drizzle migrations complete -> API starts

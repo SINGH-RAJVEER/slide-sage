@@ -6,7 +6,7 @@ default:
 
 # Start all services and apps (postgres, apis, web)
 dev:
-    devenv shell slidesage-dev-up
+    devenv up
 
 # Open a psql shell to the local dev database
 db-shell:
