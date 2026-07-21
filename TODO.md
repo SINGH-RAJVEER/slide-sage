@@ -8,9 +8,11 @@
 - Add an option to use openAI auth for the model provider
 - Find a way to implement images in the presentations
 - Add an option to add files as inputs
+- Make streaming partially returned slide data possible
 
 ## Issues
 
+- Fix streaming
 - Fix the fullscreen view
 - In the deployment sign out button does not function properly
 - When checking presentations, the entire page shouldnt load, instead just the part with the actual presentations listing

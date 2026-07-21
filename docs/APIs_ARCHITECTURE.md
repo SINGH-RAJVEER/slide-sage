@@ -81,9 +81,13 @@ owning modules.
    pop-in below the header and dismiss automatically after an eight-second
    cooldown.
    Starting generation navigates to the viewer in the same interaction, before
-   the stream response or first slide arrives. The viewer displays its centered
-   generation loader until streamed content is available and routes startup
-   failures to the presentation error screen.
+   the stream response or first slide arrives. The viewer keeps its full control
+   surface visible and displays a blank 16:9 slide with a centered loader until
+   streamed content is available. Content-dependent controls remain disabled,
+   and startup failures route to the presentation error screen.
+   The global active-generation indicator is suppressed on that generation's own
+   viewer route because progress is already represented inside the viewer; it
+   remains available when the user navigates elsewhere.
 8. The web app treats `saved`, rather than `complete`, as the persistence signal.
    It refreshes an open Presentations page after that event and links the completed
    status to the stored deck.

@@ -1,5 +1,6 @@
 import type React from "react";
 import { Card } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 import type { Slide } from "@/modules/types/presentation";
 import { SlideRenderer } from "./SlideRenderer";
 
@@ -10,6 +11,7 @@ interface ViewerSlideCarouselProps {
     currentTemplate: string;
     containerRef: React.RefObject<HTMLDivElement | null>;
     onSelectSlide: (index: number) => void;
+    isWaitingForFirstSlide?: boolean;
 }
 
 export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
@@ -19,6 +21,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
     currentTemplate,
     containerRef,
     onSelectSlide,
+    isWaitingForFirstSlide = false,
 }) => {
     return (
         <div
@@ -31,6 +34,32 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
                 role="listbox"
                 aria-label="Slides carousel"
             >
+                {isWaitingForFirstSlide && (
+                    <div
+                        id="slide-loading"
+                        role="option"
+                        tabIndex={0}
+                        aria-selected="true"
+                        aria-label="Waiting for the first generated slide"
+                        className="slide-carousel__item"
+                    >
+                        <div className="ss-slide-stage flex-shrink-0">
+                            <Card className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[hsl(222,27%,12%)] shadow-2xl">
+                                <div className="flex flex-col items-center gap-4 text-center text-white/70">
+                                    <Spinner className="size-8 text-blue-400" />
+                                    <div>
+                                        <p className="text-sm font-medium text-white/85">
+                                            Generating your presentation
+                                        </p>
+                                        <p className="mt-1 text-xs text-white/40">
+                                            Waiting for the first slide
+                                        </p>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                )}
                 {slides.map((slide, idx) => {
                     const isActive = visibleSlide === idx;
 

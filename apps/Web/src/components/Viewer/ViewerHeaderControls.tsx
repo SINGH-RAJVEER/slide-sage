@@ -35,6 +35,7 @@ interface ViewerHeaderControlsProps {
     playbackDisabled: boolean;
 
     onEnterFullscreen: () => void;
+    fullscreenDisabled?: boolean;
 }
 
 export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
@@ -58,6 +59,7 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
     onTogglePlayback,
     playbackDisabled,
     onEnterFullscreen,
+    fullscreenDisabled = false,
 }) => {
     return (
         <div
@@ -88,16 +90,15 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
                     onLayoutChange={onLayoutChange}
                     disabled={layoutDisabled}
                 />
-                {canIterate && (
-                    <Button
-                        onClick={onIterate}
-                        variant="outline"
-                        className="bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/5 text-white transition-all duration-300"
-                    >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Iterate
-                    </Button>
-                )}
+                <Button
+                    onClick={onIterate}
+                    variant="outline"
+                    disabled={!canIterate}
+                    className="bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/5 text-white transition-all duration-300"
+                >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Iterate
+                </Button>
             </div>
 
             <div className="flex items-center justify-end gap-2">
@@ -187,6 +188,7 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={onEnterFullscreen}
+                    disabled={fullscreenDisabled}
                     className="text-white/60 hover:text-white hover:bg-white/5 h-9 w-9"
                 >
                     <Maximize className="h-5 w-5" />

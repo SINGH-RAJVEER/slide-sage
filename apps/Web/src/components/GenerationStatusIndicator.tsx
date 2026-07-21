@@ -132,6 +132,8 @@ export default function GenerationStatusIndicator() {
     }
 
     if (streamingState.isStreaming) {
+        if (location.pathname === activePath) return null;
+
         const generatedSlides = streamingState.slides.length;
         const requestedSlides = streamingState.requestedSlides;
         const progress = requestedSlides > 0 ? generatedSlides / requestedSlides : 0;

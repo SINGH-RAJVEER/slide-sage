@@ -82,6 +82,34 @@ it("shows an active generation indicator on the generate page", async () => {
     }
 });
 
+it("does not duplicate generation status on the active viewer", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = mock(() => new Promise<Response>(() => {}));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    try {
+        const view = render(
+            <MemoryRouter initialEntries={["/presentation"]}>
+                <StreamingProvider>
+                    <StartGeneration />
+                    <GenerationStatusIndicator />
+                </StreamingProvider>
+            </MemoryRouter>,
+        );
+
+        fireEvent.click(view.getByRole("button", { name: "Start generation" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+        expect(
+            view.queryByRole("button", {
+                name: "Generating presentation. Grid storage",
+            }),
+        ).toBeNull();
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
 for (const loginPath of ["/sign-in", "/login"]) {
     it(`does not show generation status on ${loginPath}`, async () => {
         const originalFetch = globalThis.fetch;
