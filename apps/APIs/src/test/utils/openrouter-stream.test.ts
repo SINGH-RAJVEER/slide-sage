@@ -96,6 +96,37 @@ describe("OpenRouter streaming utilities", () => {
         await expect(consume()).rejects.toThrow("idle for 10ms");
     });
 
+    it("requests structured output from compatible fallback providers", async () => {
+        let requestBody: Record<string, unknown> | undefined;
+        const fetchImpl = mock((_url: string | URL | Request, init?: RequestInit) => {
+            requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+            return Promise.resolve(responseFromBytes([]));
+        }) as unknown as typeof fetch;
+
+        await requestOpenRouterStream(
+            {
+                endpoint: "https://openrouter.example.test",
+                apiKey: "test-key",
+                model: "test-model",
+                messages: [{ role: "user", content: "test" }],
+                requestTimeoutMs: 100,
+                maxTokens: 8192,
+                responseFormat: { type: "json_schema", json_schema: { name: "presentation" } },
+            },
+            fetchImpl
+        );
+
+        expect(requestBody?.["max_tokens"]).toBe(8192);
+        expect(requestBody?.["response_format"]).toEqual({
+            type: "json_schema",
+            json_schema: { name: "presentation" },
+        });
+        expect(requestBody?.["provider"]).toEqual({
+            allow_fallbacks: true,
+            require_parameters: true,
+        });
+    });
+
     it("classifies rate limits as retryable and honors Retry-After", async () => {
         const fetchImpl = mock(() =>
             Promise.resolve(
@@ -114,6 +145,8 @@ describe("OpenRouter streaming utilities", () => {
                     model: "test-model",
                     messages: [{ role: "user", content: "test" }],
                     requestTimeoutMs: 100,
+                    maxTokens: 4096,
+                    responseFormat: { type: "json_object" },
                 },
                 fetchImpl
             );

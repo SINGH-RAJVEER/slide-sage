@@ -17,6 +17,7 @@ interface StreamingLikeState {
     theme: string;
     title: string;
     presentationId?: string;
+    error?: string;
 }
 
 interface UsePresentationDataParams {
@@ -272,8 +273,22 @@ export function usePresentationData({
         streamingState.slides.length,
     ]);
 
+    useEffect(() => {
+        if (!isStreamingMode || !streamingState.error) return;
+
+        navigate(ROUTES.presentationError, {
+            replace: true,
+            state: {
+                error: streamingState.error,
+                presentationId: streamingState.presentationId,
+            },
+        });
+    }, [isStreamingMode, navigate, streamingState.error, streamingState.presentationId]);
+
     const shouldShowGenerating =
-        streamingState.isStreaming && (!presentation || presentation.slides.length === 0);
+        (streamingState.isStreaming || isStreamingMode) &&
+        !streamingState.error &&
+        (!presentation || presentation.slides.length === 0);
 
     return {
         presentation,

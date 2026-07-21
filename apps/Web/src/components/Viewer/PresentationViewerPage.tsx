@@ -10,10 +10,18 @@ import type { ViewerLocationState } from "@/hooks/usePresentationData";
 import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { API_URL } from "@/lib/api";
+import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
+import { applySlideLayout } from "@/lib/slide-layout";
 // Import directly from source modules (not the @/modules/presentations barrel) to avoid a
 // circular dependency: the barrel re-exports this very page, which under circular evaluation
 // left the AVAILABLE_TEMPLATES binding unestablished (ReferenceError at render).
 import { useStreaming } from "@/modules/contexts/StreamingContext";
+import {
+    isChartSlide,
+    isLegacyHtmlSlide,
+    type PresentationData,
+    type SlideLayout,
+} from "@/modules/types/presentation";
 import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
 import { useTemplate } from "@/modules/useTemplate";
 import { ROUTES } from "@/router/paths";
@@ -266,19 +274,50 @@ export default function PresentationViewerPage() {
         }
     };
 
-    if (shouldShowGenerating) {
-        return <CenteredStatusScreen message="Generating your presentation..." />;
-    }
-
     if (isLoading) {
         return <CenteredStatusScreen message="Loading presentation..." />;
     }
 
-    if (!presentation) {
+    if (!presentation && !shouldShowGenerating) {
         return null;
     }
 
-    const activeSlide = presentation.slides[navigation.currentSlide];
+    const viewerPresentation =
+        presentation ||
+        ({
+            title: streamingState.prompt || "Generating presentation",
+            theme: streamingState.theme || currentTemplate,
+            slides: [],
+            totalSlides: 0,
+        } satisfies PresentationData);
+    const hasSlides = viewerPresentation.slides.length > 0;
+    const activeSlide = viewerPresentation.slides[navigation.currentSlide];
+    const activeContentSlide =
+        activeSlide && !isChartSlide(activeSlide)
+            ? isLegacyHtmlSlide(activeSlide)
+                ? adaptLegacyHtmlSlide(activeSlide)
+                : activeSlide
+            : undefined;
+
+    const handleTemplateChange = (templateId: string) => {
+        changeTemplate(templateId);
+        setPresentation((current) => (current ? { ...current, theme: templateId } : current));
+    };
+
+    const handleLayoutChange = (layout: SlideLayout) => {
+        setPresentation((current) => {
+            if (!current) return current;
+            const selected = current.slides[navigation.currentSlide];
+            if (!selected || isChartSlide(selected)) return current;
+
+            const contentSlide = isLegacyHtmlSlide(selected)
+                ? adaptLegacyHtmlSlide(selected)
+                : selected;
+            const slides = [...current.slides];
+            slides[navigation.currentSlide] = applySlideLayout(contentSlide, layout);
+            return { ...current, slides };
+        });
+    };
 
     return (
         <div
@@ -297,13 +336,16 @@ export default function PresentationViewerPage() {
             >
                 {showControls && !isFullscreenMode && (
                     <ViewerHeaderControls
-                        title={presentation.title}
-                        canIterate={!!presentationId}
+                        title={viewerPresentation.title}
+                        canIterate={hasSlides && !!presentationId}
                         currentTemplate={currentTemplate}
                         onBack={() =>
                             navigate(isStreamingMode ? ROUTES.generate : ROUTES.presentations)
                         }
-                        onTemplateChange={changeTemplate}
+                        onTemplateChange={handleTemplateChange}
+                        selectedLayout={activeContentSlide?.layout}
+                        onLayoutChange={handleLayoutChange}
+                        layoutDisabled={!activeContentSlide}
                         onIterate={() => setShowIterateModal(true)}
                         intervalMode={intervalMode}
                         slideInterval={slideInterval}
@@ -314,8 +356,9 @@ export default function PresentationViewerPage() {
                         setCustomInterval={setCustomInterval}
                         isPlaying={playback.isPlaying}
                         onTogglePlayback={playback.toggle}
-                        playbackDisabled={presentation.slides.length === 1}
+                        playbackDisabled={viewerPresentation.slides.length <= 1}
                         onEnterFullscreen={() => void enterFullscreen()}
+                        fullscreenDisabled={!hasSlides}
                     />
                 )}
 
@@ -328,11 +371,12 @@ export default function PresentationViewerPage() {
 
                 {!isFullscreenMode && (
                     <ViewerSlideCarousel
-                        slides={presentation.slides}
+                        slides={viewerPresentation.slides}
                         currentSlide={navigation.currentSlide}
                         visibleSlide={navigation.visibleSlide}
                         currentTemplate={currentTemplate}
                         containerRef={slideContainerRef}
+                        isWaitingForFirstSlide={shouldShowGenerating}
                         onSelectSlide={(idx) => {
                             if (idx !== navigation.currentSlide) {
                                 playback.stop();
@@ -344,9 +388,9 @@ export default function PresentationViewerPage() {
 
                 {showControls && !isFullscreenMode && (
                     <ViewerNavigationControls
-                        presentation={presentation}
+                        presentation={viewerPresentation}
                         currentSlide={navigation.currentSlide}
-                        totalSlides={presentation.slides.length}
+                        totalSlides={viewerPresentation.slides.length}
                         onFirst={() => {
                             playback.stop();
                             navigation.first();
@@ -364,16 +408,16 @@ export default function PresentationViewerPage() {
                             navigation.last();
                         }}
                         onDelete={deleteCurrentSlide}
-                        deleteDisabled={presentation.slides.length === 1}
+                        deleteDisabled={viewerPresentation.slides.length <= 1}
                     />
                 )}
 
                 {showControls && !isFullscreenMode && (
                     <ViewerThumbnails
-                        slides={presentation.slides}
+                        slides={viewerPresentation.slides}
                         currentSlide={navigation.currentSlide}
                         isStreamingMode={isStreamingMode}
-                        isStreaming={streamingState.isStreaming}
+                        isStreaming={streamingState.isStreaming || shouldShowGenerating}
                         onSelect={(index) => {
                             playback.stop();
                             navigation.scrollToSlide(index, "smooth", { block: "center" });
@@ -407,9 +451,9 @@ export default function PresentationViewerPage() {
                         setCustomInterval={setCustomInterval}
                         isPlaying={playback.isPlaying}
                         onTogglePlayback={playback.toggle}
-                        playbackDisabled={presentation.slides.length === 1}
+                        playbackDisabled={viewerPresentation.slides.length <= 1}
                         currentSlide={navigation.currentSlide}
-                        totalSlides={presentation.slides.length}
+                        totalSlides={viewerPresentation.slides.length}
                         onFirst={() => {
                             playback.stop();
                             navigation.first();

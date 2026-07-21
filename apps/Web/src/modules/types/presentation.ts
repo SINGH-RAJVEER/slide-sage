@@ -2,27 +2,47 @@ import type { Slide, Source } from "@slide-sage/types";
 
 export type {
     BaseSlide,
+    BulletBlock,
+    CalloutBlock,
     ChartConfig,
     ChartSlide,
-    HtmlSlide,
+    ContentSlide,
+    ImageBlock,
+    ImagePlaceholderBlock,
+    LegacyHtmlSlide,
+    ParagraphBlock,
     PresentationData,
     PresentationJSON,
+    PresentationLayoutPreference,
     PresentationStreamEvent,
     ResearchFreshness,
     ResearchOptions,
     ResearchPayload,
     Slide,
+    SlideBlock,
+    SlideLayout,
+    SlideRegion,
     Source,
+    StatsBlock,
     StreamCompleteEvent,
     StreamCreatedEvent,
     StreamErrorEvent,
     StreamEvent,
-    StreamMidwayspaceEvent,
     StreamResearchEvent,
     StreamSavedEvent,
     StreamSlideEvent,
     StreamStartEvent,
     StreamThemeEvent,
+    StructuredSlide,
+    TableBlock,
+    ThemeId,
+} from "@slide-sage/types";
+
+export {
+    isChartSlide,
+    isContentSlide,
+    isLegacyHtmlSlide,
+    PRESENTATION_SCHEMA_VERSION,
 } from "@slide-sage/types";
 
 // Streaming presentation state
@@ -34,7 +54,6 @@ export interface StreamingPresentationState {
     totalSlides?: number;
     presentationId?: number;
     error?: string;
-    researchSummary?: string;
     researchSources?: Source[];
-    researchStatus?: "idle" | "searching" | "sourced" | "summarizing" | "ready" | "generating";
+    researchStatus?: "idle" | "searching" | "ready" | "generating";
 }

@@ -9,7 +9,6 @@ function renderGenerateForm(overrides: Partial<React.ComponentProps<typeof Gener
         prompt: "",
         topics: [],
         loading: false,
-        error: "",
         estimatedTokens: 0,
         onPromptChange: mock(),
         onKeyDown: mock(),
@@ -49,7 +48,6 @@ describe("GenerateForm", () => {
                 prompt=""
                 topics={["Investor Pitch Deck"]}
                 loading={false}
-                error=""
                 estimatedTokens={4.5}
                 onPromptChange={mock()}
                 onKeyDown={mock()}
@@ -72,18 +70,16 @@ describe("GenerateForm", () => {
         expect(onGenerate).toHaveBeenCalled();
     });
 
-    it("shows estimates, removable topics, and errors", () => {
+    it("shows estimates and removable topics", () => {
         const onRemoveTopic = mock();
         const { getAllByRole, getByDisplayValue, getByText } = renderGenerateForm({
             topics: ["Quarterly OKR Planning"],
             loading: false,
-            error: "Unable to generate right now",
             estimatedTokens: 7.25,
             onRemoveTopic,
         });
 
         expect(getByText("Estimated 7.3 points")).toBeInTheDocument();
-        expect(getByText("Unable to generate right now")).toBeInTheDocument();
         expect(getByDisplayValue("Quarterly OKR Planning")).toBeInTheDocument();
 
         const removeButton = getAllByRole("button")[0];
@@ -113,7 +109,9 @@ describe("GenerateForm", () => {
             onSubmitPrompt,
         });
 
-        fireEvent.submit(getByPlaceholderText("What's on your mind ?").closest("form")!);
+        const form = getByPlaceholderText("What's on your mind ?").closest("form");
+        if (!form) throw new Error("Expected prompt input to be inside a form.");
+        fireEvent.submit(form);
 
         expect(onSubmitPrompt).toHaveBeenCalledTimes(1);
     });

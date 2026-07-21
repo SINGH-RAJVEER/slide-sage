@@ -4,7 +4,7 @@ Rules for AI agents in this repository.
 
 ## Package Manager
 
-- Always use `bun` as both the runtime and pacakge manager.
+- Always use `bun` as the runtime, testing suite and pacakge manager.
 
 ## Indentation
 
@@ -15,6 +15,10 @@ Rules for AI agents in this repository.
 
 - Always update documentation in `/docs` after updating a feature.
 - Create a new file in `/docs` only for an entirely new feature.
+
+## Test updates
+
+- After changes are made, update any related tests if required.
 
 ## Don’ts
 

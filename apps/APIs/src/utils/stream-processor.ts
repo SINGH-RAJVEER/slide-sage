@@ -187,6 +187,14 @@ export class StreamProcessor {
 
         if (slide["title"] && typeof slide["title"] === "string") {
             this.titleExtracted = slide["title"];
+        } else if (
+            slide["chartConfig"] &&
+            typeof slide["chartConfig"] === "object" &&
+            typeof (slide["chartConfig"] as Record<string, unknown>)["title"] === "string"
+        ) {
+            this.titleExtracted = (slide["chartConfig"] as Record<string, unknown>)[
+                "title"
+            ] as string;
         } else if (slide["html"] && typeof slide["html"] === "string") {
             const html = slide["html"];
 

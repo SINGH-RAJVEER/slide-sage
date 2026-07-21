@@ -1,37 +1,49 @@
+import type {
+    PresentationLayoutPreference,
+    PresentationRetryOptions,
+    ThemeId,
+} from "@slide-sage/types";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { GenerateForm, GenerateOptionsBar } from "@/components/Generate";
 import Header from "@/components/Header";
 import { useStreaming } from "@/modules/presentations";
 import { ROUTES } from "@/router/paths";
 
+interface GenerateRouteState {
+    retry?: PresentationRetryOptions;
+    retryPresentationId?: string;
+}
+
 export default function GeneratePPTPage() {
+    const location = useLocation();
+    const retry = (location.state as GenerateRouteState | null)?.retry;
+    const retryPresentationId = (location.state as GenerateRouteState | null)?.retryPresentationId;
+    const retryPrompt = retry?.prompt.trim() ?? "";
+    const retrySlideCount = retry?.slide_count.toString() ?? "5";
+    const presetSlideCounts = ["5", "10", "15", "20", "25", "30"];
     const [prompt, setPrompt] = useState("");
-    const [topics, setTopics] = useState<string[]>([]);
+    const [topics, setTopics] = useState<string[]>(() => (retryPrompt ? [retryPrompt] : []));
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [slideCount, setSlideCount] = useState("5");
-    const [slideCountMode, setSlideCountMode] = useState("preset");
-    const [customSlideCount, setCustomSlideCount] = useState("5");
-    const [detailLevel, setDetailLevel] = useState("balanced");
-    const [tonality, setTonality] = useState("professional");
-    const [useWebResearch, setUseWebResearch] = useState(false);
+    const [slideCount, setSlideCount] = useState(retrySlideCount);
+    const [slideCountMode, setSlideCountMode] = useState(
+        presetSlideCounts.includes(retrySlideCount) ? "preset" : "custom",
+    );
+    const [customSlideCount, setCustomSlideCount] = useState(retrySlideCount);
+    const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
+    const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
+    const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
+    const [theme, setTheme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
+    const [layoutPreference, setLayoutPreference] = useState<PresentationLayoutPreference>(
+        retry?.layout_preference ?? "auto",
+    );
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
 
     useEffect(() => {
-        if (streamingState.slides.length >= 1 && loading) {
-            setLoading(false);
-            navigate(ROUTES.presentation, {
-                state: { isStreaming: true },
-            });
-        }
-    }, [streamingState.slides.length, loading, navigate]);
-
-    useEffect(() => {
         if (streamingState.error) {
-            setError(streamingState.error);
+            console.error("Presentation generation failed:", streamingState.error);
             setLoading(false);
         }
     }, [streamingState.error]);
@@ -90,7 +102,6 @@ export default function GeneratePPTPage() {
         if (selectedTopics.length === 0 || streamingState.isStreaming) return;
 
         setLoading(true);
-        setError("");
 
         const count =
             slideCountMode === "preset" ? parseInt(slideCount, 10) : parseInt(customSlideCount, 10);
@@ -102,19 +113,30 @@ export default function GeneratePPTPage() {
                     slideCount: count,
                     detailLevel,
                     tonality,
+                    theme,
+                    layoutPreference,
+                    retryPresentationId,
                 },
             });
             return;
         }
 
-        const success = await startStreaming(
+        const streamingRequest = startStreaming(
             selectedTopics.join(", "),
             count,
             detailLevel,
             tonality,
             false,
+            undefined,
+            retryPresentationId,
+            theme,
+            layoutPreference,
         );
+        navigate(ROUTES.presentation, {
+            state: { isStreaming: true },
+        });
 
+        const success = await streamingRequest;
         if (!success) {
             setLoading(false);
         }
@@ -154,7 +176,7 @@ export default function GeneratePPTPage() {
         } else if (detailLevel === "detailed") {
             baseTokenPerSlide = 2.0;
         } else if (detailLevel === "comprehensive") {
-            baseTokenPerSlide = 3.0;
+            baseTokenPerSlide = 2.5;
         }
 
         let tonalityMultiplier = 1.0;
@@ -181,12 +203,16 @@ export default function GeneratePPTPage() {
                     slideCountMode={slideCountMode}
                     slideCount={slideCount}
                     customSlideCount={customSlideCount}
+                    theme={theme}
+                    layoutPreference={layoutPreference}
                     onDetailLevelChange={setDetailLevel}
                     onTonalityChange={setTonality}
                     onUseWebResearchChange={setUseWebResearch}
                     onSlideCountModeChange={setSlideCountMode}
                     onSlideCountChange={setSlideCount}
                     onCustomSlideCountChange={setCustomSlideCount}
+                    onThemeChange={setTheme}
+                    onLayoutPreferenceChange={setLayoutPreference}
                 />
             </div>
 
@@ -197,7 +223,6 @@ export default function GeneratePPTPage() {
                             prompt={prompt}
                             topics={topics}
                             loading={loading || streamingState.isStreaming}
-                            error={error}
                             estimatedTokens={calculateEstimatedTokens()}
                             onPromptChange={setPrompt}
                             onKeyDown={handleKeyDown}

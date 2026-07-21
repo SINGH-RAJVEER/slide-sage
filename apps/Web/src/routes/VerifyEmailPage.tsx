@@ -22,6 +22,9 @@ export default function VerifyEmailPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [resending, setResending] = useState(false);
+    const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
+
+    const resendDisabled = resending || resendCooldownSeconds > 0;
 
     useEffect(() => {
         if (isSignedIn && user?.emailVerified) {
@@ -33,6 +36,16 @@ export default function VerifyEmailPage() {
     useEffect(() => {
         if (!email) navigate("/sign-up");
     }, [email, navigate]);
+
+    useEffect(() => {
+        if (resendCooldownSeconds <= 0) return;
+
+        const timer = window.setInterval(() => {
+            setResendCooldownSeconds((seconds) => Math.max(0, seconds - 1));
+        }, 1000);
+
+        return () => window.clearInterval(timer);
+    }, [resendCooldownSeconds]);
 
     const handleVerify = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -70,7 +83,7 @@ export default function VerifyEmailPage() {
     };
 
     const handleResend = async () => {
-        if (!email) return;
+        if (!email || resendDisabled) return;
 
         setResending(true);
         setError(null);
@@ -85,7 +98,7 @@ export default function VerifyEmailPage() {
                 throw new Error(error.message || "Failed to resend code");
             }
 
-            alert("Verification code sent to your email");
+            setResendCooldownSeconds(30);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to resend code");
         } finally {
@@ -155,9 +168,13 @@ export default function VerifyEmailPage() {
                                     type="button"
                                     onClick={handleResend}
                                     className="w-full text-white/60 hover:text-white font-medium py-2 px-4 rounded-lg transition duration-200 disabled:opacity-60"
-                                    disabled={resending}
+                                    disabled={resendDisabled}
                                 >
-                                    {resending ? "Sending..." : "Resend Code"}
+                                    {resending
+                                        ? "Sending..."
+                                        : resendCooldownSeconds > 0
+                                          ? `Resend Code in ${resendCooldownSeconds}s`
+                                          : "Resend Code"}
                                 </button>
                             </form>
                         )}

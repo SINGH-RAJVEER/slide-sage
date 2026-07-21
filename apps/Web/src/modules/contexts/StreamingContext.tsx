@@ -2,7 +2,14 @@ import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_URL } from "@/lib/api";
 import { publishPresentationUpdated } from "@/lib/presentation-events";
-import type { PresentationData, ResearchPayload, Slide, Source } from "../types/presentation";
+import type {
+    PresentationData,
+    PresentationLayoutPreference,
+    ResearchPayload,
+    Slide,
+    Source,
+    ThemeId,
+} from "../types/presentation";
 
 export interface StreamingState {
     isStreaming: boolean;
@@ -16,13 +23,35 @@ export interface StreamingState {
     presentationId?: string;
     error?: string;
     isComplete: boolean;
-    researchSummary?: string;
     researchSources?: Source[];
-    researchStatus?: "idle" | "searching" | "sourced" | "summarizing" | "ready" | "generating";
+    researchStatus?: "idle" | "searching" | "ready" | "generating";
+}
+
+type ResearchPreviewStatus = "idle" | "loading" | "ready" | "error";
+
+interface ResearchPreviewRequest {
+    prompt: string;
+    slideCount: number;
+    detailLevel: string;
+    tonality: string;
+}
+
+interface ResearchPreviewState extends ResearchPreviewRequest {
+    status: ResearchPreviewStatus;
+    sources: Source[];
+    estimatedTokens: number | null;
+    error?: string;
+    requestKey?: string;
 }
 
 interface StreamingContextValue {
     streamingState: StreamingState;
+    researchPreviewState: ResearchPreviewState;
+    startResearchPreview: (
+        request: ResearchPreviewRequest,
+        savedResearch?: ResearchPayload,
+        forceRefresh?: boolean,
+    ) => Promise<boolean>;
     startStreaming: (
         prompt: string,
         slideCount: number,
@@ -30,6 +59,9 @@ interface StreamingContextValue {
         tonality: string,
         researchEnabled?: boolean,
         researchPayload?: ResearchPayload,
+        retryPresentationId?: string,
+        theme?: ThemeId,
+        layoutPreference?: PresentationLayoutPreference,
     ) => Promise<boolean>;
     startIterating: (
         prompt: string,
@@ -52,12 +84,27 @@ const initialState: StreamingState = {
     totalSlides: 0,
     requestedSlides: 0,
     isComplete: false,
-    researchSummary: undefined,
     researchSources: undefined,
     researchStatus: "idle",
 };
 
+const initialResearchPreviewState: ResearchPreviewState = {
+    status: "idle",
+    prompt: "",
+    slideCount: 0,
+    detailLevel: "balanced",
+    tonality: "professional",
+    sources: [],
+    estimatedTokens: null,
+};
+
 const StreamingContext = createContext<StreamingContextValue | null>(null);
+
+function getResearchPreviewKey(request: ResearchPreviewRequest) {
+    return [request.prompt.trim(), request.slideCount, request.detailLevel, request.tonality].join(
+        "\u001f",
+    );
+}
 
 function publishPointsBalance(slideTokens: unknown) {
     if (typeof slideTokens !== "number" || !Number.isFinite(slideTokens)) return;
@@ -70,9 +117,28 @@ function publishPointsBalance(slideTokens: unknown) {
 
 export function StreamingProvider({ children }: { children: ReactNode }) {
     const [streamingState, setStreamingState] = useState<StreamingState>(initialState);
+    const [researchPreviewState, setResearchPreviewState] = useState<ResearchPreviewState>(
+        initialResearchPreviewState,
+    );
     const abortControllerRef = useRef<AbortController | null>(null);
     const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
     const activeStreamRef = useRef(false);
+    const researchAbortControllerRef = useRef<AbortController | null>(null);
+    const researchRequestIdRef = useRef(0);
+    const researchPreviewStateRef = useRef<ResearchPreviewState>(initialResearchPreviewState);
+
+    const updateResearchPreviewState = useCallback(
+        (
+            next: ResearchPreviewState | ((previous: ResearchPreviewState) => ResearchPreviewState),
+        ) => {
+            setResearchPreviewState((previous) => {
+                const resolved = typeof next === "function" ? next(previous) : next;
+                researchPreviewStateRef.current = resolved;
+                return resolved;
+            });
+        },
+        [],
+    );
 
     const releaseActiveStream = useCallback(() => {
         activeStreamRef.current = false;
@@ -98,6 +164,133 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
         setStreamingState((prev) => ({ ...prev, isStreaming: false }));
     }, [releaseActiveStream]);
 
+    const startResearchPreview = useCallback(
+        async (
+            request: ResearchPreviewRequest,
+            savedResearch?: ResearchPayload,
+            forceRefresh = false,
+        ): Promise<boolean> => {
+            const requestKey = getResearchPreviewKey(request);
+            const current = researchPreviewStateRef.current;
+
+            if (
+                !forceRefresh &&
+                current.requestKey === requestKey &&
+                (current.status === "loading" || current.status === "ready")
+            ) {
+                return current.status === "ready";
+            }
+
+            researchRequestIdRef.current += 1;
+            const requestId = researchRequestIdRef.current;
+            researchAbortControllerRef.current?.abort();
+            researchAbortControllerRef.current = null;
+
+            if (savedResearch && !forceRefresh) {
+                updateResearchPreviewState({
+                    ...request,
+                    status: "ready",
+                    sources: savedResearch.sources,
+                    estimatedTokens:
+                        typeof savedResearch.estimated_tokens === "number"
+                            ? savedResearch.estimated_tokens
+                            : null,
+                    requestKey,
+                });
+                return true;
+            }
+
+            const controller = new AbortController();
+            researchAbortControllerRef.current = controller;
+            updateResearchPreviewState({
+                ...request,
+                status: "loading",
+                sources: [],
+                estimatedTokens: null,
+                error: undefined,
+                requestKey,
+            });
+
+            try {
+                const response = await fetch(`${API_URL}/api/research-presentation`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        topic: request.prompt,
+                        research: {
+                            enabled: true,
+                        },
+                        slide_count: request.slideCount,
+                        detail_level: request.detailLevel,
+                        tonality: request.tonality,
+                    }),
+                    signal: controller.signal,
+                });
+
+                if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
+                    return false;
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errorMessage =
+                        typeof errorData.error === "string"
+                            ? errorData.error
+                            : errorData.error?.message ||
+                              errorData.message ||
+                              "Failed to fetch research";
+
+                    updateResearchPreviewState((previous) => ({
+                        ...previous,
+                        status: "error",
+                        error: errorMessage,
+                    }));
+                    return false;
+                }
+
+                const data = (await response.json()) as ResearchPayload;
+                if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
+                    return false;
+                }
+
+                updateResearchPreviewState({
+                    ...request,
+                    status: "ready",
+                    sources: Array.isArray(data.sources) ? data.sources : [],
+                    estimatedTokens:
+                        typeof data.estimated_tokens === "number" ? data.estimated_tokens : null,
+                    requestKey,
+                });
+                return true;
+            } catch (err: unknown) {
+                const isAbort = err instanceof Error && err.name === "AbortError";
+                if (
+                    isAbort ||
+                    controller.signal.aborted ||
+                    requestId !== researchRequestIdRef.current
+                ) {
+                    return false;
+                }
+
+                const message = err instanceof Error ? err.message : String(err);
+                updateResearchPreviewState((previous) => ({
+                    ...previous,
+                    status: "error",
+                    error: message,
+                }));
+                return false;
+            } finally {
+                if (requestId === researchRequestIdRef.current) {
+                    researchAbortControllerRef.current = null;
+                }
+            }
+        },
+        [updateResearchPreviewState],
+    );
+
     const getPresentation = useCallback((): PresentationData | null => {
         if (streamingState.slides.length === 0) return null;
         return {
@@ -116,6 +309,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             tonality: string,
             researchEnabled = false,
             researchPayload?: ResearchPayload,
+            retryPresentationId?: string,
+            theme: ThemeId = "corporate-blue",
+            layoutPreference: PresentationLayoutPreference = "auto",
         ): Promise<boolean> => {
             if (activeStreamRef.current) return false;
             activeStreamRef.current = true;
@@ -127,6 +323,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 requestedSlides: slideCount,
                 operation: "generation",
                 prompt,
+                theme,
+                presentationId: retryPresentationId,
                 researchStatus: researchEnabled && !researchPayload ? "searching" : "idle",
             });
 
@@ -148,6 +346,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                             enabled: Boolean(researchEnabled),
                         },
                         research_payload: researchPayload,
+                        retry_presentation_id: retryPresentationId,
+                        theme,
+                        layout_preference: layoutPreference,
                     }),
                     signal: abortControllerRef.current.signal,
                 });
@@ -262,19 +463,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                         data.status || prev.researchStatus,
                                                     researchSources:
                                                         data.sources ?? prev.researchSources,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                }));
-                                                break;
-
-                                            case "midwayspace":
-                                                setStreamingState((prev) => ({
-                                                    ...prev,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                    researchSources:
-                                                        data.sources ?? prev.researchSources,
-                                                    researchStatus: "ready",
                                                 }));
                                                 break;
 
@@ -362,6 +550,11 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "error":
                                                 receivedError = true;
+                                                if (data.presentation_id) {
+                                                    publishPresentationUpdated(
+                                                        data.presentation_id,
+                                                    );
+                                                }
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     isStreaming: false,
@@ -592,19 +785,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                         data.status || prev.researchStatus,
                                                     researchSources:
                                                         data.sources ?? prev.researchSources,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                }));
-                                                break;
-
-                                            case "midwayspace":
-                                                setStreamingState((prev) => ({
-                                                    ...prev,
-                                                    researchSummary:
-                                                        data.summary ?? prev.researchSummary,
-                                                    researchSources:
-                                                        data.sources ?? prev.researchSources,
-                                                    researchStatus: "ready",
                                                 }));
                                                 break;
 
@@ -769,6 +949,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         return () => {
             stopStreaming();
+            researchAbortControllerRef.current?.abort();
         };
     }, [stopStreaming]);
 
@@ -776,6 +957,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
         <StreamingContext.Provider
             value={{
                 streamingState,
+                researchPreviewState,
+                startResearchPreview,
                 startStreaming,
                 startIterating,
                 stopStreaming,

@@ -36,15 +36,18 @@ mock.module("@slide-sage/database", () => {
                 slideCount,
                 detailLevel,
                 tonality,
+                researchContext,
             }: {
                 slideCount: number;
                 detailLevel: string;
                 tonality: string;
+                researchContext?: string;
             }) => ({
                 estimatedTokens:
                     slideCount *
-                    (detailLevel === "detailed" ? 2 : 1) *
-                    (tonality === "persuasive" ? 1.1 : 1),
+                        (detailLevel === "detailed" ? 2 : 1) *
+                        (tonality === "persuasive" ? 1.1 : 1) +
+                    (researchContext ? 1 : 0),
             }),
             getTokenPricingTiers: () => [],
             getDailyLoginBonus: () => 0,
@@ -89,6 +92,11 @@ describe("PresentationService", () => {
         const service = new PresentationService();
 
         expect(service.calculateEstimatedTokens(5, "detailed", "persuasive")).toBe(11);
+        expect(
+            service.calculateEstimatedTokens(5, "balanced", "professional", "Storage", {
+                sources: [{ url: "https://example.com", summary: "Research context" }],
+            })
+        ).toBe(6);
     });
 
     it("returns a presentation when the requesting user owns it", async () => {

@@ -26,7 +26,6 @@ const presentationService = {
 
 const searchService = {
     storeSourceChunks: mock(),
-    summarizeSourcesDetailed: mock(),
     webSearch: mock(),
 };
 
@@ -70,7 +69,6 @@ mock.module("../../services/presentation.service", () => ({
 mock.module("../../services/search.service", () => ({
     SearchService: class {
         storeSourceChunks = searchService.storeSourceChunks;
-        summarizeSourcesDetailed = searchService.summarizeSourcesDetailed;
         webSearch = searchService.webSearch;
     },
 }));
@@ -120,7 +118,6 @@ describe("presentation routes", () => {
         presentationService.iteratePresentationStream.mockReset();
         presentationService.storePresentationMemory.mockReset();
         searchService.storeSourceChunks.mockReset();
-        searchService.summarizeSourcesDetailed.mockReset();
         searchService.webSearch.mockReset();
 
         presentationService.calculateEstimatedTokens.mockReturnValue(3);
@@ -173,9 +170,10 @@ describe("presentation routes", () => {
                 slide_count: 3,
                 detail_level: "balanced",
                 tonality: "professional",
+                theme: "nature-green",
+                layout_preference: "image-led",
                 research_payload: {
                     sources: [{ url: " https://example.com ", title: "Example" }],
-                    summary: "Summary",
                 },
             }),
         });
@@ -190,9 +188,27 @@ describe("presentation routes", () => {
             currentUserId,
             "Generating...",
             "Quarterly planning",
-            { slides: [], theme: "corporate-blue", title: "Generating..." }
+            {
+                schemaVersion: 2,
+                slides: [],
+                theme: "nature-green",
+                title: "Generating...",
+            }
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
+        expect(presentationService.generatePresentationStream).toHaveBeenCalledWith(
+            expect.objectContaining({
+                theme: "nature-green",
+                layoutPreference: "image-led",
+            })
+        );
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            3,
+            "balanced",
+            "professional",
+            "Quarterly planning",
+            { sources: [{ url: "https://example.com", title: "Example" }] }
+        );
         expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
         expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -206,7 +222,73 @@ describe("presentation routes", () => {
         );
     });
 
-    it("does not persist or charge for a partial generation that ends in error", async () => {
+    it("reuses the same failed presentation row across retries", async () => {
+        presentationService.getPresentation.mockResolvedValue({
+            id: "failed_presentation",
+            slidesData: {
+                title: "Failed deck",
+                theme: "corporate-blue",
+                slides: [],
+                status: "failed",
+            },
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic: "Retry the same deck",
+                slide_count: 3,
+                retry_presentation_id: "failed_presentation",
+            }),
+        });
+        const body = await text(response);
+
+        expect(body).toContain('event: created\ndata: {"presentation_id":"failed_presentation"}');
+        expect(body).toContain("event: saved");
+        expect(presentationRepository.create).not.toHaveBeenCalled();
+        expect(presentationService.getPresentation).toHaveBeenCalledWith(
+            "failed_presentation",
+            currentUserId
+        );
+        expect(presentationUpdates[0]).toEqual(
+            expect.objectContaining({
+                id: "failed_presentation",
+                updates: expect.objectContaining({ prompt: "Retry the same deck" }),
+            })
+        );
+    });
+
+    it("does not allow a completed presentation row to be retried", async () => {
+        presentationService.getPresentation.mockResolvedValue({
+            id: "ready_presentation",
+            slidesData: {
+                title: "Ready deck",
+                theme: "corporate-blue",
+                slides: [{ id: "slide_1" }],
+                status: "ready",
+            },
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic: "Do not overwrite",
+                slide_count: 3,
+                retry_presentation_id: "ready_presentation",
+            }),
+        });
+
+        expect(response.status).toBe(409);
+        expect(await json(response)).toEqual({
+            error: { message: "Only failed presentations can be retried" },
+        });
+        expect(presentationRepository.create).not.toHaveBeenCalled();
+        expect(presentationService.generatePresentationStream).not.toHaveBeenCalled();
+    });
+
+    it("stores retry data and does not charge for a partial generation that ends in error", async () => {
         presentationService.generatePresentationStream.mockImplementation(async function* () {
             yield {
                 event: "slide",
@@ -226,18 +308,65 @@ describe("presentation routes", () => {
         const response = await app().request("/api/generate-presentation-stream", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic: "Failure handling", slide_count: 3 }),
+            body: JSON.stringify({
+                topic: "Failure handling",
+                slide_count: 3,
+                detail_level: "detailed",
+                tonality: "persuasive",
+                research_payload: {
+                    sources: [{ url: "https://example.com/research", title: "Research" }],
+                },
+            }),
         });
         const body = await text(response);
 
         expect(body).toContain("event: error");
         expect(body).not.toContain("event: saved");
-        expect(presentationRepository.update).not.toHaveBeenCalled();
+        expect(presentationRepository.update).toHaveBeenCalledTimes(1);
+        expect(presentationUpdates[0]).toEqual({
+            id: "presentation_1",
+            updates: {
+                title: "Failure handling",
+                prompt: "Failure handling",
+                slidesData: {
+                    schemaVersion: 2,
+                    title: "Failure handling",
+                    theme: "corporate-blue",
+                    slides: [],
+                    totalSlides: 0,
+                    status: "failed",
+                    failure: {
+                        message: "Upstream failed",
+                        retry: {
+                            prompt: "Failure handling",
+                            slide_count: 3,
+                            detail_level: "detailed",
+                            tonality: "persuasive",
+                            research_enabled: true,
+                            theme: "corporate-blue",
+                            layout_preference: "auto",
+                            research_payload: {
+                                sources: [
+                                    {
+                                        url: "https://example.com/research",
+                                        title: "Research",
+                                        snippet: undefined,
+                                        retrieved_at: undefined,
+                                        published_date: undefined,
+                                        author: undefined,
+                                        highlights: undefined,
+                                        summary: undefined,
+                                    },
+                                ],
+                                estimated_tokens: 3,
+                            },
+                        },
+                    },
+                },
+            },
+        });
         expect(userRepository.deductTokens).not.toHaveBeenCalled();
-        expect(presentationService.deletePresentation).toHaveBeenCalledWith(
-            "presentation_1",
-            currentUserId
-        );
+        expect(presentationService.deletePresentation).not.toHaveBeenCalled();
     });
 
     it("clears partial slides when the AI retries generation", async () => {
@@ -271,26 +400,25 @@ describe("presentation routes", () => {
         expect(body).toContain("event: retry");
         expect(body).toContain("event: saved");
         const finalUpdate = presentationUpdates[0]?.updates as {
-            slidesData?: { slides?: Array<{ id?: string }> };
+            slidesData?: { schemaVersion?: number; slides?: Array<{ id?: string }> };
         };
+        expect(finalUpdate.slidesData?.schemaVersion).toBe(2);
         expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
         expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
     });
 
-    it("researches presentation topics and summarizes sources", async () => {
+    it("researches presentation topics and returns sources", async () => {
         const sources = [{ url: "https://example.com", title: "Source" }];
         searchService.webSearch.mockResolvedValue(sources);
         searchService.storeSourceChunks.mockResolvedValue(undefined);
-        searchService.summarizeSourcesDetailed.mockResolvedValue({
-            summary: "Useful facts",
-            tokensUsed: 12,
-            tokensEstimated: 15,
-        });
 
         const response = await app().request("/api/research-presentation", {
             method: "POST",
             body: JSON.stringify({
                 topic: "AI news",
+                slide_count: 6,
+                detail_level: "detailed",
+                tonality: "persuasive",
                 research: {
                     enabled: true,
                     freshness: "week",
@@ -305,12 +433,7 @@ describe("presentation routes", () => {
         });
 
         expect(response.status).toBe(200);
-        expect(await json(response)).toEqual({
-            summary: "Useful facts",
-            sources,
-            tokens_used: 12,
-            tokens_estimated: 15,
-        });
+        expect(await json(response)).toEqual({ sources, estimated_tokens: 3 });
         expect(searchService.webSearch).toHaveBeenCalledWith("AI news", {
             enabled: true,
             freshness: "week",
@@ -325,6 +448,13 @@ describe("presentation routes", () => {
             currentUserId,
             "AI news",
             sources
+        );
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            6,
+            "detailed",
+            "persuasive",
+            "AI news",
+            { sources }
         );
     });
 
@@ -417,6 +547,8 @@ describe("presentation routes", () => {
                     title: "Deck",
                     prompt: "Topic",
                     slide_count: 2,
+                    status: "ready",
+                    has_research: false,
                     created_at: createdAt.toISOString(),
                     updated_at: createdAt.toISOString(),
                 },

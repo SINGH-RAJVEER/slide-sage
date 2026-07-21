@@ -1,12 +1,15 @@
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { API_URL } from "@/lib/api";
 import { useStreaming } from "@/modules/presentations";
-import type { ResearchPayload, Source } from "@/modules/types/presentation";
+import type {
+    PresentationLayoutPreference,
+    ResearchPayload,
+    ThemeId,
+} from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
 
 interface ResearchRouteState {
@@ -14,6 +17,10 @@ interface ResearchRouteState {
     slideCount: number;
     detailLevel: string;
     tonality: string;
+    theme: ThemeId;
+    layoutPreference: PresentationLayoutPreference;
+    researchPayload?: ResearchPayload;
+    retryPresentationId?: string;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -21,27 +28,41 @@ type ResearchStatus = "loading" | "ready" | "error";
 export default function GenerateResearchPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { streamingState, startStreaming } = useStreaming();
+    const { streamingState, researchPreviewState, startResearchPreview, startStreaming } =
+        useStreaming();
 
     const routeState = location.state as ResearchRouteState | null;
     const prompt = routeState?.prompt?.trim() ?? "";
     const slideCount = routeState?.slideCount ?? 0;
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
+    const theme = routeState?.theme ?? "corporate-blue";
+    const layoutPreference = routeState?.layoutPreference ?? "auto";
+    const savedResearch = routeState?.researchPayload;
+    const retryPresentationId = routeState?.retryPresentationId;
 
-    const [summary, setSummary] = useState<string | null>(null);
-    const [sources, setSources] = useState<Source[]>([]);
-    const [tokensUsed, setTokensUsed] = useState<number | null>(null);
-    const [tokensEstimated, setTokensEstimated] = useState<number | null>(null);
-    const [researchStatus, setResearchStatus] = useState<ResearchStatus>("loading");
-    const [error, setError] = useState("");
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
-    const requestIdRef = useRef(0);
+    const isProceedingRef = useRef(false);
 
-    const hasSummary = Boolean(summary && summary.trim().length > 0);
-    const summaryLines =
-        hasSummary && summary ? summary.split("\n").filter((line) => line.trim().length > 0) : [];
+    const researchRequest = useMemo(
+        () => ({
+            prompt,
+            slideCount,
+            detailLevel,
+            tonality,
+        }),
+        [detailLevel, prompt, slideCount, tonality],
+    );
+    const sources = researchPreviewState.sources;
+    const estimatedTokens = researchPreviewState.estimatedTokens;
+    const error = researchPreviewState.error ?? "";
+    const researchStatus: ResearchStatus =
+        researchPreviewState.status === "ready"
+            ? "ready"
+            : researchPreviewState.status === "error"
+              ? "error"
+              : "loading";
 
     const hasSources = sources.length > 0;
     const isLoading = researchStatus === "loading";
@@ -60,112 +81,93 @@ export default function GenerateResearchPage() {
         }
     }, [navigate, prompt, slideCount]);
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: researchAttempt intentionally retriggers failed requests.
     useEffect(() => {
-        const controller = new AbortController();
-        const requestId = ++requestIdRef.current;
+        if (!prompt || !slideCount) return;
+        void startResearchPreview(researchRequest, savedResearch, researchAttempt > 0);
+    }, [prompt, slideCount, researchAttempt, researchRequest, savedResearch, startResearchPreview]);
 
-        const fetchResearch = async () => {
-            if (!prompt || !slideCount) return;
-
-            setResearchStatus("loading");
-            setError("");
-            setSummary(null);
-            setSources([]);
-            setTokensUsed(null);
-            setTokensEstimated(null);
-
-            try {
-                const response = await fetch(`${API_URL}/api/research-presentation`, {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        topic: prompt,
-                        research: {
-                            enabled: true,
-                        },
-                    }),
-                    signal: controller.signal,
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    const errorMessage =
-                        typeof errorData.error === "string"
-                            ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
-                              "Failed to fetch research";
-                    if (controller.signal.aborted || requestId !== requestIdRef.current) return;
-                    setError(errorMessage);
-                    setResearchStatus("error");
-                    return;
-                }
-
-                const data = (await response.json()) as ResearchPayload & {
-                    tokens_used?: number;
-                    tokens_estimated?: number;
-                };
-                if (controller.signal.aborted || requestId !== requestIdRef.current) return;
-
-                setSummary(typeof data.summary === "string" ? data.summary : null);
-                setSources(Array.isArray(data.sources) ? data.sources : []);
-                setTokensUsed(typeof data.tokens_used === "number" ? data.tokens_used : null);
-                setTokensEstimated(
-                    typeof data.tokens_estimated === "number" ? data.tokens_estimated : null,
-                );
-                setResearchStatus("ready");
-            } catch (err: unknown) {
-                if (
-                    controller.signal.aborted ||
-                    requestId !== requestIdRef.current ||
-                    (err instanceof Error && err.name === "AbortError")
-                ) {
-                    return;
-                }
-                const message = err instanceof Error ? err.message : String(err);
-                setError(message);
-                setResearchStatus("error");
-            }
-        };
-
-        fetchResearch();
-        return () => controller.abort();
-    }, [prompt, slideCount, researchAttempt]);
-
-    useEffect(() => {
-        if (isProceeding && streamingState.slides.length >= 1) {
-            navigate(ROUTES.presentation, { state: { isStreaming: true } });
+    const handleProceed = useCallback(async () => {
+        if (
+            !prompt ||
+            !slideCount ||
+            researchStatus !== "ready" ||
+            streamingState.isStreaming ||
+            isProceedingRef.current
+        ) {
+            return;
         }
-    }, [isProceeding, navigate, streamingState.slides.length]);
 
-    const handleProceed = async () => {
-        if (!prompt || !slideCount || streamingState.isStreaming) return;
-
+        isProceedingRef.current = true;
         setIsProceeding(true);
-        setError("");
 
         const payload: ResearchPayload = {
-            summary,
             sources,
+            ...(estimatedTokens === null ? {} : { estimated_tokens: estimatedTokens }),
         };
 
-        const success = await startStreaming(
+        const streamingRequest = startStreaming(
             prompt,
             slideCount,
             detailLevel,
             tonality,
             false,
             payload,
+            retryPresentationId,
+            theme,
+            layoutPreference,
         );
+        navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
+        const success = await streamingRequest;
         if (!success) {
+            isProceedingRef.current = false;
             setIsProceeding(false);
         }
-    };
+    }, [
+        detailLevel,
+        estimatedTokens,
+        prompt,
+        researchStatus,
+        retryPresentationId,
+        theme,
+        layoutPreference,
+        navigate,
+        slideCount,
+        sources,
+        startStreaming,
+        streamingState.isStreaming,
+        tonality,
+    ]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (
+                event.key !== "Enter" ||
+                event.repeat ||
+                event.shiftKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.altKey
+            ) {
+                return;
+            }
+
+            const target = event.target;
+            if (
+                target instanceof HTMLElement &&
+                (target.isContentEditable ||
+                    target.closest("a, button, input, textarea, select") !== null)
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            void handleProceed();
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleProceed]);
 
     return (
         <div className="h-screen overflow-hidden bg-transparent flex flex-col">
@@ -180,12 +182,17 @@ export default function GenerateResearchPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </button>
 
-                <div className="mx-auto w-full max-w-4xl px-4 py-12 md:px-6">
+                <div className="mx-auto w-full max-w-7xl px-4 py-10 md:px-8 lg:px-12">
                     <div className="space-y-8">
                         <div className="text-center">
                             <h2 className="text-3xl font-semibold text-white md:text-4xl">
                                 Research Insights
                             </h2>
+                            {estimatedTokens !== null && (
+                                <p className="mt-3 text-lg font-medium text-white/60">
+                                    Estimated {estimatedTokens.toFixed(1)} points
+                                </p>
+                            )}
                         </div>
 
                         {researchStatus === "error" && (
@@ -203,118 +210,159 @@ export default function GenerateResearchPage() {
                         )}
 
                         <div className="space-y-6">
-                            <div className="space-y-5 rounded-xl border border-white/10 bg-black/20 p-6 md:p-8">
-                                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                                    <h3 className="flex items-center gap-2 text-xl font-semibold text-white/90">
-                                        Synopsis
-                                        {isLoading && <Spinner className="text-white/50" />}
-                                    </h3>
-                                </div>
-
-                                {(tokensUsed !== null || tokensEstimated !== null) && (
-                                    <p className="text-sm font-light text-white/40">
-                                        Search tokens: {tokensUsed !== null ? tokensUsed : "?"} used{" "}
-                                        / {tokensEstimated !== null ? tokensEstimated : "?"} est
-                                    </p>
-                                )}
-
-                                {hasSummary ? (
-                                    <div className="space-y-3 text-base leading-relaxed text-white/80">
-                                        {summaryLines.map((line) => (
-                                            <p key={line}>{line}</p>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-base text-white/45 italic">
-                                        {isLoading
-                                            ? "Searching, reading, and synthesizing relevant sources..."
-                                            : "No summary available."}
-                                    </div>
+                            <div className="flex items-center justify-between">
+                                <h3 className="flex items-center gap-2 text-xl font-semibold text-white/90">
+                                    Sources
+                                    {isLoading && <Spinner className="text-white/50" />}
+                                </h3>
+                                {hasSources && (
+                                    <span className="text-sm text-white/45">
+                                        {sources.length}{" "}
+                                        {sources.length === 1 ? "source" : "sources"}
+                                    </span>
                                 )}
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-semibold text-white/90">Sources</h3>
-                                    {hasSources && (
-                                        <span className="text-sm text-white/45">
-                                            {sources.length}{" "}
-                                            {sources.length === 1 ? "source" : "sources"}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    {hasSources &&
-                                        sources.map((source) => (
-                                            <a
-                                                key={source.url}
-                                                href={source.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="group flex min-w-0 flex-col rounded-lg border border-white/10 bg-black/20 p-5 transition-colors hover:border-white/20 hover:bg-white/5"
+                            <div className="overflow-x-auto rounded-md border border-white/10 bg-black/15">
+                                <table
+                                    className="w-full min-w-[880px] table-fixed text-left"
+                                    aria-label="Research sources"
+                                >
+                                    <colgroup>
+                                        <col className="w-[28%]" />
+                                        <col className="w-[48%]" />
+                                        <col className="w-[17%]" />
+                                        <col className="w-[7%]" />
+                                    </colgroup>
+                                    <thead>
+                                        <tr className="border-b border-white/10 bg-white/[0.025]">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-xs font-medium text-white/45"
                                             >
-                                                <div className="mb-3 flex items-start justify-between gap-3">
-                                                    <h4 className="text-base font-medium leading-snug text-white/90 transition-colors group-hover:text-white">
-                                                        {source.title || getSourceLabel(source.url)}
-                                                    </h4>
-                                                    <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
-                                                </div>
-                                                <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-white/65">
-                                                    {source.summary ||
-                                                        source.snippet ||
-                                                        "No preview available for this source."}
-                                                </p>
-                                                {source.highlights &&
-                                                    source.highlights.length > 0 && (
-                                                        <ul className="mb-4 space-y-2 text-sm leading-relaxed text-white/55">
-                                                            {source.highlights.map((highlight) => (
-                                                                <li
-                                                                    key={highlight}
-                                                                    className="flex gap-2"
-                                                                >
-                                                                    <span className="text-white/30">
-                                                                        -
-                                                                    </span>
-                                                                    <span>{highlight}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/35">
-                                                    <span>{getSourceLabel(source.url)}</span>
-                                                    {source.author && <span>{source.author}</span>}
-                                                    {source.published_date && (
-                                                        <span>{source.published_date}</span>
-                                                    )}
-                                                </div>
-                                            </a>
-                                        ))}
-
-                                    {researchStatus === "ready" && !hasSources && (
-                                        <div className="md:col-span-2 rounded-lg border border-white/10 bg-black/10 p-6 text-center text-white/45">
-                                            No sources found. Try a different phrasing or a broader
-                                            topic.
-                                        </div>
-                                    )}
-
-                                    {isLoading &&
-                                        sources.length === 0 &&
-                                        [1, 2, 3, 4].map((i) => (
-                                            <div
-                                                key={i}
-                                                className="animate-pulse rounded-lg border border-white/10 bg-black/10 p-6"
+                                                Source
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-xs font-medium text-white/45"
                                             >
-                                                <div className="h-6 w-3/4 bg-white/5 rounded mb-4" />
-                                                <div className="h-4 w-full bg-white/5 rounded mb-2" />
-                                                <div className="h-4 w-2/3 bg-white/5 rounded" />
-                                            </div>
-                                        ))}
-                                </div>
+                                                Research note
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                            >
+                                                Details
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                className="sticky right-0 bg-background/95 px-3 py-3"
+                                            >
+                                                <span className="sr-only">Open source</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/[0.07]">
+                                        {hasSources &&
+                                            sources.map((source) => {
+                                                const sourceTitle =
+                                                    source.title || getSourceLabel(source.url);
+
+                                                return (
+                                                    <tr
+                                                        key={source.url}
+                                                        className="group/row transition-colors hover:bg-white/[0.035]"
+                                                    >
+                                                        <td className="px-5 py-5 align-top">
+                                                            <p className="break-words text-sm font-medium leading-5 text-white/90">
+                                                                {sourceTitle}
+                                                            </p>
+                                                            <p className="mt-1 truncate text-xs text-white/35">
+                                                                {getSourceLabel(source.url)}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-5 py-5 align-top">
+                                                            <p className="line-clamp-4 whitespace-pre-line text-sm leading-6 text-white/60">
+                                                                {source.summary ||
+                                                                    source.snippet ||
+                                                                    "No preview available for this source."}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-5 py-5 align-top text-xs leading-5 text-white/45">
+                                                            {source.author ||
+                                                            source.published_date ? (
+                                                                <div className="space-y-0.5">
+                                                                    {source.author && (
+                                                                        <p className="truncate text-white/60">
+                                                                            {source.author}
+                                                                        </p>
+                                                                    )}
+                                                                    {source.published_date && (
+                                                                        <p>
+                                                                            {source.published_date}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-white/30">
+                                                                    Not listed
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="sticky right-0 bg-background/95 px-3 py-5 text-center align-top transition-colors group-hover/row:bg-[#121214]">
+                                                            <a
+                                                                href={source.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                aria-label={`Open source: ${sourceTitle}`}
+                                                                title="Open source"
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-white/45 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                                                            >
+                                                                <ExternalLink className="h-4 w-4" />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+
+                                        {researchStatus === "ready" && !hasSources && (
+                                            <tr>
+                                                <td
+                                                    colSpan={4}
+                                                    className="px-6 py-10 text-center text-sm text-white/45"
+                                                >
+                                                    No sources found. Try a different phrasing or a
+                                                    broader topic.
+                                                </td>
+                                            </tr>
+                                        )}
+
+                                        {isLoading &&
+                                            sources.length === 0 &&
+                                            [1, 2, 3, 4].map((i) => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-4 py-5">
+                                                        <div className="mb-2 h-4 w-4/5 rounded bg-white/5" />
+                                                        <div className="h-3 w-2/5 rounded bg-white/5" />
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="mb-2 h-3 w-full rounded bg-white/5" />
+                                                        <div className="h-3 w-3/4 rounded bg-white/5" />
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="h-3 w-2/3 rounded bg-white/5" />
+                                                    </td>
+                                                    <td className="sticky right-0 bg-background/95 px-3 py-5">
+                                                        <div className="mx-auto h-8 w-8 rounded-md bg-white/5" />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
-                        <div className="flex justify-center pt-2 pb-6">
+                        <div className="flex flex-col items-center gap-4 pb-6 pt-2">
                             <Button
                                 onClick={handleProceed}
                                 disabled={
@@ -338,6 +386,9 @@ export default function GenerateResearchPage() {
                                     )}
                                 </span>
                             </Button>
+                            <p className="text-center text-sm text-white/45">
+                                Press <span className="text-white/50">Enter</span> to generate
+                            </p>
                         </div>
                     </div>
                 </div>

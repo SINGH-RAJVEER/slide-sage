@@ -7,7 +7,6 @@ interface GenerateFormProps {
     prompt: string;
     topics: string[];
     loading: boolean;
-    error: string;
     estimatedTokens: number;
     onPromptChange: (value: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -33,7 +32,6 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
     prompt,
     topics,
     loading,
-    error,
     estimatedTokens,
     onPromptChange,
     onKeyDown,
@@ -97,12 +95,6 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
                         )}
                     </span>
                 </Button>
-
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-6 py-4 rounded-xl backdrop-blur-sm text-center font-light w-full max-w-xl">
-                        {error}
-                    </div>
-                )}
             </div>
         </div>
     );

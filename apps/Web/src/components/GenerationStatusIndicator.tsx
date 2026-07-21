@@ -1,16 +1,20 @@
 import { AlertCircle, ArrowUpRight, Check, LoaderCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useStreaming } from "@/modules/contexts/StreamingContext";
 import { ROUTES } from "@/router/paths";
 
 type GenerationStatus = "active" | "complete" | "error";
 
+export const GENERATION_ERROR_COOLDOWN_MS = 8000;
+const AUTH_STATUS_SUPPRESSED_PATHS = new Set<string>([ROUTES.signIn, "/login"]);
+
 interface GenerationStatusIndicatorViewProps {
     status: GenerationStatus;
     title: string;
     detail: string;
     progress?: number;
+    autoDismissMs?: number;
     onActivate: () => void;
 }
 
@@ -26,17 +30,29 @@ export function GenerationStatusIndicatorView({
     title,
     detail,
     progress,
+    autoDismissMs,
     onActivate,
 }: GenerationStatusIndicatorViewProps) {
+    const [isVisible, setIsVisible] = useState(true);
     const Icon = status === "active" ? LoaderCircle : status === "complete" ? Check : AlertCircle;
     const normalizedProgress = Math.max(0, Math.min(progress ?? 0, 1));
+
+    useEffect(() => {
+        if (autoDismissMs === undefined) return;
+
+        const cooldown = window.setTimeout(() => setIsVisible(false), autoDismissMs);
+        return () => window.clearTimeout(cooldown);
+    }, [autoDismissMs]);
+
+    if (!isVisible) return null;
 
     return (
         <button
             type="button"
             onClick={onActivate}
-            className={`group fixed bottom-4 left-4 z-50 flex min-h-16 w-[calc(100vw-2rem)] max-w-sm items-center gap-3 rounded-lg border px-4 py-3 text-left shadow-2xl transition-colors sm:left-auto sm:right-5 ${STATUS_STYLES[status]}`}
+            className={`group fixed right-4 top-24 z-50 flex min-h-16 w-[calc(100vw-2rem)] max-w-sm animate-in items-center gap-3 rounded-lg border px-4 py-3 text-left shadow-2xl transition-colors fade-in-0 slide-in-from-top-2 duration-200 sm:right-5 ${STATUS_STYLES[status]}`}
             aria-label={`${title}. ${detail}`}
+            aria-live={status === "error" ? "assertive" : "polite"}
         >
             <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white/8">
                 <Icon
@@ -47,7 +63,11 @@ export function GenerationStatusIndicatorView({
 
             <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-white">{title}</span>
-                <span className="mt-0.5 block truncate text-xs text-white/60">{detail}</span>
+                <span
+                    className={`mt-0.5 block text-xs text-white/60 ${status === "error" ? "break-words" : "truncate"}`}
+                >
+                    {detail}
+                </span>
                 {status === "active" ? (
                     <span className="mt-2 block h-1 overflow-hidden rounded-full bg-white/10">
                         <span
@@ -83,6 +103,33 @@ export default function GenerationStatusIndicator() {
     const completionKey = streamingState.presentationId
         ? `${streamingState.presentationId}:${streamingState.slides.length}`
         : null;
+    const errorKey = streamingState.error
+        ? `${streamingState.presentationId ?? "unsaved"}:${streamingState.error}`
+        : null;
+
+    if (AUTH_STATUS_SUPPRESSED_PATHS.has(location.pathname)) {
+        return null;
+    }
+
+    if (streamingState.error && location.pathname !== ROUTES.presentationError) {
+        return (
+            <GenerationStatusIndicatorView
+                key={errorKey}
+                status="error"
+                title="Generation stopped"
+                detail={streamingState.error}
+                autoDismissMs={GENERATION_ERROR_COOLDOWN_MS}
+                onActivate={() =>
+                    navigate(ROUTES.presentationError, {
+                        state: {
+                            error: streamingState.error,
+                            presentationId: streamingState.presentationId,
+                        },
+                    })
+                }
+            />
+        );
+    }
 
     if (streamingState.isStreaming) {
         if (location.pathname === activePath) return null;
@@ -139,24 +186,6 @@ export default function GenerationStatusIndicator() {
                         },
                     });
                 }}
-            />
-        );
-    }
-
-    if (streamingState.error && location.pathname !== ROUTES.presentationError) {
-        return (
-            <GenerationStatusIndicatorView
-                status="error"
-                title="Generation stopped"
-                detail={streamingState.error}
-                onActivate={() =>
-                    navigate(ROUTES.presentationError, {
-                        state: {
-                            error: streamingState.error,
-                            presentationId: streamingState.presentationId,
-                        },
-                    })
-                }
             />
         );
     }

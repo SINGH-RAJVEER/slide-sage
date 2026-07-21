@@ -1,9 +1,12 @@
 import PptxGenJS from "pptxgenjs";
-import type {
-    ChartConfig,
-    ChartSlide,
-    HtmlSlide,
-    PresentationData,
+import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
+import {
+    type ChartConfig,
+    type ContentSlide,
+    isChartSlide,
+    isLegacyHtmlSlide,
+    type PresentationData,
+    type SlideBlock,
 } from "@/modules/types/presentation";
 
 const SLIDE_WIDTH = 13.333;
@@ -245,30 +248,35 @@ const addParagraph = (
     context.cursorY += h + 0.12;
 };
 
-const addList = (context: RenderContext, element: Element) => {
-    const items = Array.from(element.children).filter((child) => child.tagName === "LI");
-    if (items.length === 0) return;
+const blobToDataUri = async (blob: Blob) => {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    const chunkSize = 8192;
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+    }
+    return `data:${blob.type || "image/png"};base64,${btoa(binary)}`;
+};
 
-    const ordered = element.tagName === "OL";
-    const fontSize = items.length > 7 ? 14 : 17;
+const addStructuredList = (
+    context: RenderContext,
+    block: Extract<SlideBlock, { type: "bullets" }>,
+) => {
+    const fontSize = block.items.length > 7 ? 14 : 17;
     const availableHeight = context.region.y + context.region.h - context.cursorY;
-    const estimatedHeight = items.reduce(
+    const estimatedHeight = block.items.reduce(
         (height, item) =>
-            height +
-            Math.max(
-                0.34,
-                estimateTextHeight(cleanText(item.textContent), context.region.w, fontSize),
-            ),
+            height + Math.max(0.34, estimateTextHeight(item, context.region.w, fontSize)),
         0,
     );
     const height = Math.min(availableHeight, estimatedHeight + 0.15);
-    const runs: PptxGenJS.TextProps[] = items.map((item, index) => ({
-        text: cleanText(item.textContent),
+    const runs: PptxGenJS.TextProps[] = block.items.map((item, index) => ({
+        text: item,
         options: {
-            bullet: ordered
+            bullet: block.ordered
                 ? { type: "number", numberStartAt: index + 1, indent: 22 }
                 : { type: "bullet", indent: 22 },
-            breakLine: index < items.length - 1,
+            breakLine: index < block.items.length - 1,
             color: context.theme.text,
             fontFace: context.theme.bodyFont,
             fontSize,
@@ -281,32 +289,31 @@ const addList = (context: RenderContext, element: Element) => {
         w: context.region.w - 0.12,
         h: height,
         margin: 0,
-        breakLine: false,
         valign: "top",
         fit: "shrink",
         paraSpaceAfter: 10,
-        objectName: ordered ? "Numbered list" : "Bullet list",
+        objectName: block.ordered ? "Numbered list" : "Bullet list",
     });
     context.cursorY += height + 0.12;
 };
 
-const addTable = (context: RenderContext, element: HTMLTableElement) => {
-    const sourceRows = Array.from(element.rows);
-    if (sourceRows.length === 0) return;
+const addStructuredTable = (
+    context: RenderContext,
+    block: Extract<SlideBlock, { type: "table" }>,
+) => {
+    const sourceRows = [block.headers, ...block.rows];
+    const columnCount = block.headers.length;
+    if (columnCount === 0) return;
 
-    const columnCount = Math.max(...sourceRows.map((row) => row.cells.length), 1);
     const rows: PptxGenJS.TableRow[] = sourceRows.map((row, rowIndex) =>
-        Array.from(row.cells).map((cell) => ({
-            text: cleanText(cell.textContent),
+        block.headers.map((_, columnIndex) => ({
+            text: row[columnIndex] || "",
             options: {
-                bold: cell.tagName === "TH" || rowIndex === 0,
-                color:
-                    cell.tagName === "TH" || rowIndex === 0
-                        ? context.theme.background
-                        : context.theme.text,
+                bold: rowIndex === 0,
+                color: rowIndex === 0 ? context.theme.background : context.theme.text,
                 fill: {
                     color:
-                        cell.tagName === "TH" || rowIndex === 0
+                        rowIndex === 0
                             ? context.theme.accent
                             : rowIndex % 2 === 0
                               ? context.theme.surface
@@ -319,7 +326,6 @@ const addTable = (context: RenderContext, element: HTMLTableElement) => {
     );
     const availableHeight = context.region.y + context.region.h - context.cursorY;
     const height = Math.min(availableHeight, Math.max(0.9, sourceRows.length * 0.48));
-    const fontSize = sourceRows.length > 8 || columnCount > 5 ? 11 : 14;
 
     context.slide.addTable(rows, {
         x: context.region.x,
@@ -329,7 +335,7 @@ const addTable = (context: RenderContext, element: HTMLTableElement) => {
         colW: Array(columnCount).fill(context.region.w / columnCount),
         rowH: height / sourceRows.length,
         fontFace: context.theme.bodyFont,
-        fontSize,
+        fontSize: sourceRows.length > 8 || columnCount > 5 ? 11 : 14,
         color: context.theme.text,
         border: { type: "solid", color: context.theme.muted, pt: 0.5 },
         margin: 0.08,
@@ -340,27 +346,16 @@ const addTable = (context: RenderContext, element: HTMLTableElement) => {
     context.cursorY += height + 0.15;
 };
 
-const blobToDataUri = async (blob: Blob) => {
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    let binary = "";
-    const chunkSize = 8192;
-    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
-    }
-    return `data:${blob.type || "image/png"};base64,${btoa(binary)}`;
-};
-
-const addImage = async (context: RenderContext, element: HTMLImageElement) => {
-    const src = element.getAttribute("src");
-    const alt = cleanText(element.getAttribute("alt")) || "Presentation image";
-    if (!src) return;
-
+const addStructuredImage = async (
+    context: RenderContext,
+    block: Extract<SlideBlock, { type: "image" }>,
+) => {
     const availableHeight = context.region.y + context.region.h - context.cursorY;
     const height = Math.min(availableHeight, 2.7);
     if (height < 0.45) return;
 
     try {
-        const response = await fetch(src);
+        const response = await fetch(block.url);
         if (!response.ok) throw new Error(`Image request failed with ${response.status}`);
         const data = await blobToDataUri(await response.blob());
         context.slide.addImage({
@@ -370,8 +365,8 @@ const addImage = async (context: RenderContext, element: HTMLImageElement) => {
             w: context.region.w,
             h: height,
             sizing: { type: "contain", w: context.region.w, h: height },
-            altText: alt,
-            objectName: alt,
+            altText: block.alt,
+            objectName: block.alt,
         });
     } catch {
         context.slide.addShape(context.pptx.ShapeType.rect, {
@@ -383,7 +378,7 @@ const addImage = async (context: RenderContext, element: HTMLImageElement) => {
             line: { color: context.theme.accent, transparency: 45, pt: 1 },
             objectName: "Unavailable image placeholder",
         });
-        context.slide.addText(alt, {
+        context.slide.addText(block.alt, {
             x: context.region.x + 0.2,
             y: context.cursorY + 0.2,
             w: context.region.w - 0.4,
@@ -399,18 +394,59 @@ const addImage = async (context: RenderContext, element: HTMLImageElement) => {
         });
     }
     context.cursorY += height + 0.12;
+    if (block.caption) {
+        addParagraph(context, block.caption, { color: context.theme.muted, fontSize: 11 });
+    }
 };
 
-const addEmphasis = (context: RenderContext, element: Element) => {
-    const text = cleanText(element.textContent);
-    if (!text) return;
-    const isQuote = element.tagName === "BLOCKQUOTE" || element.id === "slide-quote";
+const addStructuredImagePlaceholder = (
+    context: RenderContext,
+    block: Extract<SlideBlock, { type: "image-placeholder" }>,
+) => {
+    const availableHeight = context.region.y + context.region.h - context.cursorY;
+    const height = Math.min(availableHeight, 2.7);
+    if (height < 0.45) return;
+
+    context.slide.addShape(context.pptx.ShapeType.rect, {
+        x: context.region.x,
+        y: context.cursorY,
+        w: context.region.w,
+        h: height,
+        fill: { color: context.theme.surface },
+        line: { color: context.theme.accent, transparency: 25, pt: 1.25 },
+        objectName: "Image placeholder",
+    });
+    context.slide.addText([block.alt, block.caption].filter(Boolean).join("\n"), {
+        x: context.region.x + 0.3,
+        y: context.cursorY + 0.3,
+        w: context.region.w - 0.6,
+        h: height - 0.6,
+        fontFace: context.theme.bodyFont,
+        fontSize: 16,
+        color: context.theme.muted,
+        align: "center",
+        valign: "middle",
+        fit: "shrink",
+        margin: 0,
+        objectName: "Image placeholder description",
+    });
+    context.cursorY += height + 0.12;
+};
+
+const addStructuredEmphasis = (
+    context: RenderContext,
+    text: string,
+    options: { quote?: boolean; heading?: string; attribution?: string } = {},
+) => {
+    const body = [options.heading, text, options.attribution].filter(Boolean).join("\n");
     const availableHeight = context.region.y + context.region.h - context.cursorY;
     const height = Math.min(
         availableHeight,
-        Math.max(0.9, estimateTextHeight(text, context.region.w - 0.5, isQuote ? 22 : 18) + 0.35),
+        Math.max(
+            0.9,
+            estimateTextHeight(body, context.region.w - 0.5, options.quote ? 22 : 18) + 0.35,
+        ),
     );
-
     context.slide.addShape(context.pptx.ShapeType.roundRect, {
         x: context.region.x,
         y: context.cursorY,
@@ -418,197 +454,171 @@ const addEmphasis = (context: RenderContext, element: Element) => {
         h: height,
         rectRadius: 0.06,
         fill: { color: context.theme.surface },
-        line: { color: context.theme.accent, pt: isQuote ? 2 : 1 },
-        objectName: isQuote ? "Quote background" : "Highlight background",
+        line: { color: context.theme.accent, pt: options.quote ? 2 : 1 },
+        objectName: options.quote ? "Quote background" : "Callout background",
     });
-    context.slide.addText(text, {
+    context.slide.addText(body, {
         x: context.region.x + 0.28,
         y: context.cursorY + 0.12,
         w: context.region.w - 0.56,
         h: height - 0.24,
-        fontFace: isQuote ? context.theme.headingFont : context.theme.bodyFont,
-        fontSize: isQuote ? 22 : 18,
-        bold: !isQuote,
-        italic: isQuote,
-        color: isQuote ? context.theme.title : context.theme.text,
+        fontFace: options.quote ? context.theme.headingFont : context.theme.bodyFont,
+        fontSize: options.quote ? 22 : 18,
+        bold: !options.quote,
+        italic: options.quote,
+        color: options.quote ? context.theme.title : context.theme.text,
         align: "center",
         valign: "middle",
         margin: 0,
         fit: "shrink",
-        objectName: isQuote ? "Quote" : "Highlighted text",
+        objectName: options.quote ? "Quote" : "Callout",
     });
     context.cursorY += height + 0.15;
 };
 
-const isEmphasisElement = (element: Element) =>
-    element.tagName === "BLOCKQUOTE" ||
-    ["slide-quote", "slide-highlight", "slide-keypoint"].includes(element.id);
+const addStructuredStats = (
+    context: RenderContext,
+    block: Extract<SlideBlock, { type: "stats" }>,
+) => {
+    const count = Math.max(block.items.length, 1);
+    const gap = 0.15;
+    const itemWidth = (context.region.w - gap * (count - 1)) / count;
+    const height = Math.min(1.45, context.region.y + context.region.h - context.cursorY);
+    block.items.forEach((item, index) => {
+        const x = context.region.x + index * (itemWidth + gap);
+        context.slide.addShape(context.pptx.ShapeType.roundRect, {
+            x,
+            y: context.cursorY,
+            w: itemWidth,
+            h: height,
+            rectRadius: 0.05,
+            fill: { color: context.theme.surface },
+            line: { color: context.theme.accent, transparency: 35, pt: 1 },
+            objectName: `Statistic ${index + 1} background`,
+        });
+        context.slide.addText(`${item.value}\n${item.label}`, {
+            x: x + 0.12,
+            y: context.cursorY + 0.1,
+            w: itemWidth - 0.24,
+            h: height - 0.2,
+            fontFace: context.theme.bodyFont,
+            fontSize: 17,
+            bold: true,
+            color: context.theme.title,
+            align: "center",
+            valign: "middle",
+            fit: "shrink",
+            margin: 0,
+            objectName: `Statistic ${index + 1}`,
+        });
+    });
+    context.cursorY += height + 0.15;
+};
 
-const renderElement = async (context: RenderContext, element: Element): Promise<void> => {
+const renderStructuredBlock = async (context: RenderContext, block: SlideBlock) => {
     if (context.cursorY >= context.region.y + context.region.h) return;
-    if (["slide-title", "slide-footer", "slide-header"].includes(element.id)) return;
-
-    if (element instanceof HTMLImageElement) {
-        await addImage(context, element);
-        return;
-    }
-    if (element instanceof HTMLTableElement) {
-        addTable(context, element);
-        return;
-    }
-    if (element.tagName === "UL" || element.tagName === "OL") {
-        addList(context, element);
-        return;
-    }
-    if (isEmphasisElement(element)) {
-        addEmphasis(context, element);
-        return;
-    }
-    if (element.id === "slide-stats") {
-        const stats = Array.from(element.children);
-        const count = Math.max(stats.length, 1);
-        const gap = 0.15;
-        const itemWidth = (context.region.w - gap * (count - 1)) / count;
-        const height = Math.min(1.45, context.region.y + context.region.h - context.cursorY);
-        stats.forEach((stat, index) => {
-            const x = context.region.x + index * (itemWidth + gap);
-            context.slide.addShape(context.pptx.ShapeType.roundRect, {
-                x,
-                y: context.cursorY,
-                w: itemWidth,
-                h: height,
-                rectRadius: 0.05,
-                fill: { color: context.theme.surface },
-                line: { color: context.theme.accent, transparency: 35, pt: 1 },
-                objectName: `Statistic ${index + 1} background`,
+    switch (block.type) {
+        case "paragraph":
+            addParagraph(context, block.text);
+            return;
+        case "bullets":
+            addStructuredList(context, block);
+            return;
+        case "table":
+            addStructuredTable(context, block);
+            return;
+        case "image":
+            await addStructuredImage(context, block);
+            return;
+        case "image-placeholder":
+            addStructuredImagePlaceholder(context, block);
+            return;
+        case "quote":
+            addStructuredEmphasis(context, block.text, {
+                quote: true,
+                attribution: block.attribution,
             });
-            context.slide.addText(cleanText(stat.textContent), {
-                x: x + 0.12,
-                y: context.cursorY + 0.1,
-                w: itemWidth - 0.24,
-                h: height - 0.2,
-                fontFace: context.theme.bodyFont,
-                fontSize: 17,
-                bold: true,
-                color: context.theme.title,
-                align: "center",
-                valign: "middle",
-                fit: "shrink",
-                margin: 0,
-                objectName: `Statistic ${index + 1}`,
-            });
-        });
-        context.cursorY += height + 0.15;
-        return;
-    }
-
-    const childElements = Array.from(element.children);
-    const isTextElement = ["P", "H2", "H3", "H4", "H5", "SPAN"].includes(element.tagName);
-    if (isTextElement || childElements.length === 0) {
-        const text = cleanText(element.textContent);
-        addParagraph(context, text, {
-            bold: ["H2", "H3", "H4", "H5"].includes(element.tagName),
-            color: element.id === "slide-subtitle" ? context.theme.muted : context.theme.text,
-            fontSize: ["H2", "H3"].includes(element.tagName) ? 19 : 17,
-        });
-        return;
-    }
-
-    for (const child of childElements) {
-        await renderElement(context, child);
+            return;
+        case "callout":
+            addStructuredEmphasis(context, block.text, { heading: block.heading });
+            return;
+        case "stats":
+            addStructuredStats(context, block);
+            return;
     }
 };
 
-const renderColumn = async (
+const renderStructuredRegion = async (
     slide: PptxGenJS.Slide,
     pptx: PptxGenJS,
     theme: PptxTheme,
-    element: Element,
+    blocks: SlideBlock[],
     region: ContentRegion,
 ) => {
     const context: RenderContext = { slide, pptx, theme, region, cursorY: region.y };
-    for (const child of Array.from(element.children)) {
-        await renderElement(context, child);
-    }
+    for (const block of blocks) await renderStructuredBlock(context, block);
 };
 
-const renderHtmlSlide = async (
+const renderStructuredSlide = async (
     pptx: PptxGenJS,
-    slideData: HtmlSlide,
+    slideData: ContentSlide,
     theme: PptxTheme,
     slideNumber: number,
 ) => {
     const slide = pptx.addSlide();
     addSlideFrame(slide, pptx, theme, slideNumber);
-
-    const document = new DOMParser().parseFromString(slideData.html, "text/html");
-    const root = document.querySelector("#slide-content") || document.body;
-    const titleElement = root.querySelector("#slide-title");
-    const directSubtitle = Array.from(root.children).find(
-        (element) => element.id === "slide-subtitle",
-    );
-    const title = cleanText(titleElement?.textContent);
-    const subtitle = cleanText(directSubtitle?.textContent);
-    const centered =
-        ["title", "quote", "conclusion"].includes(slideData.type) ||
-        root.classList.contains("layout-title") ||
-        root.classList.contains("layout-highlight");
-
+    const centered = slideData.layout === "title" || slideData.layout === "quote";
     let contentY = centered ? 1.8 : 0.55;
-    if (title) contentY = addTitle(slide, theme, title, centered, contentY);
-    if (subtitle) contentY = addSubtitle(slide, theme, subtitle, centered, contentY + 0.1);
-
-    if (centered && title && root.children.length <= 2) return;
-
-    const twoColumn = root.querySelector(":scope > .two-column");
-    if (twoColumn) {
-        const columns = Array.from(twoColumn.children).filter((element) =>
-            element.classList.contains("column"),
+    contentY = addTitle(slide, theme, cleanText(slideData.title), centered, contentY);
+    if (slideData.subtitle) {
+        contentY = addSubtitle(
+            slide,
+            theme,
+            cleanText(slideData.subtitle),
+            centered,
+            contentY + 0.1,
         );
-        if (columns.length > 0) {
-            const gap = 0.42;
-            const availableWidth = SLIDE_WIDTH - PAGE_MARGIN * 2;
-            const columnWidth = (availableWidth - gap * (columns.length - 1)) / columns.length;
-            const top = Math.max(contentY + 0.25, 1.65);
-            const height = 6.85 - top;
+    }
+    if (slideData.layout === "title" && slideData.blocks.length === 0) return;
 
-            for (const [index, column] of columns.entries()) {
-                const region = {
-                    x: PAGE_MARGIN + index * (columnWidth + gap),
-                    y: top,
-                    w: columnWidth,
-                    h: height,
-                };
-                slide.addShape(pptx.ShapeType.roundRect, {
-                    ...region,
-                    rectRadius: 0.04,
-                    fill: { color: theme.surface, transparency: 35 },
-                    line: { color: theme.accent, transparency: 70, pt: 0.75 },
-                    objectName: `Column ${index + 1} background`,
-                });
-                await renderColumn(slide, pptx, theme, column, {
-                    x: region.x + 0.25,
-                    y: region.y + 0.25,
-                    w: region.w - 0.5,
-                    h: region.h - 0.5,
-                });
-            }
-            return;
-        }
+    const top = Math.max(contentY + 0.22, centered ? 2.85 : 1.65);
+    const availableWidth = SLIDE_WIDTH - PAGE_MARGIN * 2;
+    if (slideData.layout === "two-column" || slideData.layout === "image-right") {
+        const gap = 0.42;
+        const columnWidth = (availableWidth - gap) / 2;
+        const leftRegion = {
+            x: PAGE_MARGIN,
+            y: top,
+            w: columnWidth,
+            h: 6.85 - top,
+        };
+        const rightRegion = {
+            ...leftRegion,
+            x: PAGE_MARGIN + columnWidth + gap,
+        };
+        const leftBlocks = slideData.blocks.filter((block) =>
+            slideData.layout === "image-right"
+                ? block.region === "main" || block.region === "left"
+                : block.region === "left",
+        );
+        const rightBlocks = slideData.blocks.filter((block) => block.region === "right");
+        await renderStructuredRegion(slide, pptx, theme, leftBlocks, leftRegion);
+        await renderStructuredRegion(slide, pptx, theme, rightBlocks, rightRegion);
+        return;
     }
 
-    const region = {
-        x: PAGE_MARGIN,
-        y: Math.max(contentY + 0.22, centered ? 2.85 : 1.65),
-        w: SLIDE_WIDTH - PAGE_MARGIN * 2,
-        h: 6.85 - Math.max(contentY + 0.22, centered ? 2.85 : 1.65),
-    };
-    const context: RenderContext = { slide, pptx, theme, region, cursorY: region.y };
-    for (const element of Array.from(root.children)) {
-        if (element === titleElement || element === directSubtitle || element === twoColumn)
-            continue;
-        await renderElement(context, element);
-    }
+    await renderStructuredRegion(
+        slide,
+        pptx,
+        theme,
+        slideData.blocks.filter((block) => block.region === "main"),
+        {
+            x: PAGE_MARGIN,
+            y: top,
+            w: availableWidth,
+            h: 6.85 - top,
+        },
+    );
 };
 
 const normalizeColor = (color: string | string[] | undefined, fallback: string) => {
@@ -707,11 +717,13 @@ export const buildEditablePptx = async (presentation: PresentationData) => {
     };
 
     for (const [index, slide] of presentation.slides.entries()) {
-        if (slide.type === "chart") {
-            renderChartSlide(pptx, (slide as ChartSlide).chartConfig, theme, index + 1);
-        } else {
-            await renderHtmlSlide(pptx, slide as HtmlSlide, theme, index + 1);
+        if (isChartSlide(slide)) {
+            renderChartSlide(pptx, slide.chartConfig, theme, index + 1);
+            continue;
         }
+
+        const contentSlide = isLegacyHtmlSlide(slide) ? adaptLegacyHtmlSlide(slide) : slide;
+        await renderStructuredSlide(pptx, contentSlide, theme, index + 1);
     }
 
     return pptx;

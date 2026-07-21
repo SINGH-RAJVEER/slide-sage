@@ -1,13 +1,18 @@
 import { PresentationRepository, UserRepository } from "@slide-sage/database";
-import type {
-    PresentationJSON,
-    PresentationResponse,
-    PresentationSummary,
-    PresentationsResponse,
-    ResearchOptions,
-    ResearchPayload,
-    Slide,
-    Source,
+import {
+    PRESENTATION_LAYOUT_PREFERENCES,
+    PRESENTATION_SCHEMA_VERSION,
+    type PresentationJSON,
+    type PresentationLayoutPreference,
+    type PresentationResponse,
+    type PresentationSummary,
+    type PresentationsResponse,
+    type ResearchOptions,
+    type ResearchPayload,
+    type Slide,
+    type Source,
+    THEME_IDS,
+    type ThemeId,
 } from "@slide-sage/types";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
@@ -40,7 +45,7 @@ interface ResearchSourceInput {
 
 interface ResearchPayloadInput {
     sources?: unknown;
-    summary?: unknown;
+    estimated_tokens?: unknown;
 }
 
 function parseResearchOptions(input: unknown): ResearchOptions | undefined {
@@ -129,18 +134,33 @@ function parseResearchPayload(input: unknown): ResearchPayload | undefined {
         });
     }
 
-    const summaryRaw = value.summary;
-    const summary = typeof summaryRaw === "string" ? summaryRaw : null;
-
+    const estimatedTokens = value.estimated_tokens;
     return {
-        summary,
         sources,
+        ...(typeof estimatedTokens === "number" && Number.isFinite(estimatedTokens)
+            ? { estimated_tokens: estimatedTokens }
+            : {}),
     };
 }
 
 function positiveIntegerEnv(name: string, fallback: number): number {
     const parsed = Number.parseInt(process.env[name] || "", 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const THEME_ID_SET = new Set<string>(THEME_IDS);
+const LAYOUT_PREFERENCE_SET = new Set<string>(PRESENTATION_LAYOUT_PREFERENCES);
+
+function parseTheme(value: unknown): ThemeId {
+    return typeof value === "string" && THEME_ID_SET.has(value)
+        ? (value as ThemeId)
+        : "corporate-blue";
+}
+
+function parseLayoutPreference(value: unknown): PresentationLayoutPreference {
+    return typeof value === "string" && LAYOUT_PREFERENCE_SET.has(value)
+        ? (value as PresentationLayoutPreference)
+        : "auto";
 }
 
 function sseFrame(event: string, data: unknown): string {
@@ -152,11 +172,80 @@ const presentationService = new PresentationService();
 const presentationRepo = new PresentationRepository();
 const searchService = new SearchService();
 
-async function deleteIncompletePresentation(presentationId: string, userId: string): Promise<void> {
+interface FailedPresentationInput {
+    presentationId: string;
+    topic: unknown;
+    slideCount: unknown;
+    detailLevel: string;
+    tonality: string;
+    researchEnabled: boolean;
+    theme: ThemeId;
+    layoutPreference: PresentationLayoutPreference;
+    researchPayload?: ResearchPayload;
+    sources?: Source[];
+    estimatedTokens: number;
+    message: string;
+}
+
+async function markPresentationFailed({
+    presentationId,
+    topic,
+    slideCount,
+    detailLevel,
+    tonality,
+    researchEnabled,
+    theme,
+    layoutPreference,
+    researchPayload,
+    sources,
+    estimatedTokens,
+    message,
+}: FailedPresentationInput): Promise<void> {
+    const prompt = String(topic).trim();
+    const retrySources = sources?.length ? sources : researchPayload?.sources;
+    const failedTitle = (prompt || "Failed presentation").slice(0, 255);
+    const parsedSlideCount = Number(slideCount);
+    const retrySlideCount =
+        Number.isFinite(parsedSlideCount) && parsedSlideCount > 0
+            ? Math.floor(parsedSlideCount)
+            : 5;
+    const failedData: PresentationJSON = {
+        schemaVersion: PRESENTATION_SCHEMA_VERSION,
+        title: failedTitle,
+        theme,
+        slides: [],
+        totalSlides: 0,
+        status: "failed",
+        failure: {
+            message,
+            retry: {
+                prompt,
+                slide_count: retrySlideCount,
+                detail_level: detailLevel,
+                tonality,
+                research_enabled: researchEnabled,
+                theme,
+                layout_preference: layoutPreference,
+                ...(retrySources?.length
+                    ? {
+                          research_payload: {
+                              sources: retrySources,
+                              estimated_tokens: estimatedTokens,
+                          },
+                      }
+                    : {}),
+            },
+        },
+    };
+
     try {
-        await presentationService.deletePresentation(presentationId, userId);
+        await presentationRepo.update(presentationId, {
+            title: failedTitle,
+            prompt,
+            slidesData: failedData,
+        });
     } catch (error) {
-        console.error(`Failed to delete incomplete presentation ${presentationId}:`, error);
+        console.error(`Failed to save retry data for presentation ${presentationId}:`, error);
     }
 }
 
@@ -171,10 +260,15 @@ presentations.post(
             const body = await c.req.json();
 
             const { topic, slide_count, detail_level, tonality } = body;
+            const preferredTheme = parseTheme(body?.theme);
+            const layoutPreference = parseLayoutPreference(
+                body?.layout_preference ?? body?.layoutPreference
+            );
             const research = parseResearchOptions(body?.research);
             const researchPayload = parseResearchPayload(
                 body?.research_payload ?? body?.researchPayload
             );
+            const retryPresentationId = body?.retry_presentation_id ?? body?.retryPresentationId;
 
             if (!topic || !slide_count) {
                 return c.json({ error: { message: "Missing required fields" } }, 400);
@@ -185,7 +279,9 @@ presentations.post(
             const estimatedTokens = presentationService.calculateEstimatedTokens(
                 slide_count,
                 detail_level || "balanced",
-                tonality || "professional"
+                tonality || "professional",
+                String(topic),
+                researchPayload
             );
             const { sufficient, user, shortfall } = await UserRepository.hasSufficientTokens(
                 userId,
@@ -203,14 +299,29 @@ presentations.post(
                 );
             }
 
-            // Create initial presentation record
-            const presentation = await presentationRepo.create(userId, "Generating...", topic, {
-                slides: [],
-                theme: "corporate-blue",
-                title: "Generating...",
-            });
-
-            const presentationId = presentation.id;
+            let presentationId: string;
+            if (retryPresentationId) {
+                const failedPresentation = await presentationService.getPresentation(
+                    String(retryPresentationId),
+                    userId
+                );
+                const failedData = failedPresentation.slidesData as PresentationJSON;
+                if (failedData.status !== "failed") {
+                    return c.json(
+                        { error: { message: "Only failed presentations can be retried" } },
+                        409
+                    );
+                }
+                presentationId = failedPresentation.id;
+            } else {
+                const presentation = await presentationRepo.create(userId, "Generating...", topic, {
+                    schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                    slides: [],
+                    theme: preferredTheme,
+                    title: "Generating...",
+                });
+                presentationId = presentation.id;
+            }
 
             c.header("Content-Type", "text/event-stream; charset=utf-8");
             c.header("Cache-Control", "no-cache, no-transform");
@@ -223,15 +334,38 @@ presentations.post(
                     },
                     positiveIntegerEnv("SSE_KEEPALIVE_INTERVAL_MS", 10000)
                 );
+                let retainedSources: Source[] | undefined = researchPayload?.sources;
 
                 try {
                     const allSlides: Slide[] = [];
-                    let theme = "corporate-blue";
+                    let theme: string = preferredTheme;
                     let title = "Untitled Presentation";
-                    let sources: Source[] | undefined;
+                    let sources: Source[] | undefined = retainedSources;
                     let tokensUsed = 0;
                     let generationCompleted = false;
                     let generationFailed = false;
+                    let failureSaved = false;
+                    let failureMessage = "Presentation generation failed. Please try again.";
+
+                    const saveFailure = async (message: string) => {
+                        if (failureSaved) return;
+                        failureSaved = true;
+                        failureMessage = message;
+                        await markPresentationFailed({
+                            presentationId,
+                            topic,
+                            slideCount: slide_count,
+                            detailLevel: detail_level || "balanced",
+                            tonality: tonality || "professional",
+                            researchEnabled: Boolean(research?.enabled || sources?.length),
+                            theme: preferredTheme,
+                            layoutPreference,
+                            researchPayload,
+                            sources,
+                            estimatedTokens,
+                            message,
+                        });
+                    };
 
                     // Stream presentation generation
                     for await (const event of presentationService.generatePresentationStream({
@@ -243,6 +377,8 @@ presentations.post(
                         tonality: tonality || "professional",
                         research,
                         researchPayload,
+                        theme: preferredTheme,
+                        layoutPreference,
                     })) {
                         const eventType = event.event || "data";
                         // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
@@ -255,11 +391,15 @@ presentations.post(
 
                         if (eventType === "retry") {
                             allSlides.length = 0;
-                            theme = "corporate-blue";
+                            theme = preferredTheme;
                             title = "Untitled Presentation";
-                            sources = undefined;
                             tokensUsed = 0;
                             generationCompleted = false;
+                        }
+
+                        if (eventType === "research" && Array.isArray(eventData.sources)) {
+                            sources = eventData.sources;
+                            retainedSources = eventData.sources;
                         }
 
                         if (eventType === "slide") {
@@ -286,23 +426,41 @@ presentations.post(
                             }
                             if (Array.isArray(eventData.sources)) {
                                 sources = eventData.sources;
+                                retainedSources = eventData.sources;
                             }
                             tokensUsed = eventData.tokens_used || 0;
                         }
 
                         if (eventType === "error") {
                             generationFailed = true;
+                            failureMessage =
+                                typeof eventData.error === "string"
+                                    ? eventData.error
+                                    : failureMessage;
+                            await saveFailure(failureMessage);
                         }
 
-                        await stream.write(sseFrame(eventType, eventData));
+                        await stream.write(
+                            sseFrame(
+                                eventType,
+                                eventType === "error"
+                                    ? { ...eventData, presentation_id: presentationId }
+                                    : eventData
+                            )
+                        );
                     }
 
                     if (generationFailed || !generationCompleted) {
-                        await deleteIncompletePresentation(presentationId, userId);
+                        if (!generationFailed) {
+                            failureMessage =
+                                "Presentation generation ended before completion. Please try again.";
+                        }
+                        await saveFailure(failureMessage);
                         if (!generationFailed) {
                             await stream.write(
                                 sseFrame("error", {
-                                    error: "Presentation generation ended before completion. Please try again.",
+                                    error: failureMessage,
+                                    presentation_id: presentationId,
                                 })
                             );
                         }
@@ -324,9 +482,11 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
+                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
                             slides: allSlides,
                             theme,
                             title: finalTitle,
+                            status: "ready",
                             totalSlides: allSlides.length,
                             tokens_used: tokensUsed,
                         };
@@ -338,6 +498,7 @@ presentations.post(
                         // Update the existing presentation with final data
                         await presentationRepo.update(presentationId, {
                             title: finalTitle,
+                            prompt: String(topic),
                             slidesData: finalData,
                         });
 
@@ -391,18 +552,35 @@ presentations.post(
                         );
                     } else {
                         console.error(`No slides generated for presentation ${presentationId}`);
-                        await deleteIncompletePresentation(presentationId, userId);
+                        const message = "Failed to generate presentation content";
+                        await saveFailure(message);
                         await stream.write(
                             sseFrame("error", {
-                                error: "Failed to generate presentation content",
+                                error: message,
+                                presentation_id: presentationId,
                             })
                         );
                     }
                 } catch (error: unknown) {
                     const message = error instanceof Error ? error.message : "Unknown error";
                     console.error("Error during generation:", error);
-                    await deleteIncompletePresentation(presentationId, userId);
-                    await stream.write(sseFrame("error", { error: message }));
+                    await markPresentationFailed({
+                        presentationId,
+                        topic,
+                        slideCount: slide_count,
+                        detailLevel: detail_level || "balanced",
+                        tonality: tonality || "professional",
+                        researchEnabled: Boolean(research?.enabled || retainedSources?.length),
+                        theme: preferredTheme,
+                        layoutPreference,
+                        researchPayload,
+                        sources: retainedSources,
+                        estimatedTokens,
+                        message,
+                    });
+                    await stream.write(
+                        sseFrame("error", { error: message, presentation_id: presentationId })
+                    );
                 } finally {
                     clearInterval(keepAlive);
                 }
@@ -439,16 +617,22 @@ presentations.post(
                 console.warn("Failed to store source chunks:", error);
             }
 
-            const summaryResult = sources.length
-                ? await searchService.summarizeSourcesDetailed(String(topic), sources)
-                : { summary: null, tokensUsed: 0, tokensEstimated: 0 };
+            const requestedSlideCount = Number(body?.slide_count ?? body?.slideCount);
+            const estimatedTokens =
+                Number.isFinite(requestedSlideCount) && requestedSlideCount > 0
+                    ? presentationService.calculateEstimatedTokens(
+                          requestedSlideCount,
+                          body?.detail_level ?? body?.detailLevel ?? "balanced",
+                          body?.tonality ?? "professional",
+                          String(topic),
+                          { sources }
+                      )
+                    : undefined;
 
             return c.json(
                 {
-                    summary: summaryResult.summary,
                     sources,
-                    tokens_used: summaryResult.tokensUsed,
-                    tokens_estimated: summaryResult.tokensEstimated,
+                    ...(estimatedTokens === undefined ? {} : { estimated_tokens: estimatedTokens }),
                 },
                 200
             );
@@ -618,9 +802,11 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
+                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
                             slides: allSlides,
                             theme,
                             title: finalTitle,
+                            status: "ready",
                             totalSlides: allSlides.length,
                             tokens_used: tokensUsed,
                         };
@@ -713,6 +899,8 @@ presentations.get("/presentations", authMiddleware, async (c) => {
                 title: p.title,
                 prompt: p.prompt,
                 slide_count: slidesData?.slides?.length || 0,
+                status: slidesData?.status === "failed" ? "failed" : "ready",
+                has_research: Boolean(slidesData?.failure?.retry.research_payload?.sources.length),
                 created_at: p.createdAt.toISOString(),
                 updated_at: p.updatedAt.toISOString(),
             };

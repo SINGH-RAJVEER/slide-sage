@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import DownloadPptxButton from "@/components/Viewer/DownloadPptxButton";
+import DownloadMenu from "@/components/Viewer/DownloadMenu";
 import type { PresentationData } from "@/modules/types/presentation";
 
 interface ViewerNavigationControlsProps {
@@ -33,14 +33,14 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
             style={{ minHeight: 36, fontSize: "0.95rem" }}
         >
             <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                <DownloadPptxButton presentation={presentation} />
+                <DownloadMenu presentation={presentation} />
             </div>
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2">
                 <Button
                     variant="outline"
                     onClick={onFirst}
-                    disabled={currentSlide === 0}
+                    disabled={totalSlides === 0 || currentSlide === 0}
                     className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     <SkipBack className="w-4 h-4" />
@@ -48,7 +48,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                 <Button
                     variant="outline"
                     onClick={onPrev}
-                    disabled={currentSlide === 0}
+                    disabled={totalSlides === 0 || currentSlide === 0}
                     className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     <ChevronLeft className="w-4 h-4 mr-2" />
@@ -57,7 +57,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                 <Button
                     variant="outline"
                     onClick={onNext}
-                    disabled={currentSlide === totalSlides - 1}
+                    disabled={totalSlides === 0 || currentSlide === totalSlides - 1}
                     className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     Next
@@ -66,7 +66,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                 <Button
                     variant="outline"
                     onClick={onLast}
-                    disabled={currentSlide === totalSlides - 1}
+                    disabled={totalSlides === 0 || currentSlide === totalSlides - 1}
                     className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     <SkipForward className="w-4 h-4" />

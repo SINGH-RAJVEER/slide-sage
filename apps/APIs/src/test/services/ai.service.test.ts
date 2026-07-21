@@ -57,12 +57,17 @@ function interruptedOpenRouterResponse(content: string): Response {
 
 function validDeck(title = "Reliable Deck"): string {
     return JSON.stringify({
+        schemaVersion: 2,
+        title,
         theme: "minimalist",
         slides: [
             {
                 id: "slide-1",
                 type: "content",
-                html: `<div id="slide-content"><h1 id="slide-title">${title}</h1></div>`,
+                layout: "title",
+                title,
+                subtitle: "",
+                blocks: [],
             },
         ],
         totalSlides: 1,
@@ -102,6 +107,39 @@ describe("AIService resilient presentation generation", () => {
         delete process.env["OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS"];
     });
 
+    it("requests a strict schema and an explicit output budget", async () => {
+        let requestBody: Record<string, unknown> | undefined;
+        const fetchMock = mock((_url: string | URL | Request, init?: RequestInit) => {
+            requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+            return Promise.resolve(openRouterResponse(validDeck()));
+        });
+        globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+        const events = await collectGenerationEvents(new AIService());
+        const responseFormat = requestBody?.["response_format"] as
+            | { json_schema?: { strict?: boolean; schema?: Record<string, unknown> } }
+            | undefined;
+        const schema = responseFormat?.json_schema?.schema as
+            | {
+                  properties?: {
+                      schemaVersion?: unknown;
+                      slides?: Record<string, unknown>;
+                      totalSlides?: unknown;
+                  };
+              }
+            | undefined;
+
+        expect(events.at(-1)?.event).toBe("complete");
+        expect(requestBody?.["model"]).toBe("google/gemma-4-26b-a4b-it");
+        expect(requestBody?.["max_tokens"]).toBe(4096);
+        expect(responseFormat?.json_schema?.strict).toBe(true);
+        expect(schema?.properties?.slides?.["minItems"]).toBe(1);
+        expect(schema?.properties?.slides?.["maxItems"]).toBe(1);
+        expect(schema?.properties?.totalSlides).toEqual({ const: 1 });
+        expect(schema?.properties?.schemaVersion).toEqual({ const: 2 });
+        expect(JSON.stringify(responseFormat)).toContain("image-placeholder");
+    });
+
     it("retries a transient HTTP failure and completes from a fragmented stream", async () => {
         const fetchMock = mock()
             .mockResolvedValueOnce(new Response("busy", { status: 503 }))
@@ -120,6 +158,8 @@ describe("AIService resilient presentation generation", () => {
         ]);
         const complete = events.find((event) => event.event === "complete");
         expect(complete?.data.slides).toHaveLength(1);
+        expect(complete?.data.schemaVersion).toBe(2);
+        expect(complete?.data.theme).toBe("corporate-blue");
         expect(complete?.data.tokens_used).toBe(42);
     });
 
@@ -136,7 +176,7 @@ describe("AIService resilient presentation generation", () => {
         expect(events.filter((event) => event.event === "retry")).toHaveLength(1);
         const complete = events.find((event) => event.event === "complete");
         const recoveredSlide = complete?.data.slides[0];
-        expect(recoveredSlide && "html" in recoveredSlide ? recoveredSlide.html : "").toContain(
+        expect(recoveredSlide && "title" in recoveredSlide ? recoveredSlide.title : "").toBe(
             "Recovered Deck"
         );
         expect(events.at(-1)?.event).toBe("complete");
@@ -156,22 +196,29 @@ describe("AIService resilient presentation generation", () => {
         expect(eventNames.indexOf("slide")).toBeLessThan(eventNames.indexOf("retry"));
         const complete = events.find((event) => event.event === "complete");
         const finalSlide = complete?.data.slides[0];
-        expect(finalSlide && "html" in finalSlide ? finalSlide.html : "").toContain("Final Deck");
+        expect(finalSlide && "title" in finalSlide ? finalSlide.title : "").toBe("Final Deck");
     });
 
     it("trims model overproduction without retrying or streaming surplus slides", async () => {
         const deck = JSON.stringify({
+            schemaVersion: 2,
             theme: "minimalist",
             slides: [
                 {
                     id: "slide-1",
                     type: "content",
-                    html: '<div id="slide-content"><h1 id="slide-title">Requested</h1></div>',
+                    layout: "title",
+                    title: "Requested",
+                    subtitle: "",
+                    blocks: [],
                 },
                 {
                     id: "slide-2",
                     type: "content",
-                    html: '<div id="slide-content"><h2>Surplus</h2></div>',
+                    layout: "title",
+                    title: "Surplus",
+                    subtitle: "",
+                    blocks: [],
                 },
             ],
         });

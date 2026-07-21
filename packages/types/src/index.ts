@@ -17,12 +17,112 @@ export interface ChartConfig {
     [key: string]: unknown;
 }
 
-export interface BaseSlide {
-    id: string;
-    type: string;
+export const PRESENTATION_SCHEMA_VERSION = 2 as const;
+
+export const THEME_IDS = [
+    "modern-dark",
+    "corporate-blue",
+    "minimalist",
+    "creative-studio",
+    "elegant-serif",
+    "nature-green",
+] as const;
+
+export type ThemeId = (typeof THEME_IDS)[number];
+
+export const PRESENTATION_LAYOUT_PREFERENCES = [
+    "auto",
+    "content",
+    "two-column",
+    "image-led",
+    "data-led",
+] as const;
+
+export type PresentationLayoutPreference = (typeof PRESENTATION_LAYOUT_PREFERENCES)[number];
+
+export type SlideLayout = "title" | "content" | "two-column" | "quote" | "image-right";
+export type SlideRegion = "main" | "left" | "right";
+
+interface BaseSlideBlock {
+    region: SlideRegion;
 }
 
-export interface HtmlSlide extends BaseSlide {
+export interface ParagraphBlock extends BaseSlideBlock {
+    type: "paragraph";
+    text: string;
+}
+
+export interface BulletBlock extends BaseSlideBlock {
+    type: "bullets";
+    items: string[];
+    ordered: boolean;
+}
+
+export interface TableBlock extends BaseSlideBlock {
+    type: "table";
+    headers: string[];
+    rows: string[][];
+}
+
+export interface ImageBlock extends BaseSlideBlock {
+    type: "image";
+    url: string;
+    alt: string;
+    caption: string;
+}
+
+export interface ImagePlaceholderBlock extends BaseSlideBlock {
+    type: "image-placeholder";
+    alt: string;
+    caption: string;
+}
+
+export interface QuoteBlock extends BaseSlideBlock {
+    type: "quote";
+    text: string;
+    attribution: string;
+}
+
+export interface CalloutBlock extends BaseSlideBlock {
+    type: "callout";
+    heading: string;
+    text: string;
+}
+
+export interface StatsBlock extends BaseSlideBlock {
+    type: "stats";
+    items: Array<{
+        value: string;
+        label: string;
+    }>;
+}
+
+export type SlideBlock =
+    | ParagraphBlock
+    | BulletBlock
+    | TableBlock
+    | ImageBlock
+    | ImagePlaceholderBlock
+    | QuoteBlock
+    | CalloutBlock
+    | StatsBlock;
+
+export interface BaseSlide {
+    id: string;
+    type: "content" | "chart";
+}
+
+export interface ContentSlide extends BaseSlide {
+    type: "content";
+    layout: SlideLayout;
+    title: string;
+    subtitle: string;
+    blocks: SlideBlock[];
+}
+
+export interface LegacyHtmlSlide {
+    id: string;
+    type: string;
     html: string;
 }
 
@@ -31,7 +131,20 @@ export interface ChartSlide extends BaseSlide {
     chartConfig: ChartConfig;
 }
 
-export type Slide = HtmlSlide | ChartSlide;
+export type StructuredSlide = ContentSlide | ChartSlide;
+export type Slide = StructuredSlide | LegacyHtmlSlide;
+
+export function isLegacyHtmlSlide(slide: Slide): slide is LegacyHtmlSlide {
+    return "html" in slide;
+}
+
+export function isChartSlide(slide: Slide): slide is ChartSlide {
+    return !isLegacyHtmlSlide(slide) && slide.type === "chart";
+}
+
+export function isContentSlide(slide: Slide): slide is ContentSlide {
+    return !isLegacyHtmlSlide(slide) && slide.type === "content";
+}
 
 export interface Source {
     url: string;
@@ -45,9 +158,11 @@ export interface Source {
 }
 
 export interface ResearchPayload {
-    summary?: string | null;
     sources: Source[];
+    estimated_tokens?: number;
 }
+
+export { buildResearchSystemMessage, estimateMessageInputTokens } from "./research-context";
 
 export type ResearchFreshness = "day" | "week" | "month" | "year";
 
@@ -63,6 +178,7 @@ export interface ResearchOptions {
 }
 
 export interface PresentationData {
+    schemaVersion?: typeof PRESENTATION_SCHEMA_VERSION;
     title: string;
     theme: string;
     slides: Slide[];
@@ -71,10 +187,31 @@ export interface PresentationData {
     tokens_used?: number;
 }
 
+export type PresentationStatus = "ready" | "failed";
+
+export interface PresentationRetryOptions {
+    prompt: string;
+    slide_count: number;
+    detail_level: string;
+    tonality: string;
+    research_enabled: boolean;
+    theme?: ThemeId;
+    layout_preference?: PresentationLayoutPreference;
+    research_payload?: ResearchPayload;
+}
+
+export interface PresentationFailure {
+    message: string;
+    retry: PresentationRetryOptions;
+}
+
 export interface PresentationJSON {
+    schemaVersion?: typeof PRESENTATION_SCHEMA_VERSION;
     title: string;
     theme: string;
     slides: Slide[];
+    status?: PresentationStatus;
+    failure?: PresentationFailure;
     totalSlides?: number;
     tokens_used?: number;
     sources?: Source[];
@@ -96,17 +233,11 @@ export interface StreamThemeEvent {
     data: { theme: string };
 }
 
-export interface StreamMidwayspaceEvent {
-    event: "midwayspace";
-    data: { summary: string | null; sources: Source[] };
-}
-
 export interface StreamResearchEvent {
     event: "research";
     data: {
-        status: "searching" | "sourced" | "summarizing" | "ready" | "generating";
+        status: "searching" | "ready" | "generating";
         sources?: Source[];
-        summary?: string | null;
     };
 }
 
@@ -141,13 +272,17 @@ export interface StreamSavedEvent {
 
 export interface StreamErrorEvent {
     event: "error";
-    data: { error: string; details?: unknown; [key: string]: unknown };
+    data: {
+        error: string;
+        presentation_id?: string | number;
+        details?: unknown;
+        [key: string]: unknown;
+    };
 }
 
 export type PresentationStreamEvent =
     | StreamStartEvent
     | StreamCreatedEvent
-    | StreamMidwayspaceEvent
     | StreamResearchEvent
     | StreamThemeEvent
     | StreamRetryEvent
@@ -186,6 +321,8 @@ export interface PresentationSummary {
     title: string;
     prompt: string;
     slide_count: number;
+    status: PresentationStatus;
+    has_research: boolean;
     created_at: string;
     updated_at: string;
 }

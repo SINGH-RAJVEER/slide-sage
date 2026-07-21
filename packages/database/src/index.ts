@@ -17,7 +17,6 @@ export type {
     StreamCreatedEvent,
     StreamErrorEvent,
     StreamEvent,
-    StreamMidwayspaceEvent,
     StreamResearchEvent,
     StreamSavedEvent,
     StreamSlideEvent,

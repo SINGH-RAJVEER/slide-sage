@@ -94,6 +94,8 @@ browser requests.
 
 - Email/password accounts must verify their email before normal use.
 - Verification OTPs expire after 15 minutes.
+- Resending a verification OTP disables the resend action during its cooldown;
+  the cooldown text is the resend confirmation.
 - Successful verification signs the user in.
 - Without `RESEND_API_KEY`, development mode logs OTPs; production does not.
 - The session user includes the server-owned `slideTokens` field.
