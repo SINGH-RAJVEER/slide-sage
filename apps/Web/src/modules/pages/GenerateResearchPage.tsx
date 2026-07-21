@@ -86,12 +86,6 @@ export default function GenerateResearchPage() {
         void startResearchPreview(researchRequest, savedResearch, researchAttempt > 0);
     }, [prompt, slideCount, researchAttempt, researchRequest, savedResearch, startResearchPreview]);
 
-    useEffect(() => {
-        if (isProceeding && streamingState.slides.length >= 1) {
-            navigate(ROUTES.presentation, { state: { isStreaming: true } });
-        }
-    }, [isProceeding, navigate, streamingState.slides.length]);
-
     const handleProceed = useCallback(async () => {
         if (
             !prompt ||
@@ -111,7 +105,7 @@ export default function GenerateResearchPage() {
             ...(estimatedTokens === null ? {} : { estimated_tokens: estimatedTokens }),
         };
 
-        const success = await startStreaming(
+        const streamingRequest = startStreaming(
             prompt,
             slideCount,
             detailLevel,
@@ -122,7 +116,9 @@ export default function GenerateResearchPage() {
             theme,
             layoutPreference,
         );
+        navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
+        const success = await streamingRequest;
         if (!success) {
             isProceedingRef.current = false;
             setIsProceeding(false);
@@ -135,6 +131,7 @@ export default function GenerateResearchPage() {
         retryPresentationId,
         theme,
         layoutPreference,
+        navigate,
         slideCount,
         sources,
         startStreaming,

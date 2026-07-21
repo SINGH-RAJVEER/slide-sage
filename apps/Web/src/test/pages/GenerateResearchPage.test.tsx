@@ -99,6 +99,10 @@ describe("GenerateResearchPage", () => {
                     <StreamingProvider>
                         <Routes>
                             <Route path="/generate/research" element={<GenerateResearchPage />} />
+                            <Route
+                                path="/presentation"
+                                element={<div>Viewer waiting for stream</div>}
+                            />
                         </Routes>
                     </StreamingProvider>
                 </MemoryRouter>,
@@ -149,7 +153,7 @@ describe("GenerateResearchPage", () => {
             fireEvent.keyDown(window, { key: "Enter" });
 
             await waitFor(() => expect(requestCount).toBe(2));
-            expect(view.getByText("Processing...")).toBeInTheDocument();
+            expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
         } finally {
             globalThis.fetch = originalFetch;
         }

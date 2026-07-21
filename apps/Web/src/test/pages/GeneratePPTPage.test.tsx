@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
-import { expect, it } from "bun:test";
-import { render } from "@testing-library/react";
+import { expect, it, mock } from "bun:test";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { StreamingProvider } from "@/modules/contexts/StreamingContext";
 import GeneratePPTPage from "@/modules/pages/GeneratePPTPage";
@@ -44,4 +44,48 @@ it("prefills a failed presentation prompt and generation options", () => {
     expect(view.getByText("Image-led")).toBeInTheDocument();
     expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
     expect(view.getByRole("button", { name: "Start Generating" })).not.toBeDisabled();
+});
+
+it("opens the viewer immediately while generation waits for the stream", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = mock(() => new Promise<Response>(() => {}));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    try {
+        const view = render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: "/generate",
+                        state: {
+                            retry: {
+                                prompt: "Immediate viewer navigation",
+                                slide_count: 5,
+                                detail_level: "balanced",
+                                tonality: "professional",
+                                research_enabled: false,
+                            },
+                        },
+                    },
+                ]}
+            >
+                <StreamingProvider>
+                    <Routes>
+                        <Route path="/generate" element={<GeneratePPTPage />} />
+                        <Route
+                            path="/presentation"
+                            element={<div>Viewer waiting for stream</div>}
+                        />
+                    </Routes>
+                </StreamingProvider>
+            </MemoryRouter>,
+        );
+
+        fireEvent.click(view.getByRole("button", { name: "Start Generating" }));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
 });

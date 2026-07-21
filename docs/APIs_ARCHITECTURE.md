@@ -80,6 +80,10 @@ owning modules.
    End-user generation failures use the same top-right position in an assertive
    pop-in below the header and dismiss automatically after an eight-second
    cooldown.
+   Starting generation navigates to the viewer in the same interaction, before
+   the stream response or first slide arrives. The viewer displays its centered
+   generation loader until streamed content is available and routes startup
+   failures to the presentation error screen.
 8. The web app treats `saved`, rather than `complete`, as the persistence signal.
    It refreshes an open Presentations page after that event and links the completed
    status to the stored deck.

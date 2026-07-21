@@ -42,15 +42,6 @@ export default function GeneratePPTPage() {
     const { streamingState, startStreaming } = useStreaming();
 
     useEffect(() => {
-        if (streamingState.slides.length >= 1 && loading) {
-            setLoading(false);
-            navigate(ROUTES.presentation, {
-                state: { isStreaming: true },
-            });
-        }
-    }, [streamingState.slides.length, loading, navigate]);
-
-    useEffect(() => {
         if (streamingState.error) {
             console.error("Presentation generation failed:", streamingState.error);
             setLoading(false);
@@ -130,7 +121,7 @@ export default function GeneratePPTPage() {
             return;
         }
 
-        const success = await startStreaming(
+        const streamingRequest = startStreaming(
             selectedTopics.join(", "),
             count,
             detailLevel,
@@ -141,7 +132,11 @@ export default function GeneratePPTPage() {
             theme,
             layoutPreference,
         );
+        navigate(ROUTES.presentation, {
+            state: { isStreaming: true },
+        });
 
+        const success = await streamingRequest;
         if (!success) {
             setLoading(false);
         }
