@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { API_URL } from "@/lib/api";
+import { API_URL, readJsonResponse } from "@/lib/api";
 import { getPresentationRetryDestination } from "@/lib/presentation-retry";
 import { ROUTES } from "@/router/paths";
 
@@ -42,15 +42,23 @@ export default function PresentationErrorPage({
             const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
                 credentials: "include",
             });
-            const result = (await response.json()) as PresentationResponse | ApiErrorResponse;
+            const result = await readJsonResponse<PresentationResponse | ApiErrorResponse>(
+                response,
+            );
 
             if (response.status === 401) {
                 setRetryError("Your session expired. Please sign in again.");
                 return;
             }
 
-            if ("error" in result) {
-                setRetryError(result.error.message);
+            if (!result) {
+                setRetryError("The presentation service returned an invalid response. Try again.");
+                return;
+            }
+
+            if (!response.ok || "error" in result) {
+                const message = "error" in result ? result.error.message : undefined;
+                setRetryError(message || "Unable to open this retry.");
                 return;
             }
 

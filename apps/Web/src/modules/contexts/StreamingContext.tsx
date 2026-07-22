@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { API_URL } from "@/lib/api";
+import { API_URL, readJsonResponse } from "@/lib/api";
 import { publishPresentationUpdated } from "@/lib/presentation-events";
 import type {
     PresentationData,
@@ -235,12 +235,15 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        error?: string | { message?: string };
+                        message?: string;
+                    }>(response);
                     const errorMessage =
-                        typeof errorData.error === "string"
+                        typeof errorData?.error === "string"
                             ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
+                            : errorData?.error?.message ||
+                              errorData?.message ||
                               "Failed to fetch research";
 
                     updateResearchPreviewState((previous) => ({
@@ -251,8 +254,17 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                     return false;
                 }
 
-                const data = (await response.json()) as ResearchPayload;
+                const data = await readJsonResponse<ResearchPayload>(response);
                 if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
+                    return false;
+                }
+
+                if (!data) {
+                    updateResearchPreviewState((previous) => ({
+                        ...previous,
+                        status: "error",
+                        error: "The research service returned an invalid response.",
+                    }));
                     return false;
                 }
 
@@ -375,28 +387,34 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (response.status === 402) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        slide_tokens_remaining?: number;
+                        slide_tokens_required?: number;
+                    }>(response);
                     releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
                         error: `Insufficient points. You have ${
-                            errorData.slide_tokens_remaining?.toFixed(1) || 0
+                            errorData?.slide_tokens_remaining?.toFixed(1) || 0
                         } points, but need at least ${
-                            errorData.slide_tokens_required || 1
+                            errorData?.slide_tokens_required || 1
                         } to generate.`,
                     }));
                     return false;
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        error?: string | { message?: string };
+                        message?: string;
+                    }>(response);
                     const errorMessage =
-                        typeof errorData.error === "string"
+                        typeof errorData?.error === "string"
                             ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
-                              "Failed to generate presentation";
+                            : errorData?.error?.message ||
+                              errorData?.message ||
+                              `Presentation service request failed (${response.status}).`;
 
                     releaseActiveStream();
                     setStreamingState((prev) => ({
@@ -698,28 +716,34 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (response.status === 402) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        slide_tokens_remaining?: number;
+                        slide_tokens_required?: number;
+                    }>(response);
                     releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
                         error: `Insufficient points. You have ${
-                            errorData.slide_tokens_remaining?.toFixed(1) || 0
+                            errorData?.slide_tokens_remaining?.toFixed(1) || 0
                         } points, but need at least ${
-                            errorData.slide_tokens_required || 1
+                            errorData?.slide_tokens_required || 1
                         } to iterate.`,
                     }));
                     return false;
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        error?: string | { message?: string };
+                        message?: string;
+                    }>(response);
                     const errorMessage =
-                        typeof errorData.error === "string"
+                        typeof errorData?.error === "string"
                             ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
-                              "Failed to iterate presentation";
+                            : errorData?.error?.message ||
+                              errorData?.message ||
+                              `Presentation service request failed (${response.status}).`;
                     releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,

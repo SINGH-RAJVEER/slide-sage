@@ -4,6 +4,7 @@ import {
     type PresentationJSON,
     type PresentationLayoutPreference,
     type PresentationStreamEvent,
+    type Slide,
     type Source,
     THEME_IDS,
     type ThemeId,
@@ -354,6 +355,8 @@ export async function* streamStructuredPresentation(
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const processor = new StreamProcessor();
+        const streamedSlides = new Map<number, Slide>();
+        let streamedTheme: ThemeId | undefined;
         let chunkCount = 0;
 
         try {
@@ -387,9 +390,10 @@ export async function* streamStructuredPresentation(
                 if (!processor.themeYielded) {
                     const theme = processor.extractTheme();
                     if (theme) {
+                        streamedTheme = options.preferredTheme || normalizeTheme(theme);
                         yield {
                             event: "theme",
-                            data: { theme: options.preferredTheme || normalizeTheme(theme) },
+                            data: { theme: streamedTheme },
                         };
                     }
                 }
@@ -403,6 +407,7 @@ export async function* streamStructuredPresentation(
                     }
                     const processedSlide = processSlide(slide, index);
                     if (!processedSlide) continue;
+                    streamedSlides.set(index, processedSlide);
 
                     if (processor.titleExtracted === null) {
                         processor.titleExtracted = processor.extractTitleFromSlide(
@@ -474,6 +479,37 @@ export async function* streamStructuredPresentation(
             return;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
+            const expectedSlideCount = options.expectedSlideCount;
+            const completeStreamedSlides =
+                expectedSlideCount === undefined
+                    ? []
+                    : Array.from({ length: expectedSlideCount }, (_, index) =>
+                          streamedSlides.get(index)
+                      );
+
+            if (
+                expectedSlideCount !== undefined &&
+                completeStreamedSlides.every((slide): slide is Slide => slide !== undefined)
+            ) {
+                const presentation: PresentationJSON = {
+                    schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                    slides: completeStreamedSlides,
+                    title: processor.titleExtracted || options.fallbackTitle,
+                    theme: options.preferredTheme || streamedTheme || "corporate-blue",
+                    totalSlides: completeStreamedSlides.length,
+                    tokens_used: processor.currentTotalTokensUsed,
+                };
+                if (options.sources.length) {
+                    presentation.sources = options.sources;
+                }
+
+                console.warn(
+                    `${options.operation} stream ended after all requested slides were received; preserving the completed deck: ${message}`
+                );
+                yield { event: "complete", data: presentation };
+                return;
+            }
+
             const retryable = !(error instanceof OpenRouterStreamError) || error.retryable;
             console.warn(
                 `${options.operation} stream attempt ${attempt}/${maxAttempts} failed: ${message}`
