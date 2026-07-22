@@ -87,10 +87,14 @@ stream begins with `created` for new decks, forwards generation events such as
 theme and slide updates, and ends with `saved`. The API sends SSE keepalive
 comments while OpenRouter is silent. A `retry` event means the current partial
 attempt must be discarded; its payload includes the next attempt, attempt limit,
-delay, and reason. Only a validated `complete` event is charged and stored as a
-ready deck. Failures use an `error` event and persist retry metadata without
-partial slides. Clients should parse the response stream rather than use the
-browser `EventSource` API, which only supports GET.
+delay, and reason. If every requested slide was parsed before the provider stream
+failed or returned a malformed trailing envelope, the API preserves those slides
+and completes the deck instead of emitting a destructive retry. Only a
+`complete` event is charged and stored as a ready deck. Failures use an `error`
+event and persist retry metadata without partial slides. Clients should parse the
+response stream rather than use the browser `EventSource` API, which only
+supports GET. Web clients also treat non-JSON deployment and proxy error pages as
+service failures rather than exposing a JSON parser exception.
 
 The API validates the requested theme and layout preference before generation.
 Invalid or omitted values fall back to the `corporate-blue` theme and `auto`

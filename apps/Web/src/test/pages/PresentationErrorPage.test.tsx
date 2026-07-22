@@ -106,6 +106,40 @@ describe("PresentationErrorPage", () => {
         }
     });
 
+    it("handles an HTML deployment error without exposing a JSON parser failure", async () => {
+        const { default: PresentationErrorPage } = await import(
+            "@/modules/pages/PresentationErrorPage"
+        );
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = mock(() =>
+            Promise.resolve(
+                new Response("<!DOCTYPE html><title>Deployment error</title>", {
+                    status: 502,
+                    headers: { "Content-Type": "text/html" },
+                }),
+            ),
+        ) as unknown as typeof fetch;
+
+        try {
+            const view = render(
+                <MemoryRouter initialEntries={["/presentation-error"]}>
+                    <PresentationErrorPage presentationId="presentation_42" />
+                </MemoryRouter>,
+            );
+
+            fireEvent.click(view.getByRole("button", { name: "Retry presentation" }));
+
+            expect(
+                await view.findByText(
+                    "The presentation service returned an invalid response. Try again.",
+                ),
+            ).toBeInTheDocument();
+            expect(view.queryByText(/Unexpected token/)).toBeNull();
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
     it("uses the provided delete action for an unfinished presentation", async () => {
         const { default: PresentationErrorPage } = await import(
             "@/modules/pages/PresentationErrorPage"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { normalizeApiUrl, resolveApiUrl } from "@/lib/api";
+import { normalizeApiUrl, readJsonResponse, resolveApiUrl } from "@/lib/api";
 
 describe("normalizeApiUrl", () => {
     it("adds HTTPS to a bare deployed API hostname", () => {
@@ -64,5 +64,16 @@ describe("resolveApiUrl", () => {
                 "https://slide-sage.pages.dev/profile",
             ),
         ).toBe("https://api.slidesage.app");
+    });
+});
+
+describe("readJsonResponse", () => {
+    it("returns null when a deployment returns HTML", async () => {
+        const response = new Response("<!DOCTYPE html><title>Bad gateway</title>", {
+            status: 502,
+            headers: { "Content-Type": "text/html" },
+        });
+
+        expect(await readJsonResponse(response)).toBeNull();
     });
 });

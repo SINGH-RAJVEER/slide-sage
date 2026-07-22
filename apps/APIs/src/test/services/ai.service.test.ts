@@ -182,7 +182,7 @@ describe("AIService resilient presentation generation", () => {
         expect(events.at(-1)?.event).toBe("complete");
     });
 
-    it("restarts after a connection drops even when partial slides were already emitted", async () => {
+    it("preserves a complete deck when the connection drops after every slide", async () => {
         const fetchMock = mock()
             .mockResolvedValueOnce(interruptedOpenRouterResponse(validDeck("Discarded Deck")))
             .mockResolvedValueOnce(openRouterResponse(validDeck("Final Deck")));
@@ -191,12 +191,11 @@ describe("AIService resilient presentation generation", () => {
         const events = await collectGenerationEvents(new AIService());
         const eventNames = events.map((event) => event.event);
 
-        expect(fetchMock).toHaveBeenCalledTimes(2);
-        expect(eventNames).toContain("retry");
-        expect(eventNames.indexOf("slide")).toBeLessThan(eventNames.indexOf("retry"));
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(eventNames).not.toContain("retry");
         const complete = events.find((event) => event.event === "complete");
         const finalSlide = complete?.data.slides[0];
-        expect(finalSlide && "title" in finalSlide ? finalSlide.title : "").toBe("Final Deck");
+        expect(finalSlide && "title" in finalSlide ? finalSlide.title : "").toBe("Discarded Deck");
     });
 
     it("trims model overproduction without retrying or streaming surplus slides", async () => {
