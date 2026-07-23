@@ -45,6 +45,10 @@ export const router = createBrowserRouter([
                         lazy: lazyRoute(() => import("@/modules/pages/GenerateResearchPage")),
                     },
                     {
+                        path: "marketplace",
+                        lazy: lazyRoute(() => import("@/modules/pages/MarketplacePage")),
+                    },
+                    {
                         path: "presentations",
                         lazy: lazyRoute(() => import("@/modules/pages/PresentationsGridPage")),
                     },

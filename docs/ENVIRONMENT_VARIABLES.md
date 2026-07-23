@@ -25,6 +25,8 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 Devenv may select another PostgreSQL port when the default is occupied. Its migration
 task constructs `DATABASE_URL` from the active `POSTGRES_PORT`, so values loaded from
 `.env` cannot redirect migrations to a stale local port.
+The managed API process uses the same active-port connection string and does not
+reload `.env`, preventing its development command from reverting to the default port.
 
 ## AI and Research
 

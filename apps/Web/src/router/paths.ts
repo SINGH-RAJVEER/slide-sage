@@ -7,6 +7,7 @@ export const ROUTES = {
     profile: "/profile",
     generate: "/generate",
     research: "/generate/research",
+    marketplace: "/marketplace",
     presentations: "/presentations",
     presentationById: (presentationId: number | string) => `/presentations/${presentationId}`,
     presentation: "/presentation",

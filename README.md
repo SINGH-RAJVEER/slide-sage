@@ -13,7 +13,7 @@ SlideSage is an AI-assisted presentation builder. It generates, researches, revi
 
 ## Local Development
 
-Requirements: Nix with [devenv](https://devenv.sh/getting-started/) enabled.
+Requirements: Nix with [devenv](https://devenv.sh/getting-started/) installed.
 
 ```bash
 cp .env.example .env
@@ -74,3 +74,4 @@ The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector, OpenRout
 - [API reference](docs/API_OVERVIEW.md)
 - [Authentication](docs/AUTH_API.md)
 - [RAG and semantic memory](docs/RAG_IMPLEMENTATION.md)
+

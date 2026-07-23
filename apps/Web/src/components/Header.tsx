@@ -64,26 +64,26 @@ export default function Header() {
 
     return (
         <header className="w-full border-b border-white/10 bg-black/10">
-            <div className="flex w-full items-center justify-between px-6 py-5 md:px-10 h-20">
+            <div className="grid h-20 w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-4 md:grid-cols-3 md:px-10 md:py-5">
                 {/* Left Side: Logo */}
-                <div className="flex items-center w-auto md:w-1/3">
+                <div className="flex items-center md:w-full">
                     <Link to={ROUTES.home} aria-label="Go to home">
                         <img
                             src="/icon.png"
                             alt="SlideSage"
-                            className="h-12 w-auto object-contain"
+                            className="h-10 w-auto object-contain md:h-12"
                         />
                     </Link>
                 </div>
 
                 {/* Center: Tabs */}
                 {!isAuthPage && (
-                    <div className="flex-1 flex justify-center w-auto md:w-1/3">
-                        <nav className="flex items-center gap-2">
+                    <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <nav className="flex w-max items-center gap-1 md:mx-auto md:gap-2">
                             <Link
                                 to={ROUTES.generate}
                                 className={cn(
-                                    "rounded-lg px-4 py-2.5 text-base font-medium transition-colors",
+                                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors md:px-4 md:py-2.5 md:text-base",
                                     isActive(ROUTES.generate)
                                         ? "bg-white/10 text-white"
                                         : "text-white/70 hover:bg-white/5 hover:text-white",
@@ -94,7 +94,7 @@ export default function Header() {
                             <Link
                                 to={ROUTES.presentations}
                                 className={cn(
-                                    "rounded-lg px-4 py-2.5 text-base font-medium transition-colors",
+                                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors md:px-4 md:py-2.5 md:text-base",
                                     isActive(ROUTES.presentations)
                                         ? "bg-white/10 text-white"
                                         : "text-white/70 hover:bg-white/5 hover:text-white",
@@ -102,18 +102,29 @@ export default function Header() {
                             >
                                 Presentations
                             </Link>
+                            <Link
+                                to={ROUTES.marketplace}
+                                className={cn(
+                                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors md:px-4 md:py-2.5 md:text-base",
+                                    isActive(ROUTES.marketplace)
+                                        ? "bg-white/10 text-white"
+                                        : "text-white/70 hover:bg-white/5 hover:text-white",
+                                )}
+                            >
+                                Marketplace
+                            </Link>
                         </nav>
                     </div>
                 )}
 
                 {/* Right Side: Profile / Points */}
-                <div className="flex items-center justify-end w-auto md:w-1/3 gap-4">
+                <div className="flex items-center justify-end gap-2 md:w-full md:gap-4">
                     {user && (
                         <>
                             <button
                                 type="button"
                                 onClick={() => navigate(ROUTES.purchase)}
-                                className="rounded-full border border-white/10 px-5 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                className="hidden rounded-full border border-white/10 px-5 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 lg:block"
                                 title="Click to purchase more points"
                             >
                                 {`${user.slideTokens?.toFixed(1) ?? "0.0"} points`}

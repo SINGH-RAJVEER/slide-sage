@@ -7,6 +7,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useInstalledMarketplaceThemes } from "@/hooks/useInstalledMarketplaceThemes";
 import type { ThemeId } from "@/modules/types/presentation";
 
 const THEMES: Array<{
@@ -31,6 +32,15 @@ export const GenerationThemeSelector: React.FC<GenerationThemeSelectorProps> = (
     theme,
     onThemeChange,
 }) => {
+    const installedThemes = useInstalledMarketplaceThemes();
+    const installedOptions = installedThemes.map((item) => ({
+        id: item.themeId,
+        label: item.name,
+        colors:
+            THEMES.find((themeOption) => themeOption.id === item.themeId)?.colors ||
+            THEMES[0].colors,
+        marketplaceId: item.marketplaceId,
+    }));
     const selected = THEMES.find((item) => item.id === theme) || THEMES[0];
 
     return (
@@ -85,6 +95,32 @@ export const GenerationThemeSelector: React.FC<GenerationThemeSelectorProps> = (
                             {item.label}
                         </span>
                         {item.id === theme && <Check className="h-4 w-4 text-blue-300" />}
+                    </DropdownMenuItem>
+                ))}
+                {installedOptions.map((item) => (
+                    <DropdownMenuItem
+                        key={item.marketplaceId}
+                        onClick={() => onThemeChange(item.id)}
+                        className="my-1 cursor-pointer rounded-lg px-3 py-2.5 text-white/80 focus:bg-white/10 focus:text-white"
+                    >
+                        <span className="flex flex-1 items-center gap-3">
+                            <span
+                                className="flex h-6 w-8 shrink-0 overflow-hidden rounded border border-white/10 shadow-sm"
+                                aria-hidden="true"
+                            >
+                                {item.colors.map((color) => (
+                                    <span
+                                        key={color}
+                                        className="h-full flex-1"
+                                        style={{ backgroundColor: color }}
+                                    />
+                                ))}
+                            </span>
+                            <span className="flex-1">{item.label}</span>
+                            <span className="text-[10px] uppercase tracking-wider text-amber-200/55">
+                                Marketplace
+                            </span>
+                        </span>
                     </DropdownMenuItem>
                 ))}
             </DropdownMenuContent>

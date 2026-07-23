@@ -9,6 +9,7 @@
 - Find a way to implement images in the presentations
 - Add an option to add files as inputs
 - Make streaming partially returned slide data possible
+- Add widget generation functionality into slides
 
 ## Issues
 

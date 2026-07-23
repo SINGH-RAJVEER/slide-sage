@@ -56,6 +56,7 @@ describe("Header", () => {
 
         expect(queryByText("Generate")).toBeNull();
         expect(queryByText("Presentations")).toBeNull();
+        expect(queryByText("Marketplace")).toBeNull();
     });
 
     it("hides navigation tabs on nested auth pages", async () => {
@@ -72,6 +73,7 @@ describe("Header", () => {
 
         expect(queryByText("Generate")).toBeNull();
         expect(queryByText("Presentations")).toBeNull();
+        expect(queryByText("Marketplace")).toBeNull();
 
         rerender(
             <MemoryRouter initialEntries={["/sign-up/verify-email"]}>
@@ -81,6 +83,7 @@ describe("Header", () => {
 
         expect(queryByText("Generate")).toBeNull();
         expect(queryByText("Presentations")).toBeNull();
+        expect(queryByText("Marketplace")).toBeNull();
     });
 
     it("shows first and last name initials when image is missing", async () => {
