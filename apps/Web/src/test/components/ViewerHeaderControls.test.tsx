@@ -15,7 +15,7 @@ const renderHeader = (
         currentTemplate: "corporate-blue",
         onBack: mock(),
         onTemplateChange: mock(),
-        selectedLayout: "content",
+        selectedLayout: "body",
         onLayoutChange: mock(),
         layoutDisabled: false,
         onIterate: mock(),
@@ -43,4 +43,16 @@ it("disables Present until slides are available", () => {
     fireEvent.click(present);
 
     expect(onPresent).not.toHaveBeenCalled();
+});
+
+it("shows a fixed theme indicator and omits generation controls in preview mode", () => {
+    const { view } = renderHeader({
+        themeLabel: "Midnight Signal",
+        showIterate: false,
+        showLayoutSelector: false,
+    });
+
+    expect(view.getByText("Midnight Signal")).toBeInTheDocument();
+    expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
+    expect(view.queryByRole("combobox")).toBeNull();
 });

@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/router/paths";
 
-export default function Header() {
+export default function Header({ sticky = false }: { sticky?: boolean }) {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -63,7 +63,12 @@ export default function Header() {
     };
 
     return (
-        <header className="w-full border-b border-white/10 bg-black/10">
+        <header
+            className={cn(
+                "w-full border-b border-white/10 bg-[hsl(222,27%,12%)]/95 backdrop-blur-md",
+                sticky && "sticky top-0 z-50",
+            )}
+        >
             <div className="grid h-20 w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-4 md:grid-cols-3 md:px-10 md:py-5">
                 {/* Left Side: Logo */}
                 <div className="flex items-center md:w-full">

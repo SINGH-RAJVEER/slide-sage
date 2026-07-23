@@ -1,7 +1,12 @@
-import type { Slide, Source } from "@slide-sage/types";
+import type { Slide, Source, WidgetBlock } from "@slide-sage/types";
+
+export type WidgetSpecV1 = Pick<WidgetBlock, "version" | "kind" | "direction" | "nodes" | "edges">;
+export type WidgetBlockLike = WidgetBlock;
 
 export type {
     BaseSlide,
+    BlockEmphasis,
+    BlockTreatment,
     BulletBlock,
     CalloutBlock,
     ChartConfig,
@@ -20,8 +25,11 @@ export type {
     ResearchPayload,
     Slide,
     SlideBlock,
+    SlideDensity,
     SlideLayout,
+    SlidePattern,
     SlideRegion,
+    SlideTone,
     Source,
     StatsBlock,
     StreamCompleteEvent,
@@ -36,6 +44,13 @@ export type {
     StructuredSlide,
     TableBlock,
     ThemeId,
+    WidgetBlock,
+    WidgetDirection,
+    WidgetEdge,
+    WidgetKind,
+    WidgetNode,
+    WidgetNodeRole,
+    WidgetTone,
 } from "@slide-sage/types";
 
 export {

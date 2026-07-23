@@ -9,12 +9,11 @@
 - Find a way to implement images in the presentations
 - Add an option to add files as inputs
 - Make streaming partially returned slide data possible
-- Add widget generation functionality into slides
 
 ## Issues
 
-- Fix streaming
-- Fix the fullscreen view
 - In the deployment sign out button does not function properly
 - When checking presentations, the entire page shouldnt load, instead just the part with the actual presentations listing
 - The second generate is pressed it should lead to the viewer page with loaders waiting for the stream to start
+- The charts showing percentages and other metrics on hover should instead have it displayed from the get go
+- Points should be consumed for every successful search

@@ -1,4 +1,4 @@
-import { ArrowLeft, Presentation, Sparkles } from "lucide-react";
+import { ArrowLeft, Palette, Presentation, Sparkles } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { SlideLayoutSelector } from "@/components/Viewer/SlideLayoutSelector";
@@ -17,6 +17,9 @@ interface ViewerHeaderControlsProps {
     onIterate: () => void;
     onPresent: () => void;
     presentDisabled?: boolean;
+    themeLabel?: string;
+    showIterate?: boolean;
+    showLayoutSelector?: boolean;
 }
 
 export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
@@ -31,6 +34,9 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
     onIterate,
     onPresent,
     presentDisabled = false,
+    themeLabel,
+    showIterate = true,
+    showLayoutSelector = true,
 }) => {
     return (
         <div
@@ -52,24 +58,35 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
             </div>
 
             <div className="flex items-center justify-center gap-2">
-                <TemplateSelector
-                    selectedTemplate={currentTemplate}
-                    onTemplateChange={onTemplateChange}
-                />
-                <SlideLayoutSelector
-                    selectedLayout={selectedLayout}
-                    onLayoutChange={onLayoutChange}
-                    disabled={layoutDisabled}
-                />
-                <Button
-                    onClick={onIterate}
-                    variant="outline"
-                    disabled={!canIterate}
-                    className="bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/5 text-white transition-all duration-300"
-                >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Iterate
-                </Button>
+                {themeLabel ? (
+                    <div className="flex h-10 items-center gap-2 rounded-md border border-white/5 bg-white/5 px-3 text-sm text-white/75">
+                        <Palette className="size-4 text-blue-400" />
+                        {themeLabel}
+                    </div>
+                ) : (
+                    <TemplateSelector
+                        selectedTemplate={currentTemplate}
+                        onTemplateChange={onTemplateChange}
+                    />
+                )}
+                {showLayoutSelector && (
+                    <SlideLayoutSelector
+                        selectedLayout={selectedLayout}
+                        onLayoutChange={onLayoutChange}
+                        disabled={layoutDisabled}
+                    />
+                )}
+                {showIterate && (
+                    <Button
+                        onClick={onIterate}
+                        variant="outline"
+                        disabled={!canIterate}
+                        className="bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/5 text-white transition-all duration-300"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Iterate
+                    </Button>
+                )}
             </div>
 
             <div className="flex items-center justify-end gap-2">

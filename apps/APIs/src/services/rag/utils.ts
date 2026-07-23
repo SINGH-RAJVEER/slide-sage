@@ -36,11 +36,28 @@ export function buildSlideSummary(slide: Slide, index: number): { title: string;
         : isLegacyHtmlSlide(slide)
           ? stripHtml(slide.html)
           : truncateText(JSON.stringify(slide.chartConfig), 700);
+    const composition = isContentSlide(slide)
+        ? [
+              `Tone: ${slide.tone}`,
+              `Density: ${slide.density}`,
+              `Pattern: ${slide.pattern}`,
+              slide.eyebrow ? `Eyebrow: ${slide.eyebrow}` : "",
+              slide.regionLabels
+                  ? `Region labels: ${Object.entries(slide.regionLabels)
+                        .map(([region, label]) => `${region}=${label}`)
+                        .join(", ")}`
+                  : "",
+              slide.backgroundImage
+                  ? `Background image: ${slide.backgroundImage.alt}; focal point ${slide.backgroundImage.focalPoint}; overlay ${slide.backgroundImage.overlay}`
+                  : "",
+          ].filter(Boolean)
+        : [];
     const summary = [
         `Slide ${index + 1}`,
         `Title: ${title}`,
         `Type: ${slide.type || "content"}`,
         `Layout: ${layout}`,
+        ...composition,
         content ? `Content: ${truncateText(content, 1200)}` : "",
     ]
         .filter(Boolean)
@@ -188,27 +205,40 @@ function getSlideTitle(slide: Slide): string {
 }
 
 function serializeBlock(block: SlideBlock): string {
+    const semantics = `${block.emphasis || "standard"}/${block.treatment || "plain"}`;
     switch (block.type) {
         case "paragraph":
-            return `[${block.region}] ${block.text}`;
+            return `[${block.region}; ${semantics}] ${block.text}`;
         case "bullets":
-            return `[${block.region}] ${block.items.join("; ")}`;
+            return `[${block.region}; ${semantics}] ${block.items.join("; ")}`;
         case "table":
-            return `[${block.region}] ${[block.headers, ...block.rows]
+            return `[${block.region}; ${semantics}] ${[block.headers, ...block.rows]
                 .map((row) => row.join(" | "))
                 .join("; ")}`;
         case "image":
-            return `[${block.region}] Image: ${block.alt} ${block.caption}`;
+            return `[${block.region}; ${semantics}] Image: ${block.alt} ${block.caption}`;
         case "image-placeholder":
-            return `[${block.region}] Image placeholder: ${block.alt} ${block.caption}`;
+            return `[${block.region}; ${semantics}] Image placeholder: ${block.alt} ${block.caption}`;
         case "quote":
-            return `[${block.region}] Quote: ${block.text} ${block.attribution}`;
+            return `[${block.region}; ${semantics}] Quote: ${block.text} ${block.attribution}`;
         case "callout":
-            return `[${block.region}] ${block.heading}: ${block.text}`;
+            return `[${block.region}; ${semantics}] ${block.heading}: ${block.text}`;
         case "stats":
-            return `[${block.region}] ${block.items
+            return `[${block.region}; ${semantics}] ${block.items
                 .map((item) => `${item.value} ${item.label}`)
                 .join("; ")}`;
+        case "widget": {
+            const nodes = block.nodes
+                .map(
+                    (node) =>
+                        `${node.label} (${node.role}, ${node.tone})${node.value ? ` = ${node.value}` : ""}${node.description ? `: ${node.description}` : ""}${node.parentId ? ` [parent: ${node.parentId}]` : ""}`
+                )
+                .join("; ");
+            const edges = block.edges
+                .map((edge) => `${edge.from} -> ${edge.to}${edge.label ? `: ${edge.label}` : ""}`)
+                .join("; ");
+            return `[${block.region}; ${semantics}] ${block.kind} widget, ${block.direction}. Nodes: ${nodes}${edges ? ` Edges: ${edges}` : ""}`;
+        }
     }
 }
 

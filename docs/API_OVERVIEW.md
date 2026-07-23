@@ -58,9 +58,31 @@ available workspace and supports Enter as a shortcut to begin generation.
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
 
-Presentation documents use schema version 3. The API normalizes older documents
-on read by assigning deterministic block IDs and defaults for dimensions, speaker
-notes, transitions, and effects. `PATCH /api/presentations/:id` accepts a non-empty
+Presentation documents use schema version 5. The API continues to load older
+documents and maps `title` to `cover`, `content` to `body`, `two-column` to
+`split`, and `image-right` to `media-right`. Legacy `left` and `right` regions
+become semantic `primary`, `secondary`, or `media` regions. New content layouts
+also include `section`, `comparison`, `sidebar`, `media-left`, `quote`,
+`spotlight`, and `canvas`.
+
+Schema-v5 slides expose only bounded visual intent: tone, density, pattern, and
+an optional HTTPS background image with alt text, a named focal point, and a
+named overlay strength. Blocks similarly use allowlisted emphasis and treatment
+values. Content slides may include an eyebrow and semantic region labels. No
+arbitrary CSS, colors, coordinates, dimensions, or positioning values are part
+of the composition contract.
+
+Content slides support bounded, data-only semantic widgets for timelines, flows,
+architecture diagrams, and comparisons. Widget nodes use allowlisted roles and
+tones, edges can reference only nodes in the same widget, and direction is
+horizontal or vertical. Generated widgets cannot carry code, HTML, raw SVG,
+styles, class names, attributes, or URLs.
+The Web renderer compiles widgets into deterministic full-width or column-width
+SVG scenes and exports their nodes, text, and connectors as editable PowerPoint
+objects. Unsupported widget data is shown explicitly rather than silently omitted.
+The API normalizes older documents on read by assigning deterministic block IDs
+and defaults for dimensions, composition fields, transitions, and effects.
+`PATCH /api/presentations/:id` accepts a non-empty
 `mutations` array. Supported operations are `update-presentation`, `update-slide`,
 `delete-slide`, and `reorder-slides`. Slide IDs cannot be changed, reorder requests
 must contain every slide exactly once, and the final slide cannot be deleted. All

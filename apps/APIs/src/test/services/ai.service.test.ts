@@ -136,8 +136,15 @@ describe("AIService resilient presentation generation", () => {
         expect(schema?.properties?.slides?.["minItems"]).toBe(1);
         expect(schema?.properties?.slides?.["maxItems"]).toBe(1);
         expect(schema?.properties?.totalSlides).toEqual({ const: 1 });
-        expect(schema?.properties?.schemaVersion).toEqual({ const: 3 });
+        expect(schema?.properties?.schemaVersion).toEqual({ const: 5 });
         expect(JSON.stringify(responseFormat)).toContain("image-placeholder");
+        expect(JSON.stringify(responseFormat)).toContain('"const":"widget"');
+        expect(JSON.stringify(responseFormat)).toContain('"maxItems":16');
+        expect(JSON.stringify(responseFormat)).toContain('"maxItems":32');
+        expect(JSON.stringify(responseFormat)).toContain('"enum":["cover","section","body"');
+        expect(JSON.stringify(responseFormat)).toContain(
+            '"enum":["main","primary","secondary","media"]'
+        );
     });
 
     it("retries a transient HTTP failure and completes from a fragmented stream", async () => {
@@ -158,7 +165,7 @@ describe("AIService resilient presentation generation", () => {
         ]);
         const complete = events.find((event) => event.event === "complete");
         expect(complete?.data.slides).toHaveLength(1);
-        expect(complete?.data.schemaVersion).toBe(3);
+        expect(complete?.data.schemaVersion).toBe(5);
         expect(complete?.data.theme).toBe("corporate-blue");
         expect(complete?.data.tokens_used).toBe(42);
     });

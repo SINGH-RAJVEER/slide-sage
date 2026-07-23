@@ -223,7 +223,7 @@ export default function GenerateResearchPage() {
                                 )}
                             </div>
 
-                            <div className="overflow-x-auto rounded-md border border-white/10 bg-black/15">
+                            <div className="max-h-[62vh] overflow-auto rounded-md border border-white/10 bg-black/15">
                                 <table
                                     className="w-full min-w-[880px] table-fixed text-left"
                                     aria-label="Research sources"
@@ -234,29 +234,29 @@ export default function GenerateResearchPage() {
                                         <col className="w-[17%]" />
                                         <col className="w-[7%]" />
                                     </colgroup>
-                                    <thead>
+                                    <thead className="sticky top-0 z-20 bg-[hsl(222,27%,12%)]">
                                         <tr className="border-b border-white/10 bg-white/[0.025]">
                                             <th
                                                 scope="col"
-                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                                className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
                                             >
                                                 Source
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                                className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
                                             >
                                                 Research note
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                                className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
                                             >
                                                 Details
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="sticky right-0 bg-background/95 px-3 py-3"
+                                                className="sticky right-0 top-0 bg-[hsl(222,27%,12%)] px-3 py-3"
                                             >
                                                 <span className="sr-only">Open source</span>
                                             </th>

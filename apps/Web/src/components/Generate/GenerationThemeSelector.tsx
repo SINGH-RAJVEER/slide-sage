@@ -36,9 +36,8 @@ export const GenerationThemeSelector: React.FC<GenerationThemeSelectorProps> = (
     const installedOptions = installedThemes.map((item) => ({
         id: item.themeId,
         label: item.name,
-        colors:
-            THEMES.find((themeOption) => themeOption.id === item.themeId)?.colors ||
-            THEMES[0].colors,
+        colors: THEMES.find((themeOption) => themeOption.id === item.themeId)?.colors ||
+            THEMES[0]?.colors || ["#0f172a", "#38bdf8", "#818cf8"],
         marketplaceId: item.marketplaceId,
     }));
     const selected = THEMES.find((item) => item.id === theme) || THEMES[0];

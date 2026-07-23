@@ -1,4 +1,10 @@
-import type { SlideBlock, SlideLayout, SlideRegion } from "@/modules/types/presentation";
+import { normalizeWidgetSpec } from "@/lib/widget-scene";
+import type {
+    SlideBlock,
+    SlideLayout,
+    SlideRegion,
+    WidgetBlockLike,
+} from "@/modules/types/presentation";
 
 export type SlideBlockKind = SlideBlock["type"];
 export type EditableSlideBlock = SlideBlock & { id: string };
@@ -12,6 +18,7 @@ export const BLOCK_LABELS: Record<SlideBlockKind, string> = {
     quote: "Quote",
     callout: "Callout",
     stats: "Statistics",
+    widget: "Widget",
 };
 
 function createBlockId(slideId: string): string {
@@ -24,9 +31,15 @@ export function normalizeBlockRegion(
     layout: SlideLayout,
     type: SlideBlockKind,
 ): SlideRegion {
-    if (layout === "two-column") return region === "right" ? "right" : "left";
-    if (layout === "image-right" && (type === "image" || type === "image-placeholder")) {
-        return "right";
+    if (layout === "split" || layout === "comparison" || layout === "sidebar") {
+        return region === "secondary" ? "secondary" : "primary";
+    }
+    if (layout === "media-left" || layout === "media-right") {
+        if (type === "image" || type === "image-placeholder") return "media";
+        return region === "secondary" ? "secondary" : "primary";
+    }
+    if (layout === "spotlight") {
+        return region === "secondary" ? "secondary" : "primary";
     }
     return "main";
 }
@@ -76,6 +89,35 @@ export function createDefaultBlock(
             return { ...base, type: kind, heading: "Key point", text: "Add supporting detail" };
         case "stats":
             return { ...base, type: kind, items: [{ value: "0", label: "Metric" }] };
+        case "widget":
+            return {
+                ...base,
+                type: kind,
+                version: 1,
+                kind: "flow",
+                direction: "horizontal",
+                nodes: [
+                    {
+                        id: "step-1",
+                        role: "start",
+                        label: "First step",
+                        description: "",
+                        value: "",
+                        tone: "accent",
+                        parentId: "",
+                    },
+                    {
+                        id: "step-2",
+                        role: "end",
+                        label: "Next step",
+                        description: "",
+                        value: "",
+                        tone: "neutral",
+                        parentId: "",
+                    },
+                ],
+                edges: [{ from: "step-1", to: "step-2", label: "" }],
+            };
     }
 }
 
@@ -99,7 +141,7 @@ export function moveBlock(
     return next;
 }
 
-export function blockPreview(block: SlideBlock): string {
+export function blockPreview(block: SlideBlock | WidgetBlockLike): string {
     switch (block.type) {
         case "paragraph":
         case "quote":
@@ -115,6 +157,12 @@ export function blockPreview(block: SlideBlock): string {
             return `${block.heading}: ${block.text}`;
         case "stats":
             return block.items.map((item) => `${item.value} ${item.label}`).join(" · ");
+        case "widget": {
+            const spec = normalizeWidgetSpec(block);
+            return spec
+                ? `${spec.kind}: ${spec.nodes.map((node) => node.label).join(" · ")}`
+                : "Invalid generated widget";
+        }
     }
 }
 
@@ -140,6 +188,9 @@ export function validateBlocks(blocks: EditableSlideBlock[]): string | null {
         }
         if (block.type === "stats" && block.items.length === 0) {
             return "Statistics need at least one value.";
+        }
+        if (block.type === "widget" && !normalizeWidgetSpec(block)) {
+            return "Widgets need a valid version 1 specification.";
         }
     }
     return null;

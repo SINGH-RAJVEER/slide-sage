@@ -100,11 +100,21 @@ owning modules.
 
 ### Presentation Document
 
-New presentations use schema version `2`. A content slide chooses one of the
-`title`, `content`, `two-column`, `quote`, or `image-right` layouts and contains
-bounded paragraph, bullet, table, image, image-placeholder, quote, callout, or
-statistic blocks. Image placeholders reserve a stable visual area and describe
-the intended asset without inventing or fetching an ungrounded image URL.
+New presentations use schema version `5`. A content slide chooses a semantic
+layout from `cover`, `section`, `body`, `split`, `comparison`, `sidebar`,
+`media-left`, `media-right`, `quote`, `spotlight`, or `canvas`. Blocks occupy
+`main`, `primary`, `secondary`, or `media` regions and contain bounded paragraph,
+bullet, table, image, image-placeholder, quote, callout, statistic, or widget
+data. The schema adds semantic slide tone, density, and pattern plus bounded block
+emphasis and treatment. Optional background images require HTTPS and use named
+focal-point and overlay values rather than coordinates or arbitrary styling.
+Eyebrows and region labels provide optional narrative context.
+
+Stored older layouts normalize to their v5 equivalents: `title` becomes `cover`,
+`content` becomes `body`, `two-column` becomes `split`, and `image-right` becomes
+`media-right`. Old `left` and `right` regions become the appropriate semantic
+regions. Image placeholders reserve a stable visual area and describe the
+intended asset without inventing or fetching an ungrounded image URL.
 Chart slides retain their structured chart configuration. The API normalizes
 model output at the stream boundary, drops unknown fields and unsupported blocks,
 restricts image URLs to HTTPS, and stores only the normalized document.

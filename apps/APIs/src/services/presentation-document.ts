@@ -21,6 +21,7 @@ const BLOCK_TYPES = new Set([
     "quote",
     "callout",
     "stats",
+    "widget",
 ]);
 
 function record(value: unknown): Record<string, unknown> | null {

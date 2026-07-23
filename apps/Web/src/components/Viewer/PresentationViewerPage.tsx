@@ -9,6 +9,7 @@ import { usePlayback } from "@/hooks/usePlayback";
 import type { ViewerLocationState } from "@/hooks/usePresentationData";
 import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
+import { useViewerKeyboardNavigation } from "@/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@/lib/api";
 import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
 import { persistPresentationMutations } from "@/lib/presentation-mutations";
@@ -29,6 +30,7 @@ import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
 import { useTemplate } from "@/modules/useTemplate";
 import { ROUTES } from "@/router/paths";
 import { CenteredStatusScreen } from "./CenteredStatusScreen";
+import { ScaledSlide } from "./ScaledSlide";
 import { SlideRenderer } from "./SlideRenderer";
 import { ViewerFullscreenOverlayControls } from "./ViewerFullscreenOverlayControls";
 import { ViewerHeaderControls } from "./ViewerHeaderControls";
@@ -128,11 +130,6 @@ export default function PresentationViewerPage() {
     }, [intervalMode]);
 
     const slideCount = presentation?.slides.length ?? 0;
-    const keyboardSlideRef = useRef(navigation.currentSlide);
-    useEffect(() => {
-        keyboardSlideRef.current = navigation.currentSlide;
-    }, [navigation.currentSlide]);
-
     const playback = usePlayback({
         slideCount,
         currentSlide: navigation.currentSlide,
@@ -142,47 +139,12 @@ export default function PresentationViewerPage() {
         },
     });
 
-    // Keyboard navigation
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (slideCount <= 0) return;
-            const target = e.target as HTMLElement | null;
-            if (target?.matches("input, textarea, select") || target?.isContentEditable) {
-                return;
-            }
-
-            if (e.key === "ArrowLeft" || e.key.toLowerCase() === "j") {
-                e.preventDefault();
-                if (e.repeat) return;
-                playback.stop();
-                const nextIndex = Math.max(keyboardSlideRef.current - 1, 0);
-                keyboardSlideRef.current = nextIndex;
-                navigation.scrollToSlide(nextIndex, "auto");
-            } else if (e.key === "ArrowRight" || e.key.toLowerCase() === "l") {
-                e.preventDefault();
-                if (e.repeat) return;
-                playback.stop();
-                const nextIndex = Math.min(keyboardSlideRef.current + 1, slideCount - 1);
-                keyboardSlideRef.current = nextIndex;
-                navigation.scrollToSlide(nextIndex, "auto");
-            } else if (e.key === "ArrowUp") {
-                e.preventDefault();
-                if (e.repeat) return;
-                playback.stop();
-                keyboardSlideRef.current = 0;
-                navigation.first("auto");
-            } else if (e.key === "ArrowDown") {
-                e.preventDefault();
-                if (e.repeat) return;
-                playback.stop();
-                keyboardSlideRef.current = Math.max(slideCount - 1, 0);
-                navigation.last("auto");
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [slideCount, navigation.first, navigation.last, navigation.scrollToSlide, playback.stop]);
+    useViewerKeyboardNavigation({
+        currentSlide: navigation.currentSlide,
+        slideCount,
+        onNavigate: (index) => navigation.scrollToSlide(index, "auto"),
+        onStopPlayback: playback.stop,
+    });
 
     // While streaming, follow the latest slide
     useEffect(() => {
@@ -232,6 +194,7 @@ export default function PresentationViewerPage() {
 
     const [showIterateModal, setShowIterateModal] = useState(false);
     const [savingEdit, setSavingEdit] = useState(false);
+    const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
 
     const handleIteratePresentation = async (
         prompt: string,
@@ -484,16 +447,22 @@ export default function PresentationViewerPage() {
                 )}
 
                 {isFullscreenMode && activeSlide && (
-                    <div className="flex-1 flex flex-col items-center justify-center overflow-auto">
-                        <div key={activeSlide.id} className="ss-slide-stage ss-slide-enter">
-                            <Card className="w-full h-full rounded-none bg-black flex items-center justify-center">
+                    <div className="min-h-0 flex-1 bg-black">
+                        <ScaledSlide
+                            key={activeSlide.id}
+                            className="ss-slide-enter"
+                            stageClassName="shadow-2xl"
+                            onReadyChange={setFullscreenSlideReady}
+                        >
+                            <Card className="h-full w-full overflow-hidden rounded-none border-0 bg-black">
                                 <SlideRenderer
+                                    key={`${activeSlide.id}-${fullscreenSlideReady ? "ready" : "measuring"}`}
                                     slide={activeSlide}
                                     currentTemplate={currentTemplate}
-                                    isActive={true}
+                                    isActive={fullscreenSlideReady}
                                 />
                             </Card>
-                        </div>
+                        </ScaledSlide>
                     </div>
                 )}
 

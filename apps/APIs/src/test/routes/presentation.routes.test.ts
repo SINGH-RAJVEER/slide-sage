@@ -208,7 +208,7 @@ describe("presentation routes", () => {
             "Generating...",
             "Quarterly planning",
             {
-                schemaVersion: 3,
+                schemaVersion: 5,
                 slides: [],
                 theme: "nature-green",
                 title: "Generating...",
@@ -348,7 +348,7 @@ describe("presentation routes", () => {
                 title: "Failure handling",
                 prompt: "Failure handling",
                 slidesData: {
-                    schemaVersion: 3,
+                    schemaVersion: 5,
                     title: "Failure handling",
                     theme: "corporate-blue",
                     slides: [],
@@ -421,7 +421,7 @@ describe("presentation routes", () => {
         const finalUpdate = presentationUpdates[0]?.updates as {
             slidesData?: { schemaVersion?: number; slides?: Array<{ id?: string }> };
         };
-        expect(finalUpdate.slidesData?.schemaVersion).toBe(3);
+        expect(finalUpdate.slidesData?.schemaVersion).toBe(5);
         expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
         expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
     });
@@ -648,6 +648,6 @@ describe("presentation routes", () => {
                 },
             ]
         );
-        expect((await json(response)).presentation.slides_data.schemaVersion).toBe(3);
+        expect((await json(response)).presentation.slides_data.schemaVersion).toBe(5);
     });
 });

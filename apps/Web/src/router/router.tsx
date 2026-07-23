@@ -49,6 +49,12 @@ export const router = createBrowserRouter([
                         lazy: lazyRoute(() => import("@/modules/pages/MarketplacePage")),
                     },
                     {
+                        path: "marketplace/:marketplaceId/preview",
+                        lazy: lazyRoute(
+                            () => import("@/modules/pages/MarketplaceThemePreviewPage"),
+                        ),
+                    },
+                    {
                         path: "presentations",
                         lazy: lazyRoute(() => import("@/modules/pages/PresentationsGridPage")),
                     },

@@ -17,7 +17,7 @@ export interface ChartConfig {
     [key: string]: unknown;
 }
 
-export const PRESENTATION_SCHEMA_VERSION = 3 as const;
+export const PRESENTATION_SCHEMA_VERSION = 5 as const;
 
 export interface PresentationDimensions {
     width: number;
@@ -60,13 +60,58 @@ export const PRESENTATION_LAYOUT_PREFERENCES = [
 
 export type PresentationLayoutPreference = (typeof PRESENTATION_LAYOUT_PREFERENCES)[number];
 
-export type SlideLayout = "title" | "content" | "two-column" | "quote" | "image-right";
-export type SlideRegion = "main" | "left" | "right";
+export const SLIDE_LAYOUTS = [
+    "cover",
+    "section",
+    "body",
+    "split",
+    "comparison",
+    "sidebar",
+    "media-left",
+    "media-right",
+    "quote",
+    "spotlight",
+    "canvas",
+] as const;
+export type SlideLayout = (typeof SLIDE_LAYOUTS)[number];
+
+export const SLIDE_REGIONS = ["main", "primary", "secondary", "media"] as const;
+export type SlideRegion = (typeof SLIDE_REGIONS)[number];
+
+export const SLIDE_TONES = ["default", "muted", "accent", "inverse"] as const;
+export type SlideTone = (typeof SLIDE_TONES)[number];
+
+export const SLIDE_DENSITIES = ["airy", "standard", "compact"] as const;
+export type SlideDensity = (typeof SLIDE_DENSITIES)[number];
+
+export const SLIDE_PATTERNS = ["none", "grid", "dots", "diagonal"] as const;
+export type SlidePattern = (typeof SLIDE_PATTERNS)[number];
+
+export const BACKGROUND_FOCAL_POINTS = ["center", "top", "bottom", "left", "right"] as const;
+export type BackgroundFocalPoint = (typeof BACKGROUND_FOCAL_POINTS)[number];
+
+export const BACKGROUND_OVERLAYS = ["none", "subtle", "medium", "strong"] as const;
+export type BackgroundOverlay = (typeof BACKGROUND_OVERLAYS)[number];
+
+export const BLOCK_EMPHASES = ["standard", "strong", "hero", "supporting"] as const;
+export type BlockEmphasis = (typeof BLOCK_EMPHASES)[number];
+
+export const BLOCK_TREATMENTS = ["plain", "card", "outline", "accent"] as const;
+export type BlockTreatment = (typeof BLOCK_TREATMENTS)[number];
+
+export interface SlideBackgroundImage {
+    url: string;
+    alt: string;
+    focalPoint: BackgroundFocalPoint;
+    overlay: BackgroundOverlay;
+}
 
 export interface BaseSlideBlock {
     id?: string;
     region: SlideRegion;
     sourceIds?: string[];
+    emphasis?: BlockEmphasis;
+    treatment?: BlockTreatment;
 }
 
 export interface ParagraphBlock extends BaseSlideBlock {
@@ -119,6 +164,54 @@ export interface StatsBlock extends BaseSlideBlock {
     }>;
 }
 
+export const WIDGET_KINDS = ["timeline", "flow", "architecture", "comparison"] as const;
+export type WidgetKind = (typeof WIDGET_KINDS)[number];
+
+export const WIDGET_NODE_ROLES = [
+    "default",
+    "start",
+    "end",
+    "decision",
+    "actor",
+    "system",
+    "data",
+] as const;
+export type WidgetNodeRole = (typeof WIDGET_NODE_ROLES)[number];
+
+export const WIDGET_TONES = ["neutral", "accent", "positive", "warning", "danger"] as const;
+export type WidgetTone = (typeof WIDGET_TONES)[number];
+
+export const WIDGET_DIRECTIONS = ["horizontal", "vertical"] as const;
+export type WidgetDirection = (typeof WIDGET_DIRECTIONS)[number];
+
+export const MAX_WIDGET_NODES = 16;
+export const MAX_WIDGET_EDGES = 32;
+
+export interface WidgetNode {
+    id: string;
+    label: string;
+    description: string;
+    value: string;
+    role: WidgetNodeRole;
+    tone: WidgetTone;
+    parentId: string;
+}
+
+export interface WidgetEdge {
+    from: string;
+    to: string;
+    label: string;
+}
+
+export interface WidgetBlock extends BaseSlideBlock {
+    type: "widget";
+    version: 1;
+    kind: WidgetKind;
+    direction: WidgetDirection;
+    nodes: WidgetNode[];
+    edges: WidgetEdge[];
+}
+
 export type SlideBlock =
     | ParagraphBlock
     | BulletBlock
@@ -127,7 +220,8 @@ export type SlideBlock =
     | ImagePlaceholderBlock
     | QuoteBlock
     | CalloutBlock
-    | StatsBlock;
+    | StatsBlock
+    | WidgetBlock;
 
 export interface BaseSlide {
     id: string;
@@ -141,6 +235,12 @@ export interface ContentSlide extends BaseSlide {
     layout: SlideLayout;
     title: string;
     subtitle: string;
+    eyebrow?: string;
+    regionLabels?: Partial<Record<SlideRegion, string>>;
+    tone: SlideTone;
+    density: SlideDensity;
+    pattern: SlidePattern;
+    backgroundImage?: SlideBackgroundImage;
     blocks: SlideBlock[];
 }
 

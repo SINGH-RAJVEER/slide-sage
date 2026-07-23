@@ -1,14 +1,16 @@
-import { Palette, Search, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import MarketplaceCard from "@/components/Marketplace/MarketplaceCard";
-import { getInstalledMarketplaceThemes, installMarketplaceTheme } from "@/lib/marketplace-themes";
 import {
-    createMarketplacePreviewPresentation,
-    MARKETPLACE_ITEMS,
-    type MarketplaceItem,
-} from "@/modules/marketplace/catalog";
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getInstalledMarketplaceThemes, installMarketplaceTheme } from "@/lib/marketplace-themes";
+import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@/modules/marketplace/catalog";
 import { ROUTES } from "@/router/paths";
 
 type MarketplaceSort = "popular" | "newest";
@@ -29,7 +31,10 @@ export default function MarketplacePage() {
         () => new Set(getInstalledMarketplaceThemes().map((theme) => theme.marketplaceId)),
     );
     const visibleItems = MARKETPLACE_ITEMS.filter((item) => matchesSearch(item, query)).sort(
-        (a, b) => (sort === "popular" ? b.votes - a.votes : b.id.localeCompare(a.id)),
+        (a, b) => {
+            if (a.isNew !== b.isNew) return a.isNew ? -1 : 1;
+            return sort === "popular" ? b.votes - a.votes : b.id.localeCompare(a.id);
+        },
     );
 
     const handleVote = (itemId: string) => {
@@ -49,65 +54,77 @@ export default function MarketplacePage() {
     const handleOpen = (itemId: string) => {
         const item = MARKETPLACE_ITEMS.find((candidate) => candidate.id === itemId);
         if (!item) return;
-        navigate(ROUTES.presentation, {
-            state: { presentation: createMarketplacePreviewPresentation(item) },
-        });
+        navigate(ROUTES.marketplacePreview(item.id));
     };
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
+        <div className="flex h-screen flex-col overflow-hidden bg-transparent text-white">
             <Header />
-            <main className="overflow-hidden pb-20">
+            <main className="min-h-0 flex-1 overflow-y-auto pb-20">
                 <section className="px-4 py-8 md:px-8 md:py-12">
                     <div className="mx-auto max-w-7xl">
-                        <div className="flex flex-col gap-5 border-b border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                                <h1 className="font-serif text-3xl text-[#f3ead5] md:text-4xl">
-                                    Theme marketplace
-                                </h1>
-                                <p className="mt-2 text-sm text-white/40">
-                                    Community-made systems for complete presentations.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col gap-3 sm:flex-row">
+                        <div className="grid gap-3 border-b border-white/10 pb-6 md:grid-cols-[auto_minmax(16rem,1fr)_auto] md:items-center">
+                            <div className="flex justify-start">
                                 <button
                                     type="button"
                                     disabled
                                     title="Theme editor coming soon"
-                                    className="flex h-10 items-center justify-center gap-2 rounded-full border border-amber-200/20 bg-amber-200/[0.08] px-4 text-sm font-medium text-amber-100/70 disabled:cursor-not-allowed"
+                                    className="flex h-10 items-center justify-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-70"
                                 >
                                     <Palette className="h-4 w-4" />
                                     Contribute a theme
-                                    <span className="text-[9px] uppercase tracking-wider text-amber-100/40">
+                                    <span className="text-[9px] uppercase tracking-wider text-blue-300/55">
                                         Soon
                                     </span>
                                 </button>
-                                <label className="flex h-10 min-w-0 items-center gap-2 rounded-full border border-white/10 bg-black/15 px-4 text-white/40 focus-within:border-white/25 sm:w-72">
-                                    <Search className="h-4 w-4 shrink-0" />
-                                    <span className="sr-only">Search marketplace</span>
-                                    <input
-                                        type="search"
-                                        value={query}
-                                        onInput={(event) => setQuery(event.currentTarget.value)}
-                                        placeholder="Search designs or creators"
-                                        className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
-                                    />
-                                </label>
-                                <label className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-black/15 px-4 text-sm text-white/55">
-                                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                                    <span className="sr-only">Sort marketplace</span>
-                                    <select
-                                        value={sort}
-                                        onChange={(event) =>
-                                            setSort(event.target.value as MarketplaceSort)
-                                        }
-                                        className="bg-transparent text-sm text-white/70 outline-none [&>option]:bg-[#172033]"
+                            </div>
+                            <label className="flex h-11 min-w-0 items-center gap-3 rounded-full border border-white/10 bg-black/20 px-5 text-white/40 transition-colors focus-within:border-blue-400/50 focus-within:bg-black/30 focus-within:ring-2 focus-within:ring-blue-500/10">
+                                <Search className="h-4 w-4 shrink-0" />
+                                <span className="sr-only">Search marketplace</span>
+                                <input
+                                    type="search"
+                                    value={query}
+                                    onInput={(event) => setQuery(event.currentTarget.value)}
+                                    placeholder="Search designs or creators"
+                                    className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
+                                />
+                            </label>
+                            <div className="flex justify-end">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            aria-label="Sort marketplace"
+                                            className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-black/15 px-4 text-sm text-white/60 transition-colors hover:border-white/20 hover:bg-white/[0.06] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                                        >
+                                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                                            {sort === "popular" ? "Most upvoted" : "Newest"}
+                                            <ChevronDown className="h-3.5 w-3.5 text-white/35" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="min-w-44 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
                                     >
-                                        <option value="popular">Most upvoted</option>
-                                        <option value="newest">Newest</option>
-                                    </select>
-                                </label>
+                                        {(
+                                            [
+                                                { id: "popular", label: "Most upvoted" },
+                                                { id: "newest", label: "Newest" },
+                                            ] as const
+                                        ).map((option) => (
+                                            <DropdownMenuItem
+                                                key={option.id}
+                                                onSelect={() => setSort(option.id)}
+                                                className="my-1 cursor-pointer rounded-lg px-3 py-2.5 text-white/70 focus:bg-white/10 focus:text-white"
+                                            >
+                                                <span className="flex-1">{option.label}</span>
+                                                {sort === option.id && (
+                                                    <Check className="h-4 w-4 text-amber-100/70" />
+                                                )}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
 

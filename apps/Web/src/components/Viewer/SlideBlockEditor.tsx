@@ -1,7 +1,12 @@
 import { ArrowDown, ArrowUp, Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EditableSlideBlock } from "@/lib/slide-block-editing";
-import type { SlideLayout, SlideRegion } from "@/modules/types/presentation";
+import type {
+    BlockEmphasis,
+    BlockTreatment,
+    SlideLayout,
+    SlideRegion,
+} from "@/modules/types/presentation";
 
 interface SlideBlockEditorProps {
     block: EditableSlideBlock;
@@ -28,6 +33,28 @@ export function SlideBlockEditor({
     onDelete,
 }: SlideBlockEditorProps) {
     const updateRegion = (region: SlideRegion) => onChange({ ...block, region });
+    const supportsRegions = [
+        "split",
+        "comparison",
+        "sidebar",
+        "media-left",
+        "media-right",
+        "spotlight",
+    ].includes(layout);
+    const regionOptions: Array<{ value: SlideRegion; label: string }> =
+        layout === "media-left" || layout === "media-right"
+            ? [
+                  { value: "primary", label: "Primary content" },
+                  { value: "secondary", label: "Supporting content" },
+                  { value: "media", label: "Media" },
+              ]
+            : [
+                  { value: "primary", label: layout === "sidebar" ? "Main (68%)" : "Primary" },
+                  {
+                      value: "secondary",
+                      label: layout === "sidebar" ? "Sidebar (32%)" : "Secondary",
+                  },
+              ];
     return (
         <section className="grid gap-4" aria-label={`${block.type} block editor`}>
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -78,19 +105,61 @@ export function SlideBlockEditor({
                 </div>
             </div>
 
-            {layout === "two-column" && (
+            {supportsRegions && (
                 <label className="grid gap-2 text-sm text-white/70">
-                    Column
+                    Region
                     <select
                         className={fieldClass}
                         value={block.region}
                         onChange={(event) => updateRegion(event.target.value as SlideRegion)}
                     >
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
+                        {regionOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
                     </select>
                 </label>
             )}
+
+            <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-2 text-sm text-white/70">
+                    Emphasis
+                    <select
+                        className={fieldClass}
+                        value={block.emphasis || "standard"}
+                        onChange={(event) =>
+                            onChange({
+                                ...block,
+                                emphasis: event.target.value as BlockEmphasis,
+                            })
+                        }
+                    >
+                        <option value="standard">Standard</option>
+                        <option value="strong">Strong</option>
+                        <option value="hero">Hero</option>
+                        <option value="supporting">Supporting</option>
+                    </select>
+                </label>
+                <label className="grid gap-2 text-sm text-white/70">
+                    Treatment
+                    <select
+                        className={fieldClass}
+                        value={block.treatment || "plain"}
+                        onChange={(event) =>
+                            onChange({
+                                ...block,
+                                treatment: event.target.value as BlockTreatment,
+                            })
+                        }
+                    >
+                        <option value="plain">Plain</option>
+                        <option value="card">Card</option>
+                        <option value="outline">Outline</option>
+                        <option value="accent">Accent</option>
+                    </select>
+                </label>
+            </div>
 
             {block.type === "paragraph" && (
                 <textarea

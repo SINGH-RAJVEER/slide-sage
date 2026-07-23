@@ -8,16 +8,16 @@ describe("SlideLayoutSelector", () => {
     it("selects a layout independently from the theme control", () => {
         const onLayoutChange = mock();
         const view = render(
-            <SlideLayoutSelector selectedLayout="content" onLayoutChange={onLayoutChange} />,
+            <SlideLayoutSelector selectedLayout="body" onLayoutChange={onLayoutChange} />,
         );
 
-        fireEvent.pointerDown(view.getByRole("button", { name: /Content/ }), {
+        fireEvent.pointerDown(view.getByRole("button", { name: /Body/ }), {
             button: 0,
             ctrlKey: false,
         });
-        fireEvent.click(view.getByRole("menuitem", { name: "Image right" }));
+        fireEvent.click(view.getByRole("menuitem", { name: "Media right" }));
 
-        expect(onLayoutChange).toHaveBeenCalledWith("image-right");
+        expect(onLayoutChange).toHaveBeenCalledWith("media-right");
     });
 
     it("disables layout changes for chart slides", () => {

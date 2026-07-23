@@ -2,7 +2,7 @@
 
 import { describe, expect, it, mock } from "bun:test";
 import { fireEvent, render } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 mock.module("@/contexts/AuthContext", () => ({
     useAuth: () => ({ user: null, signOut: () => Promise.resolve() }),
@@ -15,26 +15,24 @@ mock.module("@/components/Viewer/SlideRenderer", () => ({
 }));
 
 describe("MarketplacePage", () => {
-    it("opens a theme sample presentation in the viewer route", async () => {
+    it("opens the selected theme in its dedicated preview route", async () => {
         const { default: MarketplacePage } = await import("@/modules/pages/MarketplacePage");
-        function ViewerState() {
-            const location = useLocation();
-            const presentation = location.state?.presentation;
-            return <div>{`${presentation?.title}|${presentation?.slides.length}`}</div>;
-        }
 
         const { getByRole, getByText } = render(
             <MemoryRouter initialEntries={["/marketplace"]}>
                 <Routes>
                     <Route path="/marketplace" element={<MarketplacePage />} />
-                    <Route path="/presentation" element={<ViewerState />} />
+                    <Route
+                        path="/marketplace/:marketplaceId/preview"
+                        element={<div>Dedicated theme preview</div>}
+                    />
                 </Routes>
             </MemoryRouter>,
         );
 
         fireEvent.click(getByRole("button", { name: "Preview Midnight Signal theme" }));
 
-        expect(getByText("Midnight Signal theme preview|4")).toBeInTheDocument();
+        expect(getByText("Dedicated theme preview")).toBeInTheDocument();
     });
 
     it("adds a marketplace theme to the installed collection", async () => {
@@ -82,10 +80,23 @@ describe("MarketplacePage", () => {
         );
 
         fireEvent.input(getByRole("searchbox", { name: "Search marketplace" }), {
-            target: { value: "Studio North" },
+            target: { value: "Serif" },
         });
 
         expect(queryByText("Founder Letter", { selector: "h2" })).toBeInTheDocument();
         expect(queryByText("Boardroom Clear", { selector: "h2" })).toBeNull();
+    });
+
+    it("lists every marketplace theme as authored by SlideSage", async () => {
+        const { default: MarketplacePage } = await import("@/modules/pages/MarketplacePage");
+        const { getAllByText, getByText } = render(
+            <MemoryRouter initialEntries={["/marketplace"]}>
+                <MarketplacePage />
+            </MemoryRouter>,
+        );
+
+        expect(getByText("Citrus Brief", { selector: "h2" })).toBeInTheDocument();
+        expect(getByText("Paper Grid", { selector: "h2" })).toBeInTheDocument();
+        expect(getAllByText("by SlideSage")).toHaveLength(6);
     });
 });

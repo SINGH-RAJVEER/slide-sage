@@ -1,13 +1,14 @@
-import type { ContentSlide, SlideBlock, SlideLayout } from "@/modules/types/presentation";
+import type {
+    ContentSlide,
+    SlideBlock,
+    SlideLayout,
+    SlideRegion,
+} from "@/modules/types/presentation";
 
 const isVisualBlock = (block: SlideBlock) =>
     block.type === "image" || block.type === "image-placeholder";
 
-type LayoutGeneratedPlaceholder = Omit<
-    Extract<SlideBlock, { type: "image-placeholder" }>,
-    "region"
-> & {
-    region: "right";
+type LayoutGeneratedPlaceholder = Extract<SlideBlock, { type: "image-placeholder" }> & {
     layoutGenerated: true;
 };
 
@@ -16,49 +17,76 @@ const isLayoutGeneratedPlaceholder = (block: SlideBlock): block is LayoutGenerat
     "layoutGenerated" in block &&
     block.layoutGenerated === true;
 
-export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): ContentSlide {
-    if (layout === "image-right") {
-        const visualBlocks = slide.blocks
-            .filter(isVisualBlock)
-            .map((block) => ({ ...block, region: "right" as const }));
-        const contentBlocks = slide.blocks
-            .filter((block) => !isVisualBlock(block))
-            .map((block) => ({ ...block, region: "main" as const }));
+function withRegion(block: SlideBlock, region: SlideRegion): SlideBlock {
+    return { ...block, region };
+}
 
-        if (visualBlocks.length === 0) {
+function distributePaired(blocks: SlideBlock[]): SlideBlock[] {
+    const hasPrimary = blocks.some((block) => block.region === "primary");
+    const hasSecondary = blocks.some((block) => block.region === "secondary");
+    if (hasPrimary && hasSecondary) return blocks;
+    return blocks.map((block, index) =>
+        withRegion(block, index % 2 === 0 ? "primary" : "secondary"),
+    );
+}
+
+export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): ContentSlide {
+    const authoredBlocks = slide.blocks.filter((block) => !isLayoutGeneratedPlaceholder(block));
+
+    if (layout === "media-left" || layout === "media-right") {
+        const media = authoredBlocks
+            .filter(isVisualBlock)
+            .map((block) => withRegion(block, "media"));
+        const content = authoredBlocks
+            .filter((block) => !isVisualBlock(block))
+            .map((block, index) => withRegion(block, index < 2 ? "primary" : "secondary"));
+
+        if (media.length === 0) {
             const placeholder: LayoutGeneratedPlaceholder = {
                 type: "image-placeholder",
-                region: "right",
+                region: "media",
                 alt: `Supporting visual for ${slide.title}`,
                 caption: "Add an image",
                 layoutGenerated: true,
             };
-            visualBlocks.push(placeholder);
+            media.push(placeholder);
         }
-
-        return { ...slide, layout, blocks: [...contentBlocks, ...visualBlocks] };
+        return { ...slide, layout, blocks: [...content, ...media] };
     }
 
-    if (layout === "two-column") {
-        const hasLeft = slide.blocks.some((block) => block.region === "left");
-        const hasRight = slide.blocks.some((block) => block.region === "right");
-        const blocks =
-            hasLeft && hasRight
-                ? slide.blocks
-                : slide.blocks.map((block, index) => ({
-                      ...block,
-                      region: (isVisualBlock(block) || index % 2 === 1 ? "right" : "left") as
-                          | "left"
-                          | "right",
-                  }));
+    if (layout === "split" || layout === "comparison") {
+        return { ...slide, layout, blocks: distributePaired(authoredBlocks) };
+    }
+
+    if (layout === "sidebar") {
+        const hasRail = authoredBlocks.some((block) => block.region === "secondary");
+        const blocks = hasRail
+            ? authoredBlocks.map((block) =>
+                  withRegion(block, block.region === "secondary" ? "secondary" : "primary"),
+              )
+            : authoredBlocks.map((block, index) =>
+                  withRegion(block, index > 0 && index % 3 === 0 ? "secondary" : "primary"),
+              );
         return { ...slide, layout, blocks };
+    }
+
+    if (layout === "spotlight") {
+        const heroIndex = Math.max(
+            0,
+            authoredBlocks.findIndex((block) => block.emphasis === "hero"),
+        );
+        return {
+            ...slide,
+            layout,
+            blocks: authoredBlocks.map((block, index) =>
+                withRegion(block, index === heroIndex ? "primary" : "secondary"),
+            ),
+        };
     }
 
     return {
         ...slide,
         layout,
-        blocks: slide.blocks
-            .filter((block) => !isLayoutGeneratedPlaceholder(block))
-            .map((block) => ({ ...block, region: "main" })),
+        blocks: authoredBlocks.map((block) => withRegion(block, "main")),
     };
 }

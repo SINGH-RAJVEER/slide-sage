@@ -1,4 +1,11 @@
-import type { ContentSlide, PresentationData, SlideLayout, ThemeId } from "@slide-sage/types";
+import type {
+    ChartSlide,
+    ContentSlide,
+    PresentationData,
+    Slide,
+    SlideLayout,
+    ThemeId,
+} from "@slide-sage/types";
 
 export interface MarketplaceItem {
     id: string;
@@ -10,6 +17,7 @@ export interface MarketplaceItem {
     uses: string;
     tags: string[];
     featured?: boolean;
+    isNew?: boolean;
     themeId: ThemeId;
     layoutId: SlideLayout;
     previewSlide: ContentSlide;
@@ -28,31 +36,101 @@ function previewSlide(
         layout,
         title,
         subtitle,
+        tone: "default",
+        density: "standard",
+        pattern: "none",
         blocks,
     };
 }
 
 export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
     {
+        id: "citrus-brief",
+        name: "Citrus Brief",
+        description: "A crisp, optimistic system for campaigns, workshops, and growth narratives.",
+        author: "SlideSage",
+        authorInitials: "SS",
+        votes: 389,
+        uses: "1.2k",
+        tags: ["Bright", "Campaign", "Workshop"],
+        featured: true,
+        isNew: true,
+        themeId: "creative-studio",
+        layoutId: "split",
+        previewSlide: previewSlide(
+            "market-citrus",
+            "Momentum has a color",
+            "Turn the next quarter into a visible movement",
+            "split",
+            [
+                {
+                    id: "market-citrus-left",
+                    type: "callout",
+                    region: "primary",
+                    heading: "Make it tangible",
+                    text: "One message. Three decisive actions.",
+                },
+                {
+                    id: "market-citrus-right",
+                    type: "stats",
+                    region: "secondary",
+                    items: [{ value: "86%", label: "Team alignment" }],
+                },
+            ],
+        ),
+    },
+    {
+        id: "paper-grid",
+        name: "Paper Grid",
+        description: "A precise monochrome theme for operating plans, teaching, and documentation.",
+        author: "SlideSage",
+        authorInitials: "SS",
+        votes: 326,
+        uses: "980",
+        tags: ["Minimal", "Planning", "Education"],
+        featured: true,
+        isNew: true,
+        themeId: "minimalist",
+        layoutId: "body",
+        previewSlide: previewSlide(
+            "market-paper-grid",
+            "Structure creates speed",
+            "A practical operating system for complex work",
+            "body",
+            [
+                {
+                    id: "market-paper-grid-list",
+                    type: "bullets",
+                    region: "main",
+                    ordered: true,
+                    items: ["Define the constraint", "Name the owner", "Measure the outcome"],
+                },
+            ],
+        ),
+    },
+    {
         id: "midnight-signal",
         name: "Midnight Signal",
         description: "A high-contrast dark system for product launches and technical narratives.",
-        author: "Amina K.",
-        authorInitials: "AK",
+        author: "SlideSage",
+        authorInitials: "SS",
         votes: 842,
         uses: "3.4k",
         tags: ["Dark", "Product", "Launch"],
         featured: true,
         themeId: "modern-dark",
-        layoutId: "content",
+        layoutId: "spotlight",
         previewSlide: previewSlide(
             "market-midnight",
             "Signals over noise",
             "The product brief, distilled",
-            "content",
+            "spotlight",
             [
                 {
+                    id: "market-midnight-stats",
                     type: "stats",
+                    region: "primary",
+                    emphasis: "hero",
                     items: [
                         { label: "Activation", value: "+42%" },
                         { label: "Time saved", value: "18h" },
@@ -65,25 +143,32 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
         id: "field-notes",
         name: "Field Notes",
         description: "A grounded editorial palette for research, climate, and impact reporting.",
-        author: "Noah Field",
-        authorInitials: "NF",
+        author: "SlideSage",
+        authorInitials: "SS",
         votes: 614,
         uses: "2.1k",
         tags: ["Editorial", "Research", "Warm"],
         featured: true,
         themeId: "nature-green",
-        layoutId: "two-column",
+        layoutId: "split",
         previewSlide: previewSlide(
             "market-field",
             "Regrowth is measurable",
             "A field report from the northern corridor",
-            "two-column",
+            "split",
             [
-                { type: "callout", text: "64 hectares restored", region: "left" },
                 {
+                    id: "market-field-callout",
+                    type: "callout",
+                    heading: "Measured recovery",
+                    text: "64 hectares restored",
+                    region: "primary",
+                },
+                {
+                    id: "market-field-copy",
                     type: "paragraph",
                     text: "Local stewardship changed the curve in under twelve months.",
-                    region: "right",
+                    region: "secondary",
                 },
             ],
         ),
@@ -93,8 +178,8 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
         name: "Founder Letter",
         description:
             "Restrained serif typography for strategy, annual reviews, and investor updates.",
-        author: "Studio North",
-        authorInitials: "SN",
+        author: "SlideSage",
+        authorInitials: "SS",
         votes: 497,
         uses: "1.8k",
         tags: ["Serif", "Strategy", "Elegant"],
@@ -107,7 +192,9 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
             "quote",
             [
                 {
+                    id: "market-founder-quote",
                     type: "quote",
+                    region: "main",
                     text: "Build the company you would want to discover ten years from now.",
                     attribution: "2026 outlook",
                 },
@@ -118,21 +205,24 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
         id: "boardroom-clear",
         name: "Boardroom Clear",
         description: "A structured business theme designed for decision-heavy executive sessions.",
-        author: "Maya Chen",
-        authorInitials: "MC",
+        author: "SlideSage",
+        authorInitials: "SS",
         votes: 731,
         uses: "4.7k",
         tags: ["Business", "Data", "Clean"],
         themeId: "corporate-blue",
-        layoutId: "content",
+        layoutId: "body",
         previewSlide: previewSlide(
             "market-boardroom",
             "The decision in one page",
             "Three indicators point in the same direction",
-            "content",
+            "body",
             [
                 {
+                    id: "market-boardroom-list",
                     type: "bullets",
+                    region: "main",
+                    ordered: false,
                     items: [
                         "Demand is durable",
                         "Margins are expanding",
@@ -145,47 +235,99 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 ];
 
 export function createMarketplacePreviewPresentation(item: MarketplaceItem): PresentationData {
-    const slides: ContentSlide[] = [
+    const chartSlides: ChartSlide[] = [
+        {
+            id: `${item.id}-preview-growth-chart`,
+            type: "chart",
+            chartConfig: {
+                type: "line",
+                title: "Momentum compounds across the year",
+                description: "A representative trend view using the selected theme.",
+                data: {
+                    labels: ["Q1", "Q2", "Q3", "Q4"],
+                    datasets: [
+                        {
+                            label: "Adoption",
+                            data: [24, 41, 67, 89],
+                            borderColor: "#60a5fa",
+                            backgroundColor: "rgba(96, 165, 250, 0.18)",
+                            borderWidth: 3,
+                            fill: true,
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            id: `${item.id}-preview-mix-chart`,
+            type: "chart",
+            chartConfig: {
+                type: "doughnut",
+                title: "A balanced communication mix",
+                description: "Charts inherit the preview theme's surrounding visual system.",
+                data: {
+                    labels: ["Narrative", "Evidence", "Action"],
+                    datasets: [
+                        {
+                            data: [42, 34, 24],
+                            backgroundColor: ["#60a5fa", "#34d399", "#f59e0b"],
+                            borderColor: ["#bfdbfe", "#a7f3d0", "#fde68a"],
+                            borderWidth: 2,
+                        },
+                    ],
+                },
+            },
+        },
+    ];
+    const slides: Slide[] = [
         {
             ...item.previewSlide,
             id: `${item.id}-preview-title`,
-            layout: "title",
+            layout: "cover",
             blocks: [],
         },
         {
             id: `${item.id}-preview-story`,
             type: "content",
-            layout: "two-column",
+            layout: "split",
             title: "A system for clear stories",
             subtitle: "Built to carry one visual voice across every idea",
+            tone: "default",
+            density: "standard",
+            pattern: "none",
             blocks: [
                 {
                     id: `${item.id}-preview-principle`,
                     type: "callout",
-                    region: "left",
+                    region: "primary",
                     heading: "One principle",
                     text: "Make the hierarchy obvious before adding decoration.",
                 },
                 {
                     id: `${item.id}-preview-details`,
                     type: "bullets",
-                    region: "right",
+                    region: "secondary",
                     ordered: false,
                     items: ["Purposeful typography", "Consistent color", "Calm composition"],
                 },
             ],
         },
+        ...chartSlides,
         {
             id: `${item.id}-preview-impact`,
             type: "content",
-            layout: "content",
+            layout: "spotlight",
             title: "Designed to make the point land",
             subtitle: "A sample data story",
+            tone: "accent",
+            density: "standard",
+            pattern: "none",
             blocks: [
                 {
                     id: `${item.id}-preview-stats`,
                     type: "stats",
-                    region: "main",
+                    region: "primary",
+                    emphasis: "hero",
                     items: [
                         { value: "3.4x", label: "Faster comprehension" },
                         { value: "72%", label: "Stronger recall" },
@@ -200,6 +342,9 @@ export function createMarketplacePreviewPresentation(item: MarketplaceItem): Pre
             layout: "quote",
             title: "Make the story unmistakable",
             subtitle: item.name,
+            tone: "default",
+            density: "airy",
+            pattern: "none",
             blocks: [
                 {
                     id: `${item.id}-preview-quote`,
@@ -213,7 +358,7 @@ export function createMarketplacePreviewPresentation(item: MarketplaceItem): Pre
     ];
 
     return {
-        schemaVersion: 3,
+        schemaVersion: 5,
         title: `${item.name} theme preview`,
         theme: item.themeId,
         dimensions: { width: 1280, height: 720 },

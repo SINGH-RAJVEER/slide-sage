@@ -14,6 +14,8 @@ interface ViewerNavigationControlsProps {
     onLast: () => void;
     onDelete: () => void;
     deleteDisabled: boolean;
+    showDownload?: boolean;
+    showDelete?: boolean;
 }
 
 export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> = ({
@@ -26,15 +28,19 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
     onLast,
     onDelete,
     deleteDisabled,
+    showDownload = true,
+    showDelete = true,
 }) => {
     return (
         <div
             className="relative flex items-center mt-3 pt-8 flex-shrink-0"
             style={{ minHeight: 36, fontSize: "0.95rem" }}
         >
-            <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                <DownloadMenu presentation={presentation} />
-            </div>
+            {showDownload && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                    <DownloadMenu presentation={presentation} />
+                </div>
+            )}
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2">
                 <Button
@@ -73,18 +79,20 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                 </Button>
             </div>
 
-            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <Button
-                    variant="destructive"
-                    onClick={onDelete}
-                    disabled={deleteDisabled}
-                    className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 shadow-none transition-all duration-200"
-                    title="Delete current slide"
-                >
-                    <Trash className="w-4 h-4 mr-2" />
-                    Delete
-                </Button>
-            </div>
+            {showDelete && (
+                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                    <Button
+                        variant="destructive"
+                        onClick={onDelete}
+                        disabled={deleteDisabled}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 shadow-none transition-all duration-200"
+                        title="Delete current slide"
+                    >
+                        <Trash className="w-4 h-4 mr-2" />
+                        Delete
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };

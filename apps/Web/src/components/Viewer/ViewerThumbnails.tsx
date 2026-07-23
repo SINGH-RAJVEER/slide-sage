@@ -1,6 +1,7 @@
 import type React from "react";
 import { Spinner } from "@/components/ui/spinner";
 import type { Slide } from "@/modules/types/presentation";
+import { ScaledSlide } from "./ScaledSlide";
 import { SlideRenderer } from "./SlideRenderer";
 
 export const ViewerThumbnails: React.FC<{
@@ -40,17 +41,14 @@ export const ViewerThumbnails: React.FC<{
                 }
                 backdrop-blur-sm relative`}
                         >
-                            <div className="relative h-full w-full overflow-hidden bg-black">
-                                <div
-                                    className="pointer-events-none absolute left-0 top-0 h-[720px] w-[1280px] origin-top-left"
-                                    style={{ transform: "scale(0.1)" }}
-                                >
+                            <div className="relative h-full w-full bg-black">
+                                <ScaledSlide className="pointer-events-none">
                                     <SlideRenderer
                                         slide={slide}
                                         currentTemplate={currentTemplate}
                                         isActive={false}
                                     />
-                                </div>
+                                </ScaledSlide>
                                 <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
                                     {index + 1}
                                 </span>

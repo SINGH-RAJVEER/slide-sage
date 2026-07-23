@@ -34,12 +34,54 @@ describe("presentation document", () => {
         const first = normalizePresentationDocument(legacyDocument);
         const second = normalizePresentationDocument(legacyDocument);
 
-        expect(first.schemaVersion).toBe(3);
+        expect(first.schemaVersion).toBe(5);
+        expect(first.slides[0] && "layout" in first.slides[0] ? first.slides[0].layout : null).toBe(
+            "body"
+        );
         expect(first.dimensions).toEqual({ width: 1280, height: 720 });
         expect(
             first.slides[0] && "blocks" in first.slides[0] ? first.slides[0].blocks[0]?.id : null
         ).toBe("slide-1-block-1");
         expect(first).toEqual(second);
+    });
+
+    it("maps every legacy layout and column region into schema v5", () => {
+        const document = normalizePresentationDocument({
+            ...legacyDocument,
+            slides: [
+                { ...legacyDocument.slides[0], id: "title", layout: "title" },
+                { ...legacyDocument.slides[0], id: "content", layout: "content" },
+                {
+                    ...legacyDocument.slides[0],
+                    id: "columns",
+                    layout: "two-column",
+                    blocks: [
+                        { type: "paragraph", region: "left", text: "A" },
+                        { type: "paragraph", region: "right", text: "B" },
+                    ],
+                },
+                {
+                    ...legacyDocument.slides[0],
+                    id: "image",
+                    layout: "image-right",
+                    blocks: [{ type: "image-placeholder", region: "right", alt: "Visual" }],
+                },
+            ],
+        });
+        const contentSlides = document.slides.filter((slide) => "layout" in slide);
+
+        expect(contentSlides.map((slide) => slide.layout)).toEqual([
+            "cover",
+            "body",
+            "split",
+            "media-right",
+        ]);
+        expect(contentSlides[2]?.blocks.map((block) => block.region)).toEqual([
+            "primary",
+            "secondary",
+        ]);
+        expect(contentSlides[3]?.blocks[0]?.region).toBe("media");
+        expect(contentSlides.every((slide) => slide.tone === "default")).toBe(true);
     });
 
     it("applies updates, reordering, and deletion as one document operation", () => {
@@ -148,5 +190,90 @@ describe("presentation document", () => {
 
         expect(block?.id).toBe("kept");
         expect(block?.sourceIds).toEqual(["source-1"]);
+    });
+
+    it("loads v3 widgets and stores only normalized v5 semantic data", () => {
+        const document = normalizePresentationDocument({
+            schemaVersion: 3,
+            title: "Widget deck",
+            theme: "minimalist",
+            slides: [
+                {
+                    id: "slide-1",
+                    type: "content",
+                    layout: "content",
+                    title: "System flow",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            id: "widget-1",
+                            type: "widget",
+                            region: "main",
+                            kind: "flow",
+                            direction: "diagonal",
+                            url: "https://example.com/widget",
+                            style: { color: "red" },
+                            nodes: [
+                                {
+                                    id: "client",
+                                    label: "Client",
+                                    description: "Starts a request",
+                                    role: "actor",
+                                    tone: "accent",
+                                    html: "<b>Client</b>",
+                                },
+                                {
+                                    id: "api",
+                                    label: "API",
+                                    description: "Handles it",
+                                    role: "unsupported",
+                                    tone: "unsupported",
+                                },
+                            ],
+                            edges: [
+                                { from: "client", to: "api", label: "HTTPS", style: "bold" },
+                                { from: "client", to: "missing", label: "Invalid" },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+        const slide = document.slides[0];
+        const widget = slide && "blocks" in slide ? slide.blocks[0] : undefined;
+
+        expect(document.schemaVersion).toBe(5);
+        expect(widget).toEqual({
+            id: "widget-1",
+            sourceIds: [],
+            type: "widget",
+            region: "main",
+            emphasis: "standard",
+            treatment: "plain",
+            version: 1,
+            kind: "flow",
+            direction: "horizontal",
+            nodes: [
+                {
+                    id: "client",
+                    label: "Client",
+                    description: "Starts a request",
+                    value: "",
+                    role: "actor",
+                    tone: "accent",
+                    parentId: "",
+                },
+                {
+                    id: "api",
+                    label: "API",
+                    description: "Handles it",
+                    value: "",
+                    role: "default",
+                    tone: "neutral",
+                    parentId: "",
+                },
+            ],
+            edges: [{ from: "client", to: "api", label: "HTTPS" }],
+        });
     });
 });
