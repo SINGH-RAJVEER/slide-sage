@@ -17,7 +17,27 @@ export interface ChartConfig {
     [key: string]: unknown;
 }
 
-export const PRESENTATION_SCHEMA_VERSION = 2 as const;
+export const PRESENTATION_SCHEMA_VERSION = 3 as const;
+
+export interface PresentationDimensions {
+    width: number;
+    height: number;
+}
+
+export type SlideTransitionType = "none" | "fade" | "slide" | "zoom" | "morph";
+
+export interface SlideTransition {
+    type: SlideTransitionType;
+    durationMs?: number;
+}
+
+export interface SlideEffect {
+    id: string;
+    type: "fade-in" | "count-up" | "ken-burns";
+    targetBlockId?: string;
+    order?: number;
+    durationMs?: number;
+}
 
 export const THEME_IDS = [
     "modern-dark",
@@ -43,8 +63,10 @@ export type PresentationLayoutPreference = (typeof PRESENTATION_LAYOUT_PREFERENC
 export type SlideLayout = "title" | "content" | "two-column" | "quote" | "image-right";
 export type SlideRegion = "main" | "left" | "right";
 
-interface BaseSlideBlock {
+export interface BaseSlideBlock {
+    id?: string;
     region: SlideRegion;
+    sourceIds?: string[];
 }
 
 export interface ParagraphBlock extends BaseSlideBlock {
@@ -110,6 +132,8 @@ export type SlideBlock =
 export interface BaseSlide {
     id: string;
     type: "content" | "chart";
+    transition?: SlideTransition;
+    effects?: SlideEffect[];
 }
 
 export interface ContentSlide extends BaseSlide {
@@ -124,6 +148,8 @@ export interface LegacyHtmlSlide {
     id: string;
     type: string;
     html: string;
+    transition?: SlideTransition;
+    effects?: SlideEffect[];
 }
 
 export interface ChartSlide extends BaseSlide {
@@ -178,9 +204,10 @@ export interface ResearchOptions {
 }
 
 export interface PresentationData {
-    schemaVersion?: typeof PRESENTATION_SCHEMA_VERSION;
+    schemaVersion?: number;
     title: string;
     theme: string;
+    dimensions?: PresentationDimensions;
     slides: Slide[];
     totalSlides: number;
     sources?: Source[];
@@ -206,9 +233,10 @@ export interface PresentationFailure {
 }
 
 export interface PresentationJSON {
-    schemaVersion?: typeof PRESENTATION_SCHEMA_VERSION;
+    schemaVersion?: number;
     title: string;
     theme: string;
+    dimensions?: PresentationDimensions;
     slides: Slide[];
     status?: PresentationStatus;
     failure?: PresentationFailure;
@@ -216,6 +244,21 @@ export interface PresentationJSON {
     tokens_used?: number;
     sources?: Source[];
     [key: string]: unknown;
+}
+
+export type PresentationMutation =
+    | {
+          type: "update-presentation";
+          title?: string;
+          theme?: ThemeId;
+          dimensions?: PresentationDimensions;
+      }
+    | { type: "update-slide"; slideId: string; slide: Slide }
+    | { type: "delete-slide"; slideId: string }
+    | { type: "reorder-slides"; slideIds: string[] };
+
+export interface PresentationMutationRequest {
+    mutations: PresentationMutation[];
 }
 
 export interface StreamStartEvent {

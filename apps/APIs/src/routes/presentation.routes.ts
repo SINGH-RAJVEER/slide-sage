@@ -4,6 +4,7 @@ import {
     PRESENTATION_SCHEMA_VERSION,
     type PresentationJSON,
     type PresentationLayoutPreference,
+    type PresentationMutationRequest,
     type PresentationResponse,
     type PresentationSummary,
     type PresentationsResponse,
@@ -18,6 +19,10 @@ import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "../services/auth";
 import { PresentationService } from "../services/presentation.service";
+import {
+    normalizePresentationDocument,
+    parsePresentationMutationRequest,
+} from "../services/presentation-document";
 import { SearchService } from "../services/search.service";
 
 interface ResearchOptionsInput {
@@ -669,6 +674,7 @@ presentations.post(
             }
 
             const presentationId = String(parentPresentationId);
+            const iterationBase = await presentationService.getPresentation(presentationId, userId);
 
             // Verify the user has enough points before iterating (mirrors generation).
             const iterationSlideCount = Number(slideCount);
@@ -815,10 +821,23 @@ presentations.post(
                             finalData.sources = sources;
                         }
 
-                        await presentationRepo.update(presentationId, {
-                            title: finalTitle,
-                            slidesData: finalData,
-                        });
+                        const updated = await presentationRepo.updateOwnedAtRevision(
+                            presentationId,
+                            userId,
+                            iterationBase.updatedAt,
+                            {
+                                title: finalTitle,
+                                slidesData: finalData,
+                            }
+                        );
+                        if (!updated) {
+                            await stream.write(
+                                sseFrame("error", {
+                                    error: "Presentation changed while the iteration was running. Review the latest edits and try again.",
+                                })
+                            );
+                            return;
+                        }
 
                         // Store semantic memory for future RAG context.
                         try {
@@ -931,7 +950,7 @@ presentations.get("/presentations/:id", authMiddleware, async (c) => {
                     id: presentation.id,
                     title: presentation.title,
                     prompt: presentation.prompt,
-                    slides_data: presentation.slidesData as PresentationJSON,
+                    slides_data: normalizePresentationDocument(presentation.slidesData),
                     created_at: presentation.createdAt.toISOString(),
                     updated_at: presentation.updatedAt.toISOString(),
                 },
@@ -946,6 +965,45 @@ presentations.get("/presentations/:id", authMiddleware, async (c) => {
         if (message.includes("Unauthorized")) {
             return c.json({ error: { message } }, 403);
         }
+        return c.json({ error: { message } }, 400);
+    }
+});
+
+// Apply persistent editor mutations to a presentation document.
+presentations.patch("/presentations/:id", authMiddleware, async (c) => {
+    try {
+        const userId = getCurrentUserId(c);
+        const presentationId = c.req.param("id");
+        if (!presentationId) {
+            return c.json({ error: { message: "Invalid presentation ID" } }, 400);
+        }
+
+        const request = parsePresentationMutationRequest(
+            (await c.req.json()) as PresentationMutationRequest
+        );
+        const presentation = await presentationService.updatePresentation(
+            presentationId,
+            userId,
+            request.mutations
+        );
+        return c.json(
+            {
+                presentation: {
+                    id: presentation.id,
+                    title: presentation.title,
+                    prompt: presentation.prompt,
+                    slides_data: normalizePresentationDocument(presentation.slidesData),
+                    created_at: presentation.createdAt.toISOString(),
+                    updated_at: presentation.updatedAt.toISOString(),
+                },
+            } satisfies PresentationResponse,
+            200
+        );
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        if (message.includes("not found")) return c.json({ error: { message } }, 404);
+        if (message.includes("Unauthorized")) return c.json({ error: { message } }, 403);
+        if (message.includes("changed while")) return c.json({ error: { message } }, 409);
         return c.json({ error: { message } }, 400);
     }
 });

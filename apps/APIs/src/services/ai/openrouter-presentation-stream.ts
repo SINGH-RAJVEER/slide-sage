@@ -301,7 +301,7 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
             schema: {
                 type: "object",
                 properties: {
-                    schemaVersion: { const: 2 },
+                    schemaVersion: { const: PRESENTATION_SCHEMA_VERSION },
                     title: { type: "string" },
                     theme: {
                         enum: [

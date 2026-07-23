@@ -41,9 +41,11 @@ All profile routes require authentication.
 | `POST` | `/api/iterate-presentation-stream` | Revise an existing deck over SSE |
 | `GET` | `/api/presentations` | List the user's decks |
 | `GET` | `/api/presentations/:id` | Get one owned deck |
+| `PATCH` | `/api/presentations/:id` | Apply persistent presentation mutations |
 | `DELETE` | `/api/presentations/:id` | Delete one owned deck and its associated memory |
 
-Generation requires `topic` and `slide_count`; it accepts `detail_level`,
+Generation requires `topic` and `slide_count`; the web client supports custom
+slide counts from 1 through 40. Generation also accepts `detail_level`,
 `tonality`, `theme`, `layout_preference`, `research`, and an optional
 `research_payload`. `theme` accepts a built-in theme ID. `layout_preference`
 accepts `auto`, `content`, `two-column`, `image-led`, or `data-led`. Research options can
@@ -55,6 +57,16 @@ available workspace and supports Enter as a shortcut to begin generation.
 
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
+
+Presentation documents use schema version 3. The API normalizes older documents
+on read by assigning deterministic block IDs and defaults for dimensions, speaker
+notes, transitions, and effects. `PATCH /api/presentations/:id` accepts a non-empty
+`mutations` array. Supported operations are `update-presentation`, `update-slide`,
+`delete-slide`, and `reorder-slides`. Slide IDs cannot be changed, reorder requests
+must contain every slide exactly once, and the final slide cannot be deleted. All
+mutations in one request are validated and applied to one document update.
+Writes use the owned row's `updated_at` value as a compare-and-swap revision. A
+concurrent write returns `409` instead of overwriting another editor mutation.
 
 Generation and iteration return `402` before streaming when the account lacks
 enough slide tokens. The response includes the remaining, required, and shortfall

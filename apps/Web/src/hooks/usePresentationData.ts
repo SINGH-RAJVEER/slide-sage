@@ -81,8 +81,10 @@ export function usePresentationData({
     useEffect(() => {
         if (streamingState.isStreaming && streamingSlidesCount > 0) {
             setPresentation({
+                schemaVersion: 3,
                 title: streamingState.title,
                 theme: streamingState.theme,
+                dimensions: { width: 1280, height: 720 },
                 slides: streamingState.slides.map((s) => ({ ...s })),
                 totalSlides: streamingSlidesCount,
             });
@@ -103,8 +105,10 @@ export function usePresentationData({
             streamingState.slides.length > 0
         ) {
             setPresentation({
+                schemaVersion: 3,
                 title: streamingState.title,
                 theme: streamingState.theme,
+                dimensions: { width: 1280, height: 720 },
                 slides: streamingState.slides.map((s) => ({ ...s })),
                 totalSlides: streamingState.slides.length,
             });
@@ -207,6 +211,7 @@ export function usePresentationData({
 
                 if (fetchedSlides.length > 0 && pres.title !== "Generating...") {
                     setPresentation({
+                        ...slidesData,
                         title: pres.title || slidesData.title,
                         theme: slidesData.theme || "corporate-blue",
                         slides: fetchedSlides,

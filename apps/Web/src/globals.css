@@ -135,7 +135,7 @@ input.hide-number-spin[type="number"] {
 
     /* Ensure the first/last fixed-size slide can snap centered */
     padding-block: 1rem;
-    padding-inline: max(2rem, calc(50vw - (var(--ss-slide-width) / 2)));
+    padding-inline: max(2rem, calc(50% - (var(--ss-slide-width) / 2)));
 
     align-items: center;
     position: relative;
@@ -167,6 +167,225 @@ input.hide-number-spin[type="number"] {
     height: var(--ss-slide-height);
     flex: 0 0 auto;
     position: relative;
+}
+
+.ss-edit-shell {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ss-edit-shell > :first-child {
+    opacity: 1;
+}
+
+.ss-edit-overlay {
+    position: absolute;
+    inset: 3rem 4rem 4.5rem;
+    z-index: 2;
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 1rem;
+    color: white;
+}
+
+.ss-edit-header input,
+.ss-edit-block input,
+.ss-edit-block textarea {
+    color: inherit;
+}
+
+.ss-edit-header {
+    padding: 0.35rem 0.5rem;
+}
+
+.ss-edit-region {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.ss-edit-block {
+    position: relative;
+    cursor: grab;
+    padding: 0.75rem 1rem 0.75rem 2rem;
+}
+
+.ss-edit-handle,
+.ss-edit-delete {
+    position: absolute;
+    top: 0.65rem;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.ss-edit-handle {
+    left: 0.25rem;
+    cursor: grab;
+}
+.ss-edit-delete {
+    right: 0.25rem;
+    cursor: pointer;
+    color: rgb(252, 165, 165);
+}
+.ss-canvas-textarea {
+    width: 100%;
+    resize: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    outline: none;
+}
+.ss-canvas-field {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.375rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    outline: none;
+}
+.ss-edit-toolbar {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.65rem;
+    background: rgba(15, 23, 42, 0.92);
+    padding: 0.45rem;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease;
+}
+
+.ss-edit-toolbar--visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.ss-inplace-input,
+.ss-inplace-text {
+    box-sizing: border-box;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    outline: none;
+}
+
+.ss-inplace-text {
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    padding: 0;
+    text-align: inherit;
+    outline: 1px dotted color-mix(in srgb, currentColor 42%, transparent);
+    outline-offset: 4px;
+}
+
+.ss-inplace-input:focus {
+    outline: 1px dotted color-mix(in srgb, currentColor 42%, transparent);
+    outline-offset: 4px;
+}
+
+.ss-editable-object {
+    cursor: text;
+}
+.ss-editable-object:has(+ *) {
+    isolation: isolate;
+}
+.ss-editable-reset {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    text-align: inherit;
+    font: inherit;
+}
+.ss-inline-editor {
+    position: absolute;
+    z-index: 4;
+    color: inherit;
+}
+.ss-inline-editor input,
+.ss-inline-editor textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    outline: none;
+}
+.ss-inline-editor--title {
+    top: 3rem;
+    left: 4rem;
+    right: 4rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+}
+.ss-inline-editor--subtitle {
+    top: 7.4rem;
+    left: 4rem;
+    right: 4rem;
+    font-size: 1.25rem;
+}
+.ss-inline-editor--block {
+    border: 0;
+    background: inherit;
+    padding: 0;
+    cursor: grab;
+}
+.ss-inline-handle {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.15rem;
+    opacity: 0.65;
+}
+.ss-inline-delete {
+    position: absolute;
+    right: -1.5rem;
+    top: 0.15rem;
+    border: 0;
+    background: transparent;
+    color: rgb(252, 165, 165);
+}
+
+@keyframes ss-slide-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.995);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.ss-slide-enter {
+    animation: ss-slide-enter 320ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ss-slide-enter {
+        animation: none;
+    }
 }
 
 /* Hide horizontal scrollbar while keeping scroll accessible */

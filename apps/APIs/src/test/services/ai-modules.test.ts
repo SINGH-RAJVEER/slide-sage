@@ -47,7 +47,14 @@ describe("AI presentation content", () => {
         const secondSlide = slides[1];
         expect(firstSlide?.type).toBe("content");
         expect(firstSlide?.type === "content" ? firstSlide.blocks : []).toEqual([
-            { type: "bullets", region: "main", items: ["One", "Two"], ordered: false },
+            {
+                id: "slide-2-block-1",
+                type: "bullets",
+                region: "main",
+                sourceIds: [],
+                items: ["One", "Two"],
+                ordered: false,
+            },
         ]);
         expect(secondSlide?.type === "content" ? secondSlide.blocks[0]?.region : "").toBe("left");
     });
@@ -58,8 +65,10 @@ describe("AI presentation content", () => {
         expect(slide?.type).toBe("content");
         expect(slide?.type === "content" ? slide.title : "").toBe("Data Visualization");
         expect(slide?.type === "content" ? slide.blocks[0] : null).toEqual({
+            id: "chart-block-1",
             type: "paragraph",
             region: "main",
+            sourceIds: [],
             text: "Chart data unavailable",
         });
     });
@@ -109,8 +118,10 @@ describe("AI presentation content", () => {
         );
 
         expect(slide?.type === "content" ? slide.blocks[0] : null).toEqual({
+            id: "visual-block-1",
             type: "image-placeholder",
             region: "right",
+            sourceIds: [],
             alt: "Annotated product workflow screenshot",
             caption: "Add the final product capture",
         });
@@ -145,13 +156,17 @@ describe("AI presentation content", () => {
         ).toEqual({
             id: "unsafe",
             type: "content",
+            transition: { type: "none", durationMs: 0 },
+            effects: [],
             layout: "content",
             title: "<script>alert(1)</script>",
             subtitle: "",
             blocks: [
                 {
+                    id: "unsafe-block-1",
                     type: "paragraph",
                     region: "main",
+                    sourceIds: [],
                     text: "<img src=x onerror=alert(1)>",
                 },
             ],
@@ -160,7 +175,7 @@ describe("AI presentation content", () => {
 });
 
 describe("AI presentation prompts", () => {
-    it("requires content-only schema V2 output for generation and iteration", () => {
+    it("requires content-only schema V3 output for generation and iteration", () => {
         const generationPrompt = buildGenerationPrompt(
             "balanced",
             "professional",
@@ -169,13 +184,13 @@ describe("AI presentation prompts", () => {
         );
         const iterationPrompt = buildIterationPrompt("Improve the comparison");
 
-        expect(generationPrompt).toContain('Set "schemaVersion" to 2');
+        expect(generationPrompt).toContain('Set "schemaVersion" to 3');
         expect(generationPrompt).toContain("Never return HTML, Markdown, CSS, JSX, JavaScript");
         expect(generationPrompt).toContain('"type": "content"');
         expect(generationPrompt).toContain('theme to exactly "nature-green"');
         expect(generationPrompt).toContain("Prefer image-right layouts");
         expect(generationPrompt).toContain("image-placeholder");
-        expect(iterationPrompt).toContain("Always output schema version 2");
+        expect(iterationPrompt).toContain("Always output schema version 3");
         expect(iterationPrompt).toContain("Improve the comparison");
     });
 });

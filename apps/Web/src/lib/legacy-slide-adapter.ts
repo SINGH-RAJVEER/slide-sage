@@ -152,6 +152,12 @@ export function adaptLegacyHtmlSlide(slide: LegacyHtmlSlide): ContentSlide {
         layout,
         title,
         subtitle,
-        blocks: blocks.slice(0, 12),
+        blocks: blocks.slice(0, 12).map((block, index) => ({
+            ...block,
+            id: `${slide.id}-block-${index + 1}`,
+            sourceIds: [],
+        })),
+        transition: slide.transition,
+        effects: slide.effects,
     };
 }

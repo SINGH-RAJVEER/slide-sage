@@ -1,7 +1,8 @@
 import type React from "react";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import type { Slide } from "@/modules/types/presentation";
+import type { ContentSlide, Slide } from "@/modules/types/presentation";
+import { EditableSlideCanvas } from "./EditableSlideCanvas";
 import { SlideRenderer } from "./SlideRenderer";
 
 interface ViewerSlideCarouselProps {
@@ -12,6 +13,9 @@ interface ViewerSlideCarouselProps {
     containerRef: React.RefObject<HTMLDivElement | null>;
     onSelectSlide: (index: number) => void;
     isWaitingForFirstSlide?: boolean;
+    savingEdit?: boolean;
+    onSaveEdit?: (slide: ContentSlide) => Promise<void>;
+    onCancelEdit?: () => void;
 }
 
 export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
@@ -22,6 +26,9 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
     containerRef,
     onSelectSlide,
     isWaitingForFirstSlide = false,
+    savingEdit = false,
+    onSaveEdit,
+    onCancelEdit,
 }) => {
     return (
         <div
@@ -76,16 +83,25 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
                             onClick={() => onSelectSlide(idx)}
                         >
                             <div className="ss-slide-stage flex-shrink-0 cursor-pointer">
-                                <Card
-                                    className={`w-full h-full rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 flex items-stretch ${
-                                        currentSlide === idx ? "ring-2 ring-blue-500" : ""
-                                    }`}
-                                >
-                                    <SlideRenderer
-                                        slide={slide}
-                                        currentTemplate={currentTemplate}
-                                        isActive={currentSlide === idx}
-                                    />
+                                <Card className="w-full h-full rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 flex items-stretch">
+                                    {currentSlide === idx &&
+                                    "blocks" in slide &&
+                                    onSaveEdit &&
+                                    onCancelEdit ? (
+                                        <EditableSlideCanvas
+                                            slide={slide}
+                                            currentTemplate={currentTemplate}
+                                            saving={savingEdit}
+                                            onSave={onSaveEdit}
+                                            onCancel={onCancelEdit}
+                                        />
+                                    ) : (
+                                        <SlideRenderer
+                                            slide={slide}
+                                            currentTemplate={currentTemplate}
+                                            isActive={currentSlide === idx}
+                                        />
+                                    )}
                                 </Card>
                             </div>
                         </div>

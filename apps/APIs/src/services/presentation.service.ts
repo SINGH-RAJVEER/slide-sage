@@ -7,7 +7,9 @@ import type { Presentation } from "@slide-sage/database";
 import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
 import {
     buildResearchSystemMessage,
+    type PresentationJSON,
     type PresentationLayoutPreference,
+    type PresentationMutation,
     type PresentationStreamEvent,
     type ResearchOptions,
     type ResearchPayload,
@@ -16,6 +18,7 @@ import {
     type ThemeId,
 } from "@slide-sage/types";
 import { AIService } from "./ai.service";
+import { applyPresentationMutations, normalizePresentationDocument } from "./presentation-document";
 import { RAGService } from "./rag.service";
 
 export interface GeneratePresentationParams {
@@ -222,6 +225,31 @@ export class PresentationService {
         }
 
         return presentation;
+    }
+
+    async updatePresentation(
+        presentationId: string,
+        userId: string,
+        mutations: PresentationMutation[]
+    ): Promise<Presentation> {
+        const presentation = await this.getPresentation(presentationId, userId);
+        const storedDocument = presentation.slidesData as Partial<PresentationJSON>;
+        const current = normalizePresentationDocument({
+            ...storedDocument,
+            title: storedDocument.title || presentation.title,
+        });
+        const slidesData = applyPresentationMutations(current, mutations);
+        const updated = await this.presentationRepo.updateOwnedAtRevision(
+            presentationId,
+            userId,
+            presentation.updatedAt,
+            {
+                title: slidesData.title,
+                slidesData: slidesData as PresentationJSON,
+            }
+        );
+        if (!updated) throw new Error("Presentation changed while it was being saved");
+        return updated;
     }
 
     /**

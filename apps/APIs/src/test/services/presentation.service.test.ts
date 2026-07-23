@@ -18,6 +18,7 @@ const repository = {
     findByUserId: mock(),
     delete: mock(),
     update: mock(),
+    updateOwnedAtRevision: mock(),
     findIterations: mock(),
 };
 
@@ -29,6 +30,7 @@ mock.module("@slide-sage/database", () => {
             findByUserId = repository.findByUserId;
             delete = repository.delete;
             update = repository.update;
+            updateOwnedAtRevision = repository.updateOwnedAtRevision;
             findIterations = repository.findIterations;
         },
         TokenCalculator: {
@@ -85,6 +87,7 @@ describe("PresentationService", () => {
         repository.findByUserId.mockReset();
         repository.delete.mockReset();
         repository.update.mockReset();
+        repository.updateOwnedAtRevision.mockReset();
         repository.findIterations.mockReset();
     });
 
@@ -134,6 +137,48 @@ describe("PresentationService", () => {
         });
         await expect(service.getPresentation("presentation_1", "user_1")).rejects.toThrow(
             "Unauthorized access to presentation"
+        );
+    });
+
+    it("preserves the row title and uses compare-and-swap for document updates", async () => {
+        const updatedAt = new Date("2026-01-01T00:00:00.000Z");
+        const presentation = {
+            id: "presentation_1",
+            userId: "user_1",
+            title: "Roadmap",
+            prompt: "Build a roadmap deck",
+            slidesData: {
+                slides: [
+                    {
+                        id: "slide-1",
+                        type: "content",
+                        layout: "content",
+                        title: "Plan",
+                        subtitle: "",
+                        blocks: [],
+                    },
+                ],
+            },
+            createdAt: updatedAt,
+            updatedAt,
+            parentPresentationId: null,
+        };
+        repository.findById.mockResolvedValue(presentation);
+        repository.updateOwnedAtRevision.mockResolvedValue({ ...presentation, title: "Roadmap" });
+
+        const service = new PresentationService();
+        await service.updatePresentation("presentation_1", "user_1", [
+            { type: "update-presentation", theme: "nature-green" },
+        ]);
+
+        expect(repository.updateOwnedAtRevision).toHaveBeenCalledWith(
+            "presentation_1",
+            "user_1",
+            updatedAt,
+            expect.objectContaining({
+                title: "Roadmap",
+                slidesData: expect.objectContaining({ title: "Roadmap", theme: "nature-green" }),
+            })
         );
     });
 

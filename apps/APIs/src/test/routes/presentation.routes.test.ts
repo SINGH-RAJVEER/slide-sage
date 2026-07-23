@@ -12,6 +12,7 @@ const userRepository = {
 const presentationRepository = {
     create: mock(),
     update: mock(),
+    updateOwnedAtRevision: mock(),
 };
 
 const presentationService = {
@@ -22,6 +23,7 @@ const presentationService = {
     getUserPresentations: mock(),
     iteratePresentationStream: mock(),
     storePresentationMemory: mock(),
+    updatePresentation: mock(),
 };
 
 const searchService = {
@@ -51,6 +53,15 @@ mock.module("@slide-sage/database", () => ({
             presentationUpdates.push({ id, updates });
             return presentationRepository.update(id, updates);
         };
+        updateOwnedAtRevision = (
+            id: string,
+            _userId: string,
+            _updatedAt: Date,
+            updates: unknown
+        ) => {
+            presentationUpdates.push({ id, updates });
+            return presentationRepository.updateOwnedAtRevision(id, updates);
+        };
     },
 }));
 
@@ -63,6 +74,7 @@ mock.module("../../services/presentation.service", () => ({
         getUserPresentations = presentationService.getUserPresentations;
         iteratePresentationStream = presentationService.iteratePresentationStream;
         storePresentationMemory = presentationService.storePresentationMemory;
+        updatePresentation = presentationService.updatePresentation;
     },
 }));
 
@@ -110,6 +122,7 @@ describe("presentation routes", () => {
         userRepository.hasSufficientTokens.mockReset();
         presentationRepository.create.mockReset();
         presentationRepository.update.mockReset();
+        presentationRepository.updateOwnedAtRevision.mockReset();
         presentationService.calculateEstimatedTokens.mockReset();
         presentationService.deletePresentation.mockReset();
         presentationService.generatePresentationStream.mockReset();
@@ -129,6 +142,12 @@ describe("presentation routes", () => {
         userRepository.deductTokens.mockResolvedValue({ slideTokens: 17 });
         presentationRepository.create.mockResolvedValue({ id: "presentation_1" });
         presentationRepository.update.mockResolvedValue({});
+        presentationRepository.updateOwnedAtRevision.mockResolvedValue({});
+        presentationService.getPresentation.mockResolvedValue({
+            id: "presentation_1",
+            userId: currentUserId,
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        });
         presentationService.generatePresentationStream.mockImplementation(successfulStream);
         presentationService.iteratePresentationStream.mockImplementation(successfulStream);
         presentationService.storePresentationMemory.mockResolvedValue(undefined);
@@ -189,7 +208,7 @@ describe("presentation routes", () => {
             "Generating...",
             "Quarterly planning",
             {
-                schemaVersion: 2,
+                schemaVersion: 3,
                 slides: [],
                 theme: "nature-green",
                 title: "Generating...",
@@ -329,7 +348,7 @@ describe("presentation routes", () => {
                 title: "Failure handling",
                 prompt: "Failure handling",
                 slidesData: {
-                    schemaVersion: 2,
+                    schemaVersion: 3,
                     title: "Failure handling",
                     theme: "corporate-blue",
                     slides: [],
@@ -402,7 +421,7 @@ describe("presentation routes", () => {
         const finalUpdate = presentationUpdates[0]?.updates as {
             slidesData?: { schemaVersion?: number; slides?: Array<{ id?: string }> };
         };
-        expect(finalUpdate.slidesData?.schemaVersion).toBe(2);
+        expect(finalUpdate.slidesData?.schemaVersion).toBe(3);
         expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
         expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
     });
@@ -589,5 +608,46 @@ describe("presentation routes", () => {
         expect(forbidden.status).toBe(403);
         expect(deleted.status).toBe(200);
         expect(await json(deleted)).toEqual({ message: "Presentation deleted successfully" });
+    });
+
+    it("applies authenticated presentation mutations", async () => {
+        const createdAt = new Date("2026-01-01T00:00:00.000Z");
+        presentationService.updatePresentation.mockResolvedValueOnce({
+            id: "presentation_1",
+            title: "Deck",
+            prompt: "Topic",
+            slidesData: {
+                schemaVersion: 3,
+                title: "Deck",
+                theme: "nature-green",
+                slides: [],
+                totalSlides: 0,
+            },
+            createdAt,
+            updatedAt: createdAt,
+        });
+
+        const response = await app().request("/api/presentations/presentation_1", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                mutations: [{ type: "update-presentation", theme: "nature-green" }],
+            }),
+        });
+
+        expect(response.status).toBe(200);
+        expect(presentationService.updatePresentation).toHaveBeenCalledWith(
+            "presentation_1",
+            currentUserId,
+            [
+                {
+                    type: "update-presentation",
+                    theme: "nature-green",
+                    title: undefined,
+                    dimensions: undefined,
+                },
+            ]
+        );
+        expect((await json(response)).presentation.slides_data.schemaVersion).toBe(3);
     });
 });

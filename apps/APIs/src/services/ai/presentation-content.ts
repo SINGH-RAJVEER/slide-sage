@@ -209,8 +209,10 @@ function chartFallback(id: string): ContentSlide {
         subtitle: "",
         blocks: [
             {
+                id: `${id}-block-1`,
                 type: "paragraph",
                 region: "main",
+                sourceIds: [],
                 text: "Chart data unavailable",
             },
         ],
@@ -225,9 +227,15 @@ export function processSlide(input: unknown, index: number): StructuredSlide | n
 
     const slide = input as Record<string, unknown>;
     const id = text(slide["id"], 120) || `slide-${index + 1}`;
+    const presentationMetadata = {
+        transition: { type: "none" as const, durationMs: 0 },
+        effects: [],
+    };
     if (slide["type"] === "chart") {
         const chartConfig = normalizeChartConfig(slide["chartConfig"]);
-        return chartConfig ? { id, type: "chart", chartConfig } : chartFallback(id);
+        return chartConfig
+            ? { id, type: "chart", chartConfig, ...presentationMetadata }
+            : { ...chartFallback(id), ...presentationMetadata };
     }
     if (slide["type"] !== "content") {
         console.warn(`Slide ${index} has an unsupported type, skipping`);
@@ -242,6 +250,11 @@ export function processSlide(input: unknown, index: number): StructuredSlide | n
               .slice(0, 12)
               .map((block) => normalizeBlock(block, layout))
               .filter((block): block is SlideBlock => block !== null)
+              .map((block, blockIndex) => ({
+                  ...block,
+                  id: `${id}-block-${blockIndex + 1}`,
+                  sourceIds: [],
+              }))
         : [];
     const title = text(slide["title"], 240) || `Slide ${index + 1}`;
 
@@ -252,6 +265,7 @@ export function processSlide(input: unknown, index: number): StructuredSlide | n
         title,
         subtitle: text(slide["subtitle"], 400),
         blocks,
+        ...presentationMetadata,
     };
 }
 

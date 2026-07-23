@@ -1,12 +1,6 @@
-import { ArrowLeft, ChevronDown, Maximize, Pause, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, Presentation, Sparkles } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SlideLayoutSelector } from "@/components/Viewer/SlideLayoutSelector";
 import TemplateSelector from "@/components/Viewer/TemplateSelector";
 import type { SlideLayout } from "@/modules/types/presentation";
@@ -21,21 +15,8 @@ interface ViewerHeaderControlsProps {
     onLayoutChange: (layout: SlideLayout) => void;
     layoutDisabled: boolean;
     onIterate: () => void;
-
-    intervalMode: "preset" | "custom";
-    slideInterval: number;
-    customInterval: string;
-    customInputRef: React.RefObject<HTMLInputElement | null>;
-    setIntervalMode: (mode: "preset" | "custom") => void;
-    setSlideInterval: (seconds: number) => void;
-    setCustomInterval: (seconds: string) => void;
-
-    isPlaying: boolean;
-    onTogglePlayback: () => void;
-    playbackDisabled: boolean;
-
-    onEnterFullscreen: () => void;
-    fullscreenDisabled?: boolean;
+    onPresent: () => void;
+    presentDisabled?: boolean;
 }
 
 export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
@@ -48,18 +29,8 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
     onLayoutChange,
     layoutDisabled,
     onIterate,
-    intervalMode,
-    slideInterval,
-    customInterval,
-    customInputRef,
-    setIntervalMode,
-    setSlideInterval,
-    setCustomInterval,
-    isPlaying,
-    onTogglePlayback,
-    playbackDisabled,
-    onEnterFullscreen,
-    fullscreenDisabled = false,
+    onPresent,
+    presentDisabled = false,
 }) => {
     return (
         <div
@@ -102,96 +73,13 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
             </div>
 
             <div className="flex items-center justify-end gap-2">
-                {intervalMode === "preset" ? (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="w-24 bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 justify-between h-9 px-3"
-                            >
-                                <span>{slideInterval}s</span>
-                                <ChevronDown className="w-4 h-4 opacity-50" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-32 bg-gray-900/95 backdrop-blur-md border border-white/10 text-white shadow-xl">
-                            {[2, 3, 5, 10, 15].map((val) => (
-                                <DropdownMenuItem
-                                    key={val}
-                                    onClick={() => {
-                                        setSlideInterval(val);
-                                        setCustomInterval(val.toString());
-                                        setIntervalMode("preset");
-                                    }}
-                                    className="focus:bg-white/10 focus:text-white cursor-pointer"
-                                >
-                                    {val}s
-                                </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuItem
-                                onClick={() => setIntervalMode("custom")}
-                                className="focus:bg-white/10 focus:text-white cursor-pointer"
-                            >
-                                Custom
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                ) : (
-                    <input
-                        ref={customInputRef}
-                        type="number"
-                        min={0}
-                        max={10000}
-                        value={customInterval}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (/^\d{0,5}$/.test(val) && Number(val) <= 10000) {
-                                setCustomInterval(val);
-                            }
-                        }}
-                        onBlur={() => {
-                            let val = Number(customInterval);
-                            if (Number.isNaN(val) || val < 0) val = 0;
-                            if (val > 10000) val = 10000;
-                            setSlideInterval(val);
-                            setCustomInterval(val.toString());
-                            setIntervalMode("preset");
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                let val = Number(customInterval);
-                                if (Number.isNaN(val) || val < 0) val = 0;
-                                if (val > 10000) val = 10000;
-                                setSlideInterval(val);
-                                setCustomInterval(val.toString());
-                                setIntervalMode("preset");
-                            } else if (e.key === "Escape") {
-                                setIntervalMode("preset");
-                            }
-                        }}
-                        className="w-24 px-3 py-2 rounded-md bg-transparent border border-white/5 text-white/60 hover:text-white hover:bg-white/5 focus:outline-none focus:ring-1 focus:ring-white/20 hide-number-spin transition-all duration-200 h-9"
-                        placeholder="Custom (s)"
-                        inputMode="numeric"
-                        style={{ MozAppearance: "textfield" }}
-                    />
-                )}
-
                 <Button
-                    onClick={onTogglePlayback}
                     variant="outline"
-                    className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 h-9 px-3"
-                    disabled={playbackDisabled}
+                    onClick={onPresent}
+                    disabled={presentDisabled}
+                    className="border-white/5 bg-white/5 text-white hover:bg-white/10"
                 >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </Button>
-
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onEnterFullscreen}
-                    disabled={fullscreenDisabled}
-                    className="text-white/60 hover:text-white hover:bg-white/5 h-9 w-9"
-                >
-                    <Maximize className="h-5 w-5" />
+                    <Presentation className="mr-2 size-4" /> Present
                 </Button>
             </div>
         </div>

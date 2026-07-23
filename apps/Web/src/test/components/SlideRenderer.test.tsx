@@ -79,4 +79,27 @@ describe("SlideRenderer", () => {
         ).toBeInTheDocument();
         expect(getByText("Add the final product capture")).toBeInTheDocument();
     });
+
+    it("renders final statistic values in inactive previews", () => {
+        const slide: Slide = {
+            id: "stats",
+            type: "content",
+            layout: "content",
+            title: "Results",
+            subtitle: "",
+            blocks: [
+                {
+                    id: "metric",
+                    type: "stats",
+                    region: "main",
+                    items: [{ value: "$12.5M", label: "Revenue" }],
+                },
+            ],
+        };
+        const { getByText } = render(
+            <SlideRenderer slide={slide} currentTemplate="corporate-blue" isActive={false} />,
+        );
+
+        expect(getByText("$12.5M")).toBeInTheDocument();
+    });
 });

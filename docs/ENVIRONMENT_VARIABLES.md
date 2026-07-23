@@ -22,6 +22,10 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 `POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all
 `slidesage`, except `POSTGRES_PORT=5432`.
 
+Devenv may select another PostgreSQL port when the default is occupied. Its migration
+task constructs `DATABASE_URL` from the active `POSTGRES_PORT`, so values loaded from
+`.env` cannot redirect migrations to a stale local port.
+
 ## AI and Research
 
 | Variable | Required | Default | Purpose |

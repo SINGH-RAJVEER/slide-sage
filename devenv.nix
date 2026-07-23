@@ -52,7 +52,9 @@ in
 
         "db:migrate" = {
             after = [ "db:setup" ];
-            exec = "bun run db:migrate";
+            exec = ''
+                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun run db:migrate
+            '';
             cwd = "packages/database";
         };
     };

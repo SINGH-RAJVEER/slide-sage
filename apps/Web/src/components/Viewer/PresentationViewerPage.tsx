@@ -11,16 +11,19 @@ import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { API_URL } from "@/lib/api";
 import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
+import { persistPresentationMutations } from "@/lib/presentation-mutations";
 import { applySlideLayout } from "@/lib/slide-layout";
 // Import directly from source modules (not the @/modules/presentations barrel) to avoid a
 // circular dependency: the barrel re-exports this very page, which under circular evaluation
 // left the AVAILABLE_TEMPLATES binding unestablished (ReferenceError at render).
 import { useStreaming } from "@/modules/contexts/StreamingContext";
 import {
+    type ContentSlide,
     isChartSlide,
     isLegacyHtmlSlide,
     type PresentationData,
     type SlideLayout,
+    type ThemeId,
 } from "@/modules/types/presentation";
 import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
 import { useTemplate } from "@/modules/useTemplate";
@@ -86,6 +89,7 @@ export default function PresentationViewerPage() {
     // overridden on every re-render, and we ignore unknown values so a stray theme string
     // from the model can't blank out the styling.
     const appliedThemeRef = useRef<string | null>(null);
+    const templateSaveSequenceRef = useRef(0);
     useEffect(() => {
         const theme = streamingState.theme || presentation?.theme;
         if (!theme || theme === appliedThemeRef.current) return;
@@ -124,6 +128,10 @@ export default function PresentationViewerPage() {
     }, [intervalMode]);
 
     const slideCount = presentation?.slides.length ?? 0;
+    const keyboardSlideRef = useRef(navigation.currentSlide);
+    useEffect(() => {
+        keyboardSlideRef.current = navigation.currentSlide;
+    }, [navigation.currentSlide]);
 
     const playback = usePlayback({
         slideCount,
@@ -138,32 +146,43 @@ export default function PresentationViewerPage() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (slideCount <= 0) return;
+            const target = e.target as HTMLElement | null;
+            if (target?.matches("input, textarea, select") || target?.isContentEditable) {
+                return;
+            }
 
             if (e.key === "ArrowLeft" || e.key.toLowerCase() === "j") {
+                e.preventDefault();
+                if (e.repeat) return;
                 playback.stop();
-                navigation.prev("auto");
+                const nextIndex = Math.max(keyboardSlideRef.current - 1, 0);
+                keyboardSlideRef.current = nextIndex;
+                navigation.scrollToSlide(nextIndex, "auto");
             } else if (e.key === "ArrowRight" || e.key.toLowerCase() === "l") {
+                e.preventDefault();
+                if (e.repeat) return;
                 playback.stop();
-                navigation.next("auto");
+                const nextIndex = Math.min(keyboardSlideRef.current + 1, slideCount - 1);
+                keyboardSlideRef.current = nextIndex;
+                navigation.scrollToSlide(nextIndex, "auto");
             } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                if (e.repeat) return;
                 playback.stop();
+                keyboardSlideRef.current = 0;
                 navigation.first("auto");
             } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                if (e.repeat) return;
                 playback.stop();
+                keyboardSlideRef.current = Math.max(slideCount - 1, 0);
                 navigation.last("auto");
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [
-        slideCount,
-        navigation.first,
-        navigation.last,
-        navigation.next,
-        navigation.prev,
-        playback.stop,
-    ]);
+    }, [slideCount, navigation.first, navigation.last, navigation.scrollToSlide, playback.stop]);
 
     // While streaming, follow the latest slide
     useEffect(() => {
@@ -212,6 +231,7 @@ export default function PresentationViewerPage() {
     ]);
 
     const [showIterateModal, setShowIterateModal] = useState(false);
+    const [savingEdit, setSavingEdit] = useState(false);
 
     const handleIteratePresentation = async (
         prompt: string,
@@ -256,20 +276,20 @@ export default function PresentationViewerPage() {
 
         if (presentationId && slideId) {
             try {
-                const encodedSlideId = encodeURIComponent(slideId);
-                const url = `${API_URL}/api/presentations/${presentationId}/slides/${encodedSlideId}`;
-
-                const response = await fetch(url, {
-                    method: "DELETE",
-                    credentials: "include",
-                });
-
-                if (!response.ok) {
-                    const data = await response.json().catch(() => null);
-                    console.error("Failed to delete slide from database:", data);
-                }
+                const saved = await persistPresentationMutations(presentationId, [
+                    { type: "delete-slide", slideId },
+                ]);
+                setPresentation(saved);
             } catch (error) {
                 console.error("Error deleting slide:", error);
+                setPresentation((current) => {
+                    if (!current || current.slides.some((slide) => slide.id === slideId)) {
+                        return current;
+                    }
+                    const slides = [...current.slides];
+                    slides.splice(navigation.currentSlide, 0, slideToDelete);
+                    return { ...current, slides, totalSlides: slides.length };
+                });
             }
         }
     };
@@ -299,38 +319,89 @@ export default function PresentationViewerPage() {
                 : activeSlide
             : undefined;
 
-    const handleTemplateChange = (templateId: string) => {
+    const handleTemplateChange = async (templateId: string) => {
+        const saveSequence = ++templateSaveSequenceRef.current;
+        const previousTheme = presentation?.theme || currentTemplate;
         changeTemplate(templateId);
         setPresentation((current) => (current ? { ...current, theme: templateId } : current));
+        if (!presentationId) return;
+        try {
+            const saved = await persistPresentationMutations(presentationId, [
+                { type: "update-presentation", theme: templateId as ThemeId },
+            ]);
+            setPresentation(saved);
+        } catch (error) {
+            console.error("Failed to save presentation theme:", error);
+            if (templateSaveSequenceRef.current !== saveSequence) return;
+            changeTemplate(previousTheme);
+            setPresentation((current) =>
+                current?.theme === templateId ? { ...current, theme: previousTheme } : current,
+            );
+        }
     };
 
-    const handleLayoutChange = (layout: SlideLayout) => {
-        setPresentation((current) => {
-            if (!current) return current;
-            const selected = current.slides[navigation.currentSlide];
-            if (!selected || isChartSlide(selected)) return current;
+    const handleLayoutChange = async (layout: SlideLayout) => {
+        if (!presentation) return;
+        const selected = presentation.slides[navigation.currentSlide];
+        if (!selected || isChartSlide(selected)) return;
+        const contentSlide = isLegacyHtmlSlide(selected)
+            ? adaptLegacyHtmlSlide(selected)
+            : selected;
+        const updatedSlide = applySlideLayout(contentSlide, layout);
+        const slides = [...presentation.slides];
+        slides[navigation.currentSlide] = updatedSlide;
+        setPresentation({ ...presentation, slides });
+        if (!presentationId) return;
+        try {
+            const saved = await persistPresentationMutations(presentationId, [
+                { type: "update-slide", slideId: updatedSlide.id, slide: updatedSlide },
+            ]);
+            setPresentation(saved);
+        } catch (error) {
+            console.error("Failed to save slide layout:", error);
+            setPresentation((current) => {
+                if (!current) return current;
+                const currentSlides = current.slides.map((slide) =>
+                    slide.id === contentSlide.id ? contentSlide : slide,
+                );
+                return { ...current, slides: currentSlides };
+            });
+        }
+    };
 
-            const contentSlide = isLegacyHtmlSlide(selected)
-                ? adaptLegacyHtmlSlide(selected)
-                : selected;
-            const slides = [...current.slides];
-            slides[navigation.currentSlide] = applySlideLayout(contentSlide, layout);
-            return { ...current, slides };
+    const saveCanvasEdit = async (slide: ContentSlide) => {
+        if (!presentation) return;
+        setSavingEdit(true);
+        const previous = presentation;
+        setPresentation({
+            ...presentation,
+            slides: presentation.slides.map((item) => (item.id === slide.id ? slide : item)),
         });
+        try {
+            if (presentationId) {
+                const saved = await persistPresentationMutations(presentationId, [
+                    { type: "update-slide", slideId: slide.id, slide },
+                ]);
+                setPresentation(saved);
+            }
+        } catch (error) {
+            setPresentation(previous);
+            console.error("Failed to save canvas edit:", error);
+        } finally {
+            setSavingEdit(false);
+        }
     };
 
     return (
         <div
-            className={`min-h-screen transition-all duration-300 ${
-                isFullscreenMode ? "bg-transparent p-0" : "bg-transparent p-0"
-            }`}
+            className="flex min-h-screen bg-transparent p-0"
             style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
         >
             <div
                 className={
                     isFullscreenMode
                         ? "h-screen w-screen flex flex-col"
-                        : "max-w-[95vw] mx-auto h-full flex flex-col pt-3"
+                        : "mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
                 }
                 style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
             >
@@ -346,28 +417,11 @@ export default function PresentationViewerPage() {
                         selectedLayout={activeContentSlide?.layout}
                         onLayoutChange={handleLayoutChange}
                         layoutDisabled={!activeContentSlide}
-                        onIterate={() => setShowIterateModal(true)}
-                        intervalMode={intervalMode}
-                        slideInterval={slideInterval}
-                        customInterval={customInterval}
-                        customInputRef={customInputRef}
-                        setIntervalMode={setIntervalMode}
-                        setSlideInterval={setSlideInterval}
-                        setCustomInterval={setCustomInterval}
-                        isPlaying={playback.isPlaying}
-                        onTogglePlayback={playback.toggle}
-                        playbackDisabled={viewerPresentation.slides.length <= 1}
-                        onEnterFullscreen={() => void enterFullscreen()}
-                        fullscreenDisabled={!hasSlides}
+                        onIterate={() => setShowIterateModal((current) => !current)}
+                        onPresent={() => void enterFullscreen()}
+                        presentDisabled={!hasSlides}
                     />
                 )}
-
-                <IterateModal
-                    open={showIterateModal}
-                    onOpenChange={setShowIterateModal}
-                    onIterate={handleIteratePresentation}
-                    isStreaming={streamingState.isStreaming}
-                />
 
                 {!isFullscreenMode && (
                     <ViewerSlideCarousel
@@ -383,6 +437,9 @@ export default function PresentationViewerPage() {
                                 navigation.scrollToSlide(idx, "smooth");
                             }
                         }}
+                        savingEdit={savingEdit}
+                        onSaveEdit={saveCanvasEdit}
+                        onCancelEdit={() => undefined}
                     />
                 )}
 
@@ -418,6 +475,7 @@ export default function PresentationViewerPage() {
                         currentSlide={navigation.currentSlide}
                         isStreamingMode={isStreamingMode}
                         isStreaming={streamingState.isStreaming || shouldShowGenerating}
+                        currentTemplate={currentTemplate}
                         onSelect={(index) => {
                             playback.stop();
                             navigation.scrollToSlide(index, "smooth", { block: "center" });
@@ -427,7 +485,7 @@ export default function PresentationViewerPage() {
 
                 {isFullscreenMode && activeSlide && (
                     <div className="flex-1 flex flex-col items-center justify-center overflow-auto">
-                        <div className="ss-slide-stage">
+                        <div key={activeSlide.id} className="ss-slide-stage ss-slide-enter">
                             <Card className="w-full h-full rounded-none bg-black flex items-center justify-center">
                                 <SlideRenderer
                                     slide={activeSlide}
@@ -475,6 +533,14 @@ export default function PresentationViewerPage() {
                     />
                 )}
             </div>
+            {!isFullscreenMode && (
+                <IterateModal
+                    open={showIterateModal}
+                    onOpenChange={setShowIterateModal}
+                    onIterate={handleIteratePresentation}
+                    isStreaming={streamingState.isStreaming}
+                />
+            )}
         </div>
     );
 }

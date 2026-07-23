@@ -136,7 +136,7 @@ describe("AIService resilient presentation generation", () => {
         expect(schema?.properties?.slides?.["minItems"]).toBe(1);
         expect(schema?.properties?.slides?.["maxItems"]).toBe(1);
         expect(schema?.properties?.totalSlides).toEqual({ const: 1 });
-        expect(schema?.properties?.schemaVersion).toEqual({ const: 2 });
+        expect(schema?.properties?.schemaVersion).toEqual({ const: 3 });
         expect(JSON.stringify(responseFormat)).toContain("image-placeholder");
     });
 
@@ -158,7 +158,7 @@ describe("AIService resilient presentation generation", () => {
         ]);
         const complete = events.find((event) => event.event === "complete");
         expect(complete?.data.slides).toHaveLength(1);
-        expect(complete?.data.schemaVersion).toBe(2);
+        expect(complete?.data.schemaVersion).toBe(3);
         expect(complete?.data.theme).toBe("corporate-blue");
         expect(complete?.data.tokens_used).toBe(42);
     });
