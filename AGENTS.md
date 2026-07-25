@@ -9,7 +9,7 @@ Rules for AI agents in this repository.
 ## Indentation
 
 - Always use 4 spaces for indentation everywhere in this repository.
-- Do not use tabs for indentation.
+- Do not use 2 spaces or tabs for indentation.
 
 ## Documentation updates
 

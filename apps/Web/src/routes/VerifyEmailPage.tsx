@@ -71,7 +71,7 @@ export default function VerifyEmailPage() {
             }
 
             setSuccess(true);
-            await refreshSession();
+            await refreshSession({ force: true });
             setTimeout(() => {
                 navigate(redirectTo, { replace: true });
             }, 1500);

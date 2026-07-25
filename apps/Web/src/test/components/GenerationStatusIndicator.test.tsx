@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import { fireEvent, render, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import GenerationStatusIndicator, {
     GenerationStatusIndicatorView,
@@ -38,6 +38,7 @@ it("shows live slide progress and opens the active generation", () => {
     });
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("top-24", "right-4", "sm:right-5");
+    expect(button).toHaveClass("h-10", "w-10", "hover:w-80", "focus-visible:w-80");
     expect(button).not.toHaveClass("bottom-4", "left-4");
     expect(button.querySelector('[style*="scaleX(0.4)"]')).toBeInTheDocument();
 
@@ -73,7 +74,7 @@ it("shows an active generation indicator on the generate page", async () => {
         await waitFor(() => {
             expect(
                 view.getByRole("button", {
-                    name: "Generating presentation. Grid storage",
+                    name: "Generating presentation. Preparing your presentation",
                 }),
             ).toHaveClass("top-24", "right-4");
         });
@@ -102,7 +103,7 @@ it("does not duplicate generation status on the active viewer", async () => {
 
         expect(
             view.queryByRole("button", {
-                name: "Generating presentation. Grid storage",
+                name: "Generating presentation. Preparing your presentation",
             }),
         ).toBeNull();
     } finally {
@@ -142,7 +143,7 @@ for (const loginPath of ["/sign-in", "/login"]) {
             });
             expect(
                 view.queryByRole("button", {
-                    name: "Generating presentation. Grid storage",
+                    name: "Generating presentation. Preparing your presentation",
                 }),
             ).toBeNull();
         } finally {
@@ -194,11 +195,12 @@ it("hides a stopped-generation message after its cooldown", async () => {
     expect(errorPopIn).not.toHaveClass("bottom-4", "left-4");
     expect(errorPopIn).toHaveAttribute("aria-live", "assertive");
 
-    await waitFor(() => {
-        expect(
-            view.queryByRole("button", {
-                name: "Generation stopped. The stream was interrupted",
-            }),
-        ).toBeNull();
+    await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
     });
+    expect(
+        view.queryByRole("button", {
+            name: "Generation stopped. The stream was interrupted",
+        }),
+    ).toBeNull();
 });

@@ -12,6 +12,15 @@ export interface SessionUser {
 }
 
 const SESSION_RETRY_DELAYS_MS = [0, 250, 500];
+export const SESSION_STALE_AFTER_MS = 5 * 60 * 1000;
+
+export function isSessionCheckStale(
+    lastCheckedAt: number | null,
+    now = Date.now(),
+    staleAfterMs = SESSION_STALE_AFTER_MS,
+): boolean {
+    return lastCheckedAt === null || now - lastCheckedAt >= staleAfterMs;
+}
 
 function wait(delayMs: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, delayMs));

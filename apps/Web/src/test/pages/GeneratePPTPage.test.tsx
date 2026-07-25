@@ -20,7 +20,6 @@ it("prefills a failed presentation prompt and generation options", () => {
                             tonality: "casual",
                             research_enabled: true,
                             theme: "nature-green",
-                            layout_preference: "image-led",
                         },
                     },
                 },
@@ -34,21 +33,44 @@ it("prefills a failed presentation prompt and generation options", () => {
         </MemoryRouter>,
     );
 
-    expect(view.getByRole("textbox", { name: "Topic 1" })).toHaveValue(
+    expect(view.getByRole("textbox", { name: "Presentation prompt" })).toHaveValue(
         "Retry this market analysis",
     );
     expect(view.getByDisplayValue("12")).toBeInTheDocument();
     expect(view.getByText("Comprehensive")).toBeInTheDocument();
     expect(view.getByText("Casual")).toBeInTheDocument();
     expect(view.getByText("Nature Green")).toBeInTheDocument();
-    expect(view.getByText("Image-led")).toBeInTheDocument();
+    expect(view.getByText("Estimated 27.0 points")).toHaveClass("absolute", "mt-4", "text-lg");
     expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
-    expect(view.getByRole("button", { name: "Start Generating" })).not.toBeDisabled();
+    expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled();
 });
 
 it("opens the viewer immediately while generation waits for the stream", async () => {
     const originalFetch = globalThis.fetch;
-    const fetchMock = mock(() => new Promise<Response>(() => {}));
+    const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) =>
+        String(input).includes("/api/ai/config")
+            ? Promise.resolve(
+                  new Response(
+                      JSON.stringify({
+                          generation: {
+                              mode: "openrouter",
+                              model: "openrouter/default",
+                              billing: "points",
+                          },
+                          eligibility: {
+                              eligible: false,
+                              slideTokens: 10,
+                              minimumPointsExclusive: 50,
+                          },
+                          connections: [],
+                          models: [],
+                          selection: null,
+                      }),
+                      { headers: { "Content-Type": "application/json" } },
+                  ),
+              )
+            : new Promise<Response>(() => {}),
+    );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     try {
@@ -59,7 +81,7 @@ it("opens the viewer immediately while generation waits for the stream", async (
                         pathname: "/generate",
                         state: {
                             retry: {
-                                prompt: "Immediate viewer navigation",
+                                prompt: "Immediate viewer navigation, with launch risks\nand pricing",
                                 slide_count: 5,
                                 detail_level: "balanced",
                                 tonality: "professional",
@@ -81,10 +103,26 @@ it("opens the viewer immediately while generation waits for the stream", async (
             </MemoryRouter>,
         );
 
-        fireEvent.click(view.getByRole("button", { name: "Start Generating" }));
+        fireEvent.click(view.getByRole("button", { name: "Generate" }));
 
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        await waitFor(() =>
+            expect(
+                fetchMock.mock.calls.some(([input]) =>
+                    String(input).includes("/generate-presentation-stream"),
+                ),
+            ).toBe(true),
+        );
         expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+        const generationRequest = fetchMock.mock.calls.find(([input]) =>
+            String(input).includes("/generate-presentation-stream"),
+        );
+        const requestBody = JSON.parse(
+            String((generationRequest?.[1] as RequestInit | undefined)?.body),
+        ) as Record<string, unknown>;
+        expect(requestBody["topic"]).toBe(
+            "Immediate viewer navigation, with launch risks\nand pricing",
+        );
+        expect(requestBody).not.toHaveProperty("ai");
     } finally {
         globalThis.fetch = originalFetch;
     }

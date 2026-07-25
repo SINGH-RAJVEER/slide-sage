@@ -9,6 +9,7 @@ import NotFoundPage from "@/routes/NotFoundPage";
 import ProfilePage from "@/routes/ProfilePage";
 import ResetPasswordPage from "@/routes/ResetPasswordPage";
 import RouteErrorPage from "@/routes/RouteErrorPage";
+import SettingsPage from "@/routes/SettingsPage";
 import SignInPage from "@/routes/SignInPage";
 import SignUpPage from "@/routes/SignUpPage";
 import VerifyEmailPage from "@/routes/VerifyEmailPage";
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
                 children: [
                     { index: true, element: <HomePage /> },
                     { path: "profile", element: <ProfilePage /> },
+                    { path: "settings", element: <SettingsPage /> },
                     {
                         path: "generate",
                         lazy: lazyRoute(() => import("@/modules/pages/GeneratePPTPage")),
@@ -43,6 +45,16 @@ export const router = createBrowserRouter([
                     {
                         path: "generate/research",
                         lazy: lazyRoute(() => import("@/modules/pages/GenerateResearchPage")),
+                    },
+                    {
+                        path: "marketplace",
+                        lazy: lazyRoute(() => import("@/modules/pages/MarketplacePage")),
+                    },
+                    {
+                        path: "marketplace/:marketplaceId/preview",
+                        lazy: lazyRoute(
+                            () => import("@/modules/pages/MarketplaceThemePreviewPage"),
+                        ),
                     },
                     {
                         path: "presentations",

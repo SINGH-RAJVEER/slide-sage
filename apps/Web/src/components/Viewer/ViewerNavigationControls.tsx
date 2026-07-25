@@ -14,6 +14,8 @@ interface ViewerNavigationControlsProps {
     onLast: () => void;
     onDelete: () => void;
     deleteDisabled: boolean;
+    showDownload?: boolean;
+    showDelete?: boolean;
 }
 
 export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> = ({
@@ -26,22 +28,28 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
     onLast,
     onDelete,
     deleteDisabled,
+    showDownload = true,
+    showDelete = true,
 }) => {
     return (
-        <div
-            className="relative flex items-center mt-3 pt-8 flex-shrink-0"
+        <nav
+            className="viewer-navigation relative flex items-center mt-3 pt-8 flex-shrink-0"
+            aria-label="Slide navigation"
             style={{ minHeight: 36, fontSize: "0.95rem" }}
         >
-            <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                <DownloadMenu presentation={presentation} />
-            </div>
+            {showDownload && (
+                <div className="viewer-navigation__download absolute left-0 top-1/2 -translate-y-1/2">
+                    <DownloadMenu presentation={presentation} />
+                </div>
+            )}
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2">
+            <div className="viewer-navigation__pager absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2">
                 <Button
                     variant="outline"
                     onClick={onFirst}
                     disabled={totalSlides === 0 || currentSlide === 0}
-                    className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
+                    aria-label="First slide"
+                    className="viewer-navigation__edge bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     <SkipBack className="w-4 h-4" />
                 </Button>
@@ -49,7 +57,8 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                     variant="outline"
                     onClick={onPrev}
                     disabled={totalSlides === 0 || currentSlide === 0}
-                    className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
+                    aria-label="Previous slide"
+                    className="viewer-navigation__previous bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     <ChevronLeft className="w-4 h-4 mr-2" />
                     Previous
@@ -58,7 +67,8 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                     variant="outline"
                     onClick={onNext}
                     disabled={totalSlides === 0 || currentSlide === totalSlides - 1}
-                    className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
+                    aria-label="Next slide"
+                    className="viewer-navigation__next bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     Next
                     <ChevronRight className="w-4 h-4 ml-2" />
@@ -67,24 +77,27 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
                     variant="outline"
                     onClick={onLast}
                     disabled={totalSlides === 0 || currentSlide === totalSlides - 1}
-                    className="bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
+                    aria-label="Last slide"
+                    className="viewer-navigation__edge bg-transparent border-white/5 text-white/60 hover:text-white hover:bg-white/5"
                 >
                     <SkipForward className="w-4 h-4" />
                 </Button>
             </div>
 
-            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <Button
-                    variant="destructive"
-                    onClick={onDelete}
-                    disabled={deleteDisabled}
-                    className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 shadow-none transition-all duration-200"
-                    title="Delete current slide"
-                >
-                    <Trash className="w-4 h-4 mr-2" />
-                    Delete
-                </Button>
-            </div>
-        </div>
+            {showDelete && (
+                <div className="viewer-navigation__delete absolute right-0 top-1/2 -translate-y-1/2">
+                    <Button
+                        variant="destructive"
+                        onClick={onDelete}
+                        disabled={deleteDisabled}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 shadow-none transition-all duration-200"
+                        title="Delete current slide"
+                    >
+                        <Trash className="w-4 h-4 mr-2" />
+                        Delete
+                    </Button>
+                </div>
+            )}
+        </nav>
     );
 };

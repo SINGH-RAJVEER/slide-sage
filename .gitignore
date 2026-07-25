@@ -1,6 +1,6 @@
 node_modules/
 .env
-.turbo
+.wrangler/tmp
 
 # nix
 .devenv/

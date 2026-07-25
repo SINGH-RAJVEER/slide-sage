@@ -1,12 +1,31 @@
 import {
+    type AIProvider,
+    BACKGROUND_FOCAL_POINTS,
+    BACKGROUND_OVERLAYS,
+    BLOCK_EMPHASES,
+    BLOCK_TREATMENTS,
+    MAX_WIDGET_EDGES,
+    MAX_WIDGET_NODES,
     type OpenRouterMessage,
     PRESENTATION_SCHEMA_VERSION,
     type PresentationJSON,
-    type PresentationLayoutPreference,
+    type PresentationOutline,
     type PresentationStreamEvent,
+    SCENE_ENGINE_VERSION,
+    SCENE_PRESENTATION_SCHEMA_VERSION,
+    SLIDE_DENSITIES,
+    SLIDE_LAYOUTS,
+    SLIDE_PATTERNS,
+    SLIDE_REGIONS,
+    SLIDE_TONES,
+    type Slide,
     type Source,
     THEME_IDS,
     type ThemeId,
+    WIDGET_DIRECTIONS,
+    WIDGET_KINDS,
+    WIDGET_NODE_ROLES,
+    WIDGET_TONES,
 } from "@slide-sage/types";
 import {
     OpenRouterStreamError,
@@ -19,6 +38,7 @@ import {
     parsePresentationContent,
     processSlide,
 } from "./presentation-content";
+import { compilePresentationScenes } from "./presentation-design";
 
 interface OpenRouterEnvironment {
     OPEN_ROUTER_API_BASE?: string;
@@ -26,6 +46,8 @@ interface OpenRouterEnvironment {
 }
 
 interface StructuredPresentationOptions {
+    provider?: AIProvider;
+    apiKey?: string;
     model: string;
     messages: OpenRouterMessage[];
     expectedSlideCount?: number;
@@ -33,7 +55,7 @@ interface StructuredPresentationOptions {
     sources: Source[];
     operation: "generation" | "iteration";
     preferredTheme?: ThemeId;
-    layoutPreference?: PresentationLayoutPreference;
+    outline?: PresentationOutline;
 }
 
 const THEME_ID_SET = new Set<string>(THEME_IDS);
@@ -60,8 +82,13 @@ async function wait(delayMs: number): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
-function presentationResponseFormat(expectedSlideCount?: number): Record<string, unknown> {
-    const region = { enum: ["main", "left", "right"] };
+export function presentationResponseFormat(expectedSlideCount?: number): Record<string, unknown> {
+    const region = { enum: SLIDE_REGIONS };
+    const blockSemantics = {
+        emphasis: { enum: BLOCK_EMPHASES },
+        treatment: { enum: BLOCK_TREATMENTS },
+    };
+    const blockRequired = ["type", "region", "emphasis", "treatment"];
     const blockSchemas = [
         {
             type: "object",
@@ -69,8 +96,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                 type: { const: "paragraph" },
                 region,
                 text: { type: "string", maxLength: 1200 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "text"],
+            required: [...blockRequired, "text"],
             additionalProperties: false,
         },
         {
@@ -84,8 +112,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                     items: { type: "string", maxLength: 350 },
                 },
                 ordered: { type: "boolean" },
+                ...blockSemantics,
             },
-            required: ["type", "region", "items", "ordered"],
+            required: [...blockRequired, "items", "ordered"],
             additionalProperties: false,
         },
         {
@@ -108,8 +137,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                         items: { type: "string", maxLength: 180 },
                     },
                 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "headers", "rows"],
+            required: [...blockRequired, "headers", "rows"],
             additionalProperties: false,
         },
         {
@@ -120,8 +150,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                 url: { type: "string", maxLength: 2048 },
                 alt: { type: "string", maxLength: 240 },
                 caption: { type: "string", maxLength: 300 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "url", "alt", "caption"],
+            required: [...blockRequired, "url", "alt", "caption"],
             additionalProperties: false,
         },
         {
@@ -131,8 +162,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                 region,
                 alt: { type: "string", maxLength: 240 },
                 caption: { type: "string", maxLength: 300 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "alt", "caption"],
+            required: [...blockRequired, "alt", "caption"],
             additionalProperties: false,
         },
         {
@@ -142,8 +174,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                 region,
                 text: { type: "string", maxLength: 800 },
                 attribution: { type: "string", maxLength: 200 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "text", "attribution"],
+            required: [...blockRequired, "text", "attribution"],
             additionalProperties: false,
         },
         {
@@ -153,8 +186,9 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                 region,
                 heading: { type: "string", maxLength: 180 },
                 text: { type: "string", maxLength: 700 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "heading", "text"],
+            required: [...blockRequired, "heading", "text"],
             additionalProperties: false,
         },
         {
@@ -175,8 +209,63 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                         additionalProperties: false,
                     },
                 },
+                ...blockSemantics,
             },
-            required: ["type", "region", "items"],
+            required: [...blockRequired, "items"],
+            additionalProperties: false,
+        },
+        {
+            type: "object",
+            properties: {
+                type: { const: "widget" },
+                region,
+                version: { const: 1 },
+                kind: { enum: WIDGET_KINDS },
+                direction: { enum: WIDGET_DIRECTIONS },
+                nodes: {
+                    type: "array",
+                    minItems: 2,
+                    maxItems: MAX_WIDGET_NODES,
+                    items: {
+                        type: "object",
+                        properties: {
+                            id: { type: "string", maxLength: 80 },
+                            label: { type: "string", maxLength: 160 },
+                            description: { type: "string", maxLength: 400 },
+                            value: { type: "string", maxLength: 100 },
+                            role: { enum: WIDGET_NODE_ROLES },
+                            tone: { enum: WIDGET_TONES },
+                            parentId: { type: "string", maxLength: 80 },
+                        },
+                        required: [
+                            "id",
+                            "label",
+                            "description",
+                            "value",
+                            "role",
+                            "tone",
+                            "parentId",
+                        ],
+                        additionalProperties: false,
+                    },
+                },
+                edges: {
+                    type: "array",
+                    maxItems: MAX_WIDGET_EDGES,
+                    items: {
+                        type: "object",
+                        properties: {
+                            from: { type: "string", maxLength: 80 },
+                            to: { type: "string", maxLength: 80 },
+                            label: { type: "string", maxLength: 160 },
+                        },
+                        required: ["from", "to", "label"],
+                        additionalProperties: false,
+                    },
+                },
+                ...blockSemantics,
+            },
+            required: [...blockRequired, "version", "kind", "direction", "nodes", "edges"],
             additionalProperties: false,
         },
     ];
@@ -190,18 +279,51 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
                     properties: {
                         id: { type: "string", maxLength: 120 },
                         type: { const: "content" },
-                        layout: {
-                            enum: ["title", "content", "two-column", "quote", "image-right"],
-                        },
+                        layout: { enum: SLIDE_LAYOUTS },
                         title: { type: "string", maxLength: 240 },
                         subtitle: { type: "string", maxLength: 400 },
+                        eyebrow: { type: "string", maxLength: 120 },
+                        regionLabels: {
+                            type: "object",
+                            properties: {
+                                main: { type: "string", maxLength: 80 },
+                                primary: { type: "string", maxLength: 80 },
+                                secondary: { type: "string", maxLength: 80 },
+                                media: { type: "string", maxLength: 80 },
+                            },
+                            additionalProperties: false,
+                        },
+                        tone: { enum: SLIDE_TONES },
+                        density: { enum: SLIDE_DENSITIES },
+                        pattern: { enum: SLIDE_PATTERNS },
+                        backgroundImage: {
+                            type: "object",
+                            properties: {
+                                url: { type: "string", maxLength: 2048, pattern: "^https://" },
+                                alt: { type: "string", maxLength: 240 },
+                                focalPoint: { enum: BACKGROUND_FOCAL_POINTS },
+                                overlay: { enum: BACKGROUND_OVERLAYS },
+                            },
+                            required: ["url", "alt", "focalPoint", "overlay"],
+                            additionalProperties: false,
+                        },
                         blocks: {
                             type: "array",
                             maxItems: 12,
                             items: { anyOf: blockSchemas },
                         },
                     },
-                    required: ["id", "type", "layout", "title", "subtitle", "blocks"],
+                    required: [
+                        "id",
+                        "type",
+                        "layout",
+                        "title",
+                        "subtitle",
+                        "tone",
+                        "density",
+                        "pattern",
+                        "blocks",
+                    ],
                     additionalProperties: false,
                 },
                 {
@@ -300,7 +422,7 @@ function presentationResponseFormat(expectedSlideCount?: number): Record<string,
             schema: {
                 type: "object",
                 properties: {
-                    schemaVersion: { const: 2 },
+                    schemaVersion: { const: PRESENTATION_SCHEMA_VERSION },
                     title: { type: "string" },
                     theme: {
                         enum: [
@@ -341,24 +463,29 @@ export async function* streamStructuredPresentation(
     const maxResponseBytes = positiveInteger("OPEN_ROUTER_MAX_RESPONSE_BYTES", 8 * 1024 * 1024);
     const environment = process.env as OpenRouterEnvironment;
     const endpoint =
-        environment.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions";
-    const apiKey = environment.OPEN_ROUTER_API_KEY;
+        options.provider === undefined
+            ? environment.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions"
+            : undefined;
+    const apiKey = options.apiKey || environment.OPEN_ROUTER_API_KEY;
 
     if (!apiKey) {
         yield {
             event: "error",
-            data: { error: "OpenRouter is not configured. Set OPEN_ROUTER_API_KEY." },
+            data: { error: "The selected AI provider is not configured." },
         };
         return;
     }
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const processor = new StreamProcessor();
+        const streamedSlides = new Map<number, Slide>();
+        let streamedTheme: ThemeId | undefined;
         let chunkCount = 0;
 
         try {
             const response = await requestOpenRouterStream({
                 endpoint,
+                provider: options.provider,
                 apiKey,
                 model: options.model,
                 messages: options.messages,
@@ -387,9 +514,10 @@ export async function* streamStructuredPresentation(
                 if (!processor.themeYielded) {
                     const theme = processor.extractTheme();
                     if (theme) {
+                        streamedTheme = options.preferredTheme || normalizeTheme(theme);
                         yield {
                             event: "theme",
-                            data: { theme: options.preferredTheme || normalizeTheme(theme) },
+                            data: { theme: streamedTheme },
                         };
                     }
                 }
@@ -403,6 +531,11 @@ export async function* streamStructuredPresentation(
                     }
                     const processedSlide = processSlide(slide, index);
                     if (!processedSlide) continue;
+                    const compiledSlide = options.outline
+                        ? compilePresentationScenes([processedSlide], options.outline, index)[0] ||
+                          processedSlide
+                        : processedSlide;
+                    streamedSlides.set(index, compiledSlide);
 
                     if (processor.titleExtracted === null) {
                         processor.titleExtracted = processor.extractTitleFromSlide(
@@ -412,7 +545,7 @@ export async function* streamStructuredPresentation(
                     yield {
                         event: "slide",
                         data: {
-                            slide: processedSlide,
+                            slide: compiledSlide,
                             index,
                             title: processor.titleExtracted,
                         },
@@ -430,7 +563,25 @@ export async function* streamStructuredPresentation(
             }
 
             const parsedContent = parsePresentationContent(cleanContent);
-            const slides = normalizePresentationSlides(parsedContent, options.expectedSlideCount);
+            const semanticSlides = normalizePresentationSlides(
+                parsedContent,
+                options.expectedSlideCount
+            );
+            const slides = options.outline
+                ? compilePresentationScenes(semanticSlides, options.outline)
+                : semanticSlides;
+
+            if (options.outline) {
+                yield {
+                    event: "stage",
+                    data: {
+                        stage: "designing",
+                        message: "Selecting layouts and visual structure",
+                        completed: 3,
+                        total: 4,
+                    },
+                };
+            }
 
             if (processor.titleExtracted === null) {
                 const firstSlide = slides[0];
@@ -456,15 +607,32 @@ export async function* streamStructuredPresentation(
 
             const parsedTitle = typeof parsedContent.title === "string" ? parsedContent.title : "";
             const presentation: PresentationJSON = {
-                schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                schemaVersion: options.outline
+                    ? SCENE_PRESENTATION_SCHEMA_VERSION
+                    : PRESENTATION_SCHEMA_VERSION,
+                engineVersion: options.outline ? SCENE_ENGINE_VERSION : undefined,
+                dimensions: { width: 1280, height: 720 },
                 slides,
                 title: processor.titleExtracted || parsedTitle || options.fallbackTitle,
                 theme: options.preferredTheme || normalizeTheme(parsedContent["theme"]),
                 totalSlides: slides.length,
                 tokens_used: processor.currentTotalTokensUsed,
+                outline: options.outline,
             };
             if (options.sources.length) {
                 presentation.sources = options.sources;
+            }
+
+            if (options.outline) {
+                yield {
+                    event: "stage",
+                    data: {
+                        stage: "finalizing",
+                        message: "Finalizing the presentation",
+                        completed: 4,
+                        total: 4,
+                    },
+                };
             }
 
             yield {
@@ -474,6 +642,42 @@ export async function* streamStructuredPresentation(
             return;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
+            const expectedSlideCount = options.expectedSlideCount;
+            const completeStreamedSlides =
+                expectedSlideCount === undefined
+                    ? []
+                    : Array.from({ length: expectedSlideCount }, (_, index) =>
+                          streamedSlides.get(index)
+                      );
+
+            if (
+                expectedSlideCount !== undefined &&
+                completeStreamedSlides.every((slide): slide is Slide => slide !== undefined)
+            ) {
+                const presentation: PresentationJSON = {
+                    schemaVersion: options.outline
+                        ? SCENE_PRESENTATION_SCHEMA_VERSION
+                        : PRESENTATION_SCHEMA_VERSION,
+                    engineVersion: options.outline ? SCENE_ENGINE_VERSION : undefined,
+                    dimensions: { width: 1280, height: 720 },
+                    slides: completeStreamedSlides,
+                    title: processor.titleExtracted || options.fallbackTitle,
+                    theme: options.preferredTheme || streamedTheme || "corporate-blue",
+                    totalSlides: completeStreamedSlides.length,
+                    tokens_used: processor.currentTotalTokensUsed,
+                    outline: options.outline,
+                };
+                if (options.sources.length) {
+                    presentation.sources = options.sources;
+                }
+
+                console.warn(
+                    `${options.operation} stream ended after all requested slides were received; preserving the completed deck: ${message}`
+                );
+                yield { event: "complete", data: presentation };
+                return;
+            }
+
             const retryable = !(error instanceof OpenRouterStreamError) || error.retryable;
             console.warn(
                 `${options.operation} stream attempt ${attempt}/${maxAttempts} failed: ${message}`

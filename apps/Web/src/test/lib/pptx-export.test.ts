@@ -1,20 +1,53 @@
 import { describe, expect, test } from "bun:test";
 import JSZip from "jszip";
 import { buildEditablePptx } from "@/lib/pptx-export";
-import type { PresentationData } from "@/modules/types/presentation";
+import type {
+    ContentSlide,
+    PresentationData,
+    SlideBlock,
+    SlideLayout,
+} from "@/modules/types/presentation";
 
-const presentation: PresentationData = {
+const contentSlide = (
+    layout: SlideLayout,
+    blocks: SlideBlock[],
+    overrides: Partial<ContentSlide> = {},
+): ContentSlide => ({
+    id: `${layout}-slide`,
+    type: "content",
+    layout,
+    title: "Editable Quarterly Review",
+    subtitle: "A native composition",
+    tone: "default",
+    density: "standard",
+    pattern: "none",
+    blocks,
+    ...overrides,
+});
+
+const presentation = (slides: PresentationData["slides"]): PresentationData => ({
     title: "Editable Quarterly Review",
     theme: "corporate-blue",
-    totalSlides: 2,
-    slides: [
-        {
-            id: "content-slide",
-            type: "content",
-            layout: "content",
-            title: "Editable Quarterly Review",
-            subtitle: "",
-            blocks: [
+    totalSlides: slides.length,
+    slides,
+});
+
+const paragraph = (region: SlideBlock["region"], text: string): SlideBlock => ({
+    type: "paragraph",
+    region,
+    text,
+});
+
+async function archiveFor(slides: PresentationData["slides"]) {
+    const pptx = await buildEditablePptx(presentation(slides));
+    const output = await pptx.write({ outputType: "arraybuffer", compression: true });
+    return JSZip.loadAsync(output as ArrayBuffer);
+}
+
+describe("editable PPTX export", () => {
+    test("writes schema-v5 body content, tables, and charts as native objects", async () => {
+        const archive = await archiveFor([
+            contentSlide("body", [
                 {
                     type: "bullets",
                     region: "main",
@@ -30,70 +63,183 @@ const presentation: PresentationData = {
                     headers: ["Quarter", "Revenue"],
                     rows: [["Q2", "$1.4M"]],
                 },
-            ],
-        },
-        {
-            id: "chart-slide",
-            type: "chart",
-            chartConfig: {
-                type: "bar",
-                title: "Revenue by quarter",
-                description: "Quarterly revenue in millions",
-                data: {
-                    labels: ["Q1", "Q2"],
-                    datasets: [
-                        {
-                            label: "Revenue",
-                            data: [1.1, 1.4],
-                            backgroundColor: "#2563EB",
-                        },
-                    ],
+            ]),
+            {
+                id: "chart-slide",
+                type: "chart",
+                chartConfig: {
+                    type: "bar",
+                    title: "Revenue by quarter",
+                    description: "Quarterly revenue in millions",
+                    data: {
+                        labels: ["Q1", "Q2"],
+                        datasets: [
+                            {
+                                label: "Revenue",
+                                data: [1.1, 1.4],
+                                backgroundColor: "#2563EB",
+                            },
+                        ],
+                    },
                 },
             },
-        },
-    ],
-};
-
-describe("editable PPTX export", () => {
-    test("writes native text, table, and chart objects into the OOXML archive", async () => {
-        const pptx = await buildEditablePptx(presentation);
-        const output = await pptx.write({ outputType: "arraybuffer", compression: true });
-        const archive = await JSZip.loadAsync(output as ArrayBuffer);
-
+        ]);
         const firstSlide = await archive.file("ppt/slides/slide1.xml")?.async("string");
         const secondSlide = await archive.file("ppt/slides/slide2.xml")?.async("string");
         const chartFile = archive.file(/^ppt\/charts\/chart\d+\.xml$/)[0];
         const chart = await chartFile?.async("string");
 
-        expect(firstSlide).toContain("Editable Quarterly Review");
         expect(firstSlide).toContain("Revenue increased by 24 percent");
         expect(firstSlide).toContain("<a:tbl>");
         expect(firstSlide).toContain("Quarter");
         expect(secondSlide).toContain("<c:chart");
-        expect(secondSlide).toContain("Revenue by quarter");
         expect(chart).toContain("<c:barChart>");
     });
 
-    test("uses a native radar chart for polar-area source data", async () => {
-        const pptx = await buildEditablePptx({
-            ...presentation,
-            slides: [
-                {
-                    id: "polar-chart",
-                    type: "chart",
-                    chartConfig: {
-                        type: "polarArea",
-                        data: {
-                            labels: ["Quality", "Speed", "Cost"],
-                            datasets: [{ label: "Score", data: [8, 6, 7] }],
+    test("uses native geometry for every schema-v5 composition", async () => {
+        const layouts: SlideLayout[] = [
+            "cover",
+            "section",
+            "body",
+            "split",
+            "comparison",
+            "sidebar",
+            "media-left",
+            "media-right",
+            "quote",
+            "spotlight",
+            "canvas",
+        ];
+        const archive = await archiveFor(
+            layouts.map((layout) =>
+                contentSlide(
+                    layout,
+                    [
+                        paragraph("primary", `${layout} primary`),
+                        paragraph("secondary", `${layout} secondary`),
+                        {
+                            type: "image-placeholder",
+                            region: "media",
+                            alt: `${layout} media`,
+                            caption: "Editable visual",
                         },
+                    ],
+                    layout === "spotlight"
+                        ? {
+                              blocks: [
+                                  {
+                                      ...paragraph("primary", "spotlight hero"),
+                                      emphasis: "hero",
+                                  },
+                                  paragraph("secondary", "spotlight support"),
+                              ],
+                          }
+                        : {},
+                ),
+            ),
+        );
+        const xml = await Promise.all(
+            layouts.map((_, index) =>
+                archive.file(`ppt/slides/slide${index + 1}.xml`)?.async("string"),
+            ),
+        );
+
+        expect(xml[0]).toContain("Cover divider");
+        expect(xml[1]).toContain("Section mark");
+        expect(xml[3]).toContain("Split divider");
+        expect(xml[4]).toContain("Comparison primary surface");
+        expect(xml[4]).toContain("Comparison secondary surface");
+        expect(xml[5]).toContain("Sidebar rail");
+        expect(xml[6]).toContain("Media surface");
+        expect(xml[6]).toContain("media-left media");
+        expect(xml[7]).toContain("Media support divider");
+        expect(xml[8]).toContain("Quote divider");
+        expect(xml[9]).toContain("Spotlight hero surface");
+        expect(xml[9]).toContain("Spotlight support divider");
+        expect(xml[10]).toContain("Canvas cell 1");
+    });
+
+    test("exports composition metadata through editable text and shape styling", async () => {
+        const tinyPng =
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+AvzZAAAAAElFTkSuQmCC";
+        const archive = await archiveFor([
+            contentSlide(
+                "comparison",
+                [
+                    {
+                        ...paragraph("primary", "The emphasized proposal"),
+                        emphasis: "hero",
+                        treatment: "accent",
+                    },
+                    {
+                        ...paragraph("secondary", "The supporting evidence"),
+                        emphasis: "supporting",
+                        treatment: "outline",
+                    },
+                ],
+                {
+                    eyebrow: "Field note",
+                    regionLabels: { primary: "Now", secondary: "Next" },
+                    tone: "accent",
+                    pattern: "grid",
+                    backgroundImage: {
+                        url: tinyPng,
+                        alt: "Subtle backdrop",
+                        focalPoint: "center",
+                        overlay: "medium",
                     },
                 },
-            ],
-            totalSlides: 1,
-        });
-        const output = await pptx.write({ outputType: "arraybuffer" });
-        const archive = await JSZip.loadAsync(output as ArrayBuffer);
+            ),
+        ]);
+        const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
+
+        expect(slide).toContain("FIELD NOTE");
+        expect(slide).toContain("NOW");
+        expect(slide).toContain("NEXT");
+        expect(slide).toContain("Block treatment accent");
+        expect(slide).toContain("Block treatment outline");
+        expect(slide).toContain("Slide background image");
+        expect(slide).toContain("Background image overlay");
+    });
+
+    test("normalizes legacy HTML before composing native content", async () => {
+        const archive = await archiveFor([
+            {
+                id: "legacy-split",
+                type: "content",
+                html: `
+                    <div id="slide-content" class="layout-two-col">
+                        <h2 id="slide-title">Legacy comparison</h2>
+                        <div class="two-column">
+                            <div class="column"><p>Legacy primary</p></div>
+                            <div class="column"><p>Legacy secondary</p></div>
+                        </div>
+                    </div>
+                `,
+            },
+        ]);
+        const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
+
+        expect(slide).toContain("Legacy comparison");
+        expect(slide).toContain("Legacy primary");
+        expect(slide).toContain("Legacy secondary");
+        expect(slide).toContain("Split divider");
+    });
+
+    test("uses a native radar chart for polar-area source data", async () => {
+        const archive = await archiveFor([
+            {
+                id: "polar-chart",
+                type: "chart",
+                chartConfig: {
+                    type: "polarArea",
+                    data: {
+                        labels: ["Quality", "Speed", "Cost"],
+                        datasets: [{ label: "Score", data: [8, 6, 7] }],
+                    },
+                },
+            },
+        ]);
         const chartFile = archive.file(/^ppt\/charts\/chart\d+\.xml$/)[0];
         const chart = await chartFile?.async("string");
 
@@ -101,39 +247,44 @@ describe("editable PPTX export", () => {
         expect(chart).toContain("Quality");
     });
 
-    test("keeps image placeholders as editable labeled shapes", async () => {
-        const pptx = await buildEditablePptx({
-            ...presentation,
-            totalSlides: 1,
-            slides: [
+    test("preserves widgets as native editable nodes, connectors, and text", async () => {
+        const archive = await archiveFor([
+            contentSlide("body", [
                 {
-                    id: "visual",
-                    type: "content",
-                    layout: "image-right",
-                    title: "Product workflow",
-                    subtitle: "",
-                    blocks: [
+                    type: "widget",
+                    region: "main",
+                    version: 1,
+                    kind: "flow",
+                    direction: "horizontal",
+                    nodes: [
                         {
-                            type: "paragraph",
-                            region: "main",
-                            text: "A concise explanation",
+                            id: "build",
+                            role: "start",
+                            label: "Build",
+                            description: "",
+                            value: "",
+                            tone: "neutral",
+                            parentId: "",
                         },
                         {
-                            type: "image-placeholder",
-                            region: "right",
-                            alt: "Annotated product workflow screenshot",
-                            caption: "Add the final product capture",
+                            id: "ship",
+                            role: "end",
+                            label: "Ship",
+                            description: "",
+                            value: "",
+                            tone: "positive",
+                            parentId: "",
                         },
                     ],
+                    edges: [{ from: "build", to: "ship", label: "approved" }],
                 },
-            ],
-        });
-        const output = await pptx.write({ outputType: "arraybuffer" });
-        const archive = await JSZip.loadAsync(output as ArrayBuffer);
+            ]),
+        ]);
         const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
 
-        expect(slide).toContain("Annotated product workflow screenshot");
-        expect(slide).toContain("Add the final product capture");
-        expect(slide).toContain("Image placeholder");
+        expect(slide).toContain("Widget node 1");
+        expect(slide).toContain("Widget connector 1");
+        expect(slide).toContain("Build");
+        expect(slide).toContain("approved");
     });
 });

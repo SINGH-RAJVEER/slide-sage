@@ -1,7 +1,6 @@
 # SlideSage
 
-SlideSage is an AI-assisted presentation builder. It generates, researches, revises,
-stores, previews, and exports slide decks from a React web application.
+SlideSage is an AI-assisted presentation builder. It generates, researches, revises, stores, previews, and exports slide decks from a React web application.
 
 ## Features
 
@@ -14,8 +13,7 @@ stores, previews, and exports slide decks from a React web application.
 
 ## Local Development
 
-Requirements: Nix with flakes enabled and
-[devenv](https://devenv.sh/getting-started/).
+Requirements: Nix with [devenv](https://devenv.sh/getting-started/) installed.
 
 ```bash
 cp .env.example .env
@@ -24,9 +22,7 @@ bun install
 just dev
 ```
 
-Set `AUTH_SECRET` and `OPEN_ROUTER_API_KEY` in `.env` before starting. Add
-`EXA_API_KEY` for web research, `RESEND_API_KEY` for email delivery, OAuth
-credentials for social sign-in, and Razorpay credentials for purchases.
+Set `AUTH_SECRET` and `OPEN_ROUTER_API_KEY` in `.env` before starting. Add `EXA_API_KEY` for web research, `RESEND_API_KEY` for email delivery, OAuth credentials for social sign-in, and Razorpay credentials for purchases.
 
 `just dev` starts PostgreSQL with pgvector, applies Drizzle migrations, and runs:
 
@@ -34,8 +30,7 @@ credentials for social sign-in, and Razorpay credentials for purchases.
 - API: http://localhost:8000
 - Health check: http://localhost:8000/
 
-The local database lives in `.devenv/state/postgres/`. The project does not use
-Docker, `.envrc`, or `.direnv`.
+The local database lives in `.devenv/state/postgres/`.
 
 ## Commands
 
@@ -69,8 +64,7 @@ devenv.nix      Local toolchain and service orchestration
 Justfile        Common development commands
 ```
 
-The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector,
-OpenRouter, Exa, Better Auth, Resend, and Razorpay.
+The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector, OpenRouter, Exa, Better Auth, Resend, and Razorpay.
 
 ## Documentation
 

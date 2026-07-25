@@ -1,10 +1,33 @@
 import type {
+    BackgroundFocalPoint,
+    BackgroundOverlay,
+    BlockEmphasis,
+    BlockTreatment,
     ChartConfig,
     ContentSlide,
     SlideBlock,
+    SlideDensity,
     SlideLayout,
+    SlidePattern,
     SlideRegion,
+    SlideTone,
     StructuredSlide,
+    WidgetDirection,
+    WidgetKind,
+    WidgetNodeRole,
+    WidgetTone,
+} from "@slide-sage/types";
+import {
+    BACKGROUND_FOCAL_POINTS,
+    BACKGROUND_OVERLAYS,
+    BLOCK_EMPHASES,
+    BLOCK_TREATMENTS,
+    MAX_WIDGET_EDGES,
+    MAX_WIDGET_NODES,
+    SLIDE_DENSITIES,
+    SLIDE_LAYOUTS,
+    SLIDE_PATTERNS,
+    SLIDE_TONES,
 } from "@slide-sage/types";
 import { JSONRecoveryError, recoverJson } from "../../utils/json-recovery";
 
@@ -13,13 +36,20 @@ interface RawPresentation extends Record<string, unknown> {
     title?: unknown;
 }
 
-const SLIDE_LAYOUTS = new Set<SlideLayout>([
-    "title",
-    "content",
-    "two-column",
-    "quote",
-    "image-right",
-]);
+const SLIDE_LAYOUT_SET = new Set<SlideLayout>(SLIDE_LAYOUTS);
+const LEGACY_LAYOUTS: Record<string, SlideLayout> = {
+    title: "cover",
+    content: "body",
+    "two-column": "split",
+    "image-right": "media-right",
+};
+const SLIDE_TONE_SET = new Set<SlideTone>(SLIDE_TONES);
+const SLIDE_DENSITY_SET = new Set<SlideDensity>(SLIDE_DENSITIES);
+const SLIDE_PATTERN_SET = new Set<SlidePattern>(SLIDE_PATTERNS);
+const BACKGROUND_FOCAL_POINT_SET = new Set<BackgroundFocalPoint>(BACKGROUND_FOCAL_POINTS);
+const BACKGROUND_OVERLAY_SET = new Set<BackgroundOverlay>(BACKGROUND_OVERLAYS);
+const BLOCK_EMPHASIS_SET = new Set<BlockEmphasis>(BLOCK_EMPHASES);
+const BLOCK_TREATMENT_SET = new Set<BlockTreatment>(BLOCK_TREATMENTS);
 const CHART_TYPES = new Set<ChartConfig["type"]>([
     "bar",
     "line",
@@ -28,9 +58,33 @@ const CHART_TYPES = new Set<ChartConfig["type"]>([
     "radar",
     "polarArea",
 ]);
+const WIDGET_KINDS = new Set<WidgetKind>(["timeline", "flow", "architecture", "comparison"]);
+const WIDGET_NODE_ROLES = new Set<WidgetNodeRole>([
+    "default",
+    "start",
+    "end",
+    "decision",
+    "actor",
+    "system",
+    "data",
+]);
+const WIDGET_TONES = new Set<WidgetTone>(["neutral", "accent", "positive", "warning", "danger"]);
+const WIDGET_DIRECTIONS = new Set<WidgetDirection>(["horizontal", "vertical"]);
 
 function text(value: unknown, maximum = 500): string {
     return typeof value === "string" ? value.trim().slice(0, maximum) : "";
+}
+
+function widgetText(value: unknown, maximum: number): string {
+    const valueText = text(value, maximum);
+    return /<\/?[a-z][^>]*>|https?:\/\/|www\.|```|javascript:|data:image\/svg/i.test(valueText)
+        ? ""
+        : valueText;
+}
+
+function widgetNodeId(value: unknown): string {
+    const id = text(value, 80);
+    return /^[a-z0-9][a-z0-9_-]*$/i.test(id) ? id : "";
 }
 
 function stringArray(value: unknown, maximumItems: number, maximumLength = 300): string[] {
@@ -41,10 +95,21 @@ function stringArray(value: unknown, maximumItems: number, maximumLength = 300):
         .filter(Boolean);
 }
 
-function normalizeRegion(value: unknown, layout: SlideLayout): SlideRegion {
-    const region = value === "left" || value === "right" || value === "main" ? value : "main";
-    if (layout === "two-column") return region === "main" ? "left" : region;
-    if (layout === "image-right") return region === "left" ? "main" : region;
+function normalizeLayout(value: unknown): SlideLayout {
+    if (typeof value !== "string") return "body";
+    return (
+        LEGACY_LAYOUTS[value] ||
+        (SLIDE_LAYOUT_SET.has(value as SlideLayout) ? (value as SlideLayout) : "body")
+    );
+}
+
+function normalizeRegion(value: unknown, layout: SlideLayout, rawLayout: unknown): SlideRegion {
+    if (value === "left") return "primary";
+    if (value === "right") return rawLayout === "image-right" ? "media" : "secondary";
+    if (value === "main" || value === "primary" || value === "secondary" || value === "media") {
+        if (value === "main" && (layout === "split" || layout === "comparison")) return "primary";
+        return value;
+    }
     return "main";
 }
 
@@ -60,20 +125,38 @@ function normalizeImageUrl(value: unknown): string {
     }
 }
 
-function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null {
+function normalizeBlock(
+    input: unknown,
+    layout: SlideLayout,
+    rawLayout: unknown
+): SlideBlock | null {
     if (!input || typeof input !== "object" || Array.isArray(input)) return null;
     const block = input as Record<string, unknown>;
-    const region = normalizeRegion(block["region"], layout);
+    const region = normalizeRegion(block["region"], layout, rawLayout);
+    const semantics = {
+        emphasis: BLOCK_EMPHASIS_SET.has(block["emphasis"] as BlockEmphasis)
+            ? (block["emphasis"] as BlockEmphasis)
+            : ("standard" as const),
+        treatment: BLOCK_TREATMENT_SET.has(block["treatment"] as BlockTreatment)
+            ? (block["treatment"] as BlockTreatment)
+            : ("plain" as const),
+    };
 
     switch (block["type"]) {
         case "paragraph": {
             const value = text(block["text"], 1200);
-            return value ? { type: "paragraph", region, text: value } : null;
+            return value ? { type: "paragraph", region, text: value, ...semantics } : null;
         }
         case "bullets": {
             const items = stringArray(block["items"], 8, 350);
             return items.length > 0
-                ? { type: "bullets", region, items, ordered: block["ordered"] === true }
+                ? {
+                      type: "bullets",
+                      region,
+                      items,
+                      ordered: block["ordered"] === true,
+                      ...semantics,
+                  }
                 : null;
         }
         case "table": {
@@ -88,7 +171,7 @@ function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null 
                         .map((cell) => text(cell, 180))
                         .concat(Array(Math.max(0, headers.length - row.length)).fill(""))
                 );
-            return { type: "table", region, headers, rows };
+            return { type: "table", region, headers, rows, ...semantics };
         }
         case "image": {
             const url = normalizeImageUrl(block["url"]);
@@ -99,6 +182,7 @@ function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null 
                 url,
                 alt: text(block["alt"], 240) || "Presentation image",
                 caption: text(block["caption"], 300),
+                ...semantics,
             };
         }
         case "image-placeholder":
@@ -107,6 +191,7 @@ function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null 
                 region,
                 alt: text(block["alt"], 240) || "Supporting visual",
                 caption: text(block["caption"], 300),
+                ...semantics,
             };
         case "quote": {
             const value = text(block["text"], 800);
@@ -116,6 +201,7 @@ function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null 
                       region,
                       text: value,
                       attribution: text(block["attribution"], 200),
+                      ...semantics,
                   }
                 : null;
         }
@@ -127,6 +213,7 @@ function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null 
                       region,
                       heading: text(block["heading"], 180),
                       text: value,
+                      ...semantics,
                   }
                 : null;
         }
@@ -143,11 +230,105 @@ function normalizeBlock(input: unknown, layout: SlideLayout): SlideBlock | null 
                     };
                 })
                 .filter((item) => item.value || item.label);
-            return items.length > 0 ? { type: "stats", region, items } : null;
+            return items.length > 0 ? { type: "stats", region, items, ...semantics } : null;
+        }
+        case "widget": {
+            if (!WIDGET_KINDS.has(block["kind"] as WidgetKind) || !Array.isArray(block["nodes"])) {
+                return null;
+            }
+            const usedIds = new Set<string>();
+            const nodes = block["nodes"]
+                .slice(0, MAX_WIDGET_NODES)
+                .filter((node) => node && typeof node === "object" && !Array.isArray(node))
+                .map((node) => {
+                    const value = node as Record<string, unknown>;
+                    const id = widgetNodeId(value["id"]);
+                    const label = widgetText(value["label"], 160);
+                    if (!id || !label || usedIds.has(id)) return null;
+                    usedIds.add(id);
+                    return {
+                        id,
+                        label,
+                        description: widgetText(value["description"], 400),
+                        value: widgetText(value["value"], 100),
+                        role: WIDGET_NODE_ROLES.has(value["role"] as WidgetNodeRole)
+                            ? (value["role"] as WidgetNodeRole)
+                            : "default",
+                        tone: WIDGET_TONES.has(value["tone"] as WidgetTone)
+                            ? (value["tone"] as WidgetTone)
+                            : "neutral",
+                        parentId: widgetNodeId(value["parentId"]),
+                    };
+                })
+                .filter((node): node is NonNullable<typeof node> => node !== null);
+            if (nodes.length < 2) return null;
+            for (const node of nodes) {
+                if (node.parentId === node.id || !usedIds.has(node.parentId)) node.parentId = "";
+            }
+
+            const edges = Array.isArray(block["edges"])
+                ? block["edges"]
+                      .slice(0, MAX_WIDGET_EDGES)
+                      .filter((edge) => edge && typeof edge === "object" && !Array.isArray(edge))
+                      .map((edge) => {
+                          const value = edge as Record<string, unknown>;
+                          const from = widgetNodeId(value["from"]);
+                          const to = widgetNodeId(value["to"]);
+                          return from && to && from !== to && usedIds.has(from) && usedIds.has(to)
+                              ? { from, to, label: widgetText(value["label"], 160) }
+                              : null;
+                      })
+                      .filter((edge): edge is NonNullable<typeof edge> => edge !== null)
+                : [];
+
+            return {
+                type: "widget",
+                region,
+                version: 1,
+                kind: block["kind"] as WidgetKind,
+                direction: WIDGET_DIRECTIONS.has(block["direction"] as WidgetDirection)
+                    ? (block["direction"] as WidgetDirection)
+                    : "horizontal",
+                nodes,
+                edges,
+                ...semantics,
+            };
         }
         default:
             return null;
     }
+}
+
+function normalizeRegionLabels(
+    value: unknown,
+    layout: SlideLayout,
+    rawLayout: unknown
+): ContentSlide["regionLabels"] {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+    const input = value as Record<string, unknown>;
+    const labels: NonNullable<ContentSlide["regionLabels"]> = {};
+    for (const rawRegion of ["main", "left", "right", "primary", "secondary", "media"] as const) {
+        const label = text(input[rawRegion], 80);
+        if (label) labels[normalizeRegion(rawRegion, layout, rawLayout)] = label;
+    }
+    return Object.keys(labels).length > 0 ? labels : undefined;
+}
+
+function normalizeBackgroundImage(value: unknown): ContentSlide["backgroundImage"] {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+    const input = value as Record<string, unknown>;
+    const url = normalizeImageUrl(input["url"]);
+    if (!url) return undefined;
+    return {
+        url,
+        alt: text(input["alt"], 240) || "Slide background",
+        focalPoint: BACKGROUND_FOCAL_POINT_SET.has(input["focalPoint"] as BackgroundFocalPoint)
+            ? (input["focalPoint"] as BackgroundFocalPoint)
+            : "center",
+        overlay: BACKGROUND_OVERLAY_SET.has(input["overlay"] as BackgroundOverlay)
+            ? (input["overlay"] as BackgroundOverlay)
+            : "medium",
+    };
 }
 
 function normalizeChartConfig(value: unknown): ChartConfig | null {
@@ -204,14 +385,21 @@ function chartFallback(id: string): ContentSlide {
     return {
         id,
         type: "content",
-        layout: "content",
+        layout: "body",
         title: "Data Visualization",
         subtitle: "",
+        tone: "default",
+        density: "standard",
+        pattern: "none",
         blocks: [
             {
+                id: `${id}-block-1`,
                 type: "paragraph",
                 region: "main",
+                sourceIds: [],
                 text: "Chart data unavailable",
+                emphasis: "standard",
+                treatment: "plain",
             },
         ],
     };
@@ -225,25 +413,38 @@ export function processSlide(input: unknown, index: number): StructuredSlide | n
 
     const slide = input as Record<string, unknown>;
     const id = text(slide["id"], 120) || `slide-${index + 1}`;
+    const presentationMetadata = {
+        transition: { type: "none" as const, durationMs: 0 },
+        effects: [],
+    };
     if (slide["type"] === "chart") {
         const chartConfig = normalizeChartConfig(slide["chartConfig"]);
-        return chartConfig ? { id, type: "chart", chartConfig } : chartFallback(id);
+        return chartConfig
+            ? { id, type: "chart", chartConfig, ...presentationMetadata }
+            : { ...chartFallback(id), ...presentationMetadata };
     }
     if (slide["type"] !== "content") {
         console.warn(`Slide ${index} has an unsupported type, skipping`);
         return null;
     }
 
-    const layout = SLIDE_LAYOUTS.has(slide["layout"] as SlideLayout)
-        ? (slide["layout"] as SlideLayout)
-        : "content";
+    const rawLayout = slide["layout"];
+    const layout = normalizeLayout(rawLayout);
     const blocks = Array.isArray(slide["blocks"])
         ? slide["blocks"]
               .slice(0, 12)
-              .map((block) => normalizeBlock(block, layout))
+              .map((block) => normalizeBlock(block, layout, rawLayout))
               .filter((block): block is SlideBlock => block !== null)
+              .map((block, blockIndex) => ({
+                  ...block,
+                  id: `${id}-block-${blockIndex + 1}`,
+                  sourceIds: [],
+              }))
         : [];
     const title = text(slide["title"], 240) || `Slide ${index + 1}`;
+    const eyebrow = text(slide["eyebrow"], 120);
+    const regionLabels = normalizeRegionLabels(slide["regionLabels"], layout, rawLayout);
+    const backgroundImage = normalizeBackgroundImage(slide["backgroundImage"]);
 
     return {
         id,
@@ -251,7 +452,20 @@ export function processSlide(input: unknown, index: number): StructuredSlide | n
         layout,
         title,
         subtitle: text(slide["subtitle"], 400),
+        ...(eyebrow ? { eyebrow } : {}),
+        ...(regionLabels ? { regionLabels } : {}),
+        tone: SLIDE_TONE_SET.has(slide["tone"] as SlideTone)
+            ? (slide["tone"] as SlideTone)
+            : "default",
+        density: SLIDE_DENSITY_SET.has(slide["density"] as SlideDensity)
+            ? (slide["density"] as SlideDensity)
+            : "standard",
+        pattern: SLIDE_PATTERN_SET.has(slide["pattern"] as SlidePattern)
+            ? (slide["pattern"] as SlidePattern)
+            : "none",
+        ...(backgroundImage ? { backgroundImage } : {}),
         blocks,
+        ...presentationMetadata,
     };
 }
 

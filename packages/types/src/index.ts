@@ -17,7 +17,63 @@ export interface ChartConfig {
     [key: string]: unknown;
 }
 
-export const PRESENTATION_SCHEMA_VERSION = 2 as const;
+export const PRESENTATION_SCHEMA_VERSION = 5 as const;
+
+export type {
+    ResolvedScene,
+    ResolvedSceneNode,
+    SceneAlignment,
+    SceneArtDirection,
+    SceneChartWidgetProps,
+    SceneDiagnostic,
+    SceneDirection,
+    SceneDistribution,
+    SceneGridPlacement,
+    SceneGroupNode,
+    SceneImageNode,
+    SceneInsets,
+    SceneLayoutMode,
+    SceneNode,
+    SceneNodeBase,
+    SceneNodePatch,
+    SceneNodeStyle,
+    ScenePresentationDocument,
+    SceneRect,
+    SceneResponsiveProfile,
+    SceneShapeNode,
+    SceneSizeConstraint,
+    SceneSlide,
+    SceneTextNode,
+    SceneTextRole,
+    SceneThemeTokens,
+    SceneVariant,
+    SceneWidgetKind,
+    SceneWidgetNode,
+} from "./scene";
+export { SCENE_ENGINE_VERSION, SCENE_PRESENTATION_SCHEMA_VERSION } from "./scene";
+export type { SceneCommand } from "./scene-commands";
+export { applySceneCommand, findSceneNode, invertSceneCommand } from "./scene-commands";
+export { resolveScene, sceneForProfile, slideToScene, validateSceneSlide } from "./scene-engine";
+
+export interface PresentationDimensions {
+    width: number;
+    height: number;
+}
+
+export type SlideTransitionType = "none" | "fade" | "slide" | "zoom" | "morph";
+
+export interface SlideTransition {
+    type: SlideTransitionType;
+    durationMs?: number;
+}
+
+export interface SlideEffect {
+    id: string;
+    type: "fade-in" | "count-up" | "ken-burns";
+    targetBlockId?: string;
+    order?: number;
+    durationMs?: number;
+}
 
 export const THEME_IDS = [
     "modern-dark",
@@ -30,21 +86,108 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const PRESENTATION_LAYOUT_PREFERENCES = [
-    "auto",
-    "content",
-    "two-column",
-    "image-led",
-    "data-led",
+export const PRESENTATION_NARRATIVE_ROLES = [
+    "opening",
+    "context",
+    "problem",
+    "insight",
+    "solution",
+    "evidence",
+    "comparison",
+    "process",
+    "recommendation",
+    "closing",
 ] as const;
 
-export type PresentationLayoutPreference = (typeof PRESENTATION_LAYOUT_PREFERENCES)[number];
+export type PresentationNarrativeRole = (typeof PRESENTATION_NARRATIVE_ROLES)[number];
 
-export type SlideLayout = "title" | "content" | "two-column" | "quote" | "image-right";
-export type SlideRegion = "main" | "left" | "right";
+export const PRESENTATION_VISUAL_INTENTS = [
+    "none",
+    "image",
+    "chart",
+    "table",
+    "quote",
+    "stats",
+] as const;
 
-interface BaseSlideBlock {
+export type PresentationVisualIntent = (typeof PRESENTATION_VISUAL_INTENTS)[number];
+
+export interface PresentationOutlineCard {
+    id: string;
+    title: string;
+    objective: string;
+    keyPoints: string[];
+    narrativeRole: PresentationNarrativeRole;
+    visualIntent: PresentationVisualIntent;
+    sourceIds: string[];
+}
+
+export interface PresentationOutline {
+    title: string;
+    audience: string;
+    thesis: string;
+    cards: PresentationOutlineCard[];
+}
+
+export type PresentationGenerationStage =
+    | "researching"
+    | "planning"
+    | "drafting"
+    | "designing"
+    | "finalizing";
+
+export const SLIDE_LAYOUTS = [
+    "cover",
+    "section",
+    "body",
+    "split",
+    "comparison",
+    "sidebar",
+    "media-left",
+    "media-right",
+    "quote",
+    "spotlight",
+    "canvas",
+] as const;
+export type SlideLayout = (typeof SLIDE_LAYOUTS)[number];
+
+export const SLIDE_REGIONS = ["main", "primary", "secondary", "media"] as const;
+export type SlideRegion = (typeof SLIDE_REGIONS)[number];
+
+export const SLIDE_TONES = ["default", "muted", "accent", "inverse"] as const;
+export type SlideTone = (typeof SLIDE_TONES)[number];
+
+export const SLIDE_DENSITIES = ["airy", "standard", "compact"] as const;
+export type SlideDensity = (typeof SLIDE_DENSITIES)[number];
+
+export const SLIDE_PATTERNS = ["none", "grid", "dots", "diagonal"] as const;
+export type SlidePattern = (typeof SLIDE_PATTERNS)[number];
+
+export const BACKGROUND_FOCAL_POINTS = ["center", "top", "bottom", "left", "right"] as const;
+export type BackgroundFocalPoint = (typeof BACKGROUND_FOCAL_POINTS)[number];
+
+export const BACKGROUND_OVERLAYS = ["none", "subtle", "medium", "strong"] as const;
+export type BackgroundOverlay = (typeof BACKGROUND_OVERLAYS)[number];
+
+export const BLOCK_EMPHASES = ["standard", "strong", "hero", "supporting"] as const;
+export type BlockEmphasis = (typeof BLOCK_EMPHASES)[number];
+
+export const BLOCK_TREATMENTS = ["plain", "card", "outline", "accent"] as const;
+export type BlockTreatment = (typeof BLOCK_TREATMENTS)[number];
+
+export interface SlideBackgroundImage {
+    url: string;
+    alt: string;
+    focalPoint: BackgroundFocalPoint;
+    overlay: BackgroundOverlay;
+}
+
+export interface BaseSlideBlock {
+    id?: string;
     region: SlideRegion;
+    sourceIds?: string[];
+    emphasis?: BlockEmphasis;
+    treatment?: BlockTreatment;
 }
 
 export interface ParagraphBlock extends BaseSlideBlock {
@@ -97,6 +240,54 @@ export interface StatsBlock extends BaseSlideBlock {
     }>;
 }
 
+export const WIDGET_KINDS = ["timeline", "flow", "architecture", "comparison"] as const;
+export type WidgetKind = (typeof WIDGET_KINDS)[number];
+
+export const WIDGET_NODE_ROLES = [
+    "default",
+    "start",
+    "end",
+    "decision",
+    "actor",
+    "system",
+    "data",
+] as const;
+export type WidgetNodeRole = (typeof WIDGET_NODE_ROLES)[number];
+
+export const WIDGET_TONES = ["neutral", "accent", "positive", "warning", "danger"] as const;
+export type WidgetTone = (typeof WIDGET_TONES)[number];
+
+export const WIDGET_DIRECTIONS = ["horizontal", "vertical"] as const;
+export type WidgetDirection = (typeof WIDGET_DIRECTIONS)[number];
+
+export const MAX_WIDGET_NODES = 16;
+export const MAX_WIDGET_EDGES = 32;
+
+export interface WidgetNode {
+    id: string;
+    label: string;
+    description: string;
+    value: string;
+    role: WidgetNodeRole;
+    tone: WidgetTone;
+    parentId: string;
+}
+
+export interface WidgetEdge {
+    from: string;
+    to: string;
+    label: string;
+}
+
+export interface WidgetBlock extends BaseSlideBlock {
+    type: "widget";
+    version: 1;
+    kind: WidgetKind;
+    direction: WidgetDirection;
+    nodes: WidgetNode[];
+    edges: WidgetEdge[];
+}
+
 export type SlideBlock =
     | ParagraphBlock
     | BulletBlock
@@ -105,11 +296,14 @@ export type SlideBlock =
     | ImagePlaceholderBlock
     | QuoteBlock
     | CalloutBlock
-    | StatsBlock;
+    | StatsBlock
+    | WidgetBlock;
 
 export interface BaseSlide {
     id: string;
     type: "content" | "chart";
+    transition?: SlideTransition;
+    effects?: SlideEffect[];
 }
 
 export interface ContentSlide extends BaseSlide {
@@ -117,6 +311,12 @@ export interface ContentSlide extends BaseSlide {
     layout: SlideLayout;
     title: string;
     subtitle: string;
+    eyebrow?: string;
+    regionLabels?: Partial<Record<SlideRegion, string>>;
+    tone: SlideTone;
+    density: SlideDensity;
+    pattern: SlidePattern;
+    backgroundImage?: SlideBackgroundImage;
     blocks: SlideBlock[];
 }
 
@@ -124,6 +324,8 @@ export interface LegacyHtmlSlide {
     id: string;
     type: string;
     html: string;
+    transition?: SlideTransition;
+    effects?: SlideEffect[];
 }
 
 export interface ChartSlide extends BaseSlide {
@@ -132,18 +334,22 @@ export interface ChartSlide extends BaseSlide {
 }
 
 export type StructuredSlide = ContentSlide | ChartSlide;
-export type Slide = StructuredSlide | LegacyHtmlSlide;
+export type Slide = StructuredSlide | LegacyHtmlSlide | import("./scene").SceneSlide;
+
+export function isSceneSlide(slide: Slide): slide is import("./scene").SceneSlide {
+    return slide.type === "scene";
+}
 
 export function isLegacyHtmlSlide(slide: Slide): slide is LegacyHtmlSlide {
-    return "html" in slide;
+    return slide.type !== "scene" && "html" in slide;
 }
 
 export function isChartSlide(slide: Slide): slide is ChartSlide {
-    return !isLegacyHtmlSlide(slide) && slide.type === "chart";
+    return !isSceneSlide(slide) && !isLegacyHtmlSlide(slide) && slide.type === "chart";
 }
 
 export function isContentSlide(slide: Slide): slide is ContentSlide {
-    return !isLegacyHtmlSlide(slide) && slide.type === "content";
+    return !isSceneSlide(slide) && !isLegacyHtmlSlide(slide) && slide.type === "content";
 }
 
 export interface Source {
@@ -162,6 +368,51 @@ export interface ResearchPayload {
     estimated_tokens?: number;
 }
 
+export const AI_PROVIDERS = ["openai", "google", "anthropic"] as const;
+export type AIProvider = (typeof AI_PROVIDERS)[number];
+
+export interface AIModelSelection {
+    provider: AIProvider;
+    model: string;
+}
+
+export interface AIModelDescriptor extends AIModelSelection {
+    label: string;
+    description: string;
+    recommended?: boolean;
+}
+
+export interface AIConnectionSummary {
+    provider: AIProvider;
+    status: "valid" | "invalid";
+    keyHint: string;
+    validatedAt: string;
+    lastUsedAt?: string;
+}
+
+export interface AIConfigurationResponse {
+    generation: {
+        mode: "openrouter" | "byok";
+        model: string | null;
+        billing: "points" | "provider";
+    };
+    eligibility: {
+        eligible: boolean;
+        slideTokens: number;
+        minimumPointsExclusive: 50;
+    };
+    connections: AIConnectionSummary[];
+    models: AIModelDescriptor[];
+    selection: AIModelSelection | null;
+}
+
+export interface UpsertAIConnectionRequest {
+    provider: AIProvider;
+    apiKey: string;
+}
+
+export interface UpdateAISelectionRequest extends AIModelSelection {}
+
 export { buildResearchSystemMessage, estimateMessageInputTokens } from "./research-context";
 
 export type ResearchFreshness = "day" | "week" | "month" | "year";
@@ -178,13 +429,17 @@ export interface ResearchOptions {
 }
 
 export interface PresentationData {
-    schemaVersion?: typeof PRESENTATION_SCHEMA_VERSION;
+    schemaVersion?: number;
     title: string;
     theme: string;
+    dimensions?: PresentationDimensions;
     slides: Slide[];
     totalSlides: number;
     sources?: Source[];
     tokens_used?: number;
+    engineVersion?: string;
+    outline?: PresentationOutline;
+    outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 }
 
 export type PresentationStatus = "ready" | "failed";
@@ -196,8 +451,8 @@ export interface PresentationRetryOptions {
     tonality: string;
     research_enabled: boolean;
     theme?: ThemeId;
-    layout_preference?: PresentationLayoutPreference;
     research_payload?: ResearchPayload;
+    ai?: AIModelSelection;
 }
 
 export interface PresentationFailure {
@@ -206,16 +461,34 @@ export interface PresentationFailure {
 }
 
 export interface PresentationJSON {
-    schemaVersion?: typeof PRESENTATION_SCHEMA_VERSION;
+    schemaVersion?: number;
     title: string;
     theme: string;
+    dimensions?: PresentationDimensions;
     slides: Slide[];
     status?: PresentationStatus;
     failure?: PresentationFailure;
     totalSlides?: number;
     tokens_used?: number;
     sources?: Source[];
+    outline?: PresentationOutline;
+    outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
     [key: string]: unknown;
+}
+
+export type PresentationMutation =
+    | {
+          type: "update-presentation";
+          title?: string;
+          theme?: ThemeId;
+          dimensions?: PresentationDimensions;
+      }
+    | { type: "update-slide"; slideId: string; slide: Slide }
+    | { type: "delete-slide"; slideId: string }
+    | { type: "reorder-slides"; slideIds: string[] };
+
+export interface PresentationMutationRequest {
+    mutations: PresentationMutation[];
 }
 
 export interface StreamStartEvent {
@@ -239,6 +512,21 @@ export interface StreamResearchEvent {
         status: "searching" | "ready" | "generating";
         sources?: Source[];
     };
+}
+
+export interface StreamStageEvent {
+    event: "stage";
+    data: {
+        stage: PresentationGenerationStage;
+        message: string;
+        completed: number;
+        total: number;
+    };
+}
+
+export interface StreamOutlineEvent {
+    event: "outline";
+    data: PresentationOutline;
 }
 
 export interface StreamSlideEvent {
@@ -267,7 +555,12 @@ export interface StreamCompleteEvent {
 
 export interface StreamSavedEvent {
     event: "saved";
-    data: { presentation_id: string | number };
+    data: {
+        presentation_id: string | number;
+        success?: boolean;
+        slide_tokens_remaining?: number | null;
+        slide_tokens_charged?: number;
+    };
 }
 
 export interface StreamErrorEvent {
@@ -284,6 +577,8 @@ export type PresentationStreamEvent =
     | StreamStartEvent
     | StreamCreatedEvent
     | StreamResearchEvent
+    | StreamStageEvent
+    | StreamOutlineEvent
     | StreamThemeEvent
     | StreamRetryEvent
     | StreamSlideEvent

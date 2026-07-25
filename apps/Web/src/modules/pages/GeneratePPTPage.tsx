@@ -1,13 +1,11 @@
-import type {
-    PresentationLayoutPreference,
-    PresentationRetryOptions,
-    ThemeId,
-} from "@slide-sage/types";
+import type { PresentationRetryOptions, ThemeId } from "@slide-sage/types";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GenerateForm, GenerateOptionsBar } from "@/components/Generate";
 import Header from "@/components/Header";
+import { fetchAIConfiguration } from "@/lib/ai-connections";
+import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
 import { useStreaming } from "@/modules/presentations";
 import { ROUTES } from "@/router/paths";
 
@@ -23,8 +21,7 @@ export default function GeneratePPTPage() {
     const retryPrompt = retry?.prompt.trim() ?? "";
     const retrySlideCount = retry?.slide_count.toString() ?? "5";
     const presetSlideCounts = ["5", "10", "15", "20", "25", "30"];
-    const [prompt, setPrompt] = useState("");
-    const [topics, setTopics] = useState<string[]>(() => (retryPrompt ? [retryPrompt] : []));
+    const [prompt, setPrompt] = useState(retryPrompt);
     const [loading, setLoading] = useState(false);
     const [slideCount, setSlideCount] = useState(retrySlideCount);
     const [slideCountMode, setSlideCountMode] = useState(
@@ -35,11 +32,15 @@ export default function GeneratePPTPage() {
     const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
     const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
     const [theme, setTheme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
-    const [layoutPreference, setLayoutPreference] = useState<PresentationLayoutPreference>(
-        retry?.layout_preference ?? "auto",
-    );
+    const [generationMode, setGenerationMode] = useState<"openrouter" | "byok">("openrouter");
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
+
+    useEffect(() => {
+        void fetchAIConfiguration()
+            .then((config) => setGenerationMode(config.generation.mode))
+            .catch(() => undefined);
+    }, []);
 
     useEffect(() => {
         if (streamingState.error) {
@@ -70,36 +71,9 @@ export default function GeneratePPTPage() {
         return () => window.removeEventListener("keydown", handleGlobalKeyDown);
     }, []);
 
-    const getTopicsWithPrompt = () => {
-        const nextPrompt = prompt.trim();
-        if (!nextPrompt || topics.includes(nextPrompt)) return topics;
-        return [...topics, nextPrompt];
-    };
-
-    const handleSubmitPrompt = () => {
-        const nextTopics = getTopicsWithPrompt();
-        if (nextTopics !== topics) {
-            setTopics(nextTopics);
-        }
-        setPrompt("");
-    };
-
-    const handleRemoveTopic = (topicToRemove: string) => {
-        setTopics(topics.filter((topic) => topic !== topicToRemove));
-    };
-
-    const handleAddTopic = (topicToAdd: string) => {
-        if (!topics.includes(topicToAdd)) {
-            setTopics([...topics, topicToAdd]);
-        }
-    };
-
-    const handleEditTopic = (index: number, value: string) => {
-        setTopics((prev) => prev.map((topic, i) => (i === index ? value : topic)));
-    };
-
-    const handleGenerateInternal = async (selectedTopics = topics) => {
-        if (selectedTopics.length === 0 || streamingState.isStreaming) return;
+    const handleGenerateInternal = async (selectedPrompt: string) => {
+        const normalizedPrompt = selectedPrompt.trim();
+        if (!normalizedPrompt || streamingState.isStreaming) return;
 
         setLoading(true);
 
@@ -109,12 +83,11 @@ export default function GeneratePPTPage() {
         if (useWebResearch) {
             navigate(ROUTES.research, {
                 state: {
-                    prompt: selectedTopics.join(", "),
+                    prompt: normalizedPrompt,
                     slideCount: count,
                     detailLevel,
                     tonality,
                     theme,
-                    layoutPreference,
                     retryPresentationId,
                 },
             });
@@ -122,7 +95,7 @@ export default function GeneratePPTPage() {
         }
 
         const streamingRequest = startStreaming(
-            selectedTopics.join(", "),
+            normalizedPrompt,
             count,
             detailLevel,
             tonality,
@@ -130,7 +103,6 @@ export default function GeneratePPTPage() {
             undefined,
             retryPresentationId,
             theme,
-            layoutPreference,
         );
         navigate(ROUTES.presentation, {
             state: { isStreaming: true },
@@ -148,19 +120,10 @@ export default function GeneratePPTPage() {
     });
 
     const handleGenerate = () => {
-        debouncedGenerate(topics);
-    };
+        if (!prompt.trim()) return;
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key !== "Enter" || !event.shiftKey) return;
-
-        event.preventDefault();
-        const nextTopics = getTopicsWithPrompt();
-        if (nextTopics.length === 0) return;
-
-        setTopics(nextTopics);
-        setPrompt("");
-        debouncedGenerate(nextTopics);
+        requestGenerationNotificationPermission();
+        debouncedGenerate(prompt);
     };
 
     const calculateEstimatedTokens = () => {
@@ -192,10 +155,13 @@ export default function GeneratePPTPage() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-transparent">
+        <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-transparent">
             <Header />
 
-            <div className="w-full flex items-center justify-center px-4 pt-6 md:pt-8">
+            <div
+                data-generation-selectors
+                className="relative flex w-full flex-col items-center px-4 pt-6 md:pt-8"
+            >
                 <GenerateOptionsBar
                     detailLevel={detailLevel}
                     tonality={tonality}
@@ -204,7 +170,6 @@ export default function GeneratePPTPage() {
                     slideCount={slideCount}
                     customSlideCount={customSlideCount}
                     theme={theme}
-                    layoutPreference={layoutPreference}
                     onDetailLevelChange={setDetailLevel}
                     onTonalityChange={setTonality}
                     onUseWebResearchChange={setUseWebResearch}
@@ -212,24 +177,26 @@ export default function GeneratePPTPage() {
                     onSlideCountChange={setSlideCount}
                     onCustomSlideCountChange={setCustomSlideCount}
                     onThemeChange={setTheme}
-                    onLayoutPreferenceChange={setLayoutPreference}
                 />
+                {prompt.trim() && (
+                    <p
+                        data-generation-estimate
+                        className="absolute top-full mt-4 text-center text-lg font-medium text-white/80"
+                    >
+                        {generationMode === "byok" && !useWebResearch
+                            ? "Generation billed by your provider"
+                            : `Estimated ${calculateEstimatedTokens().toFixed(1)} points`}
+                    </p>
+                )}
             </div>
 
-            <main className="flex-1 w-full flex items-center justify-center px-4 md:px-8 pb-12 overflow-y-auto">
-                <div className="w-full max-w-5xl max-h-full">
-                    <div className="mx-auto w-full max-w-4xl flex flex-col items-center justify-center">
+            <main className="flex w-full flex-1 items-center justify-center overflow-y-auto px-4 py-12 md:px-8">
+                <div className="w-full max-w-5xl">
+                    <div className="relative -top-4 mx-auto flex w-full max-w-4xl flex-col items-center justify-center md:-top-6">
                         <GenerateForm
                             prompt={prompt}
-                            topics={topics}
                             loading={loading || streamingState.isStreaming}
-                            estimatedTokens={calculateEstimatedTokens()}
                             onPromptChange={setPrompt}
-                            onKeyDown={handleKeyDown}
-                            onSubmitPrompt={handleSubmitPrompt}
-                            onRemoveTopic={handleRemoveTopic}
-                            onEditTopic={handleEditTopic}
-                            onAddTopic={handleAddTopic}
                             onGenerate={handleGenerate}
                         />
                     </div>

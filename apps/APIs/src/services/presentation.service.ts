@@ -6,8 +6,10 @@
 import type { Presentation } from "@slide-sage/database";
 import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
 import {
+    type AIModelSelection,
     buildResearchSystemMessage,
-    type PresentationLayoutPreference,
+    type PresentationJSON,
+    type PresentationMutation,
     type PresentationStreamEvent,
     type ResearchOptions,
     type ResearchPayload,
@@ -16,6 +18,7 @@ import {
     type ThemeId,
 } from "@slide-sage/types";
 import { AIService } from "./ai.service";
+import { applyPresentationMutations, normalizePresentationDocument } from "./presentation-document";
 import { RAGService } from "./rag.service";
 
 export interface GeneratePresentationParams {
@@ -28,7 +31,7 @@ export interface GeneratePresentationParams {
     research?: ResearchOptions;
     researchPayload?: ResearchPayload;
     theme?: ThemeId;
-    layoutPreference?: PresentationLayoutPreference;
+    ai?: AIModelSelection & { apiKey: string };
 }
 
 export interface IteratePresentationParams {
@@ -39,6 +42,8 @@ export interface IteratePresentationParams {
     detailLevel?: string;
     tonality?: string;
     research?: ResearchOptions;
+    ai?: AIModelSelection & { apiKey: string };
+    slideCount?: number;
 }
 
 export interface StorePresentationMemoryParams {
@@ -85,6 +90,12 @@ export class PresentationService {
         return estimate.estimatedTokens;
     }
 
+    calculateActualTokenCost(aiTokensUsed: number, quotedTokenCost: number): number {
+        if (!Number.isFinite(aiTokensUsed) || aiTokensUsed <= 0) return quotedTokenCost;
+        const actualCost = TokenCalculator.calculateActualTokenDeduction(aiTokensUsed);
+        return Math.min(quotedTokenCost, Math.round(actualCost * 1000) / 1000);
+    }
+
     /**
      * Generate presentation with token management and streaming
      */
@@ -99,7 +110,6 @@ export class PresentationService {
             research,
             researchPayload,
             theme = "corporate-blue",
-            layoutPreference = "auto",
         } = params;
 
         try {
@@ -113,7 +123,7 @@ export class PresentationService {
                 researchPayload,
                 params.userId,
                 theme,
-                layoutPreference
+                params.ai
             )) {
                 yield event;
             }
@@ -162,8 +172,9 @@ export class PresentationService {
                 return;
             }
 
-            // Note: currentSlides are stored in the vector database and retrieved via RAG
-            // No need to pass them directly to the AI service
+            const currentPresentation = normalizePresentationDocument(
+                existingPresentation.slidesData
+            );
 
             try {
                 // Stream presentation iteration
@@ -173,7 +184,11 @@ export class PresentationService {
                     feedback,
                     detailLevel,
                     tonality,
-                    research
+                    research,
+                    currentPresentation,
+                    params.slideCount,
+                    currentPresentation.theme as ThemeId,
+                    params.ai
                 )) {
                     yield event;
                 }
@@ -222,6 +237,31 @@ export class PresentationService {
         }
 
         return presentation;
+    }
+
+    async updatePresentation(
+        presentationId: string,
+        userId: string,
+        mutations: PresentationMutation[]
+    ): Promise<Presentation> {
+        const presentation = await this.getPresentation(presentationId, userId);
+        const storedDocument = presentation.slidesData as Partial<PresentationJSON>;
+        const current = normalizePresentationDocument({
+            ...storedDocument,
+            title: storedDocument.title || presentation.title,
+        });
+        const slidesData = applyPresentationMutations(current, mutations);
+        const updated = await this.presentationRepo.updateOwnedAtRevision(
+            presentationId,
+            userId,
+            presentation.updatedAt,
+            {
+                title: slidesData.title,
+                slidesData: slidesData as PresentationJSON,
+            }
+        );
+        if (!updated) throw new Error("Presentation changed while it was being saved");
+        return updated;
     }
 
     /**

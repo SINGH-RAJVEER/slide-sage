@@ -24,6 +24,8 @@ it("renders a blank loading slide before the first streamed slide", () => {
             containerRef={createRef<HTMLDivElement>()}
             onSelectSlide={mock()}
             isWaitingForFirstSlide={true}
+            generationMessage="Structuring the narrative"
+            generationProgress={0.25}
         />,
     );
 
@@ -32,6 +34,11 @@ it("renders a blank loading slide before the first streamed slide", () => {
     ).toBeInTheDocument();
     expect(view.getByRole("status", { name: "Loading" })).toBeInTheDocument();
     expect(view.getByText("Generating your presentation")).toBeInTheDocument();
+    expect(view.getByText("Structuring the narrative")).toBeInTheDocument();
+    expect(view.getByRole("progressbar", { name: "Structuring the narrative" })).toHaveAttribute(
+        "aria-valuenow",
+        "25",
+    );
 });
 
 it("keeps empty-presentation controls visible and disabled", () => {
@@ -50,7 +57,7 @@ it("keeps empty-presentation controls visible and disabled", () => {
     );
 
     expect(view.getByRole("button", { name: "Download" })).toBeDisabled();
-    expect(view.getByRole("button", { name: "Previous" })).toBeDisabled();
-    expect(view.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(view.getByRole("button", { name: "Previous slide" })).toBeDisabled();
+    expect(view.getByRole("button", { name: "Next slide" })).toBeDisabled();
     expect(view.getByRole("button", { name: "Delete" })).toBeDisabled();
 });

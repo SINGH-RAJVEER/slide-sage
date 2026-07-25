@@ -1,5 +1,5 @@
 import type { PresentationJSON } from "@slide-sage/types";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { type Presentation, presentations } from "../db/schema";
 
@@ -81,6 +81,30 @@ export class PresentationRepository {
             .update(presentations)
             .set({ ...updates, updatedAt: new Date() })
             .where(eq(presentations.id, presentationId))
+            .returning();
+
+        return presentation;
+    }
+
+    async updateOwnedAtRevision(
+        presentationId: string,
+        userId: string,
+        expectedUpdatedAt: Date,
+        updates: Partial<Presentation>,
+    ): Promise<Presentation | undefined> {
+        const [presentation] = await db
+            .update(presentations)
+            .set({
+                ...updates,
+                updatedAt: new Date(Math.max(Date.now(), expectedUpdatedAt.getTime() + 1)),
+            })
+            .where(
+                and(
+                    eq(presentations.id, presentationId),
+                    eq(presentations.userId, userId),
+                    eq(presentations.updatedAt, expectedUpdatedAt),
+                ),
+            )
             .returning();
 
         return presentation;

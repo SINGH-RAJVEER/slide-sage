@@ -45,7 +45,7 @@ function AwayPage() {
         <span>
             {streamingState.isStreaming ? "streaming" : "stopped"}:
             {streamingState.isComplete ? "complete" : "pending"}:{streamingState.slides.length}:
-            {streamingState.presentationId ?? "none"}
+            {streamingState.presentationId ?? "none"}:{streamingState.generationStage ?? "none"}
         </span>
     );
 }
@@ -88,7 +88,6 @@ it("continues processing and publishes the saved deck after the initiating page 
         expect(JSON.parse(requestBody)).toMatchObject({
             retry_presentation_id: "failed_presentation",
             theme: "corporate-blue",
-            layout_preference: "auto",
         });
         fireEvent.click(view.getByRole("button", { name: "Navigate away" }));
 
@@ -96,7 +95,10 @@ it("continues processing and publishes the saved deck after the initiating page 
             streamController?.enqueue(
                 encoder.encode(
                     'event: created\ndata: {"presentation_id":"presentation_1"}\n\n' +
-                        'event: slide\ndata: {"slide":{"id":"slide_1","type":"content","content":{}},"title":"Background deck"}\n\n' +
+                        'event: stage\ndata: {"stage":"planning","message":"Structuring the narrative","completed":1,"total":4}\n\n' +
+                        'event: outline\ndata: {"title":"Background deck","audience":"Leaders","thesis":"A thesis","cards":[]}\n\n' +
+                        'event: slide\ndata: {"slide":{"id":"slide_draft","type":"content","content":{}},"index":0,"title":"Background deck"}\n\n' +
+                        'event: slide\ndata: {"slide":{"id":"slide_1","type":"content","content":{}},"index":0,"title":"Background deck"}\n\n' +
                         'event: complete\ndata: {"title":"Background deck","slides":[{"id":"slide_1","type":"content","content":{}}],"totalSlides":1}\n\n' +
                         'event: saved\ndata: {"presentation_id":"presentation_1"}\n\n',
                 ),
@@ -105,7 +107,9 @@ it("continues processing and publishes the saved deck after the initiating page 
         });
 
         await waitFor(() => {
-            expect(view.getByText("stopped:complete:1:presentation_1")).toBeInTheDocument();
+            expect(
+                view.getByText("stopped:complete:1:presentation_1:planning"),
+            ).toBeInTheDocument();
         });
         expect(presentationUpdated).toHaveBeenCalledTimes(1);
         const event = presentationUpdated.mock

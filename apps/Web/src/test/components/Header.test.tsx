@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import type { User } from "@/contexts/AuthContext";
 
@@ -56,6 +56,7 @@ describe("Header", () => {
 
         expect(queryByText("Generate")).toBeNull();
         expect(queryByText("Presentations")).toBeNull();
+        expect(queryByText("Marketplace")).toBeNull();
     });
 
     it("hides navigation tabs on nested auth pages", async () => {
@@ -72,6 +73,7 @@ describe("Header", () => {
 
         expect(queryByText("Generate")).toBeNull();
         expect(queryByText("Presentations")).toBeNull();
+        expect(queryByText("Marketplace")).toBeNull();
 
         rerender(
             <MemoryRouter initialEntries={["/sign-up/verify-email"]}>
@@ -81,6 +83,7 @@ describe("Header", () => {
 
         expect(queryByText("Generate")).toBeNull();
         expect(queryByText("Presentations")).toBeNull();
+        expect(queryByText("Marketplace")).toBeNull();
     });
 
     it("shows first and last name initials when image is missing", async () => {
@@ -104,5 +107,58 @@ describe("Header", () => {
         );
 
         expect(getByText("RS")).toBeInTheDocument();
+    });
+
+    it("uses initials instead of loading a third-party profile image", async () => {
+        mockAuthState.user = {
+            id: "user_1",
+            name: "Rajveer Singh",
+            email: "rajveer@example.com",
+            image: "https://lh3.googleusercontent.com/a/profile=s96-c",
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            slideTokens: 10,
+        };
+
+        const { default: Header } = await import("../../components/Header");
+        const { container, getByText } = render(
+            <BrowserRouter>
+                <Header />
+            </BrowserRouter>,
+        );
+
+        expect(getByText("RS")).toBeInTheDocument();
+        expect(container.querySelector('img[src^="https://lh3.googleusercontent.com"]')).toBeNull();
+    });
+
+    it("links to settings from the account menu", async () => {
+        mockAuthState.user = {
+            id: "user_1",
+            name: "Rajveer Singh",
+            email: "rajveer@example.com",
+            image: null,
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            slideTokens: 10,
+        };
+
+        const { default: Header } = await import("../../components/Header");
+        const view = render(
+            <MemoryRouter initialEntries={["/generate"]}>
+                <Header />
+            </MemoryRouter>,
+        );
+
+        fireEvent.pointerDown(view.getByRole("button", { name: "Open account menu" }), {
+            button: 0,
+            ctrlKey: false,
+        });
+
+        expect(await view.findByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+            "href",
+            "/settings",
+        );
     });
 });

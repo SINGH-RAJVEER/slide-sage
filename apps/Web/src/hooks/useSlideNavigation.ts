@@ -4,6 +4,38 @@ function clamp(value: number, min: number, max: number) {
     return Math.min(Math.max(value, min), max);
 }
 
+export const KEYBOARD_NAVIGATION_REPEAT_DELAY_MS = 250;
+export const KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS = 120;
+
+export function startKeyboardNavigationRepeat(onRepeat: () => void): () => void {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const delayId = setTimeout(() => {
+        onRepeat();
+        intervalId = setInterval(onRepeat, KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS);
+    }, KEYBOARD_NAVIGATION_REPEAT_DELAY_MS);
+
+    return () => {
+        clearTimeout(delayId);
+        if (intervalId !== null) clearInterval(intervalId);
+    };
+}
+
+export function getKeyboardNavigationTarget(
+    event: Pick<KeyboardEvent, "key">,
+    currentSlide: number,
+    slideCount: number,
+): number | null {
+    if (slideCount <= 0) return null;
+
+    const key = event.key.toLowerCase();
+    if (event.key === "ArrowLeft" || key === "j") return clamp(currentSlide - 1, 0, slideCount - 1);
+    if (event.key === "ArrowRight" || key === "l")
+        return clamp(currentSlide + 1, 0, slideCount - 1);
+    if (event.key === "ArrowUp") return 0;
+    if (event.key === "ArrowDown") return slideCount - 1;
+    return null;
+}
+
 export function useSlideNavigation({
     slideCount,
     slideContainerRef,

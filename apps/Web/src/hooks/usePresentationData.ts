@@ -1,3 +1,4 @@
+import { SCENE_PRESENTATION_SCHEMA_VERSION } from "@slide-sage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import type { PresentationData, Slide } from "@/modules/types/presentation";
@@ -18,6 +19,7 @@ interface StreamingLikeState {
     title: string;
     presentationId?: string;
     error?: string;
+    completedDocument?: PresentationData;
 }
 
 interface UsePresentationDataParams {
@@ -81,8 +83,16 @@ export function usePresentationData({
     useEffect(() => {
         if (streamingState.isStreaming && streamingSlidesCount > 0) {
             setPresentation({
+                ...streamingState.completedDocument,
+                schemaVersion:
+                    streamingState.completedDocument?.schemaVersion ||
+                    SCENE_PRESENTATION_SCHEMA_VERSION,
                 title: streamingState.title,
                 theme: streamingState.theme,
+                dimensions: streamingState.completedDocument?.dimensions || {
+                    width: 1280,
+                    height: 720,
+                },
                 slides: streamingState.slides.map((s) => ({ ...s })),
                 totalSlides: streamingSlidesCount,
             });
@@ -93,6 +103,7 @@ export function usePresentationData({
         streamingState.title,
         streamingState.theme,
         streamingState.slides,
+        streamingState.completedDocument,
     ]);
 
     // Capture final presentation state when streaming completes
@@ -103,8 +114,16 @@ export function usePresentationData({
             streamingState.slides.length > 0
         ) {
             setPresentation({
+                ...streamingState.completedDocument,
+                schemaVersion:
+                    streamingState.completedDocument?.schemaVersion ||
+                    SCENE_PRESENTATION_SCHEMA_VERSION,
                 title: streamingState.title,
                 theme: streamingState.theme,
+                dimensions: streamingState.completedDocument?.dimensions || {
+                    width: 1280,
+                    height: 720,
+                },
                 slides: streamingState.slides.map((s) => ({ ...s })),
                 totalSlides: streamingState.slides.length,
             });
@@ -115,6 +134,7 @@ export function usePresentationData({
         streamingState.slides,
         streamingState.title,
         streamingState.theme,
+        streamingState.completedDocument,
     ]);
 
     // If we learn the presentationId from the stream, capture it
@@ -191,7 +211,21 @@ export function usePresentationData({
                     credentials: "include",
                 });
 
-                if (!response.ok) return;
+                if (!response.ok) {
+                    navigate(ROUTES.presentationError, {
+                        replace: true,
+                        state: {
+                            presentationId: idToFetch,
+                            error:
+                                response.status === 404
+                                    ? "This presentation could not be found."
+                                    : response.status === 403
+                                      ? "You do not have access to this presentation."
+                                      : "The presentation could not be loaded. Please try again.",
+                        },
+                    });
+                    return;
+                }
 
                 const data = await response.json();
                 if (data?.error) {
@@ -200,13 +234,23 @@ export function usePresentationData({
                 }
 
                 const pres = data?.presentation;
-                if (!pres) return;
+                if (!pres) {
+                    navigate(ROUTES.presentationError, {
+                        replace: true,
+                        state: {
+                            presentationId: idToFetch,
+                            error: "The presentation response was incomplete. Please try again.",
+                        },
+                    });
+                    return;
+                }
 
                 const slidesData = pres.slides || pres.slides_data || {};
                 const fetchedSlides = slidesData.slides || [];
 
                 if (fetchedSlides.length > 0 && pres.title !== "Generating...") {
                     setPresentation({
+                        ...slidesData,
                         title: pres.title || slidesData.title,
                         theme: slidesData.theme || "corporate-blue",
                         slides: fetchedSlides,
@@ -226,6 +270,13 @@ export function usePresentationData({
                 }
             } catch (error) {
                 console.error("Error fetching presentation:", error);
+                navigate(ROUTES.presentationError, {
+                    replace: true,
+                    state: {
+                        presentationId: idToFetch,
+                        error: "The presentation could not be loaded. Check your connection and try again.",
+                    },
+                });
             } finally {
                 setIsLoading(false);
             }

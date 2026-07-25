@@ -66,11 +66,13 @@ export const SlideCountSelector: React.FC<SlideCountSelectorProps> = ({
                     <span className="text-white/50 text-sm font-light">Length:</span>
                     <input
                         type="number"
+                        min={1}
+                        max={40}
                         value={customSlideCount}
                         onChange={(e) => {
                             const val = e.target.value;
-                            // Allow empty string or numbers up to 50
-                            if (val === "" || (/^\d{0,2}$/.test(val) && Number(val) <= 50)) {
+                            // Allow empty string or numbers up to 40
+                            if (val === "" || (/^\d{0,2}$/.test(val) && Number(val) <= 40)) {
                                 onCustomSlideCountChange(val);
                             }
                         }}
@@ -80,7 +82,7 @@ export const SlideCountSelector: React.FC<SlideCountSelectorProps> = ({
                             if (Number.isNaN(val) || val < 1) {
                                 onSlideCountModeChange("preset");
                             } else {
-                                if (val > 50) val = 50;
+                                if (val > 40) val = 40;
                                 onCustomSlideCountChange(val.toString());
                                 onSlideCountChange(val.toString());
                                 // Keep in custom mode but sanitized
@@ -91,7 +93,7 @@ export const SlideCountSelector: React.FC<SlideCountSelectorProps> = ({
                                 // Commit
                                 let val = Number(customSlideCount);
                                 if (Number.isNaN(val) || val < 1) val = 1;
-                                if (val > 50) val = 50;
+                                if (val > 40) val = 40;
                                 onCustomSlideCountChange(val.toString());
                                 onSlideCountChange(val.toString());
                                 // Switch back to preset if it matches one? No, just keep custom.

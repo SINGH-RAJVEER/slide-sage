@@ -1,23 +1,32 @@
 import { PresentationRepository, UserRepository } from "@slide-sage/database";
 import {
-    PRESENTATION_LAYOUT_PREFERENCES,
+    type AIModelSelection,
     PRESENTATION_SCHEMA_VERSION,
     type PresentationJSON,
-    type PresentationLayoutPreference,
+    type PresentationMutationRequest,
     type PresentationResponse,
     type PresentationSummary,
     type PresentationsResponse,
     type ResearchOptions,
     type ResearchPayload,
+    SCENE_ENGINE_VERSION,
+    SCENE_PRESENTATION_SCHEMA_VERSION,
     type Slide,
     type Source,
     THEME_IDS,
     type ThemeId,
 } from "@slide-sage/types";
+import type { Context } from "hono";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
+import { configuredOpenRouterModel } from "../services/ai/model-catalog";
+import { AIConnectionService } from "../services/ai-connections.service";
 import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "../services/auth";
 import { PresentationService } from "../services/presentation.service";
+import {
+    normalizePresentationDocument,
+    parsePresentationMutationRequest,
+} from "../services/presentation-document";
 import { SearchService } from "../services/search.service";
 
 interface ResearchOptionsInput {
@@ -149,18 +158,11 @@ function positiveIntegerEnv(name: string, fallback: number): number {
 }
 
 const THEME_ID_SET = new Set<string>(THEME_IDS);
-const LAYOUT_PREFERENCE_SET = new Set<string>(PRESENTATION_LAYOUT_PREFERENCES);
 
 function parseTheme(value: unknown): ThemeId {
     return typeof value === "string" && THEME_ID_SET.has(value)
         ? (value as ThemeId)
         : "corporate-blue";
-}
-
-function parseLayoutPreference(value: unknown): PresentationLayoutPreference {
-    return typeof value === "string" && LAYOUT_PREFERENCE_SET.has(value)
-        ? (value as PresentationLayoutPreference)
-        : "auto";
 }
 
 function sseFrame(event: string, data: unknown): string {
@@ -171,6 +173,42 @@ const presentations = new Hono();
 const presentationService = new PresentationService();
 const presentationRepo = new PresentationRepository();
 const searchService = new SearchService();
+const aiConnectionService = new AIConnectionService();
+
+function parseAISelection(value: unknown): AIModelSelection | undefined {
+    if (!value || typeof value !== "object") return undefined;
+    const selection = value as { provider?: unknown; model?: unknown };
+    if (
+        (selection.provider !== "openai" &&
+            selection.provider !== "google" &&
+            selection.provider !== "anthropic") ||
+        typeof selection.model !== "string"
+    ) {
+        return undefined;
+    }
+    return { provider: selection.provider, model: selection.model };
+}
+
+function byokError(c: Context, error: unknown) {
+    if (error instanceof Error && error.name === "BYOKPointsRequiredError") {
+        return c.json(
+            {
+                error: { message: error.message, code: "BYOK_POINTS_REQUIRED" },
+                minimum_points_exclusive: 50,
+            },
+            403
+        );
+    }
+    return c.json(
+        {
+            error: {
+                message: error instanceof Error ? error.message : "AI provider unavailable",
+                code: "AI_CONNECTION_REQUIRED",
+            },
+        },
+        409
+    );
+}
 
 interface FailedPresentationInput {
     presentationId: string;
@@ -180,11 +218,11 @@ interface FailedPresentationInput {
     tonality: string;
     researchEnabled: boolean;
     theme: ThemeId;
-    layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     sources?: Source[];
     estimatedTokens: number;
     message: string;
+    ai?: AIModelSelection;
 }
 
 async function markPresentationFailed({
@@ -195,11 +233,11 @@ async function markPresentationFailed({
     tonality,
     researchEnabled,
     theme,
-    layoutPreference,
     researchPayload,
     sources,
     estimatedTokens,
     message,
+    ai,
 }: FailedPresentationInput): Promise<void> {
     const prompt = String(topic).trim();
     const retrySources = sources?.length ? sources : researchPayload?.sources;
@@ -225,7 +263,14 @@ async function markPresentationFailed({
                 tonality,
                 research_enabled: researchEnabled,
                 theme,
-                layout_preference: layoutPreference,
+                ...(ai
+                    ? {
+                          ai: {
+                              provider: ai.provider,
+                              model: ai.model,
+                          },
+                      }
+                    : {}),
                 ...(retrySources?.length
                     ? {
                           research_payload: {
@@ -261,9 +306,6 @@ presentations.post(
 
             const { topic, slide_count, detail_level, tonality } = body;
             const preferredTheme = parseTheme(body?.theme);
-            const layoutPreference = parseLayoutPreference(
-                body?.layout_preference ?? body?.layoutPreference
-            );
             const research = parseResearchOptions(body?.research);
             const researchPayload = parseResearchPayload(
                 body?.research_payload ?? body?.researchPayload
@@ -274,15 +316,24 @@ presentations.post(
                 return c.json({ error: { message: "Missing required fields" } }, 400);
             }
 
+            let ai: (AIModelSelection & { apiKey: string }) | undefined;
+            try {
+                ai = await aiConnectionService.resolveSelection(userId, parseAISelection(body?.ai));
+            } catch (error) {
+                return byokError(c, error);
+            }
+
             // Verify the user has enough points BEFORE we create anything or start streaming.
             // The frontend expects a 402 with { slide_tokens_remaining, slide_tokens_required }.
-            const estimatedTokens = presentationService.calculateEstimatedTokens(
-                slide_count,
-                detail_level || "balanced",
-                tonality || "professional",
-                String(topic),
-                researchPayload
-            );
+            const estimatedTokens = !ai
+                ? presentationService.calculateEstimatedTokens(
+                      slide_count,
+                      detail_level || "balanced",
+                      tonality || "professional",
+                      String(topic),
+                      researchPayload
+                  )
+                : 0;
             const { sufficient, user, shortfall } = await UserRepository.hasSufficientTokens(
                 userId,
                 estimatedTokens
@@ -322,6 +373,10 @@ presentations.post(
                 });
                 presentationId = presentation.id;
             }
+            await presentationRepo.update(presentationId, {
+                aiProvider: ai?.provider || "openrouter",
+                aiModel: ai?.model || configuredOpenRouterModel(),
+            });
 
             c.header("Content-Type", "text/event-stream; charset=utf-8");
             c.header("Cache-Control", "no-cache, no-transform");
@@ -342,6 +397,7 @@ presentations.post(
                     let title = "Untitled Presentation";
                     let sources: Source[] | undefined = retainedSources;
                     let tokensUsed = 0;
+                    let completedDocument: PresentationJSON | undefined;
                     let generationCompleted = false;
                     let generationFailed = false;
                     let failureSaved = false;
@@ -359,11 +415,11 @@ presentations.post(
                             tonality: tonality || "professional",
                             researchEnabled: Boolean(research?.enabled || sources?.length),
                             theme: preferredTheme,
-                            layoutPreference,
                             researchPayload,
                             sources,
                             estimatedTokens,
                             message,
+                            ai,
                         });
                     };
 
@@ -378,7 +434,7 @@ presentations.post(
                         research,
                         researchPayload,
                         theme: preferredTheme,
-                        layoutPreference,
+                        ai,
                     })) {
                         const eventType = event.event || "data";
                         // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
@@ -394,6 +450,7 @@ presentations.post(
                             theme = preferredTheme;
                             title = "Untitled Presentation";
                             tokensUsed = 0;
+                            completedDocument = undefined;
                             generationCompleted = false;
                         }
 
@@ -405,7 +462,16 @@ presentations.post(
                         if (eventType === "slide") {
                             const slide = eventData.slide;
                             if (slide) {
-                                allSlides.push(slide);
+                                const index = Number(eventData.index);
+                                if (Number.isInteger(index) && index >= 0) {
+                                    allSlides[index] = slide;
+                                } else {
+                                    const existingIndex = allSlides.findIndex(
+                                        (existing) => existing.id === slide.id
+                                    );
+                                    if (existingIndex >= 0) allSlides[existingIndex] = slide;
+                                    else allSlides.push(slide);
+                                }
                             }
                             if (eventData.title) {
                                 title = eventData.title;
@@ -414,6 +480,7 @@ presentations.post(
 
                         if (eventType === "complete") {
                             generationCompleted = true;
+                            completedDocument = eventData as PresentationJSON;
                             if (eventData.slides) {
                                 allSlides.length = 0;
                                 allSlides.push(...eventData.slides);
@@ -482,7 +549,17 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
-                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                            ...completedDocument,
+                            schemaVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_PRESENTATION_SCHEMA_VERSION
+                                : PRESENTATION_SCHEMA_VERSION,
+                            engineVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_ENGINE_VERSION
+                                : completedDocument?.["engineVersion"],
+                            dimensions: completedDocument?.dimensions || {
+                                width: 1280,
+                                height: 720,
+                            },
                             slides: allSlides,
                             theme,
                             title: finalTitle,
@@ -524,16 +601,24 @@ presentations.post(
                             `Saved presentation ${presentationId} with ${allSlides.length} slides`
                         );
 
-                        // Deduct the SAME slide-based estimate we checked against up front and that
-                        // the purchase page advertises, so the price charged matches the price
-                        // quoted everywhere (no surprise AI-token-based amount).
+                        if (ai) await aiConnectionService.markUsed(userId, ai.provider);
+                        const chargedTokens = ai
+                            ? estimatedTokens
+                            : presentationService.calculateActualTokenCost(
+                                  tokensUsed,
+                                  estimatedTokens
+                              );
                         let newBalance: number | null = null;
                         try {
-                            const updatedUser = await UserRepository.deductTokens(
-                                userId,
-                                estimatedTokens
-                            );
-                            newBalance = updatedUser.slideTokens;
+                            if (chargedTokens > 0) {
+                                const updatedUser = await UserRepository.deductTokens(
+                                    userId,
+                                    chargedTokens
+                                );
+                                newBalance = updatedUser.slideTokens;
+                            } else {
+                                newBalance = user.slideTokens;
+                            }
                         } catch (deductError) {
                             console.error(
                                 "Failed to deduct points:",
@@ -548,6 +633,7 @@ presentations.post(
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
+                                slide_tokens_charged: chargedTokens,
                             })
                         );
                     } else {
@@ -572,11 +658,11 @@ presentations.post(
                         tonality: tonality || "professional",
                         researchEnabled: Boolean(research?.enabled || retainedSources?.length),
                         theme: preferredTheme,
-                        layoutPreference,
                         researchPayload,
                         sources: retainedSources,
                         estimatedTokens,
                         message,
+                        ai,
                     });
                     await stream.write(
                         sseFrame("error", { error: message, presentation_id: presentationId })
@@ -618,15 +704,19 @@ presentations.post(
             }
 
             const requestedSlideCount = Number(body?.slide_count ?? body?.slideCount);
+            const generationMode = (await aiConnectionService.getConfiguration(userId)).generation
+                .mode;
             const estimatedTokens =
                 Number.isFinite(requestedSlideCount) && requestedSlideCount > 0
-                    ? presentationService.calculateEstimatedTokens(
-                          requestedSlideCount,
-                          body?.detail_level ?? body?.detailLevel ?? "balanced",
-                          body?.tonality ?? "professional",
-                          String(topic),
-                          { sources }
-                      )
+                    ? generationMode === "byok"
+                        ? 0
+                        : presentationService.calculateEstimatedTokens(
+                              requestedSlideCount,
+                              body?.detail_level ?? body?.detailLevel ?? "balanced",
+                              body?.tonality ?? "professional",
+                              String(topic),
+                              { sources }
+                          )
                     : undefined;
 
             return c.json(
@@ -669,16 +759,31 @@ presentations.post(
             }
 
             const presentationId = String(parentPresentationId);
+            const iterationBase = await presentationService.getPresentation(presentationId, userId);
+
+            let ai: (AIModelSelection & { apiKey: string }) | undefined;
+            try {
+                ai = await aiConnectionService.resolveSelection(userId, parseAISelection(body?.ai));
+            } catch (error) {
+                return byokError(c, error);
+            }
 
             // Verify the user has enough points before iterating (mirrors generation).
             const iterationSlideCount = Number(slideCount);
-            const estimatedTokens = presentationService.calculateEstimatedTokens(
+            const storedSlides = (iterationBase.slidesData as Partial<PresentationJSON>)?.slides;
+            const quotedSlideCount =
                 Number.isFinite(iterationSlideCount) && iterationSlideCount > 0
                     ? iterationSlideCount
-                    : 5,
-                detailLevel || "balanced",
-                tonality || "professional"
-            );
+                    : Array.isArray(storedSlides) && storedSlides.length > 0
+                      ? storedSlides.length
+                      : 5;
+            const estimatedTokens = !ai
+                ? presentationService.calculateEstimatedTokens(
+                      quotedSlideCount,
+                      detailLevel || "balanced",
+                      tonality || "professional"
+                  )
+                : 0;
             const { sufficient, user, shortfall } = await UserRepository.hasSufficientTokens(
                 userId,
                 estimatedTokens
@@ -720,6 +825,7 @@ presentations.post(
                     let title = "Updated Presentation";
                     let tokensUsed = 0;
                     let sources: Source[] | undefined;
+                    let completedDocument: PresentationJSON | undefined;
                     let iterationCompleted = false;
                     let iterationFailed = false;
 
@@ -731,6 +837,11 @@ presentations.post(
                         detailLevel: detailLevel || "balanced",
                         tonality: tonality || "professional",
                         research,
+                        ai,
+                        slideCount:
+                            Number.isFinite(iterationSlideCount) && iterationSlideCount > 0
+                                ? iterationSlideCount
+                                : undefined,
                     })) {
                         const eventType = event.event || "data";
                         // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
@@ -746,13 +857,23 @@ presentations.post(
                             title = "Updated Presentation";
                             tokensUsed = 0;
                             sources = undefined;
+                            completedDocument = undefined;
                             iterationCompleted = false;
                         }
 
                         if (eventType === "slide") {
                             const slide = eventData.slide;
                             if (slide) {
-                                allSlides.push(slide);
+                                const index = Number(eventData.index);
+                                if (Number.isInteger(index) && index >= 0) {
+                                    allSlides[index] = slide;
+                                } else {
+                                    const existingIndex = allSlides.findIndex(
+                                        (existing) => existing.id === slide.id
+                                    );
+                                    if (existingIndex >= 0) allSlides[existingIndex] = slide;
+                                    else allSlides.push(slide);
+                                }
                             }
                             if (eventData.title) {
                                 title = eventData.title;
@@ -761,6 +882,7 @@ presentations.post(
 
                         if (eventType === "complete") {
                             iterationCompleted = true;
+                            completedDocument = eventData as PresentationJSON;
                             if (eventData.slides) {
                                 allSlides.length = 0;
                                 allSlides.push(...eventData.slides);
@@ -802,7 +924,17 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
-                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                            ...completedDocument,
+                            schemaVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_PRESENTATION_SCHEMA_VERSION
+                                : PRESENTATION_SCHEMA_VERSION,
+                            engineVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_ENGINE_VERSION
+                                : completedDocument?.["engineVersion"],
+                            dimensions: completedDocument?.dimensions || {
+                                width: 1280,
+                                height: 720,
+                            },
                             slides: allSlides,
                             theme,
                             title: finalTitle,
@@ -815,10 +947,25 @@ presentations.post(
                             finalData.sources = sources;
                         }
 
-                        await presentationRepo.update(presentationId, {
-                            title: finalTitle,
-                            slidesData: finalData,
-                        });
+                        const updated = await presentationRepo.updateOwnedAtRevision(
+                            presentationId,
+                            userId,
+                            iterationBase.updatedAt,
+                            {
+                                title: finalTitle,
+                                slidesData: finalData,
+                                aiProvider: ai?.provider || "openrouter",
+                                aiModel: ai?.model || configuredOpenRouterModel(),
+                            }
+                        );
+                        if (!updated) {
+                            await stream.write(
+                                sseFrame("error", {
+                                    error: "Presentation changed while the iteration was running. Review the latest edits and try again.",
+                                })
+                            );
+                            return;
+                        }
 
                         // Store semantic memory for future RAG context.
                         try {
@@ -838,15 +985,24 @@ presentations.post(
                             console.warn("Failed to store presentation semantic memory:", error);
                         }
 
-                        // Deduct the same slide-based estimate we checked against (consistent
-                        // with generation and the advertised pricing).
+                        if (ai) await aiConnectionService.markUsed(userId, ai.provider);
+                        const chargedTokens = ai
+                            ? estimatedTokens
+                            : presentationService.calculateActualTokenCost(
+                                  tokensUsed,
+                                  estimatedTokens
+                              );
                         let newBalance: number | null = null;
                         try {
-                            const updatedUser = await UserRepository.deductTokens(
-                                userId,
-                                estimatedTokens
-                            );
-                            newBalance = updatedUser.slideTokens;
+                            if (chargedTokens > 0) {
+                                const updatedUser = await UserRepository.deductTokens(
+                                    userId,
+                                    chargedTokens
+                                );
+                                newBalance = updatedUser.slideTokens;
+                            } else {
+                                newBalance = user.slideTokens;
+                            }
                         } catch (deductError) {
                             console.error(
                                 "Failed to deduct points:",
@@ -861,6 +1017,7 @@ presentations.post(
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
+                                slide_tokens_charged: chargedTokens,
                             })
                         );
                     } else {
@@ -931,7 +1088,7 @@ presentations.get("/presentations/:id", authMiddleware, async (c) => {
                     id: presentation.id,
                     title: presentation.title,
                     prompt: presentation.prompt,
-                    slides_data: presentation.slidesData as PresentationJSON,
+                    slides_data: normalizePresentationDocument(presentation.slidesData),
                     created_at: presentation.createdAt.toISOString(),
                     updated_at: presentation.updatedAt.toISOString(),
                 },
@@ -946,6 +1103,45 @@ presentations.get("/presentations/:id", authMiddleware, async (c) => {
         if (message.includes("Unauthorized")) {
             return c.json({ error: { message } }, 403);
         }
+        return c.json({ error: { message } }, 400);
+    }
+});
+
+// Apply persistent editor mutations to a presentation document.
+presentations.patch("/presentations/:id", authMiddleware, async (c) => {
+    try {
+        const userId = getCurrentUserId(c);
+        const presentationId = c.req.param("id");
+        if (!presentationId) {
+            return c.json({ error: { message: "Invalid presentation ID" } }, 400);
+        }
+
+        const request = parsePresentationMutationRequest(
+            (await c.req.json()) as PresentationMutationRequest
+        );
+        const presentation = await presentationService.updatePresentation(
+            presentationId,
+            userId,
+            request.mutations
+        );
+        return c.json(
+            {
+                presentation: {
+                    id: presentation.id,
+                    title: presentation.title,
+                    prompt: presentation.prompt,
+                    slides_data: normalizePresentationDocument(presentation.slidesData),
+                    created_at: presentation.createdAt.toISOString(),
+                    updated_at: presentation.updatedAt.toISOString(),
+                },
+            } satisfies PresentationResponse,
+            200
+        );
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        if (message.includes("not found")) return c.json({ error: { message } }, 404);
+        if (message.includes("Unauthorized")) return c.json({ error: { message } }, 403);
+        if (message.includes("changed while")) return c.json({ error: { message } }, 409);
         return c.json({ error: { message } }, 400);
     }
 });

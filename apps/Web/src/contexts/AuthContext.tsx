@@ -1,6 +1,6 @@
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { fetchSessionWithRetry, type SessionUser } from "@/lib/session";
+import { fetchSessionWithRetry, isSessionCheckStale, type SessionUser } from "@/lib/session";
 
 export type User = SessionUser;
 
@@ -8,7 +8,7 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     isSignedIn: boolean;
-    refreshSession: () => Promise<void>;
+    refreshSession: (options?: { force?: boolean }) => Promise<void>;
     signOut: () => Promise<void>;
 }
 
@@ -30,17 +30,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const sessionRequestId = useRef(0);
+    const sessionRequest = useRef<Promise<void> | null>(null);
+    const lastSessionCheckAt = useRef<number | null>(null);
     const signingOut = useRef(false);
 
-    const refreshSession = useCallback(async () => {
-        if (signingOut.current) return;
+    const refreshSession = useCallback((options: { force?: boolean } = {}): Promise<void> => {
+        if (signingOut.current) return Promise.resolve();
+        const force = options.force === true;
+        if (!force && sessionRequest.current) return sessionRequest.current;
 
         const requestId = ++sessionRequestId.current;
-        const nextUser = await fetchSessionWithRetry();
+        const request = fetchSessionWithRetry()
+            .then((nextUser) => {
+                if (!signingOut.current && requestId === sessionRequestId.current) {
+                    lastSessionCheckAt.current = Date.now();
+                    setUser(nextUser);
+                }
+            })
+            .finally(() => {
+                if (sessionRequest.current === request) {
+                    sessionRequest.current = null;
+                }
+            });
 
-        if (!signingOut.current && requestId === sessionRequestId.current) {
-            setUser(nextUser);
-        }
+        sessionRequest.current = request;
+        return request;
     }, []);
 
     // Fetch current user session on mount
@@ -58,7 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         const handleWindowFocus = () => {
-            void refreshSession();
+            if (isSessionCheckStale(lastSessionCheckAt.current)) {
+                void refreshSession();
+            }
         };
 
         window.addEventListener("focus", handleWindowFocus);

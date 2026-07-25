@@ -1,10 +1,11 @@
-import type { OpenRouterMessage } from "@slide-sage/types";
+import type { AIProvider, OpenRouterMessage } from "@slide-sage/types";
 import type { StreamChunk } from "./stream-processor";
 
 const RETRYABLE_STATUS_CODES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 
 export interface OpenRouterRequestOptions {
-    endpoint: string;
+    endpoint?: string;
+    provider?: AIProvider;
     apiKey: string;
     model: string;
     messages: OpenRouterMessage[];
@@ -28,6 +29,18 @@ export class OpenRouterStreamError extends Error {
         this.retryable = retryable;
         this.retryAfterMs = retryAfterMs;
     }
+}
+
+function providerErrorMessage(status: number, responseText: string, statusText: string): string {
+    try {
+        const payload = JSON.parse(responseText) as { error?: { message?: unknown } };
+        if (typeof payload.error?.message === "string" && payload.error.message.trim()) {
+            return payload.error.message.trim();
+        }
+    } catch {
+        // The provider may return plain text or an upstream HTML error page.
+    }
+    return responseText.trim() || statusText || `OpenRouter returned ${status}`;
 }
 
 function parseRetryAfter(value: string | null): number | undefined {
@@ -59,26 +72,76 @@ export async function requestOpenRouterStream(
     const baseUrl = (process.env as { BASE_URL?: string }).BASE_URL;
 
     try {
-        const response = await fetchImpl(options.endpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${options.apiKey}`,
-                "HTTP-Referer": baseUrl || "http://localhost:8000",
-                "X-OpenRouter-Title": "Slide Sage",
-            },
-            body: JSON.stringify({
+        const provider = options.provider;
+        const endpoint =
+            options.endpoint ||
+            (provider === "openai"
+                ? "https://api.openai.com/v1/chat/completions"
+                : provider === "google"
+                  ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(options.model)}:streamGenerateContent?alt=sse`
+                  : "https://api.anthropic.com/v1/messages");
+        const system = options.messages
+            .filter((message) => message.role === "system")
+            .map((message) => message.content)
+            .join("\n\n");
+        const conversational = options.messages.filter((message) => message.role !== "system");
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        let body: Record<string, unknown>;
+        if (provider === "google") {
+            headers["x-goog-api-key"] = options.apiKey;
+            body = {
+                systemInstruction: { parts: [{ text: system }] },
+                contents: conversational.map((message) => ({
+                    role: message.role === "assistant" ? "model" : "user",
+                    parts: [{ text: message.content }],
+                })),
+                generationConfig: {
+                    maxOutputTokens: options.maxTokens,
+                    responseMimeType: "application/json",
+                    responseJsonSchema: (
+                        options.responseFormat["json_schema"] as { schema?: unknown }
+                    )?.schema,
+                },
+            };
+        } else if (provider === "anthropic") {
+            headers["x-api-key"] = options.apiKey;
+            headers["anthropic-version"] = "2023-06-01";
+            body = {
+                model: options.model,
+                system,
+                messages: conversational,
+                stream: true,
+                max_tokens: options.maxTokens,
+                output_config: {
+                    format: {
+                        type: "json_schema",
+                        schema: (options.responseFormat["json_schema"] as { schema?: unknown })
+                            ?.schema,
+                    },
+                },
+            };
+        } else {
+            headers["Authorization"] = `Bearer ${options.apiKey}`;
+            if (!provider) {
+                headers["HTTP-Referer"] = baseUrl || "http://localhost:8000";
+                headers["X-OpenRouter-Title"] = "Slide Sage";
+            }
+            body = {
                 model: options.model,
                 messages: options.messages,
                 stream: true,
                 stream_options: { include_usage: true },
                 max_tokens: options.maxTokens,
                 response_format: options.responseFormat,
-                provider: {
-                    allow_fallbacks: true,
-                    require_parameters: true,
-                },
-            }),
+                ...(!provider
+                    ? { provider: { allow_fallbacks: true, require_parameters: true } }
+                    : {}),
+            };
+        }
+        const response = await fetchImpl(endpoint, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body),
             signal: controller.signal,
         });
 
@@ -90,7 +153,7 @@ export async function requestOpenRouterStream(
         const retryable = RETRYABLE_STATUS_CODES.has(response.status);
         const retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
         throw new OpenRouterStreamError(
-            `OpenRouter returned ${response.status}: ${responseText || response.statusText}`,
+            providerErrorMessage(response.status, responseText, response.statusText),
             retryable,
             retryAfterMs
         );
@@ -149,6 +212,15 @@ function parseEventBlock(block: string): StreamChunk | null {
     try {
         const parsed = JSON.parse(data) as StreamChunk & {
             error?: { message?: string; code?: number | string };
+            type?: string;
+            delta?: { type?: string; text?: string; stop_reason?: string };
+            message?: { usage?: { input_tokens?: number; output_tokens?: number } };
+            usage?: { total_tokens?: number; input_tokens?: number; output_tokens?: number };
+            candidates?: Array<{
+                content?: { parts?: Array<{ text?: string }> };
+                finishReason?: string;
+            }>;
+            usageMetadata?: { totalTokenCount?: number };
         };
 
         if (parsed.error) {
@@ -160,6 +232,47 @@ function parseEventBlock(block: string): StreamChunk | null {
             );
         }
 
+        if (parsed.candidates || parsed.usageMetadata) {
+            return {
+                choices: [
+                    {
+                        delta: {
+                            content: parsed.candidates?.[0]?.content?.parts
+                                ?.map((part) => part.text || "")
+                                .join(""),
+                        },
+                        finish_reason:
+                            parsed.candidates?.[0]?.finishReason === "MAX_TOKENS"
+                                ? "length"
+                                : parsed.candidates?.[0]?.finishReason || null,
+                    },
+                ],
+                usage: { total_tokens: parsed.usageMetadata?.totalTokenCount },
+            };
+        }
+        if (parsed.type) {
+            const totalTokens =
+                (parsed.usage?.input_tokens || parsed.message?.usage?.input_tokens || 0) +
+                (parsed.usage?.output_tokens || parsed.message?.usage?.output_tokens || 0);
+            return {
+                choices: [
+                    {
+                        delta: {
+                            content:
+                                parsed.type === "content_block_delta" &&
+                                parsed.delta?.type === "text_delta"
+                                    ? parsed.delta.text
+                                    : undefined,
+                        },
+                        finish_reason:
+                            parsed.delta?.stop_reason === "max_tokens"
+                                ? "length"
+                                : parsed.delta?.stop_reason || null,
+                    },
+                ],
+                usage: totalTokens ? { total_tokens: totalTokens } : undefined,
+            };
+        }
         return parsed;
     } catch (error) {
         if (error instanceof OpenRouterStreamError) {

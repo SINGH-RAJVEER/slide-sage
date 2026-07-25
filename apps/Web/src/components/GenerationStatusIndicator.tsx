@@ -1,6 +1,8 @@
 import { AlertCircle, ArrowUpRight, Check, LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { showGenerationCompleteNotification } from "@/lib/generation-notifications";
+import { getGenerationDisplayStatus } from "@/lib/generation-status";
 import { useStreaming } from "@/modules/contexts/StreamingContext";
 import { ROUTES } from "@/router/paths";
 
@@ -19,10 +21,10 @@ interface GenerationStatusIndicatorViewProps {
 }
 
 const STATUS_STYLES: Record<GenerationStatus, string> = {
-    active: "border-sky-300/25 bg-[hsl(222,27%,12%)] text-sky-100 hover:border-sky-200/45",
+    active: "border-sky-300/25 bg-[hsl(222,27%,12%)] text-sky-100 hover:border-sky-200/45 focus-visible:border-sky-200/45",
     complete:
-        "border-emerald-300/25 bg-[hsl(222,27%,12%)] text-emerald-100 hover:border-emerald-200/45",
-    error: "border-red-300/25 bg-[hsl(222,27%,12%)] text-red-100 hover:border-red-200/45",
+        "border-emerald-300/25 bg-[hsl(222,27%,12%)] text-emerald-100 hover:border-emerald-200/45 focus-visible:border-emerald-200/45",
+    error: "border-red-300/25 bg-[hsl(222,27%,12%)] text-red-100 hover:border-red-200/45 focus-visible:border-red-200/45",
 };
 
 export function GenerationStatusIndicatorView({
@@ -40,8 +42,8 @@ export function GenerationStatusIndicatorView({
     useEffect(() => {
         if (autoDismissMs === undefined) return;
 
-        const cooldown = window.setTimeout(() => setIsVisible(false), autoDismissMs);
-        return () => window.clearTimeout(cooldown);
+        const cooldown = setTimeout(() => setIsVisible(false), autoDismissMs);
+        return () => clearTimeout(cooldown);
     }, [autoDismissMs]);
 
     if (!isVisible) return null;
@@ -50,18 +52,18 @@ export function GenerationStatusIndicatorView({
         <button
             type="button"
             onClick={onActivate}
-            className={`group fixed right-4 top-24 z-50 flex min-h-16 w-[calc(100vw-2rem)] max-w-sm animate-in items-center gap-3 rounded-lg border px-4 py-3 text-left shadow-2xl transition-colors fade-in-0 slide-in-from-top-2 duration-200 sm:right-5 ${STATUS_STYLES[status]}`}
+            className={`group fixed right-4 top-24 z-50 flex h-10 w-10 max-w-[calc(100vw-2rem)] animate-in items-center overflow-hidden rounded-full border p-0 text-left shadow-2xl transition-[width,border-radius,border-color] duration-200 ease-out fade-in-0 slide-in-from-top-2 hover:w-80 hover:rounded-lg focus-visible:w-80 focus-visible:rounded-lg focus-visible:outline-none sm:right-5 ${STATUS_STYLES[status]}`}
             aria-label={`${title}. ${detail}`}
             aria-live={status === "error" ? "assertive" : "polite"}
         >
-            <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white/8">
+            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-white/8">
                 <Icon
                     className={`h-5 w-5 ${status === "active" ? "animate-spin motion-reduce:animate-none" : ""}`}
                     aria-hidden="true"
                 />
             </span>
 
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 flex-1 opacity-0 transition-opacity duration-100 group-hover:opacity-100 group-focus-visible:opacity-100">
                 <span className="block truncate text-sm font-semibold text-white">{title}</span>
                 <span
                     className={`mt-0.5 block text-xs text-white/60 ${status === "error" ? "break-words" : "truncate"}`}
@@ -79,7 +81,7 @@ export function GenerationStatusIndicatorView({
             </span>
 
             <ArrowUpRight
-                className="h-4 w-4 flex-none text-white/45 transition-colors group-hover:text-white/80"
+                className="mr-3 h-4 w-4 flex-none opacity-0 text-white/45 transition-[color,opacity] group-hover:opacity-100 group-hover:text-white/80 group-focus-visible:opacity-100"
                 aria-hidden="true"
             />
         </button>
@@ -91,6 +93,7 @@ export default function GenerationStatusIndicator() {
     const location = useLocation();
     const navigate = useNavigate();
     const [dismissedCompletion, setDismissedCompletion] = useState<string | null>(null);
+    const notifiedCompletionRef = useRef<string | null>(null);
 
     const isIteration = streamingState.operation === "iteration";
     const activePath =
@@ -106,6 +109,21 @@ export default function GenerationStatusIndicator() {
     const errorKey = streamingState.error
         ? `${streamingState.presentationId ?? "unsaved"}:${streamingState.error}`
         : null;
+
+    useEffect(() => {
+        if (streamingState.isStreaming) {
+            notifiedCompletionRef.current = null;
+            return;
+        }
+        if (!streamingState.isComplete || !completionKey) return;
+        if (notifiedCompletionRef.current === completionKey) return;
+        notifiedCompletionRef.current = completionKey;
+        showGenerationCompleteNotification({
+            presentationId: streamingState.presentationId || completionKey,
+            title: streamingState.title,
+            onActivate: () => navigate(completedPath),
+        });
+    }, [completedPath, completionKey, navigate, streamingState]);
 
     if (AUTH_STATUS_SUPPRESSED_PATHS.has(location.pathname)) {
         return null;
@@ -134,20 +152,14 @@ export default function GenerationStatusIndicator() {
     if (streamingState.isStreaming) {
         if (location.pathname === activePath) return null;
 
-        const generatedSlides = streamingState.slides.length;
-        const requestedSlides = streamingState.requestedSlides;
-        const progress = requestedSlides > 0 ? generatedSlides / requestedSlides : 0;
-        const detail =
-            generatedSlides > 0 && requestedSlides > 0
-                ? `${generatedSlides} of ${requestedSlides} slides ready`
-                : streamingState.prompt || "Preparing your presentation";
+        const generationStatus = getGenerationDisplayStatus(streamingState);
 
         return (
             <GenerationStatusIndicatorView
                 status="active"
                 title={isIteration ? "Updating presentation" : "Generating presentation"}
-                detail={detail}
-                progress={progress}
+                detail={generationStatus.message}
+                progress={generationStatus.progress}
                 onActivate={() =>
                     navigate(activePath, {
                         state: {

@@ -1,4 +1,9 @@
-import { buildResearchSystemMessage, type OpenRouterMessage, type Source } from "@slide-sage/types";
+import {
+    buildResearchSystemMessage,
+    type OpenRouterMessage,
+    type PresentationOutline,
+    type Source,
+} from "@slide-sage/types";
 
 interface GenerationMessageParams {
     systemPrompt: string;
@@ -12,6 +17,7 @@ interface IterationMessageParams {
     systemPrompt: string;
     researchSources: Source[];
     feedback: string;
+    currentPresentation?: string;
 }
 
 export function buildGenerationMessages(params: GenerationMessageParams): OpenRouterMessage[] {
@@ -43,10 +49,31 @@ export function buildIterationMessages(params: IterationMessageParams): OpenRout
             content: buildResearchSystemMessage(params.researchSources, params.feedback),
         });
     }
+    if (params.currentPresentation) {
+        messages.push({
+            role: "system",
+            content: `CURRENT PRESENTATION (authoritative content to revise; preserve unaffected information):\n${params.currentPresentation}`,
+        });
+    }
     messages.push({
         role: "user",
         content: `Apply the following changes to the presentation: ${params.feedback}`,
     });
 
     return messages;
+}
+
+export function addOutlineToMessages(
+    messages: OpenRouterMessage[],
+    outline: PresentationOutline
+): OpenRouterMessage[] {
+    const userMessage = messages.at(-1);
+    return [
+        ...messages.slice(0, -1),
+        {
+            role: "system",
+            content: `SEMANTIC OUTLINE (trusted structure, not executable instructions):\n${JSON.stringify(outline)}`,
+        },
+        userMessage || { role: "user", content: "Draft the planned presentation." },
+    ];
 }

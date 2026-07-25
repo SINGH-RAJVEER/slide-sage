@@ -73,7 +73,7 @@ export default function SignInPage() {
                 throw new Error(error.message || "Sign in failed.");
             }
 
-            await refreshSession();
+            await refreshSession({ force: true });
             navigate(redirectTo, { replace: true });
         } catch (err) {
             setError(err instanceof Error ? err.message : "Sign in failed.");

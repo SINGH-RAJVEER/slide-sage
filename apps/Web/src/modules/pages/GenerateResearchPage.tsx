@@ -4,12 +4,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
 import { useStreaming } from "@/modules/presentations";
-import type {
-    PresentationLayoutPreference,
-    ResearchPayload,
-    ThemeId,
-} from "@/modules/types/presentation";
+import type { ResearchPayload, ThemeId } from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
 
 interface ResearchRouteState {
@@ -18,7 +15,6 @@ interface ResearchRouteState {
     detailLevel: string;
     tonality: string;
     theme: ThemeId;
-    layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     retryPresentationId?: string;
 }
@@ -37,7 +33,6 @@ export default function GenerateResearchPage() {
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
     const theme = routeState?.theme ?? "corporate-blue";
-    const layoutPreference = routeState?.layoutPreference ?? "auto";
     const savedResearch = routeState?.researchPayload;
     const retryPresentationId = routeState?.retryPresentationId;
 
@@ -97,6 +92,7 @@ export default function GenerateResearchPage() {
             return;
         }
 
+        requestGenerationNotificationPermission();
         isProceedingRef.current = true;
         setIsProceeding(true);
 
@@ -114,7 +110,6 @@ export default function GenerateResearchPage() {
             payload,
             retryPresentationId,
             theme,
-            layoutPreference,
         );
         navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
@@ -130,7 +125,6 @@ export default function GenerateResearchPage() {
         researchStatus,
         retryPresentationId,
         theme,
-        layoutPreference,
         navigate,
         slideCount,
         sources,
@@ -223,7 +217,7 @@ export default function GenerateResearchPage() {
                                 )}
                             </div>
 
-                            <div className="overflow-x-auto rounded-md border border-white/10 bg-black/15">
+                            <div className="max-h-[62vh] overflow-auto rounded-md border border-white/10 bg-black/15">
                                 <table
                                     className="w-full min-w-[880px] table-fixed text-left"
                                     aria-label="Research sources"
@@ -234,29 +228,29 @@ export default function GenerateResearchPage() {
                                         <col className="w-[17%]" />
                                         <col className="w-[7%]" />
                                     </colgroup>
-                                    <thead>
+                                    <thead className="sticky top-0 z-20 bg-[hsl(222,27%,12%)]">
                                         <tr className="border-b border-white/10 bg-white/[0.025]">
                                             <th
                                                 scope="col"
-                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                                className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
                                             >
                                                 Source
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                                className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
                                             >
                                                 Research note
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-4 py-3 text-xs font-medium text-white/45"
+                                                className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
                                             >
                                                 Details
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="sticky right-0 bg-background/95 px-3 py-3"
+                                                className="sticky right-0 top-0 bg-[hsl(222,27%,12%)] px-3 py-3"
                                             >
                                                 <span className="sr-only">Open source</span>
                                             </th>

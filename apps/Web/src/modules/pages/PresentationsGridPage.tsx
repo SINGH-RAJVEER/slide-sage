@@ -22,7 +22,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Spinner } from "@/components/ui/spinner";
 import { API_URL } from "@/lib/api";
 import { PRESENTATIONS_UPDATED_EVENT } from "@/lib/presentation-events";
@@ -255,14 +254,10 @@ export default function PresentationsGridPage() {
         });
     };
 
-    if (loading) {
-        return <LoadingScreen label="Loading presentations" />;
-    }
-
     return (
-        <div className="min-h-screen bg-transparent">
+        <div className="flex h-screen flex-col overflow-hidden bg-transparent">
             <Header />
-            <div className="px-4 py-6 md:px-8 md:py-8">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-6 flex items-center justify-between">
                         <h1 className="text-2xl font-semibold text-white md:text-3xl">
@@ -284,37 +279,47 @@ export default function PresentationsGridPage() {
                         </Alert>
                     )}
 
-                    <div
-                        className={`grid grid-cols-1 ${
-                            gridSize === 2
-                                ? "md:grid-cols-2"
-                                : gridSize === 3
-                                  ? "md:grid-cols-2 lg:grid-cols-3"
-                                  : "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        } gap-5`}
-                    >
-                        {filteredPresentations.length === 0 ? (
-                            <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
-                                <h2 className="mb-2 text-xl text-white md:text-2xl">
-                                    {presentations.length === 0
-                                        ? "No Presentations Generated Yet"
-                                        : "No presentations match your search"}
-                                </h2>
-                            </div>
-                        ) : (
-                            filteredPresentations.map((presentation) => (
-                                <PresentationCard
-                                    key={presentation.id}
-                                    presentation={presentation}
-                                    isDeleting={deletingId === presentation.id}
-                                    isOpening={openingId === presentation.id}
-                                    onCardClick={handlePresentationClick}
-                                    onDelete={handleDeletePresentation}
-                                    formatDate={formatDate}
-                                />
-                            ))
-                        )}
-                    </div>
+                    {loading ? (
+                        <div
+                            className="flex min-h-64 items-center justify-center"
+                            role="status"
+                            aria-label="Loading presentations"
+                        >
+                            <Spinner className="size-6 text-white/60" aria-hidden="true" />
+                        </div>
+                    ) : (
+                        <div
+                            className={`grid grid-cols-1 ${
+                                gridSize === 2
+                                    ? "md:grid-cols-2"
+                                    : gridSize === 3
+                                      ? "md:grid-cols-2 lg:grid-cols-3"
+                                      : "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                            } gap-5`}
+                        >
+                            {filteredPresentations.length === 0 ? (
+                                <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+                                    <h2 className="mb-2 text-xl text-white md:text-2xl">
+                                        {presentations.length === 0
+                                            ? "No Presentations Generated Yet"
+                                            : "No presentations match your search"}
+                                    </h2>
+                                </div>
+                            ) : (
+                                filteredPresentations.map((presentation) => (
+                                    <PresentationCard
+                                        key={presentation.id}
+                                        presentation={presentation}
+                                        isDeleting={deletingId === presentation.id}
+                                        isOpening={openingId === presentation.id}
+                                        onCardClick={handlePresentationClick}
+                                        onDelete={handleDeletePresentation}
+                                        formatDate={formatDate}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

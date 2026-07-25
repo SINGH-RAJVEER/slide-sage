@@ -11,6 +11,28 @@ function RouteStateProbe() {
     return <pre>{JSON.stringify(location.state)}</pre>;
 }
 
+it("renders the page shell while presentations are loading", () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = mock(() => new Promise<Response>(() => {})) as unknown as typeof fetch;
+
+    try {
+        const view = render(
+            <MemoryRouter>
+                <PresentationsGridPage />
+            </MemoryRouter>,
+        );
+
+        expect(view.getByText("Generated Presentations")).toBeInTheDocument();
+        expect(
+            view.getByPlaceholderText("Search by title, prompt, or date..."),
+        ).toBeInTheDocument();
+        expect(view.getByLabelText("Loading presentations")).toBeInTheDocument();
+        expect(view.queryByText("No Presentations Generated Yet")).not.toBeInTheDocument();
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
 it("refreshes an open presentations page after a generated deck is saved", async () => {
     const originalFetch = globalThis.fetch;
     let requestCount = 0;

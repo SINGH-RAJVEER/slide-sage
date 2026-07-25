@@ -21,7 +21,7 @@ function safeImageUrl(value: string | null): string {
 }
 
 function layoutForSlide(slide: LegacyHtmlSlide, root: Element): SlideLayout {
-    if (root.classList.contains("layout-title") || slide.type === "title") return "title";
+    if (root.classList.contains("layout-title") || slide.type === "title") return "cover";
     if (
         root.classList.contains("layout-highlight") ||
         slide.type === "quote" ||
@@ -29,11 +29,11 @@ function layoutForSlide(slide: LegacyHtmlSlide, root: Element): SlideLayout {
     ) {
         return "quote";
     }
-    if (root.classList.contains("layout-image-right")) return "image-right";
+    if (root.classList.contains("layout-image-right")) return "media-right";
     if (root.classList.contains("layout-two-col") || root.querySelector(":scope > .two-column")) {
-        return "two-column";
+        return "split";
     }
-    return "content";
+    return "body";
 }
 
 function tableBlock(element: Element, region: SlideRegion): SlideBlock | null {
@@ -134,14 +134,14 @@ export function adaptLegacyHtmlSlide(slide: LegacyHtmlSlide): ContentSlide {
             Array.from(column.children).flatMap((child) =>
                 child === subtitleElement
                     ? []
-                    : elementBlocks(child, index === 0 ? "left" : "right"),
+                    : elementBlocks(child, index === 0 ? "primary" : "secondary"),
             ),
         );
     } else {
         blocks = Array.from(root.children).flatMap((child) => {
             if (child === titleElement || child === subtitleElement) return [];
             const region: SlideRegion =
-                layout === "image-right" && child.tagName === "IMG" ? "right" : "main";
+                layout === "media-right" && child.tagName === "IMG" ? "media" : "main";
             return elementBlocks(child, region);
         });
     }
@@ -152,6 +152,15 @@ export function adaptLegacyHtmlSlide(slide: LegacyHtmlSlide): ContentSlide {
         layout,
         title,
         subtitle,
-        blocks: blocks.slice(0, 12),
+        tone: "default",
+        density: "standard",
+        pattern: "none",
+        blocks: blocks.slice(0, 12).map((block, index) => ({
+            ...block,
+            id: `${slide.id}-block-${index + 1}`,
+            sourceIds: [],
+        })),
+        transition: slide.transition,
+        effects: slide.effects,
     };
 }

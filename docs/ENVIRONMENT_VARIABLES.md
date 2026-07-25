@@ -1,7 +1,6 @@
 # Environment Variables
 
-Copy `.env.example` to `.env`. Devenv loads the root file, and the API also loads
-it directly when run outside the devenv process group.
+Copy `.env.example` to `.env`. API development script passes it to Bun with `--env-file` when run outside the devenv process group.
 
 ## Core
 
@@ -23,11 +22,17 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 `POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all
 `slidesage`, except `POSTGRES_PORT=5432`.
 
+Devenv may select another PostgreSQL port when the default is occupied. Its migration
+task constructs `DATABASE_URL` from the active `POSTGRES_PORT`, so values loaded from
+`.env` cannot redirect migrations to a stale local port.
+The managed API process uses the same active-port connection string and does not
+reload `.env`, preventing its development command from reverting to the default port.
+
 ## AI and Research
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `OPEN_ROUTER_API_KEY` | Yes for generation | None | OpenRouter authentication |
+| `OPEN_ROUTER_API_KEY` | Yes for default generation and embeddings | None | Server OpenRouter authentication; BYOK replaces only generation calls |
 | `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it` | Generation model; the default is a paid OpenRouter endpoint for production reliability |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
@@ -41,8 +46,19 @@ Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 | `SSE_KEEPALIVE_INTERVAL_MS` | No | `10000` | Interval for downstream SSE keepalive comments during slow generation |
 | `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
+| `SEMANTIC_CACHE_MODE` | No | `serve` | Semantic cache behavior: `serve`, `shadow`, or `off` |
+| `SEARCH_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared search results |
+| `OUTLINE_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared presentation outlines |
+| `SEARCH_CACHE_TTL_SECONDS` | No | Freshness-dependent | Override search-result cache lifetime |
+| `OUTLINE_CACHE_TTL_SECONDS` | No | `604800` | Shared outline cache lifetime |
 
-Presentation requests use OpenRouter strict JSON Schema output and require a provider that supports the requested parameters. OpenRouter provider fallback remains enabled so transient provider outages can route to another compatible endpoint. The default model incurs OpenRouter usage charges; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required.
+Presentation requests without a valid user provider connection use OpenRouter
+strict JSON Schema output and consume SlideSage points. OpenRouter provider
+fallback remains enabled so transient outages can route to another compatible
+endpoint. The default model incurs OpenRouter usage charges; set
+`OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is
+required. Valid BYOK connections replace this generation path but do not replace
+the server embedding configuration.
 
 ## Authentication and Email
 
@@ -83,3 +99,13 @@ sensitive values with `wrangler secret put`. Keep `BASE_URL` and trusted origins
 as Worker variables or secrets appropriate to the environment. The API refuses
 to initialize authentication on an HTTPS base URL without a sufficiently strong
 `AUTH_SECRET`.
+# BYOK credential encryption
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` | For BYOK | Active encryption key version, normally `1` initially |
+| `BYOK_ENCRYPTION_KEY_V1` | For BYOK | Base64-encoded 32-byte AES-GCM key |
+
+Provider API keys are supplied by users and encrypted with these deployment
+secrets. They are used only for presentation generation. OpenRouter remains the
+exclusive embedding provider.

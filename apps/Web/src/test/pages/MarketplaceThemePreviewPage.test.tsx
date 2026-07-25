@@ -1,0 +1,90 @@
+/// <reference lib="dom" />
+
+import { describe, expect, it, mock } from "bun:test";
+import { render } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+
+mock.module("@/components/Viewer/ScaledSlide", () => ({
+    ScaledSlide: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+mock.module("@/components/Viewer/ViewerSlideCarousel", () => ({
+    ViewerSlideCarousel: ({ slides }: { slides: unknown[] }) => (
+        <div>{`${slides.length} preview slides`}</div>
+    ),
+}));
+
+mock.module("@/components/Viewer/ViewerNavigationControls", () => ({
+    ViewerNavigationControls: () => <div>Viewer navigation</div>,
+}));
+
+mock.module("@/components/Viewer/ViewerThumbnails", () => ({
+    ViewerThumbnails: () => <div>Viewer thumbnails</div>,
+}));
+
+mock.module("@/components/Viewer/ViewerFullscreenOverlayControls", () => ({
+    ViewerFullscreenOverlayControls: () => <div>Fullscreen controls</div>,
+}));
+
+mock.module("@/components/Viewer/SlideRenderer", () => ({
+    SlideRenderer: ({
+        slide,
+        currentTemplate,
+    }: {
+        slide: { title: string };
+        currentTemplate: string;
+    }) => <div>{`${slide.title}|${currentTemplate}`}</div>,
+}));
+
+mock.module("@/hooks/useFullscreenMode", () => ({
+    useFullscreenMode: () => ({
+        isFullscreenMode: false,
+        enter: mock(),
+        exit: mock(),
+    }),
+}));
+
+describe("MarketplaceThemePreviewPage", () => {
+    it("renders the selected placeholder slide without viewer editing controls", async () => {
+        const { default: MarketplaceThemePreviewPage } = await import(
+            "@/modules/pages/MarketplaceThemePreviewPage"
+        );
+        const view = render(
+            <MemoryRouter initialEntries={["/marketplace/midnight-signal/preview"]}>
+                <Routes>
+                    <Route
+                        path="/marketplace/:marketplaceId/preview"
+                        element={<MarketplaceThemePreviewPage />}
+                    />
+                </Routes>
+            </MemoryRouter>,
+        );
+
+        expect(view.getByText("6 preview slides")).toBeInTheDocument();
+        expect(view.getByText("Viewer navigation")).toBeInTheDocument();
+        expect(view.getByText("Viewer thumbnails")).toBeInTheDocument();
+        expect(view.getByText("Midnight Signal")).toBeInTheDocument();
+        expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
+        expect(view.queryByRole("combobox")).toBeNull();
+        expect(view.getByRole("button", { name: "Present slideshow" })).toBeInTheDocument();
+    });
+
+    it("redirects unknown themes to the marketplace", async () => {
+        const { default: MarketplaceThemePreviewPage } = await import(
+            "@/modules/pages/MarketplaceThemePreviewPage"
+        );
+        const view = render(
+            <MemoryRouter initialEntries={["/marketplace/unknown/preview"]}>
+                <Routes>
+                    <Route
+                        path="/marketplace/:marketplaceId/preview"
+                        element={<MarketplaceThemePreviewPage />}
+                    />
+                    <Route path="/marketplace" element={<div>Marketplace catalog</div>} />
+                </Routes>
+            </MemoryRouter>,
+        );
+
+        expect(view.getByText("Marketplace catalog")).toBeInTheDocument();
+    });
+});

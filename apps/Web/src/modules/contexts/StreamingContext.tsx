@@ -1,10 +1,12 @@
+import type { AIModelSelection } from "@slide-sage/types";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { API_URL } from "@/lib/api";
+import { API_URL, readJsonResponse } from "@/lib/api";
 import { publishPresentationUpdated } from "@/lib/presentation-events";
 import type {
     PresentationData,
-    PresentationLayoutPreference,
+    PresentationGenerationStage,
+    PresentationOutline,
     ResearchPayload,
     Slide,
     Source,
@@ -25,6 +27,11 @@ export interface StreamingState {
     isComplete: boolean;
     researchSources?: Source[];
     researchStatus?: "idle" | "searching" | "ready" | "generating";
+    generationStage?: PresentationGenerationStage;
+    generationMessage?: string;
+    generationProgress?: { completed: number; total: number };
+    outline?: PresentationOutline;
+    completedDocument?: PresentationData;
 }
 
 type ResearchPreviewStatus = "idle" | "loading" | "ready" | "error";
@@ -61,7 +68,7 @@ interface StreamingContextValue {
         researchPayload?: ResearchPayload,
         retryPresentationId?: string,
         theme?: ThemeId,
-        layoutPreference?: PresentationLayoutPreference,
+        ai?: AIModelSelection,
     ) => Promise<boolean>;
     startIterating: (
         prompt: string,
@@ -235,12 +242,15 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        error?: string | { message?: string };
+                        message?: string;
+                    }>(response);
                     const errorMessage =
-                        typeof errorData.error === "string"
+                        typeof errorData?.error === "string"
                             ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
+                            : errorData?.error?.message ||
+                              errorData?.message ||
                               "Failed to fetch research";
 
                     updateResearchPreviewState((previous) => ({
@@ -251,8 +261,17 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                     return false;
                 }
 
-                const data = (await response.json()) as ResearchPayload;
+                const data = await readJsonResponse<ResearchPayload>(response);
                 if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
+                    return false;
+                }
+
+                if (!data) {
+                    updateResearchPreviewState((previous) => ({
+                        ...previous,
+                        status: "error",
+                        error: "The research service returned an invalid response.",
+                    }));
                     return false;
                 }
 
@@ -294,6 +313,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
     const getPresentation = useCallback((): PresentationData | null => {
         if (streamingState.slides.length === 0) return null;
         return {
+            ...streamingState.completedDocument,
             title: streamingState.title,
             theme: streamingState.theme,
             slides: streamingState.slides,
@@ -311,7 +331,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             researchPayload?: ResearchPayload,
             retryPresentationId?: string,
             theme: ThemeId = "corporate-blue",
-            layoutPreference: PresentationLayoutPreference = "auto",
+            ai?: AIModelSelection,
         ): Promise<boolean> => {
             if (activeStreamRef.current) return false;
             activeStreamRef.current = true;
@@ -348,7 +368,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                         research_payload: researchPayload,
                         retry_presentation_id: retryPresentationId,
                         theme,
-                        layout_preference: layoutPreference,
+                        ai,
                     }),
                     signal: abortControllerRef.current.signal,
                 });
@@ -375,28 +395,34 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (response.status === 402) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        slide_tokens_remaining?: number;
+                        slide_tokens_required?: number;
+                    }>(response);
                     releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
                         error: `Insufficient points. You have ${
-                            errorData.slide_tokens_remaining?.toFixed(1) || 0
+                            errorData?.slide_tokens_remaining?.toFixed(1) || 0
                         } points, but need at least ${
-                            errorData.slide_tokens_required || 1
+                            errorData?.slide_tokens_required || 1
                         } to generate.`,
                     }));
                     return false;
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        error?: string | { message?: string };
+                        message?: string;
+                    }>(response);
                     const errorMessage =
-                        typeof errorData.error === "string"
+                        typeof errorData?.error === "string"
                             ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
-                              "Failed to generate presentation";
+                            : errorData?.error?.message ||
+                              errorData?.message ||
+                              `Presentation service request failed (${response.status}).`;
 
                     releaseActiveStream();
                     setStreamingState((prev) => ({
@@ -466,6 +492,26 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 }));
                                                 break;
 
+                                            case "stage":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    generationStage: data.stage,
+                                                    generationMessage: data.message,
+                                                    generationProgress: {
+                                                        completed: data.completed,
+                                                        total: data.total,
+                                                    },
+                                                }));
+                                                break;
+
+                                            case "outline":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    outline: data,
+                                                    title: data.title || prev.title,
+                                                }));
+                                                break;
+
                                             case "created":
                                                 // Presentation record created - store the ID immediately
                                                 setStreamingState((prev) => ({
@@ -495,7 +541,20 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "slide":
                                                 setStreamingState((prev) => {
-                                                    const newSlides = [...prev.slides, data.slide];
+                                                    const newSlides = [...prev.slides];
+                                                    const index = Number(data.index);
+                                                    if (Number.isInteger(index) && index >= 0) {
+                                                        newSlides[index] = data.slide;
+                                                    } else {
+                                                        const existingIndex = newSlides.findIndex(
+                                                            (slide) => slide.id === data.slide.id,
+                                                        );
+                                                        if (existingIndex >= 0) {
+                                                            newSlides[existingIndex] = data.slide;
+                                                        } else {
+                                                            newSlides.push(data.slide);
+                                                        }
+                                                    }
                                                     console.log(
                                                         "Adding slide",
                                                         data.slide.id,
@@ -515,6 +574,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 receivedComplete = true;
                                                 setStreamingState((prev) => ({
                                                     ...prev,
+                                                    completedDocument: data,
                                                     isComplete: true,
                                                     theme: data.theme || prev.theme,
                                                     title: data.title || prev.title,
@@ -698,28 +758,34 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 }
 
                 if (response.status === 402) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        slide_tokens_remaining?: number;
+                        slide_tokens_required?: number;
+                    }>(response);
                     releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
                         isStreaming: false,
                         error: `Insufficient points. You have ${
-                            errorData.slide_tokens_remaining?.toFixed(1) || 0
+                            errorData?.slide_tokens_remaining?.toFixed(1) || 0
                         } points, but need at least ${
-                            errorData.slide_tokens_required || 1
+                            errorData?.slide_tokens_required || 1
                         } to iterate.`,
                     }));
                     return false;
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await readJsonResponse<{
+                        error?: string | { message?: string };
+                        message?: string;
+                    }>(response);
                     const errorMessage =
-                        typeof errorData.error === "string"
+                        typeof errorData?.error === "string"
                             ? errorData.error
-                            : errorData.error?.message ||
-                              errorData.message ||
-                              "Failed to iterate presentation";
+                            : errorData?.error?.message ||
+                              errorData?.message ||
+                              `Presentation service request failed (${response.status}).`;
                     releaseActiveStream();
                     setStreamingState((prev) => ({
                         ...prev,
@@ -788,6 +854,26 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 }));
                                                 break;
 
+                                            case "stage":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    generationStage: data.stage,
+                                                    generationMessage: data.message,
+                                                    generationProgress: {
+                                                        completed: data.completed,
+                                                        total: data.total,
+                                                    },
+                                                }));
+                                                break;
+
+                                            case "outline":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    outline: data,
+                                                    title: data.title || prev.title,
+                                                }));
+                                                break;
+
                                             case "theme":
                                                 setStreamingState((prev) => ({
                                                     ...prev,
@@ -809,7 +895,20 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "slide":
                                                 setStreamingState((prev) => {
-                                                    const newSlides = [...prev.slides, data.slide];
+                                                    const newSlides = [...prev.slides];
+                                                    const index = Number(data.index);
+                                                    if (Number.isInteger(index) && index >= 0) {
+                                                        newSlides[index] = data.slide;
+                                                    } else {
+                                                        const existingIndex = newSlides.findIndex(
+                                                            (slide) => slide.id === data.slide.id,
+                                                        );
+                                                        if (existingIndex >= 0) {
+                                                            newSlides[existingIndex] = data.slide;
+                                                        } else {
+                                                            newSlides.push(data.slide);
+                                                        }
+                                                    }
                                                     console.log(
                                                         "Adding slide",
                                                         data.slide.id,
@@ -829,6 +928,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 receivedComplete = true;
                                                 setStreamingState((prev) => ({
                                                     ...prev,
+                                                    completedDocument: data,
                                                     isComplete: true,
                                                     theme: data.theme || prev.theme,
                                                     title: data.title || prev.title,
