@@ -87,6 +87,7 @@ describe("GenerateForm", () => {
             onGenerate,
         });
         const compactEditor = view.getByRole("textbox", { name: "Presentation prompt" });
+        const compactGenerateButton = view.getByRole("button", { name: "Generate" });
         makePromptOverflow(compactEditor);
         view.rerender(
             <GenerateForm
@@ -98,15 +99,36 @@ describe("GenerateForm", () => {
         );
 
         fireEvent.click(view.getByRole("button", { name: "Expand prompt editor" }));
-        const expandedEditor = view.getByRole("textbox", {
+        const expandedEditor = view.getByRole("textbox", { name: "Presentation prompt" });
+
+        expect(expandedEditor).toBe(compactEditor);
+        expect(view.getByRole("button", { name: "Generate" })).toBe(compactGenerateButton);
+        const expandedComposer = view.getByRole("group", {
             name: "Expanded presentation prompt",
         });
+        expect(expandedComposer).toHaveClass("fixed");
+        expect(expandedComposer).not.toHaveClass("border", "bg-[hsl(222,27%,10%)]", "shadow-2xl");
+        expect(Number.parseFloat(expandedComposer.style.width)).toBeGreaterThan(
+            window.innerWidth * 0.9,
+        );
+        expect(Number.parseFloat(expandedComposer.style.height)).toBeGreaterThan(
+            window.innerHeight * 0.8,
+        );
+        expect(expandedEditor).toHaveClass("h-full", "border", "border-white/15");
+        expect(compactGenerateButton).toHaveClass(
+            "generation-prompt-action",
+            "ml-auto",
+            "shrink-0",
+        );
 
         fireEvent.keyDown(expandedEditor, { key: "Enter" });
         expect(onGenerate).not.toHaveBeenCalled();
 
         fireEvent.keyDown(expandedEditor, { key: "Enter", shiftKey: true });
         expect(onGenerate).toHaveBeenCalledTimes(1);
-        expect(view.getByRole("button", { name: "Shrink prompt editor" })).toBeInTheDocument();
+
+        fireEvent.click(view.getByRole("button", { name: "Shrink prompt editor" }));
+        expect(view.queryByRole("group", { name: "Expanded presentation prompt" })).toBeNull();
+        expect(view.getByRole("textbox", { name: "Presentation prompt" })).toBe(compactEditor);
     });
 });

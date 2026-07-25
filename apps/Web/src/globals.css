@@ -55,6 +55,49 @@ body {
     --ss-slide-height: 720px;
 }
 
+::view-transition-group(generation-prompt-input) {
+    animation-duration: 480ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.generation-prompt-input {
+    view-transition-name: generation-prompt-input;
+}
+
+::view-transition-old(generation-prompt-input),
+::view-transition-new(generation-prompt-input) {
+    animation-duration: 480ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    mix-blend-mode: normal;
+}
+
+.generation-prompt-action {
+    view-transition-name: generation-prompt-action;
+}
+
+::view-transition-group(generation-prompt-action),
+::view-transition-old(generation-prompt-action),
+::view-transition-new(generation-prompt-action) {
+    animation-duration: 480ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    mix-blend-mode: normal;
+}
+
+::view-transition-group(generation-prompt-action) {
+    z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(generation-prompt-input),
+    ::view-transition-old(generation-prompt-input),
+    ::view-transition-new(generation-prompt-input),
+    ::view-transition-group(generation-prompt-action),
+    ::view-transition-old(generation-prompt-action),
+    ::view-transition-new(generation-prompt-action) {
+        animation-duration: 0.01ms;
+    }
+}
+
 .dark {
     --background: hsl(240 10% 3.9%);
     --foreground: hsl(0 0% 98%);

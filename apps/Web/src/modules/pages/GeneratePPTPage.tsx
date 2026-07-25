@@ -158,7 +158,10 @@ export default function GeneratePPTPage() {
         <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-transparent">
             <Header />
 
-            <div className="relative flex w-full flex-col items-center px-4 pt-6 md:pt-8">
+            <div
+                data-generation-selectors
+                className="relative flex w-full flex-col items-center px-4 pt-6 md:pt-8"
+            >
                 <GenerateOptionsBar
                     detailLevel={detailLevel}
                     tonality={tonality}
@@ -176,7 +179,10 @@ export default function GeneratePPTPage() {
                     onThemeChange={setTheme}
                 />
                 {prompt.trim() && (
-                    <p className="absolute top-full mt-4 text-center text-lg font-medium text-white/80">
+                    <p
+                        data-generation-estimate
+                        className="absolute top-full mt-4 text-center text-lg font-medium text-white/80"
+                    >
                         {generationMode === "byok" && !useWebResearch
                             ? "Generation billed by your provider"
                             : `Estimated ${calculateEstimatedTokens().toFixed(1)} points`}
@@ -186,7 +192,7 @@ export default function GeneratePPTPage() {
 
             <main className="flex w-full flex-1 items-center justify-center overflow-y-auto px-4 py-12 md:px-8">
                 <div className="w-full max-w-5xl">
-                    <div className="mx-auto flex w-full max-w-4xl -translate-y-4 flex-col items-center justify-center md:-translate-y-6">
+                    <div className="relative -top-4 mx-auto flex w-full max-w-4xl flex-col items-center justify-center md:-top-6">
                         <GenerateForm
                             prompt={prompt}
                             loading={loading || streamingState.isStreaming}

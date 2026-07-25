@@ -137,10 +137,15 @@ Run `just dev` to initialize it again.
 
 The generation page sends one prompt string to the presentation pipeline. Its centered
 compact editor grows to a bounded height and generates on Enter. The expand control
-appears only after the compact editor begins scrolling; the expanded editor supports
-multiline writing and generates on Shift+Enter. Commas and line breaks remain part of
-the prompt rather than creating separate topics. The generation estimate appears below
-the selectors bar once the prompt contains text without changing the centered composer's position.
+appears only after the compact editor begins scrolling. Expanding morphs that same
+textarea border toward the viewport margins, stopping below the generation estimate,
+without adding a surrounding panel. The same Generate action moves to the textarea's
+lower-right corner. The expanded editor supports multiline writing and generates on
+Shift+Enter. Commas and line breaks remain part of the prompt rather than creating
+separate topics. The generation estimate appears below the selectors bar once the prompt
+contains text without changing the centered composer's position. Expanded bounds use the
+visual viewport so transformed layout containers and mobile browser chrome do not reduce
+the editor's intended width or height.
 
 The repository uses `devenv shell` directly. It does not require direnv,
 `.envrc`, or `.direnv/`.

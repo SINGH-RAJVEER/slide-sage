@@ -1,6 +1,4 @@
 import type React from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { TopicInput } from "./TopicInput";
 
 interface GenerateFormProps {
@@ -25,21 +23,6 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
                 disabled={loading}
                 loading={loading}
             />
-
-            <Button
-                onClick={onGenerate}
-                disabled={loading || !prompt.trim()}
-                className="h-11 rounded-md border border-white/20 bg-white/10 px-6 text-white transition-colors hover:bg-white/15"
-            >
-                {loading ? (
-                    <>
-                        <Spinner />
-                        Creating...
-                    </>
-                ) : (
-                    "Generate"
-                )}
-            </Button>
         </div>
     );
 };
