@@ -1,11 +1,19 @@
 /// <reference lib="dom" />
 
-import { describe, expect, it, mock } from "bun:test";
-import { fireEvent, render } from "@testing-library/react";
+import { afterEach, describe, expect, it, jest, mock } from "bun:test";
+import { render } from "@testing-library/react";
+import {
+    KEYBOARD_NAVIGATION_REPEAT_DELAY_MS,
+    KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS,
+} from "@/hooks/useSlideNavigation";
 import {
     getViewerKeyboardDestination,
     useViewerKeyboardNavigation,
 } from "@/hooks/useViewerKeyboardNavigation";
+
+afterEach(() => {
+    jest.useRealTimers();
+});
 
 function Harness({
     currentSlide = 1,
@@ -22,7 +30,7 @@ function Harness({
         onNavigate,
         onStopPlayback,
     });
-    return <input aria-label="Ignored input" />;
+    return null;
 }
 
 describe("useViewerKeyboardNavigation", () => {
@@ -38,12 +46,34 @@ describe("useViewerKeyboardNavigation", () => {
 
     it("does not navigate while typing in a form control", () => {
         const onNavigate = mock(() => {});
-        const view = render(<Harness onNavigate={onNavigate} onStopPlayback={mock(() => {})} />);
+        render(<Harness onNavigate={onNavigate} onStopPlayback={mock(() => {})} />);
+        const input = document.createElement("input");
+        document.body.append(input);
 
-        fireEvent.keyDown(view.getByRole("textbox", { name: "Ignored input" }), {
-            key: "ArrowRight",
-        });
+        input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
 
         expect(onNavigate).not.toHaveBeenCalled();
+        input.remove();
+    });
+
+    it("uses controlled repeat navigation while a key is held", () => {
+        jest.useFakeTimers();
+        const onNavigate = mock(() => {});
+        render(
+            <Harness currentSlide={0} onNavigate={onNavigate} onStopPlayback={mock(() => {})} />,
+        );
+
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+        expect(onNavigate).toHaveBeenLastCalledWith(1);
+
+        jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_DELAY_MS);
+        expect(onNavigate).toHaveBeenLastCalledWith(2);
+
+        jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS);
+        expect(onNavigate).toHaveBeenLastCalledWith(3);
+
+        window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight" }));
+        jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS * 2);
+        expect(onNavigate).toHaveBeenCalledTimes(3);
     });
 });

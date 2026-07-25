@@ -7,7 +7,7 @@ interface GenerateFormProps {
     prompt: string;
     topics: string[];
     loading: boolean;
-    estimatedTokens: number;
+    estimatedTokens: number | null;
     onPromptChange: (value: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     onSubmitPrompt: () => void;
@@ -46,7 +46,9 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
             <div className="absolute bottom-[calc(100%+13rem)] text-center w-full">
                 {topics.length > 0 && (
                     <p className="text-lg font-medium text-white/80">
-                        Estimated {estimatedTokens.toFixed(1)} points
+                        {estimatedTokens === null
+                            ? "Generation billed by your provider"
+                            : `Estimated ${estimatedTokens.toFixed(1)} points`}
                     </p>
                 )}
             </div>

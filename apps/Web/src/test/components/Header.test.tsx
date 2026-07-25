@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import type { User } from "@/contexts/AuthContext";
 
@@ -130,5 +130,35 @@ describe("Header", () => {
 
         expect(getByText("RS")).toBeInTheDocument();
         expect(container.querySelector('img[src^="https://lh3.googleusercontent.com"]')).toBeNull();
+    });
+
+    it("links to settings from the account menu", async () => {
+        mockAuthState.user = {
+            id: "user_1",
+            name: "Rajveer Singh",
+            email: "rajveer@example.com",
+            image: null,
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            slideTokens: 10,
+        };
+
+        const { default: Header } = await import("../../components/Header");
+        const view = render(
+            <MemoryRouter initialEntries={["/generate"]}>
+                <Header />
+            </MemoryRouter>,
+        );
+
+        fireEvent.pointerDown(view.getByRole("button", { name: "Open account menu" }), {
+            button: 0,
+            ctrlKey: false,
+        });
+
+        expect(await view.findByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+            "href",
+            "/settings",
+        );
     });
 });

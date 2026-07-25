@@ -32,7 +32,7 @@ reload `.env`, preventing its development command from reverting to the default 
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `OPEN_ROUTER_API_KEY` | Yes for generation | None | OpenRouter authentication |
+| `OPEN_ROUTER_API_KEY` | Yes for default generation and embeddings | None | Server OpenRouter authentication; BYOK replaces only generation calls |
 | `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it` | Generation model; the default is a paid OpenRouter endpoint for production reliability |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
@@ -52,7 +52,13 @@ reload `.env`, preventing its development command from reverting to the default 
 | `SEARCH_CACHE_TTL_SECONDS` | No | Freshness-dependent | Override search-result cache lifetime |
 | `OUTLINE_CACHE_TTL_SECONDS` | No | `604800` | Shared outline cache lifetime |
 
-Presentation requests use OpenRouter strict JSON Schema output and require a provider that supports the requested parameters. OpenRouter provider fallback remains enabled so transient provider outages can route to another compatible endpoint. The default model incurs OpenRouter usage charges; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required.
+Presentation requests without a valid user provider connection use OpenRouter
+strict JSON Schema output and consume SlideSage points. OpenRouter provider
+fallback remains enabled so transient outages can route to another compatible
+endpoint. The default model incurs OpenRouter usage charges; set
+`OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is
+required. Valid BYOK connections replace this generation path but do not replace
+the server embedding configuration.
 
 ## Authentication and Email
 

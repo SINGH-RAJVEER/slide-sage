@@ -46,7 +46,30 @@ it("prefills a failed presentation prompt and generation options", () => {
 
 it("opens the viewer immediately while generation waits for the stream", async () => {
     const originalFetch = globalThis.fetch;
-    const fetchMock = mock(() => new Promise<Response>(() => {}));
+    const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) =>
+        String(input).includes("/api/ai/config")
+            ? Promise.resolve(
+                  new Response(
+                      JSON.stringify({
+                          generation: {
+                              mode: "openrouter",
+                              model: "openrouter/default",
+                              billing: "points",
+                          },
+                          eligibility: {
+                              eligible: false,
+                              slideTokens: 10,
+                              minimumPointsExclusive: 50,
+                          },
+                          connections: [],
+                          models: [],
+                          selection: null,
+                      }),
+                      { headers: { "Content-Type": "application/json" } },
+                  ),
+              )
+            : new Promise<Response>(() => {}),
+    );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     try {
@@ -81,8 +104,21 @@ it("opens the viewer immediately while generation waits for the stream", async (
 
         fireEvent.click(view.getByRole("button", { name: "Start Generating" }));
 
-        await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(1));
+        await waitFor(() =>
+            expect(
+                fetchMock.mock.calls.some(([input]) =>
+                    String(input).includes("/generate-presentation-stream"),
+                ),
+            ).toBe(true),
+        );
         expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+        const generationRequest = fetchMock.mock.calls.find(([input]) =>
+            String(input).includes("/generate-presentation-stream"),
+        );
+        const requestBody = JSON.parse(
+            String((generationRequest?.[1] as RequestInit | undefined)?.body),
+        ) as Record<string, unknown>;
+        expect(requestBody).not.toHaveProperty("ai");
     } finally {
         globalThis.fetch = originalFetch;
     }

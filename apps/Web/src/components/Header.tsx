@@ -136,7 +136,10 @@ export default function Header({ sticky = false }: { sticky?: boolean }) {
                             </button>
 
                             <DropdownMenu>
-                                <DropdownMenuTrigger className="focus:outline-none rounded-full ring-offset-black focus:ring-2 focus:ring-white/20 transition-all">
+                                <DropdownMenuTrigger
+                                    aria-label="Open account menu"
+                                    className="focus:outline-none rounded-full ring-offset-black focus:ring-2 focus:ring-white/20 transition-all"
+                                >
                                     <div className="h-10 w-10 overflow-hidden rounded-full border border-white/20 bg-white/10 transition-colors hover:border-white/40 flex items-center justify-center shadow-sm">
                                         <span className="text-base font-semibold text-white/90 uppercase flex-shrink-0">
                                             {getUserInitials()}
@@ -165,6 +168,17 @@ export default function Header({ sticky = false }: { sticky?: boolean }) {
                                             className="flex w-full px-3 py-2 text-sm transition-colors outline-none border-none"
                                         >
                                             Profile
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        asChild
+                                        className="cursor-pointer rounded-lg my-1 mx-1 focus:bg-white/10 focus:text-white text-white/80"
+                                    >
+                                        <Link
+                                            to={ROUTES.settings}
+                                            className="flex w-full px-3 py-2 text-sm transition-colors outline-none border-none"
+                                        >
+                                            Settings
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-white/10 my-1" />

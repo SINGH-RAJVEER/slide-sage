@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import { fireEvent, render, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import GenerationStatusIndicator, {
     GenerationStatusIndicatorView,
@@ -195,11 +195,12 @@ it("hides a stopped-generation message after its cooldown", async () => {
     expect(errorPopIn).not.toHaveClass("bottom-4", "left-4");
     expect(errorPopIn).toHaveAttribute("aria-live", "assertive");
 
-    await waitFor(() => {
-        expect(
-            view.queryByRole("button", {
-                name: "Generation stopped. The stream was interrupted",
-            }),
-        ).toBeNull();
+    await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
     });
+    expect(
+        view.queryByRole("button", {
+            name: "Generation stopped. The stream was interrupted",
+        }),
+    ).toBeNull();
 });

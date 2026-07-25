@@ -1,4 +1,3 @@
-export { AIModelSelector } from "./AIModelSelector";
 export { DetailLevelSelector } from "./DetailLevelSelector";
 export { GenerateForm } from "./GenerateForm";
 export { GenerateOptionsBar } from "./GenerateOptionsBar";

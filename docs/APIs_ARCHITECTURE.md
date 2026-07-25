@@ -63,7 +63,7 @@ owning modules.
 3. RAG retrieves relevant deck, slide, style, feedback, template, and source
    context from PostgreSQL.
 4. The API checks the shared pgvector outline cache using the topic and exact
-   generation constraints. On a miss, OpenRouter produces a semantic outline with
+   generation constraints. On a miss, the active OpenRouter or BYOK model produces a semantic outline with
    one objective, narrative role, visual intent, and source references per card.
    A second constrained call always drafts one slide per outline card. Shared
    outline planning excludes user-scoped generation memory; live drafting keeps
@@ -276,12 +276,14 @@ eight-second cooldown, while the failed record remains available until retried o
 deleted.
 ## Direct AI Providers
 
-Presentation generation can use encrypted per-user OpenAI, Gemini, or Anthropic
-keys. Provider adapters normalize native streaming events into the existing
-presentation parser and SlideSage SSE event contract. Connections and model
-selection are managed by `/api/ai`; generation requests carry the selected
-provider and model while the semantic outline, scene compilation, and cache
-contract remain provider-independent.
+Presentation generation defaults to the server OpenRouter model and point billing
+until a user connects an encrypted OpenAI, Gemini, or Anthropic key. Provider
+adapters normalize native streaming events into the existing presentation parser
+and SlideSage SSE event contract. Connections and the persisted default model are
+managed by `/api/ai` and the protected `/settings` page. Generation requests omit
+provider credentials and resolve the saved server-side preference, while the
+semantic outline, scene compilation, and cache contract remain
+provider-independent. Removing the final valid connection restores OpenRouter.
 
 Research remains an Exa workflow. Embeddings and semantic memory always use the
 server OpenRouter configuration; BYOK credentials are never passed into RAG or

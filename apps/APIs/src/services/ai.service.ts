@@ -6,6 +6,7 @@ import type {
     ResearchPayload,
     ThemeId,
 } from "@slide-sage/types";
+import { configuredOpenRouterModel } from "./ai/model-catalog";
 import { streamStructuredPresentation } from "./ai/openrouter-presentation-stream";
 import {
     addOutlineToMessages,
@@ -21,8 +22,6 @@ import {
 import { buildGenerationPrompt, buildIterationPrompt } from "./ai-prompts";
 import { RAGService } from "./rag.service";
 import { SearchService } from "./search.service";
-
-const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it";
 
 export class AIService {
     private searchService = new SearchService();
@@ -85,7 +84,7 @@ export class AIService {
                 userPrompt,
                 slideCount,
             });
-            const model = ai?.model || process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
+            const model = ai?.model || configuredOpenRouterModel();
 
             if (isSearching) {
                 yield { event: "research", data: { status: "generating" } };
@@ -226,7 +225,7 @@ export class AIService {
                     ? JSON.stringify(currentPresentation).slice(0, 120000)
                     : undefined,
             });
-            const model = ai?.model || process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
+            const model = ai?.model || configuredOpenRouterModel();
             const expectedSlideCount =
                 slideCount && slideCount > 0
                     ? slideCount

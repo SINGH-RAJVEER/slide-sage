@@ -8,7 +8,6 @@ import type {
 } from "@slide-sage/types";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { AIProviderConnections } from "@/components/Profile/AIProviderConnections";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { API_URL } from "@/lib/api";
 
@@ -267,12 +266,8 @@ export default function ProfilePage() {
                     {/* Profile Header */}
                     <div className="rounded-xl border border-white/10 bg-black/20 p-6">
                         <h1 className="mb-1 text-2xl font-semibold text-white">My profile</h1>
-                        <p className="text-white/65">
-                            Manage your account settings and preferences
-                        </p>
+                        <p className="text-white/65">Manage your account details and security</p>
                     </div>
-
-                    <AIProviderConnections />
 
                     {/* Avatar Section */}
                     <div className="space-y-4 rounded-xl border border-white/10 bg-black/20 p-6">

@@ -1,15 +1,10 @@
-import type {
-    AIConfigurationResponse,
-    AIModelSelection,
-    PresentationRetryOptions,
-    ThemeId,
-} from "@slide-sage/types";
+import type { PresentationRetryOptions, ThemeId } from "@slide-sage/types";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GenerateForm, GenerateOptionsBar } from "@/components/Generate";
 import Header from "@/components/Header";
-import { fetchAIConfiguration, selectAIModel } from "@/lib/ai-connections";
+import { fetchAIConfiguration } from "@/lib/ai-connections";
 import { useStreaming } from "@/modules/presentations";
 import { ROUTES } from "@/router/paths";
 
@@ -37,24 +32,15 @@ export default function GeneratePPTPage() {
     const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
     const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
     const [theme, setTheme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
-    const [aiConfig, setAIConfig] = useState<AIConfigurationResponse | null>(null);
-    const [aiSelection, setAISelection] = useState<AIModelSelection | null>(retry?.ai ?? null);
+    const [generationMode, setGenerationMode] = useState<"openrouter" | "byok">("openrouter");
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
 
     useEffect(() => {
         void fetchAIConfiguration()
-            .then((config) => {
-                setAIConfig(config);
-                setAISelection((current) => current || config.selection);
-            })
+            .then((config) => setGenerationMode(config.generation.mode))
             .catch(() => undefined);
     }, []);
-
-    const handleAISelectionChange = (selection: AIModelSelection) => {
-        setAISelection(selection);
-        void selectAIModel(selection).catch(() => undefined);
-    };
 
     useEffect(() => {
         if (streamingState.error) {
@@ -130,7 +116,6 @@ export default function GeneratePPTPage() {
                     tonality,
                     theme,
                     retryPresentationId,
-                    ai: aiSelection,
                 },
             });
             return;
@@ -145,7 +130,6 @@ export default function GeneratePPTPage() {
             undefined,
             retryPresentationId,
             theme,
-            aiSelection ?? undefined,
         );
         navigate(ROUTES.presentation, {
             state: { isStreaming: true },
@@ -212,8 +196,6 @@ export default function GeneratePPTPage() {
 
             <div className="w-full flex items-center justify-center px-4 pt-6 md:pt-8">
                 <GenerateOptionsBar
-                    aiConfig={aiConfig}
-                    aiSelection={aiSelection}
                     detailLevel={detailLevel}
                     tonality={tonality}
                     useWebResearch={useWebResearch}
@@ -228,7 +210,6 @@ export default function GeneratePPTPage() {
                     onSlideCountChange={setSlideCount}
                     onCustomSlideCountChange={setCustomSlideCount}
                     onThemeChange={setTheme}
-                    onAISelectionChange={handleAISelectionChange}
                 />
             </div>
 
@@ -239,7 +220,11 @@ export default function GeneratePPTPage() {
                             prompt={prompt}
                             topics={topics}
                             loading={loading || streamingState.isStreaming}
-                            estimatedTokens={calculateEstimatedTokens()}
+                            estimatedTokens={
+                                generationMode === "byok" && !useWebResearch
+                                    ? null
+                                    : calculateEstimatedTokens()
+                            }
                             onPromptChange={setPrompt}
                             onKeyDown={handleKeyDown}
                             onSubmitPrompt={handleSubmitPrompt}

@@ -6,12 +6,12 @@ Google Gemini, and Anthropic API keys.
 ## Eligibility
 
 Users must have strictly more than 50 SlideSage points to connect or replace a
-key, select a model, generate, or iterate. Existing connections remain visible
+key or change the selected model. Existing connections remain visible, usable,
 and removable below this threshold.
 
 Direct model usage is billed by the selected provider and does not consume
-SlideSage points. Web research and OpenRouter embedding work continue to consume
-the existing SlideSage point estimate.
+SlideSage generation points. Web research and OpenRouter embedding work continue
+to use SlideSage infrastructure without receiving the user's provider key.
 
 ## Credential Handling
 
@@ -31,10 +31,13 @@ Keep old versioned keys available while rotating stored credentials.
 
 ## Routing
 
-The model selector appears on the generation page after at least one provider
-key validates successfully. Generation and iteration use the user's current
-selected provider and model. SlideSage never silently falls back to another
-provider.
+API keys and the default model are managed on the protected `/settings` page,
+available from the account dropdown. Generation and iteration use point-funded
+SlideSage OpenRouter while no valid provider connection exists. Connecting the
+first key selects a recommended model and switches subsequent requests to BYOK.
+Removing the final valid connection restores OpenRouter automatically. When one
+or more connections exist, SlideSage uses the saved provider and never silently
+falls back to another direct provider.
 
 Research uses Exa. Source, presentation, and retrieval embeddings always use
 the server-owned OpenRouter embedding configuration and never a user BYOK key.

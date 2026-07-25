@@ -33,12 +33,14 @@ const searchService = {
 };
 
 const aiConnectionService = {
+    getConfiguration: mock(),
     resolveSelection: mock(),
     markUsed: mock(),
 };
 
 mock.module("../../services/ai-connections.service", () => ({
     AIConnectionService: class {
+        getConfiguration = aiConnectionService.getConfiguration;
         resolveSelection = aiConnectionService.resolveSelection;
         markUsed = aiConnectionService.markUsed;
     },
@@ -155,6 +157,7 @@ describe("presentation routes", () => {
         presentationService.storePresentationMemory.mockReset();
         searchService.storeSourceChunks.mockReset();
         searchService.webSearch.mockReset();
+        aiConnectionService.getConfiguration.mockReset();
         aiConnectionService.resolveSelection.mockReset();
         aiConnectionService.markUsed.mockReset();
 
@@ -176,6 +179,13 @@ describe("presentation routes", () => {
             id: "presentation_1",
             userId: currentUserId,
             updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            slidesData: {
+                schemaVersion: 5,
+                title: "Existing deck",
+                theme: "corporate-blue",
+                slides: [{ id: "slide_1" }, { id: "slide_2" }],
+                totalSlides: 2,
+            },
         });
         presentationService.generatePresentationStream.mockImplementation(successfulStream);
         presentationService.iteratePresentationStream.mockImplementation(successfulStream);
@@ -184,6 +194,9 @@ describe("presentation routes", () => {
             provider: "openai",
             model: "gpt-4.1",
             apiKey: "secret",
+        });
+        aiConnectionService.getConfiguration.mockResolvedValue({
+            generation: { mode: "openrouter" },
         });
         aiConnectionService.markUsed.mockResolvedValue(undefined);
     });
@@ -199,6 +212,7 @@ describe("presentation routes", () => {
             user: { slideTokens: 1 },
             shortfall: 2,
         });
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
         const insufficient = await app().request("/api/generate-presentation-stream", {
             method: "POST",
             body: JSON.stringify({ topic: "AI", slide_count: 3 }),
@@ -210,12 +224,12 @@ describe("presentation routes", () => {
         expect(await json(insufficient)).toEqual({
             error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
             slide_tokens_remaining: 1,
-            slide_tokens_required: 0,
+            slide_tokens_required: 3,
             slide_tokens_shortfall: 2,
         });
     });
 
-    it("streams generated presentations, persists final data, and deducts points", async () => {
+    it("streams BYOK presentations without deducting generation points", async () => {
         const response = await app().request("/api/generate-presentation-stream", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -264,15 +278,9 @@ describe("presentation routes", () => {
                 theme: "nature-green",
             })
         );
-        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
-            3,
-            "balanced",
-            "professional",
-            "Quarterly planning",
-            { sources: [{ url: "https://example.com", title: "Example" }] }
-        );
-        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
-        expect(body).toContain('"slide_tokens_charged":3');
+        expect(presentationService.calculateEstimatedTokens).not.toHaveBeenCalled();
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
+        expect(body).toContain('"slide_tokens_charged":0');
         expect(aiConnectionService.markUsed).toHaveBeenCalledWith(currentUserId, "openai");
         expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -284,6 +292,38 @@ describe("presentation routes", () => {
                 theme: "modern",
             })
         );
+    });
+
+    it("uses point-funded OpenRouter generation when no provider is connected", async () => {
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic: "OpenRouter fallback", slide_count: 3 }),
+        });
+        const body = await text(response);
+
+        expect(response.status).toBe(200);
+        expect(body).toContain("event: saved");
+        expect(body).toContain('"slide_tokens_charged":0.1');
+        expect(presentationService.generatePresentationStream).toHaveBeenCalledWith(
+            expect.objectContaining({ ai: undefined })
+        );
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            3,
+            "balanced",
+            "professional",
+            "OpenRouter fallback",
+            undefined
+        );
+        expect(presentationService.calculateActualTokenCost).toHaveBeenCalledWith(100, 3);
+        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 0.1);
+        expect(aiConnectionService.markUsed).not.toHaveBeenCalled();
+        expect(presentationUpdates[0]?.updates).toEqual({
+            aiProvider: "openrouter",
+            aiModel: expect.any(String),
+        });
     });
 
     it("reuses the same failed presentation row across retries", async () => {
@@ -559,6 +599,27 @@ describe("presentation routes", () => {
         );
     });
 
+    it("reports zero generation points for research when BYOK is active", async () => {
+        searchService.webSearch.mockResolvedValue([]);
+        searchService.storeSourceChunks.mockResolvedValue(undefined);
+        aiConnectionService.getConfiguration.mockResolvedValueOnce({
+            generation: { mode: "byok" },
+        });
+
+        const response = await app().request("/api/research-presentation", {
+            method: "POST",
+            body: JSON.stringify({
+                topic: "AI news",
+                slide_count: 6,
+                research: { enabled: true },
+            }),
+        });
+
+        expect(response.status).toBe(200);
+        expect(await json(response)).toEqual({ sources: [], estimated_tokens: 0 });
+        expect(presentationService.calculateEstimatedTokens).not.toHaveBeenCalled();
+    });
+
     it("validates research requests", async () => {
         const response = await app().request("/api/research-presentation", {
             method: "POST",
@@ -603,6 +664,29 @@ describe("presentation routes", () => {
         );
     });
 
+    it("quotes the existing deck size for point-funded OpenRouter iterations", async () => {
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+
+        const response = await app().request("/api/iterate-presentation-stream", {
+            method: "POST",
+            body: JSON.stringify({
+                presentation_id: "presentation_1",
+                feedback: "Make it shorter",
+            }),
+        });
+        const body = await text(response);
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('"slide_tokens_charged":0.1');
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            2,
+            "balanced",
+            "professional"
+        );
+        expect(presentationService.calculateActualTokenCost).toHaveBeenCalledWith(100, 3);
+        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 0.1);
+    });
+
     it("validates iteration requests and insufficient points", async () => {
         const missing = await app().request("/api/iterate-presentation-stream", {
             method: "POST",
@@ -613,6 +697,7 @@ describe("presentation routes", () => {
             user: { slideTokens: 0 },
             shortfall: 3,
         });
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
         const insufficient = await app().request("/api/iterate-presentation-stream", {
             method: "POST",
             body: JSON.stringify({ presentation_id: "presentation_1", feedback: "Change it" }),
@@ -621,6 +706,12 @@ describe("presentation routes", () => {
         expect(missing.status).toBe(400);
         expect(await json(missing)).toEqual({ error: { message: "Missing required fields" } });
         expect(insufficient.status).toBe(402);
+        expect(await json(insufficient)).toEqual({
+            error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
+            slide_tokens_remaining: 0,
+            slide_tokens_required: 3,
+            slide_tokens_shortfall: 3,
+        });
     });
 
     it("lists presentations for the current user", async () => {

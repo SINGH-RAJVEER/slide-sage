@@ -89,15 +89,18 @@ mutations in one request are validated and applied to one document update.
 Writes use the owned row's `updated_at` value as a compare-and-swap revision. A
 concurrent write returns `409` instead of overwriting another editor mutation.
 
-Generation and iteration return `402` before streaming when the account lacks
-enough slide tokens for the quoted maximum. The response includes the remaining,
-required, and shortfall amounts. Generation estimates add the input-token cost of
-the exact serialized research context at one point per 1,000 AI tokens. The
-research endpoint returns `estimated_tokens` when slide count and generation
-options are supplied. Successful generation charges measured aggregate
-OpenRouter usage at one point per 1,000 tokens without exceeding that quote. A
-shared outline-cache hit contributes no new outline tokens. The final `saved`
-event includes `slide_tokens_charged` and `slide_tokens_remaining`.
+Without a valid user provider connection, generation and iteration use the
+configured SlideSage OpenRouter model and return `402` before streaming when the
+account lacks the quoted maximum. The response includes the remaining, required,
+and shortfall amounts. Successful OpenRouter generation charges measured
+aggregate usage at one point per 1,000 tokens without exceeding that quote. A
+shared outline-cache hit contributes no new outline tokens. Once a user connects
+a provider key, model generation is billed by that provider and the presentation
+request reports zero SlideSage generation points. Generation estimates include
+the exact serialized research context for OpenRouter mode, and the research
+endpoint returns a mode-aware `estimated_tokens` value when slide count and
+options are supplied. The final `saved` event includes `slide_tokens_charged` and
+`slide_tokens_remaining`.
 
 Presentation summaries include `status` (`ready` or `failed`) and
 `has_research`. A failed generation remains in the presentation library with an

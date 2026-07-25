@@ -57,11 +57,12 @@ available.
 
 ## Billing
 
-OpenRouter usage from the outline and slide-drafting calls is aggregated into
-`tokens_used`. A cached outline contributes zero new model tokens. Successful
-requests convert measured usage at one slide token per 1,000 AI tokens and cap
-the charge at the preflight quote. If a provider omits usage, the quote is used.
-Failed requests remain uncharged.
+When SlideSage OpenRouter is active, usage from the outline and slide-drafting
+calls is aggregated into `tokens_used`. A cached outline contributes zero new
+model tokens. Successful requests convert measured usage at one slide token per
+1,000 AI tokens and cap the charge at the preflight quote. If OpenRouter omits
+usage, the quote is used. BYOK model calls are billed by the connected provider
+instead. Failed requests remain uncharged.
 
 The final `saved` event includes `slide_tokens_charged` and
 `slide_tokens_remaining`.

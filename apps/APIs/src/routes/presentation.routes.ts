@@ -19,6 +19,7 @@ import {
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
+import { configuredOpenRouterModel } from "../services/ai/model-catalog";
 import { AIConnectionService } from "../services/ai-connections.service";
 import { authMiddleware, ensureUserInDbMiddleware, getCurrentUserId } from "../services/auth";
 import { PresentationService } from "../services/presentation.service";
@@ -221,7 +222,7 @@ interface FailedPresentationInput {
     sources?: Source[];
     estimatedTokens: number;
     message: string;
-    ai: AIModelSelection;
+    ai?: AIModelSelection;
 }
 
 async function markPresentationFailed({
@@ -262,10 +263,14 @@ async function markPresentationFailed({
                 tonality,
                 research_enabled: researchEnabled,
                 theme,
-                ai: {
-                    provider: ai.provider,
-                    model: ai.model,
-                },
+                ...(ai
+                    ? {
+                          ai: {
+                              provider: ai.provider,
+                              model: ai.model,
+                          },
+                      }
+                    : {}),
                 ...(retrySources?.length
                     ? {
                           research_payload: {
@@ -311,7 +316,7 @@ presentations.post(
                 return c.json({ error: { message: "Missing required fields" } }, 400);
             }
 
-            let ai: AIModelSelection & { apiKey: string };
+            let ai: (AIModelSelection & { apiKey: string }) | undefined;
             try {
                 ai = await aiConnectionService.resolveSelection(userId, parseAISelection(body?.ai));
             } catch (error) {
@@ -320,7 +325,7 @@ presentations.post(
 
             // Verify the user has enough points BEFORE we create anything or start streaming.
             // The frontend expects a 402 with { slide_tokens_remaining, slide_tokens_required }.
-            const estimatedTokens = research?.enabled
+            const estimatedTokens = !ai
                 ? presentationService.calculateEstimatedTokens(
                       slide_count,
                       detail_level || "balanced",
@@ -369,8 +374,8 @@ presentations.post(
                 presentationId = presentation.id;
             }
             await presentationRepo.update(presentationId, {
-                aiProvider: ai.provider,
-                aiModel: ai.model,
+                aiProvider: ai?.provider || "openrouter",
+                aiModel: ai?.model || configuredOpenRouterModel(),
             });
 
             c.header("Content-Type", "text/event-stream; charset=utf-8");
@@ -596,13 +601,19 @@ presentations.post(
                             `Saved presentation ${presentationId} with ${allSlides.length} slides`
                         );
 
-                        await aiConnectionService.markUsed(userId, ai.provider);
+                        if (ai) await aiConnectionService.markUsed(userId, ai.provider);
+                        const chargedTokens = ai
+                            ? estimatedTokens
+                            : presentationService.calculateActualTokenCost(
+                                  tokensUsed,
+                                  estimatedTokens
+                              );
                         let newBalance: number | null = null;
                         try {
-                            if (estimatedTokens > 0) {
+                            if (chargedTokens > 0) {
                                 const updatedUser = await UserRepository.deductTokens(
                                     userId,
-                                    estimatedTokens
+                                    chargedTokens
                                 );
                                 newBalance = updatedUser.slideTokens;
                             } else {
@@ -622,7 +633,7 @@ presentations.post(
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
-                                slide_tokens_charged: estimatedTokens,
+                                slide_tokens_charged: chargedTokens,
                             })
                         );
                     } else {
@@ -693,15 +704,19 @@ presentations.post(
             }
 
             const requestedSlideCount = Number(body?.slide_count ?? body?.slideCount);
+            const generationMode = (await aiConnectionService.getConfiguration(userId)).generation
+                .mode;
             const estimatedTokens =
                 Number.isFinite(requestedSlideCount) && requestedSlideCount > 0
-                    ? presentationService.calculateEstimatedTokens(
-                          requestedSlideCount,
-                          body?.detail_level ?? body?.detailLevel ?? "balanced",
-                          body?.tonality ?? "professional",
-                          String(topic),
-                          { sources }
-                      )
+                    ? generationMode === "byok"
+                        ? 0
+                        : presentationService.calculateEstimatedTokens(
+                              requestedSlideCount,
+                              body?.detail_level ?? body?.detailLevel ?? "balanced",
+                              body?.tonality ?? "professional",
+                              String(topic),
+                              { sources }
+                          )
                     : undefined;
 
             return c.json(
@@ -746,7 +761,7 @@ presentations.post(
             const presentationId = String(parentPresentationId);
             const iterationBase = await presentationService.getPresentation(presentationId, userId);
 
-            let ai: AIModelSelection & { apiKey: string };
+            let ai: (AIModelSelection & { apiKey: string }) | undefined;
             try {
                 ai = await aiConnectionService.resolveSelection(userId, parseAISelection(body?.ai));
             } catch (error) {
@@ -755,11 +770,16 @@ presentations.post(
 
             // Verify the user has enough points before iterating (mirrors generation).
             const iterationSlideCount = Number(slideCount);
-            const estimatedTokens = research?.enabled
+            const storedSlides = (iterationBase.slidesData as Partial<PresentationJSON>)?.slides;
+            const quotedSlideCount =
+                Number.isFinite(iterationSlideCount) && iterationSlideCount > 0
+                    ? iterationSlideCount
+                    : Array.isArray(storedSlides) && storedSlides.length > 0
+                      ? storedSlides.length
+                      : 5;
+            const estimatedTokens = !ai
                 ? presentationService.calculateEstimatedTokens(
-                      Number.isFinite(iterationSlideCount) && iterationSlideCount > 0
-                          ? iterationSlideCount
-                          : 5,
+                      quotedSlideCount,
                       detailLevel || "balanced",
                       tonality || "professional"
                   )
@@ -934,8 +954,8 @@ presentations.post(
                             {
                                 title: finalTitle,
                                 slidesData: finalData,
-                                aiProvider: ai.provider,
-                                aiModel: ai.model,
+                                aiProvider: ai?.provider || "openrouter",
+                                aiModel: ai?.model || configuredOpenRouterModel(),
                             }
                         );
                         if (!updated) {
@@ -965,13 +985,19 @@ presentations.post(
                             console.warn("Failed to store presentation semantic memory:", error);
                         }
 
-                        await aiConnectionService.markUsed(userId, ai.provider);
+                        if (ai) await aiConnectionService.markUsed(userId, ai.provider);
+                        const chargedTokens = ai
+                            ? estimatedTokens
+                            : presentationService.calculateActualTokenCost(
+                                  tokensUsed,
+                                  estimatedTokens
+                              );
                         let newBalance: number | null = null;
                         try {
-                            if (estimatedTokens > 0) {
+                            if (chargedTokens > 0) {
                                 const updatedUser = await UserRepository.deductTokens(
                                     userId,
-                                    estimatedTokens
+                                    chargedTokens
                                 );
                                 newBalance = updatedUser.slideTokens;
                             } else {
@@ -991,7 +1017,7 @@ presentations.post(
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
-                                slide_tokens_charged: estimatedTokens,
+                                slide_tokens_charged: chargedTokens,
                             })
                         );
                     } else {

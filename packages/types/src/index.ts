@@ -391,6 +391,11 @@ export interface AIConnectionSummary {
 }
 
 export interface AIConfigurationResponse {
+    generation: {
+        mode: "openrouter" | "byok";
+        model: string | null;
+        billing: "points" | "provider";
+    };
     eligibility: {
         eligible: boolean;
         slideTokens: number;

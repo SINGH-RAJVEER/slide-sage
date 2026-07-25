@@ -40,8 +40,8 @@ export function GenerationStatusIndicatorView({
     useEffect(() => {
         if (autoDismissMs === undefined) return;
 
-        const cooldown = window.setTimeout(() => setIsVisible(false), autoDismissMs);
-        return () => window.clearTimeout(cooldown);
+        const cooldown = setTimeout(() => setIsVisible(false), autoDismissMs);
+        return () => clearTimeout(cooldown);
     }, [autoDismissMs]);
 
     if (!isVisible) return null;

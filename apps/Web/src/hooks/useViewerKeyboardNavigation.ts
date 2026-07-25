@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { startKeyboardNavigationRepeat } from "./useSlideNavigation";
 
 export function getViewerKeyboardDestination(
     key: string,
@@ -28,16 +29,38 @@ export function useViewerKeyboardNavigation({
     onStopPlayback: () => void;
 }) {
     const keyboardSlideRef = useRef(currentSlide);
+    const activeKeyRef = useRef<string | null>(null);
+    const stopRepeatRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         keyboardSlideRef.current = currentSlide;
     }, [currentSlide]);
 
     useEffect(() => {
+        const stopRepeating = () => {
+            stopRepeatRef.current?.();
+            stopRepeatRef.current = null;
+            activeKeyRef.current = null;
+        };
+        const navigateForKey = (key: string) => {
+            const nextIndex = getViewerKeyboardDestination(
+                key,
+                keyboardSlideRef.current,
+                slideCount,
+            );
+            if (nextIndex === undefined || nextIndex === keyboardSlideRef.current) return;
+            keyboardSlideRef.current = nextIndex;
+            onNavigate(nextIndex);
+        };
         const handleKeyDown = (event: KeyboardEvent) => {
             if (slideCount <= 0) return;
-            const target = event.target as HTMLElement | null;
-            if (target?.matches("input, textarea, select") || target?.isContentEditable) return;
+            const target = event.target;
+            if (
+                target instanceof HTMLElement &&
+                (target.matches("input, textarea, select") || target.isContentEditable)
+            ) {
+                return;
+            }
 
             const nextIndex = getViewerKeyboardDestination(
                 event.key,
@@ -47,13 +70,31 @@ export function useViewerKeyboardNavigation({
 
             if (nextIndex === undefined) return;
             event.preventDefault();
-            if (event.repeat) return;
+            if (event.repeat || activeKeyRef.current === event.key) return;
+            stopRepeating();
             onStopPlayback();
             keyboardSlideRef.current = nextIndex;
             onNavigate(nextIndex);
+            if (["arrowleft", "arrowright", "j", "l"].includes(event.key.toLowerCase())) {
+                activeKeyRef.current = event.key;
+                stopRepeatRef.current = startKeyboardNavigationRepeat(() =>
+                    navigateForKey(event.key),
+                );
+            }
+        };
+
+        const handleKeyUp = (event: KeyboardEvent) => {
+            if (activeKeyRef.current === event.key) stopRepeating();
         };
 
         window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+        window.addEventListener("blur", stopRepeating);
+        return () => {
+            stopRepeating();
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+            window.removeEventListener("blur", stopRepeating);
+        };
     }, [onNavigate, onStopPlayback, slideCount]);
 }

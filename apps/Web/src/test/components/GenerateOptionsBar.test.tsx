@@ -9,8 +9,6 @@ describe("GenerateOptionsBar", () => {
         const onThemeChange = mock();
         const view = render(
             <GenerateOptionsBar
-                aiConfig={null}
-                aiSelection={null}
                 detailLevel="balanced"
                 tonality="professional"
                 useWebResearch={false}
@@ -25,7 +23,6 @@ describe("GenerateOptionsBar", () => {
                 onSlideCountChange={mock()}
                 onCustomSlideCountChange={mock()}
                 onThemeChange={onThemeChange}
-                onAISelectionChange={mock()}
             />,
         );
 
