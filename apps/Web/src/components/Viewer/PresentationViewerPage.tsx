@@ -10,6 +10,8 @@ import { usePresentationData } from "@/hooks/usePresentationData";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@/lib/api";
+import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
+import { getGenerationDisplayStatus } from "@/lib/generation-status";
 import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
 import { persistPresentationMutations } from "@/lib/presentation-mutations";
 import { applySlideLayout } from "@/lib/slide-layout";
@@ -187,6 +189,7 @@ export default function PresentationViewerPage() {
         useWebResearch: boolean,
     ) => {
         if (!prompt.trim() || !presentationId) return;
+        requestGenerationNotificationPermission();
 
         const success = await startIterating(
             prompt,
@@ -257,20 +260,7 @@ export default function PresentationViewerPage() {
             totalSlides: 0,
         } satisfies PresentationData);
     const hasSlides = viewerPresentation.slides.length > 0;
-    const generationMessage =
-        streamingState.generationMessage ||
-        (streamingState.researchStatus === "searching"
-            ? "Finding relevant sources"
-            : "Preparing your presentation");
-    const generationPercent = Math.min(
-        100,
-        Math.max(
-            0,
-            ((streamingState.generationProgress?.completed || 0) /
-                Math.max(1, streamingState.generationProgress?.total || 4)) *
-                100,
-        ),
-    );
+    const generationStatus = getGenerationDisplayStatus(streamingState);
     const activeSlide = viewerPresentation.slides[navigation.currentSlide];
     const activeContentSlide =
         activeSlide && isContentSlide(activeSlide)
@@ -384,28 +374,6 @@ export default function PresentationViewerPage() {
                     />
                 )}
 
-                {!isFullscreenMode && streamingState.isStreaming && (
-                    <div className="mx-auto mb-2 flex w-full max-w-5xl items-center gap-3 rounded-xl border border-border/70 bg-background/85 px-4 py-3 shadow-sm backdrop-blur">
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                            <div
-                                role="progressbar"
-                                aria-label={generationMessage}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                                aria-valuenow={Math.round(generationPercent)}
-                                className="h-full rounded-full bg-primary transition-all duration-500"
-                                style={{ width: `${Math.max(8, generationPercent)}%` }}
-                            />
-                        </div>
-                        <p
-                            aria-live="polite"
-                            className="min-w-52 text-sm font-medium text-foreground"
-                        >
-                            {generationMessage}
-                        </p>
-                    </div>
-                )}
-
                 {!isFullscreenMode && (
                     <ViewerSlideCarousel
                         slides={viewerPresentation.slides}
@@ -414,6 +382,8 @@ export default function PresentationViewerPage() {
                         currentTemplate={currentTemplate}
                         containerRef={slideContainerRef}
                         isWaitingForFirstSlide={shouldShowGenerating}
+                        generationMessage={generationStatus.message}
+                        generationProgress={generationStatus.progress}
                         onSelectSlide={(idx) => {
                             if (idx !== navigation.currentSlide) {
                                 playback.stop();

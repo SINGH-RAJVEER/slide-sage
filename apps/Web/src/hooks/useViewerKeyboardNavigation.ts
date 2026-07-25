@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { startKeyboardNavigationRepeat } from "./useSlideNavigation";
 
 export function getViewerKeyboardDestination(
@@ -31,6 +31,8 @@ export function useViewerKeyboardNavigation({
     const keyboardSlideRef = useRef(currentSlide);
     const activeKeyRef = useRef<string | null>(null);
     const stopRepeatRef = useRef<(() => void) | null>(null);
+    const navigate = useEffectEvent(onNavigate);
+    const stopPlayback = useEffectEvent(onStopPlayback);
 
     useEffect(() => {
         keyboardSlideRef.current = currentSlide;
@@ -50,7 +52,7 @@ export function useViewerKeyboardNavigation({
             );
             if (nextIndex === undefined || nextIndex === keyboardSlideRef.current) return;
             keyboardSlideRef.current = nextIndex;
-            onNavigate(nextIndex);
+            navigate(nextIndex);
         };
         const handleKeyDown = (event: KeyboardEvent) => {
             if (slideCount <= 0) return;
@@ -72,11 +74,11 @@ export function useViewerKeyboardNavigation({
             event.preventDefault();
             if (event.repeat || activeKeyRef.current === event.key) return;
             stopRepeating();
-            onStopPlayback();
+            stopPlayback();
             keyboardSlideRef.current = nextIndex;
-            onNavigate(nextIndex);
+            navigate(nextIndex);
             if (["arrowleft", "arrowright", "j", "l"].includes(event.key.toLowerCase())) {
-                activeKeyRef.current = event.key;
+                activeKeyRef.current = event.key.toLowerCase();
                 stopRepeatRef.current = startKeyboardNavigationRepeat(() =>
                     navigateForKey(event.key),
                 );
@@ -84,7 +86,7 @@ export function useViewerKeyboardNavigation({
         };
 
         const handleKeyUp = (event: KeyboardEvent) => {
-            if (activeKeyRef.current === event.key) stopRepeating();
+            if (activeKeyRef.current === event.key.toLowerCase()) stopRepeating();
         };
 
         window.addEventListener("keydown", handleKeyDown);
@@ -96,5 +98,5 @@ export function useViewerKeyboardNavigation({
             window.removeEventListener("keyup", handleKeyUp);
             window.removeEventListener("blur", stopRepeating);
         };
-    }, [onNavigate, onStopPlayback, slideCount]);
+    }, [slideCount]);
 }

@@ -1,6 +1,8 @@
 import { AlertCircle, ArrowUpRight, Check, LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { showGenerationCompleteNotification } from "@/lib/generation-notifications";
+import { getGenerationDisplayStatus } from "@/lib/generation-status";
 import { useStreaming } from "@/modules/contexts/StreamingContext";
 import { ROUTES } from "@/router/paths";
 
@@ -91,6 +93,7 @@ export default function GenerationStatusIndicator() {
     const location = useLocation();
     const navigate = useNavigate();
     const [dismissedCompletion, setDismissedCompletion] = useState<string | null>(null);
+    const notifiedCompletionRef = useRef<string | null>(null);
 
     const isIteration = streamingState.operation === "iteration";
     const activePath =
@@ -106,6 +109,21 @@ export default function GenerationStatusIndicator() {
     const errorKey = streamingState.error
         ? `${streamingState.presentationId ?? "unsaved"}:${streamingState.error}`
         : null;
+
+    useEffect(() => {
+        if (streamingState.isStreaming) {
+            notifiedCompletionRef.current = null;
+            return;
+        }
+        if (!streamingState.isComplete || !completionKey) return;
+        if (notifiedCompletionRef.current === completionKey) return;
+        notifiedCompletionRef.current = completionKey;
+        showGenerationCompleteNotification({
+            presentationId: streamingState.presentationId || completionKey,
+            title: streamingState.title,
+            onActivate: () => navigate(completedPath),
+        });
+    }, [completedPath, completionKey, navigate, streamingState]);
 
     if (AUTH_STATUS_SUPPRESSED_PATHS.has(location.pathname)) {
         return null;
@@ -134,20 +152,14 @@ export default function GenerationStatusIndicator() {
     if (streamingState.isStreaming) {
         if (location.pathname === activePath) return null;
 
-        const generatedSlides = streamingState.slides.length;
-        const requestedSlides = streamingState.requestedSlides;
-        const progress = requestedSlides > 0 ? generatedSlides / requestedSlides : 0;
-        const detail =
-            generatedSlides > 0 && requestedSlides > 0
-                ? `${generatedSlides} of ${requestedSlides} slides ready`
-                : streamingState.prompt || "Preparing your presentation";
+        const generationStatus = getGenerationDisplayStatus(streamingState);
 
         return (
             <GenerationStatusIndicatorView
                 status="active"
                 title={isIteration ? "Updating presentation" : "Generating presentation"}
-                detail={detail}
-                progress={progress}
+                detail={generationStatus.message}
+                progress={generationStatus.progress}
                 onActivate={() =>
                     navigate(activePath, {
                         state: {

@@ -74,7 +74,7 @@ it("shows an active generation indicator on the generate page", async () => {
         await waitFor(() => {
             expect(
                 view.getByRole("button", {
-                    name: "Generating presentation. Grid storage",
+                    name: "Generating presentation. Preparing your presentation",
                 }),
             ).toHaveClass("top-24", "right-4");
         });
@@ -103,7 +103,7 @@ it("does not duplicate generation status on the active viewer", async () => {
 
         expect(
             view.queryByRole("button", {
-                name: "Generating presentation. Grid storage",
+                name: "Generating presentation. Preparing your presentation",
             }),
         ).toBeNull();
     } finally {
@@ -143,7 +143,7 @@ for (const loginPath of ["/sign-in", "/login"]) {
             });
             expect(
                 view.queryByRole("button", {
-                    name: "Generating presentation. Grid storage",
+                    name: "Generating presentation. Preparing your presentation",
                 }),
             ).toBeNull();
         } finally {

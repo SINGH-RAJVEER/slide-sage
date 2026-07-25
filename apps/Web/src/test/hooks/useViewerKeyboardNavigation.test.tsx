@@ -1,7 +1,8 @@
 /// <reference lib="dom" />
 
 import { afterEach, describe, expect, it, jest, mock } from "bun:test";
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
+import { useState } from "react";
 import {
     KEYBOARD_NAVIGATION_REPEAT_DELAY_MS,
     KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS,
@@ -29,6 +30,21 @@ function Harness({
         slideCount: 4,
         onNavigate,
         onStopPlayback,
+    });
+    return null;
+}
+
+function RerenderingHarness({ onNavigate }: { onNavigate: (index: number) => void }) {
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    useViewerKeyboardNavigation({
+        currentSlide,
+        slideCount: 4,
+        onNavigate: (index) => {
+            setCurrentSlide(index);
+            onNavigate(index);
+        },
+        onStopPlayback: () => {},
     });
     return null;
 }
@@ -63,17 +79,50 @@ describe("useViewerKeyboardNavigation", () => {
             <Harness currentSlide={0} onNavigate={onNavigate} onStopPlayback={mock(() => {})} />,
         );
 
-        window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+        act(() => {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+        });
         expect(onNavigate).toHaveBeenLastCalledWith(1);
 
-        jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_DELAY_MS);
+        act(() => {
+            jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_DELAY_MS);
+        });
         expect(onNavigate).toHaveBeenLastCalledWith(2);
 
-        jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS);
+        act(() => {
+            jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS);
+        });
         expect(onNavigate).toHaveBeenLastCalledWith(3);
 
-        window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight" }));
+        act(() => {
+            window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight" }));
+        });
         jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS * 2);
         expect(onNavigate).toHaveBeenCalledTimes(3);
+    });
+
+    it("keeps repeating when navigation rerenders the viewer", () => {
+        jest.useFakeTimers();
+        const onNavigate = mock(() => {});
+        render(<RerenderingHarness onNavigate={onNavigate} />);
+
+        act(() => {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+        });
+        expect(onNavigate).toHaveBeenLastCalledWith(1);
+
+        act(() => {
+            jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_DELAY_MS);
+        });
+        expect(onNavigate).toHaveBeenLastCalledWith(2);
+
+        act(() => {
+            jest.advanceTimersByTime(KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS);
+        });
+        expect(onNavigate).toHaveBeenLastCalledWith(3);
+
+        act(() => {
+            window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight" }));
+        });
     });
 });

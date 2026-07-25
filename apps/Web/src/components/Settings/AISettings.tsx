@@ -1,5 +1,5 @@
 import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slide-sage/types";
-import { Check, CircleDollarSign, KeyRound, LoaderCircle, ServerCog, Trash2 } from "lucide-react";
+import { Check, KeyRound, LoaderCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,15 +111,10 @@ export function AISettings() {
             <section className="grid gap-5 sm:grid-cols-[1fr_auto] sm:items-center">
                 <div>
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
-                        {isByok ? (
-                            <ServerCog className="size-4" />
-                        ) : (
-                            <CircleDollarSign className="size-4" />
-                        )}
                         Generation runtime
                     </div>
                     <h2 className="mt-2 text-xl font-semibold text-white">
-                        {isByok ? "Your provider connection" : "SlideSage OpenRouter"}
+                        {isByok ? "Your provider connection" : "SlideSage"}
                     </h2>
                     <p className="mt-1 max-w-xl text-sm leading-6 text-white/55">
                         {isByok

@@ -45,7 +45,7 @@ it("shows point-funded OpenRouter until a provider is connected", async () => {
 
     const view = render(<AISettings />);
 
-    expect(await view.findByText("SlideSage OpenRouter")).toBeInTheDocument();
+    expect(await view.findByText("SlideSage")).toBeInTheDocument();
     expect(view.getByText("Points billing")).toBeInTheDocument();
     expect(view.getByText("Connect a provider to choose a default model.")).toBeInTheDocument();
     for (const input of view.getAllByLabelText(/API key$/)) {

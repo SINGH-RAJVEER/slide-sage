@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
 import { useStreaming } from "@/modules/presentations";
 import type { ResearchPayload, ThemeId } from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
@@ -91,6 +92,7 @@ export default function GenerateResearchPage() {
             return;
         }
 
+        requestGenerationNotificationPermission();
         isProceedingRef.current = true;
         setIsProceeding(true);
 

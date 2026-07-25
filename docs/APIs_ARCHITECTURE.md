@@ -145,11 +145,12 @@ placeholder is removed when the slide returns to a single-column layout, while
 authored placeholders and real images remain. Viewer changes update the active
 deck model immediately and are included in the current PowerPoint export.
 
-The viewer supports Arrow Left/Right and J/L for previous/next navigation, with
-Arrow Up/Down jumping to the first/last slide. Holding a navigation key follows
-a viewer-controlled cadence: the first repeat occurs after 250 milliseconds,
-then navigation advances every 120 milliseconds until key release or focus
-loss. Keyboard navigation remains disabled while typing in editable controls.
+The presentation viewer and marketplace theme preview support Arrow Left/Right
+and J/L for previous/next navigation, with Arrow Up/Down jumping to the
+first/last slide. Holding a previous/next key follows a viewer-controlled
+cadence: the first repeat occurs after 250 milliseconds, then navigation
+advances every 120 milliseconds until key release or focus loss. Keyboard
+navigation remains disabled while typing in editable controls.
 
 ### Presentation Downloads
 

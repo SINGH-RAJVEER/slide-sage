@@ -91,10 +91,14 @@ tablets. Test both orientations when changing viewer controls or slide sizing.
 Saved presentations and marketplace previews share controlled held-key navigation:
 arrow keys and J/L move once immediately, then repeat at the bounded viewer rate.
 
-Background generation status is shown as a compact fixed icon. Hovering it or
-moving keyboard focus to it expands the indicator to reveal its title, detail,
-progress, and destination action. The complete accessible label remains on the
-collapsed button for assistive technology and touch activation.
+On the active viewer, the current pipeline message and stage progress appear
+inside the first-slide loader rather than in a separate bar. After navigation
+away from that viewer, the same status is shown as a compact fixed icon. Hovering
+it or moving keyboard focus to it expands the indicator to reveal its title,
+detail, progress, and destination action. The complete accessible label remains
+on the collapsed button for assistive technology and touch activation. Generation
+actions may request browser notification permission; when granted, a hidden tab
+receives one clickable notification after the presentation is saved.
 
 The application header renders user initials rather than loading third-party OAuth
 avatar URLs. This avoids cross-origin image blocking and keeps account navigation
@@ -130,6 +134,13 @@ Run `just dev` to initialize it again.
 - Failed research: set `EXA_API_KEY`; research is skipped when it is absent.
 - Failed email delivery: set `RESEND_API_KEY`; development mode logs OTPs when
   the key is absent.
+
+The generation page sends one prompt string to the presentation pipeline. Its centered
+compact editor grows to a bounded height and generates on Enter. The expand control
+appears only after the compact editor begins scrolling; the expanded editor supports
+multiline writing and generates on Shift+Enter. Commas and line breaks remain part of
+the prompt rather than creating separate topics. The generation estimate appears below
+the selectors bar once the prompt contains text without changing the centered composer's position.
 
 The repository uses `devenv shell` directly. It does not require direnv,
 `.envrc`, or `.direnv/`.
