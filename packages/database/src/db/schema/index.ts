@@ -4,6 +4,7 @@ export * from "./generation-memory";
 export * from "./presentation";
 export * from "./rag-context";
 export * from "./relations";
+export * from "./semantic-cache";
 export * from "./slide-memory";
 export * from "./source-memory";
 export * from "./style-memory";

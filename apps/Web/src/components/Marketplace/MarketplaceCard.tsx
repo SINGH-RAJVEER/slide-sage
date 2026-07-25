@@ -32,7 +32,7 @@ export default function MarketplaceCard({
                     <div className="absolute left-0 top-0 h-[720px] w-[1280px] origin-top-left scale-[var(--marketplace-preview-scale)] [--marketplace-preview-scale:calc((100vw-2rem)/1280)] sm:[--marketplace-preview-scale:calc((50vw-2.75rem)/1280)] lg:[--marketplace-preview-scale:calc((min(100vw,80rem)/3-1rem)/1280)]">
                         <SlideRenderer
                             slide={item.previewSlide}
-                            templateId={item.themeId}
+                            currentTemplate={item.themeId}
                             isActive={false}
                         />
                     </div>

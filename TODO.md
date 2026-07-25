@@ -10,6 +10,7 @@
 - Add an option to add files as inputs
 - Make streaming partially returned slide data possible
 - Add widget generation functionality into slides
+- Implementbackground images.
 
 ## Issues
 

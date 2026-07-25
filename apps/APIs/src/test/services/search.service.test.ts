@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 const exaSearch = mock();
 const exaApiKeys: string[] = [];
+const cacheResolve = mock();
 
 class MockExa {
     search = exaSearch;
@@ -19,6 +20,12 @@ mock.module("../../services/rag.service", () => ({
     RAGService: class {},
 }));
 
+mock.module("../../services/semantic-cache.service", () => ({
+    SemanticCacheService: class {
+        resolve = cacheResolve;
+    },
+}));
+
 const { SearchService } = await import("../../services/search.service");
 
 describe("SearchService", () => {
@@ -26,6 +33,11 @@ describe("SearchService", () => {
         exaSearch.mockReset();
         exaApiKeys.length = 0;
         delete process.env["EXA_API_KEY"];
+        cacheResolve.mockReset();
+        cacheResolve.mockImplementation(async (params: { load: () => Promise<unknown> }) => ({
+            payload: await params.load(),
+            status: "miss",
+        }));
     });
 
     it("skips web search when Exa is not configured", async () => {
@@ -100,5 +112,17 @@ describe("SearchService", () => {
                 summary: "AI chip demand accelerated.",
             },
         ]);
+    });
+
+    it("serves shared cached sources without calling Exa", async () => {
+        const cached = [{ url: "https://example.com/cached", title: "Cached" }];
+        cacheResolve.mockResolvedValue({ payload: cached, status: "semantic-hit" });
+
+        const sources = await new SearchService().webSearch("similar market topic", {
+            enabled: true,
+        });
+
+        expect(sources).toEqual(cached);
+        expect(exaSearch).not.toHaveBeenCalled();
     });
 });

@@ -1,6 +1,7 @@
 import type { ResearchOptions, Source } from "@slide-sage/types";
 import Exa from "exa-js";
 import { RAGService } from "./rag.service";
+import { SemanticCacheService } from "./semantic-cache.service";
 
 interface ExaSearchResult {
     url: string;
@@ -13,21 +14,71 @@ interface ExaSearchResult {
 
 export class SearchService {
     private ragService: RAGService | null = null;
+    private cacheService = new SemanticCacheService();
 
     async webSearch(query: string, options: ResearchOptions): Promise<Source[]> {
         if (!options.enabled) return [];
-
-        const apiKey = process.env["EXA_API_KEY"];
-        if (!apiKey) {
-            console.warn("Web research enabled but EXA_API_KEY is not set; skipping search.");
-            return [];
-        }
 
         const normalizedQuery = this.normalizeQuery(query);
         if (!normalizedQuery) return [];
 
         const maxResults = this.clampNumber(options.maxResults ?? 5, 1, 10);
         const maxAgeHours = this.resolveMaxAgeHours(options);
+        const startPublishedDate =
+            options.startPublishedDate ?? this.startPublishedDateForFreshness(options.freshness);
+
+        if (maxAgeHours === 0) {
+            return await this.searchExa(
+                normalizedQuery,
+                options,
+                maxResults,
+                maxAgeHours,
+                startPublishedDate
+            );
+        }
+
+        const result = await this.cacheService.resolve<Source[]>({
+            namespace: "search",
+            query: normalizedQuery,
+            variant: {
+                version: 1,
+                maxResults,
+                maxAgeHours,
+                includeDomains: this.normalizeDomains(options.includeDomains),
+                excludeDomains: this.normalizeDomains(options.excludeDomains),
+                startPublishedDate,
+                endPublishedDate: options.endPublishedDate,
+                freshness: options.freshness,
+            },
+            ttlMs: this.resolveCacheTtlMs(options, maxAgeHours),
+            load: () =>
+                this.searchExa(
+                    normalizedQuery,
+                    options,
+                    maxResults,
+                    maxAgeHours,
+                    startPublishedDate
+                ),
+            isCacheable: (sources) => sources.length > 0,
+            isValid: this.isSourceArray,
+        });
+        console.info(`Search cache status=${result.status}`);
+        return result.payload;
+    }
+
+    private async searchExa(
+        normalizedQuery: string,
+        options: ResearchOptions,
+        maxResults: number,
+        maxAgeHours: number | undefined,
+        startPublishedDate: string | undefined
+    ): Promise<Source[]> {
+        const apiKey = process.env["EXA_API_KEY"];
+        if (!apiKey) {
+            console.warn("Web research enabled but EXA_API_KEY is not set; skipping search.");
+            return [];
+        }
+
         const exa = new Exa(apiKey);
 
         try {
@@ -37,9 +88,7 @@ export class SearchService {
                     numResults: maxResults,
                     includeDomains: options.includeDomains,
                     excludeDomains: options.excludeDomains,
-                    startPublishedDate:
-                        options.startPublishedDate ??
-                        this.startPublishedDateForFreshness(options.freshness),
+                    startPublishedDate,
                     endPublishedDate: options.endPublishedDate,
                     contents: {
                         highlights: {
@@ -89,6 +138,42 @@ export class SearchService {
             console.warn("Exa search request failed:", error);
             return [];
         }
+    }
+
+    private resolveCacheTtlMs(options: ResearchOptions, maxAgeHours: number | undefined): number {
+        const configured = Number.parseInt(process.env["SEARCH_CACHE_TTL_SECONDS"] ?? "", 10);
+        if (Number.isFinite(configured) && configured > 0) return configured * 1000;
+
+        const ttlHours = {
+            day: 0.25,
+            week: 1,
+            month: 6,
+            year: 24,
+        }[options.freshness ?? "week"];
+        const cappedHours =
+            maxAgeHours === undefined
+                ? ttlHours
+                : Math.min(ttlHours, Math.max(1 / 60, maxAgeHours));
+        return cappedHours * 60 * 60 * 1000;
+    }
+
+    private normalizeDomains(domains: string[] | undefined): string[] | undefined {
+        if (!domains?.length) return undefined;
+        return Array.from(
+            new Set(domains.map((domain) => domain.trim().toLowerCase()).filter(Boolean))
+        ).sort();
+    }
+
+    private isSourceArray(value: unknown): value is Source[] {
+        return (
+            Array.isArray(value) &&
+            value.every(
+                (source) =>
+                    source !== null &&
+                    typeof source === "object" &&
+                    typeof (source as Source).url === "string"
+            )
+        );
     }
 
     private async withTimeout<T>(

@@ -1,15 +1,15 @@
 import { PresentationRepository, UserRepository } from "@slide-sage/database";
 import {
-    PRESENTATION_LAYOUT_PREFERENCES,
     PRESENTATION_SCHEMA_VERSION,
     type PresentationJSON,
-    type PresentationLayoutPreference,
     type PresentationMutationRequest,
     type PresentationResponse,
     type PresentationSummary,
     type PresentationsResponse,
     type ResearchOptions,
     type ResearchPayload,
+    SCENE_ENGINE_VERSION,
+    SCENE_PRESENTATION_SCHEMA_VERSION,
     type Slide,
     type Source,
     THEME_IDS,
@@ -154,18 +154,11 @@ function positiveIntegerEnv(name: string, fallback: number): number {
 }
 
 const THEME_ID_SET = new Set<string>(THEME_IDS);
-const LAYOUT_PREFERENCE_SET = new Set<string>(PRESENTATION_LAYOUT_PREFERENCES);
 
 function parseTheme(value: unknown): ThemeId {
     return typeof value === "string" && THEME_ID_SET.has(value)
         ? (value as ThemeId)
         : "corporate-blue";
-}
-
-function parseLayoutPreference(value: unknown): PresentationLayoutPreference {
-    return typeof value === "string" && LAYOUT_PREFERENCE_SET.has(value)
-        ? (value as PresentationLayoutPreference)
-        : "auto";
 }
 
 function sseFrame(event: string, data: unknown): string {
@@ -185,7 +178,6 @@ interface FailedPresentationInput {
     tonality: string;
     researchEnabled: boolean;
     theme: ThemeId;
-    layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     sources?: Source[];
     estimatedTokens: number;
@@ -200,7 +192,6 @@ async function markPresentationFailed({
     tonality,
     researchEnabled,
     theme,
-    layoutPreference,
     researchPayload,
     sources,
     estimatedTokens,
@@ -230,7 +221,6 @@ async function markPresentationFailed({
                 tonality,
                 research_enabled: researchEnabled,
                 theme,
-                layout_preference: layoutPreference,
                 ...(retrySources?.length
                     ? {
                           research_payload: {
@@ -266,9 +256,6 @@ presentations.post(
 
             const { topic, slide_count, detail_level, tonality } = body;
             const preferredTheme = parseTheme(body?.theme);
-            const layoutPreference = parseLayoutPreference(
-                body?.layout_preference ?? body?.layoutPreference
-            );
             const research = parseResearchOptions(body?.research);
             const researchPayload = parseResearchPayload(
                 body?.research_payload ?? body?.researchPayload
@@ -347,6 +334,7 @@ presentations.post(
                     let title = "Untitled Presentation";
                     let sources: Source[] | undefined = retainedSources;
                     let tokensUsed = 0;
+                    let completedDocument: PresentationJSON | undefined;
                     let generationCompleted = false;
                     let generationFailed = false;
                     let failureSaved = false;
@@ -364,7 +352,6 @@ presentations.post(
                             tonality: tonality || "professional",
                             researchEnabled: Boolean(research?.enabled || sources?.length),
                             theme: preferredTheme,
-                            layoutPreference,
                             researchPayload,
                             sources,
                             estimatedTokens,
@@ -383,7 +370,6 @@ presentations.post(
                         research,
                         researchPayload,
                         theme: preferredTheme,
-                        layoutPreference,
                     })) {
                         const eventType = event.event || "data";
                         // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
@@ -399,6 +385,7 @@ presentations.post(
                             theme = preferredTheme;
                             title = "Untitled Presentation";
                             tokensUsed = 0;
+                            completedDocument = undefined;
                             generationCompleted = false;
                         }
 
@@ -410,7 +397,16 @@ presentations.post(
                         if (eventType === "slide") {
                             const slide = eventData.slide;
                             if (slide) {
-                                allSlides.push(slide);
+                                const index = Number(eventData.index);
+                                if (Number.isInteger(index) && index >= 0) {
+                                    allSlides[index] = slide;
+                                } else {
+                                    const existingIndex = allSlides.findIndex(
+                                        (existing) => existing.id === slide.id
+                                    );
+                                    if (existingIndex >= 0) allSlides[existingIndex] = slide;
+                                    else allSlides.push(slide);
+                                }
                             }
                             if (eventData.title) {
                                 title = eventData.title;
@@ -419,6 +415,7 @@ presentations.post(
 
                         if (eventType === "complete") {
                             generationCompleted = true;
+                            completedDocument = eventData as PresentationJSON;
                             if (eventData.slides) {
                                 allSlides.length = 0;
                                 allSlides.push(...eventData.slides);
@@ -487,7 +484,17 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
-                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                            ...completedDocument,
+                            schemaVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_PRESENTATION_SCHEMA_VERSION
+                                : PRESENTATION_SCHEMA_VERSION,
+                            engineVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_ENGINE_VERSION
+                                : completedDocument?.["engineVersion"],
+                            dimensions: completedDocument?.dimensions || {
+                                width: 1280,
+                                height: 720,
+                            },
                             slides: allSlides,
                             theme,
                             title: finalTitle,
@@ -529,14 +536,15 @@ presentations.post(
                             `Saved presentation ${presentationId} with ${allSlides.length} slides`
                         );
 
-                        // Deduct the SAME slide-based estimate we checked against up front and that
-                        // the purchase page advertises, so the price charged matches the price
-                        // quoted everywhere (no surprise AI-token-based amount).
+                        const actualTokenCost = presentationService.calculateActualTokenCost(
+                            tokensUsed,
+                            estimatedTokens
+                        );
                         let newBalance: number | null = null;
                         try {
                             const updatedUser = await UserRepository.deductTokens(
                                 userId,
-                                estimatedTokens
+                                actualTokenCost
                             );
                             newBalance = updatedUser.slideTokens;
                         } catch (deductError) {
@@ -553,6 +561,7 @@ presentations.post(
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
+                                slide_tokens_charged: actualTokenCost,
                             })
                         );
                     } else {
@@ -577,7 +586,6 @@ presentations.post(
                         tonality: tonality || "professional",
                         researchEnabled: Boolean(research?.enabled || retainedSources?.length),
                         theme: preferredTheme,
-                        layoutPreference,
                         researchPayload,
                         sources: retainedSources,
                         estimatedTokens,
@@ -726,6 +734,7 @@ presentations.post(
                     let title = "Updated Presentation";
                     let tokensUsed = 0;
                     let sources: Source[] | undefined;
+                    let completedDocument: PresentationJSON | undefined;
                     let iterationCompleted = false;
                     let iterationFailed = false;
 
@@ -737,6 +746,10 @@ presentations.post(
                         detailLevel: detailLevel || "balanced",
                         tonality: tonality || "professional",
                         research,
+                        slideCount:
+                            Number.isFinite(iterationSlideCount) && iterationSlideCount > 0
+                                ? iterationSlideCount
+                                : undefined,
                     })) {
                         const eventType = event.event || "data";
                         // biome-ignore lint/suspicious/noExplicitAny: Data varies by event type
@@ -752,13 +765,23 @@ presentations.post(
                             title = "Updated Presentation";
                             tokensUsed = 0;
                             sources = undefined;
+                            completedDocument = undefined;
                             iterationCompleted = false;
                         }
 
                         if (eventType === "slide") {
                             const slide = eventData.slide;
                             if (slide) {
-                                allSlides.push(slide);
+                                const index = Number(eventData.index);
+                                if (Number.isInteger(index) && index >= 0) {
+                                    allSlides[index] = slide;
+                                } else {
+                                    const existingIndex = allSlides.findIndex(
+                                        (existing) => existing.id === slide.id
+                                    );
+                                    if (existingIndex >= 0) allSlides[existingIndex] = slide;
+                                    else allSlides.push(slide);
+                                }
                             }
                             if (eventData.title) {
                                 title = eventData.title;
@@ -767,6 +790,7 @@ presentations.post(
 
                         if (eventType === "complete") {
                             iterationCompleted = true;
+                            completedDocument = eventData as PresentationJSON;
                             if (eventData.slides) {
                                 allSlides.length = 0;
                                 allSlides.push(...eventData.slides);
@@ -808,7 +832,17 @@ presentations.post(
                         })();
 
                         const finalData: PresentationJSON = {
-                            schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                            ...completedDocument,
+                            schemaVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_PRESENTATION_SCHEMA_VERSION
+                                : PRESENTATION_SCHEMA_VERSION,
+                            engineVersion: allSlides.every((slide) => slide.type === "scene")
+                                ? SCENE_ENGINE_VERSION
+                                : completedDocument?.["engineVersion"],
+                            dimensions: completedDocument?.dimensions || {
+                                width: 1280,
+                                height: 720,
+                            },
                             slides: allSlides,
                             theme,
                             title: finalTitle,
@@ -857,13 +891,15 @@ presentations.post(
                             console.warn("Failed to store presentation semantic memory:", error);
                         }
 
-                        // Deduct the same slide-based estimate we checked against (consistent
-                        // with generation and the advertised pricing).
+                        const actualTokenCost = presentationService.calculateActualTokenCost(
+                            tokensUsed,
+                            estimatedTokens
+                        );
                         let newBalance: number | null = null;
                         try {
                             const updatedUser = await UserRepository.deductTokens(
                                 userId,
-                                estimatedTokens
+                                actualTokenCost
                             );
                             newBalance = updatedUser.slideTokens;
                         } catch (deductError) {
@@ -880,6 +916,7 @@ presentations.post(
                                 presentation_id: presentationId,
                                 success: true,
                                 slide_tokens_remaining: newBalance,
+                                slide_tokens_charged: actualTokenCost,
                             })
                         );
                     } else {

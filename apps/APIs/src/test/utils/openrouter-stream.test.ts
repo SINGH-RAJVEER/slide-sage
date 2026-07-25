@@ -157,4 +157,30 @@ describe("OpenRouter streaming utilities", () => {
             expect((error as OpenRouterStreamError).retryAfterMs).toBe(2000);
         }
     });
+
+    it("surfaces the provider message from structured errors", async () => {
+        const fetchImpl = mock(() =>
+            Promise.resolve(
+                Response.json(
+                    { error: { message: "Free model daily limit reached", code: 429 } },
+                    { status: 429 }
+                )
+            )
+        ) as unknown as typeof fetch;
+
+        const request = requestOpenRouterStream(
+            {
+                endpoint: "https://openrouter.example.test",
+                apiKey: "test-key",
+                model: "test-model",
+                messages: [{ role: "user", content: "test" }],
+                requestTimeoutMs: 100,
+                maxTokens: 4096,
+                responseFormat: { type: "json_object" },
+            },
+            fetchImpl
+        );
+
+        await expect(request).rejects.toThrow("Free model daily limit reached");
+    });
 });

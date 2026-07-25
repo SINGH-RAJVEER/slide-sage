@@ -1,6 +1,7 @@
 import {
     isContentSlide,
     isLegacyHtmlSlide,
+    isSceneSlide,
     type Slide,
     type SlideBlock,
     type Source,
@@ -33,9 +34,11 @@ export function buildSlideSummary(slide: Slide, index: number): { title: string;
     const layout = isContentSlide(slide) ? slide.layout : slide.type;
     const content = isContentSlide(slide)
         ? slide.blocks.map(serializeBlock).filter(Boolean).join(" ")
-        : isLegacyHtmlSlide(slide)
-          ? stripHtml(slide.html)
-          : truncateText(JSON.stringify(slide.chartConfig), 700);
+        : isSceneSlide(slide)
+          ? truncateText(JSON.stringify(slide.semantic || slide.root), 700)
+          : isLegacyHtmlSlide(slide)
+            ? stripHtml(slide.html)
+            : truncateText(JSON.stringify(slide.chartConfig), 700);
     const summary = [
         `Slide ${index + 1}`,
         `Title: ${title}`,
@@ -180,6 +183,12 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 
 function getSlideTitle(slide: Slide): string {
     if (isContentSlide(slide)) return truncateText(slide.title, 180);
+    if (isSceneSlide(slide)) {
+        const titleNode = slide.root.children.find(
+            (node) => node.type === "text" && (node.role === "title" || node.role === "display")
+        );
+        return titleNode?.type === "text" ? truncateText(titleNode.text, 180) : "";
+    }
     if (!isLegacyHtmlSlide(slide)) return truncateText(slide.chartConfig.title || "", 180);
 
     const headingMatch = slide.html.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);

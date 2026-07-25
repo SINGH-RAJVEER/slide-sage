@@ -1,12 +1,17 @@
 import type {
-    PresentationLayoutPreference,
+    PresentationJSON,
     PresentationStreamEvent,
     ResearchOptions,
     ResearchPayload,
     ThemeId,
 } from "@slide-sage/types";
 import { streamStructuredPresentation } from "./ai/openrouter-presentation-stream";
-import { buildGenerationMessages, buildIterationMessages } from "./ai/presentation-messages";
+import {
+    addOutlineToMessages,
+    buildGenerationMessages,
+    buildIterationMessages,
+} from "./ai/presentation-messages";
+import { buildOutlineMessages, generatePresentationOutline } from "./ai/presentation-outline";
 import {
     normalizeResearchOptions,
     resolveResearchSources,
@@ -34,20 +39,14 @@ export class AIService {
         research?: ResearchOptions,
         researchPayload?: ResearchPayload,
         userId?: string,
-        theme: ThemeId = "corporate-blue",
-        layoutPreference: PresentationLayoutPreference = "auto"
+        theme: ThemeId = "corporate-blue"
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting generate presentation for: ${userPrompt.substring(0, 50)}... with ${slideCount} slides`
         );
 
         try {
-            const systemPrompt = buildGenerationPrompt(
-                detailLevel,
-                tonality,
-                theme,
-                layoutPreference
-            );
+            const systemPrompt = buildGenerationPrompt(detailLevel, tonality, theme);
             const generationMemoryContext = userId
                 ? await this.ragService.buildGenerationMemoryContextString(userId, userPrompt)
                 : "";
@@ -77,27 +76,94 @@ export class AIService {
                 userPrompt,
                 slideCount,
             });
+            const outlineMessages = buildGenerationMessages({
+                systemPrompt,
+                generationMemoryContext: "",
+                researchSources: sources,
+                userPrompt,
+                slideCount,
+            });
             const model = process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
 
             if (isSearching) {
                 yield { event: "research", data: { status: "generating" } };
             }
-            yield { event: "start", data: { status: "generating" } };
-            yield* streamStructuredPresentation({
+            yield {
+                event: "stage",
+                data: {
+                    stage: "planning",
+                    message: "Structuring the narrative",
+                    completed: 1,
+                    total: 4,
+                },
+            };
+            const outlineResult = await generatePresentationOutline({
                 model,
-                messages,
+                messages: buildOutlineMessages(outlineMessages),
+                slideCount,
+                fallbackTitle: userPrompt.slice(0, 120) || "Untitled Presentation",
+                cache: researchPayload
+                    ? undefined
+                    : {
+                          query: userPrompt,
+                          variant: {
+                              detailLevel,
+                              tonality,
+                              theme,
+                              sources: sources.map((source) => ({
+                                  url: source.url,
+                                  publishedDate: source.published_date,
+                                  summary: source.summary,
+                              })),
+                          },
+                      },
+            });
+            const { outline } = outlineResult;
+            console.info(`Outline cache status=${outlineResult.cacheStatus}`);
+            yield { event: "outline", data: outline };
+            yield {
+                event: "stage",
+                data: {
+                    stage: "drafting",
+                    message: "Writing slide content",
+                    completed: 2,
+                    total: 4,
+                },
+            };
+            yield { event: "start", data: { status: "generating" } };
+            for await (const event of streamStructuredPresentation({
+                model,
+                messages: addOutlineToMessages(messages, outline),
                 expectedSlideCount: slideCount,
                 fallbackTitle: "Untitled Presentation",
                 sources,
                 operation: "generation",
                 preferredTheme: theme,
-                layoutPreference,
-            });
+                outline,
+            })) {
+                if (event.event === "complete") {
+                    yield {
+                        ...event,
+                        data: {
+                            ...event.data,
+                            tokens_used: (event.data.tokens_used || 0) + outlineResult.tokensUsed,
+                            outline_cache_status: outlineResult.cacheStatus,
+                        },
+                    };
+                } else {
+                    yield event;
+                }
+            }
         } catch (error) {
             console.error("Error during generation:", error);
             yield {
                 event: "error",
-                data: { error: "An error occurred while generating the presentation." },
+                data: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : "An error occurred while generating the presentation.",
+                },
             };
         }
     }
@@ -108,7 +174,10 @@ export class AIService {
         feedback: string,
         detailLevel = "balanced",
         tonality = "professional",
-        research?: ResearchOptions
+        research?: ResearchOptions,
+        currentPresentation?: PresentationJSON,
+        slideCount?: number,
+        theme?: ThemeId
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting presentation iteration with feedback: ${feedback.substring(0, 100)}...`
@@ -146,20 +215,53 @@ export class AIService {
                 systemPrompt: enhancedSystemPrompt,
                 researchSources: sources,
                 feedback,
+                currentPresentation: currentPresentation
+                    ? JSON.stringify(currentPresentation).slice(0, 120000)
+                    : undefined,
             });
             const model = process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
+            const expectedSlideCount =
+                slideCount && slideCount > 0
+                    ? slideCount
+                    : currentPresentation?.slides.length || undefined;
 
             if (isSearching) {
                 yield { event: "research", data: { status: "generating" } };
             }
+            const outlineResult = expectedSlideCount
+                ? await generatePresentationOutline({
+                      model,
+                      messages: buildOutlineMessages(messages),
+                      slideCount: expectedSlideCount,
+                      fallbackTitle: currentPresentation?.title || "Updated Presentation",
+                  })
+                : undefined;
+            const outline = outlineResult?.outline;
+            if (outline) yield { event: "outline", data: outline };
             yield { event: "start", data: { status: "iterating" } };
-            yield* streamStructuredPresentation({
+            for await (const event of streamStructuredPresentation({
                 model,
-                messages,
+                messages: outline ? addOutlineToMessages(messages, outline) : messages,
+                expectedSlideCount,
                 fallbackTitle: "Updated Presentation",
-                sources,
+                sources: sources.length ? sources : currentPresentation?.sources || [],
                 operation: "iteration",
-            });
+                preferredTheme: theme,
+                outline,
+            })) {
+                if (event.event === "complete" && outlineResult) {
+                    yield {
+                        ...event,
+                        data: {
+                            ...event.data,
+                            tokens_used: (event.data.tokens_used || 0) + outlineResult.tokensUsed,
+                            outline_cache_status: outlineResult.cacheStatus,
+                        },
+                    };
+                } else {
+                    yield event;
+                }
+            }
         } catch (error) {
             console.error("Error during iteration:", error);
             yield {

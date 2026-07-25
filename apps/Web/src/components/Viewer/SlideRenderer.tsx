@@ -8,10 +8,12 @@ import {
     type ContentSlide,
     isChartSlide,
     isLegacyHtmlSlide,
+    isSceneSlide,
     type Slide,
     type SlideBlock,
 } from "@/modules/types/presentation";
 import { AVAILABLE_TEMPLATES, type TemplateStyles } from "@/modules/types/template";
+import { SceneRenderer } from "./SceneRenderer";
 
 function keyed<T>(items: T[], keyFor: (item: T) => string): Array<{ item: T; key: string }> {
     const occurrences = new Map<string, number>();
@@ -300,27 +302,31 @@ function Region({
             }}
         >
             {keyed(blocks, (block) => block.id || JSON.stringify(block)).map(({ item, key }) => (
-                <button
-                    type="button"
-                    key={key}
-                    data-edit-block-id={item.id}
-                    onClick={(event) => {
-                        if (!onSelectBlock) return;
-                        event.stopPropagation();
-                        onSelectBlock(item, event.currentTarget);
-                    }}
-                    className={
-                        onSelectBlock ? "ss-editable-object ss-editable-reset" : "ss-editable-reset"
-                    }
-                >
-                    <BlockRenderer
-                        block={item}
-                        styles={styles}
-                        isActive={isActive}
-                        editing={editingTarget === item.id}
-                        onEdit={onEditBlock}
-                    />
-                </button>
+                <React.Fragment key={key}>
+                    {onSelectBlock ? (
+                        <button
+                            type="button"
+                            data-edit-block-id={item.id}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onSelectBlock(item, event.currentTarget);
+                            }}
+                            className="ss-editable-object ss-editable-reset"
+                        >
+                            <BlockRenderer
+                                block={item}
+                                styles={styles}
+                                isActive={isActive}
+                                editing={editingTarget === item.id}
+                                onEdit={onEditBlock}
+                            />
+                        </button>
+                    ) : (
+                        <div className="ss-editable-reset">
+                            <BlockRenderer block={item} styles={styles} isActive={isActive} />
+                        </div>
+                    )}
+                </React.Fragment>
             ))}
         </div>
     );
@@ -516,6 +522,15 @@ export const SlideRenderer = React.memo(
         onEditBlock?: (block: SlideBlock) => void;
         editingTarget?: string;
     }) => {
+        if (isSceneSlide(slide)) {
+            return (
+                <SceneRenderer
+                    slide={slide}
+                    currentTemplate={currentTemplate}
+                    isActive={isActive}
+                />
+            );
+        }
         const template =
             AVAILABLE_TEMPLATES.find((item) => item.id === currentTemplate) ||
             AVAILABLE_TEMPLATES.find((item) => item.id === "corporate-blue");

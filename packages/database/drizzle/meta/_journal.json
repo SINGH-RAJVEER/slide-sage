@@ -57,6 +57,13 @@
             "when": 1782864000000,
             "tag": "0007_semantic_memory_vectors",
             "breakpoints": true
+        },
+        {
+            "idx": 8,
+            "version": "7",
+            "when": 1784937600000,
+            "tag": "0008_semantic_cache",
+            "breakpoints": true
         }
     ]
 }

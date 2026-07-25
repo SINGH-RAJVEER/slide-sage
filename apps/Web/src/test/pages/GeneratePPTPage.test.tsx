@@ -20,7 +20,6 @@ it("prefills a failed presentation prompt and generation options", () => {
                             tonality: "casual",
                             research_enabled: true,
                             theme: "nature-green",
-                            layout_preference: "image-led",
                         },
                     },
                 },
@@ -41,7 +40,6 @@ it("prefills a failed presentation prompt and generation options", () => {
     expect(view.getByText("Comprehensive")).toBeInTheDocument();
     expect(view.getByText("Casual")).toBeInTheDocument();
     expect(view.getByText("Nature Green")).toBeInTheDocument();
-    expect(view.getByText("Image-led")).toBeInTheDocument();
     expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
     expect(view.getByRole("button", { name: "Start Generating" })).not.toBeDisabled();
 });

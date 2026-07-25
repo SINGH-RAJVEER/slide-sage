@@ -4,6 +4,12 @@ import {
     type PresentationJSON,
     type PresentationMutation,
     type PresentationMutationRequest,
+    SCENE_ENGINE_VERSION,
+    SCENE_PRESENTATION_SCHEMA_VERSION,
+    type SceneGroupNode,
+    type SceneNode,
+    type SceneResponsiveProfile,
+    type SceneSlide,
     type Slide,
     type SlideBlock,
     THEME_IDS,
@@ -112,6 +118,71 @@ function normalizeSlide(value: unknown, index: number, used: Set<string>): Slide
     const raw = record(value);
     if (!raw) return null;
     const id = stableId(raw["id"], `slide-${index + 1}`, used);
+    if (raw["type"] === "scene") {
+        const root = normalizeSceneNode(raw["root"], `${id}-root`, 0);
+        if (!root || root.type !== "group") return null;
+        const variants = Array.isArray(raw["variants"])
+            ? raw["variants"]
+                  .slice(0, 4)
+                  .map(record)
+                  .filter((variant): variant is Record<string, unknown> => variant !== null)
+                  .map((variant) => {
+                      const profile = variant["profile"];
+                      if (
+                          profile !== "wide" &&
+                          profile !== "standard" &&
+                          profile !== "portrait" &&
+                          profile !== "compact"
+                      ) {
+                          return null;
+                      }
+                      const variantRoot = normalizeSceneNode(
+                          variant["root"],
+                          `${id}-${profile}-root`,
+                          0
+                      );
+                      const patches = Array.isArray(variant["patches"])
+                          ? variant["patches"]
+                                .slice(0, 120)
+                                .map(record)
+                                .filter((patch): patch is Record<string, unknown> => patch !== null)
+                                .filter((patch) => typeof patch["nodeId"] === "string")
+                                .map((patch) => ({
+                                    nodeId: String(patch["nodeId"]).slice(0, 120),
+                                    bounds: normalizeSceneRect(patch["bounds"]),
+                                    hidden:
+                                        typeof patch["hidden"] === "boolean"
+                                            ? patch["hidden"]
+                                            : undefined,
+                                    order: Number.isFinite(Number(patch["order"]))
+                                        ? Math.round(Number(patch["order"]))
+                                        : undefined,
+                                    style: record(patch["style"]) as SceneNode["style"],
+                                    size: record(patch["size"]) as SceneNode["size"],
+                                    grid: record(patch["grid"]) as SceneNode["grid"],
+                                }))
+                          : [];
+                      return {
+                          profile: profile as SceneResponsiveProfile,
+                          patches,
+                          ...(variantRoot?.type === "group" ? { root: variantRoot } : {}),
+                      };
+                  })
+                  .filter((variant): variant is NonNullable<typeof variant> => variant !== null)
+            : undefined;
+        return {
+            id,
+            type: "scene",
+            root,
+            variants,
+            strategy:
+                typeof raw["strategy"] === "string" ? raw["strategy"].slice(0, 100) : undefined,
+            semantic: record(raw["semantic"]) || undefined,
+            artDirection: record(raw["artDirection"]) as SceneSlide["artDirection"],
+            transition: normalizeTransition(raw["transition"]),
+            effects: normalizeEffects(raw["effects"]),
+        };
+    }
     if (typeof raw["html"] === "string") {
         return {
             id,
@@ -151,6 +222,166 @@ function normalizeSlide(value: unknown, index: number, used: Set<string>): Slide
     return common;
 }
 
+function normalizeSceneNode(value: unknown, fallbackId: string, depth: number): SceneNode | null {
+    if (depth > 12) return null;
+    const raw = record(value);
+    if (!raw) return null;
+    const type = raw["type"];
+    if (
+        type !== "group" &&
+        type !== "text" &&
+        type !== "image" &&
+        type !== "shape" &&
+        type !== "widget"
+    ) {
+        return null;
+    }
+    const base = {
+        id:
+            typeof raw["id"] === "string"
+                ? raw["id"].trim().slice(0, 120) || fallbackId
+                : fallbackId,
+        order: Number.isFinite(Number(raw["order"])) ? Math.round(Number(raw["order"])) : 0,
+        bounds: normalizeSceneRect(raw["bounds"]),
+        size: record(raw["size"]) as SceneNode["size"],
+        grid: record(raw["grid"]) as SceneNode["grid"],
+        zIndex: Number.isFinite(Number(raw["zIndex"]))
+            ? Math.round(Number(raw["zIndex"]))
+            : undefined,
+        rotation: Number.isFinite(Number(raw["rotation"])) ? Number(raw["rotation"]) : undefined,
+        hidden: raw["hidden"] === true,
+        optional: raw["optional"] === true,
+        sourceIds: Array.isArray(raw["sourceIds"])
+            ? raw["sourceIds"]
+                  .filter((item): item is string => typeof item === "string")
+                  .slice(0, 12)
+            : [],
+        ariaLabel:
+            typeof raw["ariaLabel"] === "string" ? raw["ariaLabel"].slice(0, 500) : undefined,
+        style: record(raw["style"]) as SceneNode["style"],
+    };
+    if (type === "group") {
+        const layout = raw["layout"];
+        const children = Array.isArray(raw["children"])
+            ? raw["children"]
+                  .slice(0, 120)
+                  .map((child, index) =>
+                      normalizeSceneNode(child, `${base.id}-${index + 1}`, depth + 1)
+                  )
+                  .filter((child): child is SceneNode => child !== null)
+            : [];
+        return {
+            ...base,
+            type,
+            layout:
+                layout === "absolute" || layout === "grid" || layout === "overlay"
+                    ? layout
+                    : "stack",
+            direction: raw["direction"] === "horizontal" ? "horizontal" : "vertical",
+            align:
+                raw["align"] === "center" || raw["align"] === "end" || raw["align"] === "stretch"
+                    ? raw["align"]
+                    : "start",
+            distribute:
+                raw["distribute"] === "center" ||
+                raw["distribute"] === "end" ||
+                raw["distribute"] === "space-between"
+                    ? raw["distribute"]
+                    : "start",
+            gap: Number.isFinite(Number(raw["gap"])) ? Math.max(0, Number(raw["gap"])) : 0,
+            padding: record(raw["padding"]) as SceneGroupNode["padding"],
+            columns: Array.isArray(raw["columns"])
+                ? raw["columns"]
+                      .filter((item): item is number => typeof item === "number")
+                      .slice(0, 12)
+                : undefined,
+            rows: Array.isArray(raw["rows"])
+                ? raw["rows"]
+                      .filter((item): item is number => typeof item === "number")
+                      .slice(0, 12)
+                : undefined,
+            clip: raw["clip"] === true,
+            children,
+        };
+    }
+    if (type === "text") {
+        const role = raw["role"];
+        return {
+            ...base,
+            type,
+            role:
+                role === "display" ||
+                role === "title" ||
+                role === "subtitle" ||
+                role === "caption" ||
+                role === "label"
+                    ? role
+                    : "body",
+            text: typeof raw["text"] === "string" ? raw["text"].slice(0, 20000) : "",
+            maxLines: Number.isFinite(Number(raw["maxLines"]))
+                ? Number(raw["maxLines"])
+                : undefined,
+            minFontSize: Number.isFinite(Number(raw["minFontSize"]))
+                ? Number(raw["minFontSize"])
+                : undefined,
+        };
+    }
+    if (type === "image") {
+        const url =
+            typeof raw["url"] === "string" && raw["url"].startsWith("https://")
+                ? raw["url"]
+                : undefined;
+        return {
+            ...base,
+            type,
+            url,
+            alt: typeof raw["alt"] === "string" ? raw["alt"].slice(0, 1000) : "Image",
+            caption: typeof raw["caption"] === "string" ? raw["caption"].slice(0, 1000) : "",
+            fit: raw["fit"] === "contain" ? "contain" : "cover",
+            focalPoint: record(raw["focalPoint"]) as { x: number; y: number } | undefined,
+        };
+    }
+    if (type === "shape") {
+        return {
+            ...base,
+            type,
+            shape:
+                raw["shape"] === "ellipse" || raw["shape"] === "line" ? raw["shape"] : "rectangle",
+        };
+    }
+    const kind = raw["kind"];
+    const validKinds = new Set([
+        "chart",
+        "table",
+        "stats",
+        "quote",
+        "callout",
+        "timeline",
+        "process",
+        "comparison",
+        "architecture",
+    ]);
+    if (typeof kind !== "string" || !validKinds.has(kind)) return null;
+    return {
+        ...base,
+        type,
+        kind: kind as Extract<SceneNode, { type: "widget" }>["kind"],
+        version: 1,
+        props: record(raw["props"]) || {},
+    };
+}
+
+function normalizeSceneRect(value: unknown) {
+    const raw = record(value);
+    if (!raw) return undefined;
+    return {
+        x: Number(raw["x"]) || 0,
+        y: Number(raw["y"]) || 0,
+        width: Math.max(0, Number(raw["width"]) || 0),
+        height: Math.max(0, Number(raw["height"]) || 0),
+    };
+}
+
 export function normalizePresentationDocument(value: unknown): PresentationJSON {
     const input = record(value) || {};
     const rawSlides = Array.isArray(input["slides"]) ? input["slides"] : [];
@@ -164,7 +395,16 @@ export function normalizePresentationDocument(value: unknown): PresentationJSON 
 
     return {
         ...input,
-        schemaVersion: PRESENTATION_SCHEMA_VERSION,
+        schemaVersion:
+            slides.length > 0 && slides.every((slide) => slide.type === "scene")
+                ? SCENE_PRESENTATION_SCHEMA_VERSION
+                : PRESENTATION_SCHEMA_VERSION,
+        engineVersion:
+            slides.length > 0 && slides.every((slide) => slide.type === "scene")
+                ? typeof input["engineVersion"] === "string"
+                    ? input["engineVersion"]
+                    : SCENE_ENGINE_VERSION
+                : undefined,
         title:
             typeof input["title"] === "string" && input["title"].trim()
                 ? input["title"].trim().slice(0, 240)

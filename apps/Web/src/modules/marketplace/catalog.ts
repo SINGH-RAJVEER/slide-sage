@@ -53,6 +53,7 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
             [
                 {
                     type: "stats",
+                    region: "main",
                     items: [
                         { label: "Activation", value: "+42%" },
                         { label: "Time saved", value: "18h" },
@@ -79,7 +80,12 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
             "A field report from the northern corridor",
             "two-column",
             [
-                { type: "callout", text: "64 hectares restored", region: "left" },
+                {
+                    type: "callout",
+                    heading: "Measured recovery",
+                    text: "64 hectares restored",
+                    region: "left",
+                },
                 {
                     type: "paragraph",
                     text: "Local stewardship changed the curve in under twelve months.",
@@ -108,6 +114,7 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
             [
                 {
                     type: "quote",
+                    region: "main",
                     text: "Build the company you would want to discover ten years from now.",
                     attribution: "2026 outlook",
                 },
@@ -133,6 +140,8 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
             [
                 {
                     type: "bullets",
+                    region: "main",
+                    ordered: false,
                     items: [
                         "Demand is durable",
                         "Margins are expanding",

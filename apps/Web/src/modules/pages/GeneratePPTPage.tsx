@@ -1,8 +1,4 @@
-import type {
-    PresentationLayoutPreference,
-    PresentationRetryOptions,
-    ThemeId,
-} from "@slide-sage/types";
+import type { PresentationRetryOptions, ThemeId } from "@slide-sage/types";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -35,9 +31,6 @@ export default function GeneratePPTPage() {
     const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
     const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
     const [theme, setTheme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
-    const [layoutPreference, setLayoutPreference] = useState<PresentationLayoutPreference>(
-        retry?.layout_preference ?? "auto",
-    );
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
 
@@ -114,7 +107,6 @@ export default function GeneratePPTPage() {
                     detailLevel,
                     tonality,
                     theme,
-                    layoutPreference,
                     retryPresentationId,
                 },
             });
@@ -130,7 +122,6 @@ export default function GeneratePPTPage() {
             undefined,
             retryPresentationId,
             theme,
-            layoutPreference,
         );
         navigate(ROUTES.presentation, {
             state: { isStreaming: true },
@@ -204,7 +195,6 @@ export default function GeneratePPTPage() {
                     slideCount={slideCount}
                     customSlideCount={customSlideCount}
                     theme={theme}
-                    layoutPreference={layoutPreference}
                     onDetailLevelChange={setDetailLevel}
                     onTonalityChange={setTonality}
                     onUseWebResearchChange={setUseWebResearch}
@@ -212,7 +202,6 @@ export default function GeneratePPTPage() {
                     onSlideCountChange={setSlideCount}
                     onCustomSlideCountChange={setCustomSlideCount}
                     onThemeChange={setTheme}
-                    onLayoutPreferenceChange={setLayoutPreference}
                 />
             </div>
 

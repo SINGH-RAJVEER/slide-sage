@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { normalizePresentationSlides, processSlide } from "../../services/ai/presentation-content";
+import { compilePresentationScenes } from "../../services/ai/presentation-design";
 import {
     buildGenerationMessages,
     buildIterationMessages,
@@ -174,21 +175,83 @@ describe("AI presentation content", () => {
     });
 });
 
+describe("AI presentation design", () => {
+    it("maps semantic intent to dynamic scenes and creates a visual placeholder", () => {
+        const slides = normalizePresentationSlides({
+            slides: [
+                {
+                    id: "slide-1",
+                    type: "content",
+                    layout: "content",
+                    title: "Opening",
+                    subtitle: "",
+                    blocks: [],
+                },
+                {
+                    id: "slide-2",
+                    type: "content",
+                    layout: "content",
+                    title: "Workflow",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "bullets",
+                            region: "main",
+                            items: ["Normalize input", "Draft cards"],
+                            ordered: true,
+                        },
+                    ],
+                },
+            ],
+        });
+        const designed = compilePresentationScenes(slides, {
+            title: "System",
+            audience: "Builders",
+            thesis: "A staged pipeline creates coherent decks.",
+            cards: [
+                {
+                    id: "card-1",
+                    title: "Opening",
+                    objective: "Introduce",
+                    keyPoints: [],
+                    narrativeRole: "opening",
+                    visualIntent: "none",
+                    sourceIds: [],
+                },
+                {
+                    id: "card-2",
+                    title: "Workflow",
+                    objective: "Explain the workflow",
+                    keyPoints: [],
+                    narrativeRole: "process",
+                    visualIntent: "image",
+                    sourceIds: [],
+                },
+            ],
+        });
+
+        expect(designed[0]?.strategy).toBe("typographic-cover");
+        expect(designed[1]?.strategy).toBe("media-left");
+        expect(
+            designed[1]?.root.children.some(
+                (node) =>
+                    node.type === "image" ||
+                    (node.type === "group" && node.children.some((child) => child.type === "image"))
+            )
+        ).toBe(true);
+    });
+});
+
 describe("AI presentation prompts", () => {
     it("requires content-only schema V3 output for generation and iteration", () => {
-        const generationPrompt = buildGenerationPrompt(
-            "balanced",
-            "professional",
-            "nature-green",
-            "image-led"
-        );
+        const generationPrompt = buildGenerationPrompt("balanced", "professional", "nature-green");
         const iterationPrompt = buildIterationPrompt("Improve the comparison");
 
         expect(generationPrompt).toContain('Set "schemaVersion" to 3');
         expect(generationPrompt).toContain("Never return HTML, Markdown, CSS, JSX, JavaScript");
         expect(generationPrompt).toContain('"type": "content"');
         expect(generationPrompt).toContain('theme to exactly "nature-green"');
-        expect(generationPrompt).toContain("Prefer image-right layouts");
+        expect(generationPrompt).toContain("Vary layouts naturally");
         expect(generationPrompt).toContain("image-placeholder");
         expect(iterationPrompt).toContain("Always output schema version 3");
         expect(iterationPrompt).toContain("Improve the comparison");

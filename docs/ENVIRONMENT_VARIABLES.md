@@ -46,6 +46,11 @@ reload `.env`, preventing its development command from reverting to the default 
 | `SSE_KEEPALIVE_INTERVAL_MS` | No | `10000` | Interval for downstream SSE keepalive comments during slow generation |
 | `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
+| `SEMANTIC_CACHE_MODE` | No | `serve` | Semantic cache behavior: `serve`, `shadow`, or `off` |
+| `SEARCH_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared search results |
+| `OUTLINE_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared presentation outlines |
+| `SEARCH_CACHE_TTL_SECONDS` | No | Freshness-dependent | Override search-result cache lifetime |
+| `OUTLINE_CACHE_TTL_SECONDS` | No | `604800` | Shared outline cache lifetime |
 
 Presentation requests use OpenRouter strict JSON Schema output and require a provider that supports the requested parameters. OpenRouter provider fallback remains enabled so transient provider outages can route to another compatible endpoint. The default model incurs OpenRouter usage charges; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required.
 

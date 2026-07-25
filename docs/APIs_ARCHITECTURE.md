@@ -52,10 +52,9 @@ owning modules.
 
 ## Presentation Flow
 
-1. The web app submits generation settings, a built-in theme, a presentation-wide
-   layout preference, and optional research filters. Layout preferences bias the
-   model toward automatic, content-focused, two-column, image-led, or data-led
-   composition without exposing arbitrary layout code.
+1. The web app submits generation settings, a built-in theme, and optional
+   research filters. Layout and composition are selected automatically from each
+   slide's content and narrative purpose.
 2. When research is enabled, the app-level streaming provider waits on a
    dedicated preview state while Exa sources load. The source preview remains
    visible for review, the request continues if the user leaves the research
@@ -63,11 +62,21 @@ owning modules.
    disabled until that request finishes.
 3. RAG retrieves relevant deck, slide, style, feedback, template, and source
    context from PostgreSQL.
-4. OpenRouter produces schema-versioned presentation events. The model returns
-   semantic content using the supported slide layouts and content blocks; it does
-   not return HTML, CSS, component code, or arbitrary styling.
-5. The API streams `created`, generation progress, `saved`, or `error` events.
-6. A completed deck and its semantic memories are persisted through Drizzle. A
+4. The API checks the shared pgvector outline cache using the topic and exact
+   generation constraints. On a miss, OpenRouter produces a semantic outline with
+   one objective, narrative role, visual intent, and source references per card.
+   A second constrained call always drafts one slide per outline card. Shared
+   outline planning excludes user-scoped generation memory; live drafting keeps
+   that personalized context. The outline is persisted with the deck so later
+   tools can understand the intended story instead of reconstructing it from
+   rendered content.
+5. A deterministic design pass maps narrative and visual intent to the bounded
+   layout system, normalizes block regions, and reserves image placeholders when
+   an image-led card has no grounded asset. The model does not return HTML, CSS,
+   component code, or arbitrary styling.
+6. The API streams `created`, `stage`, `outline`, slide progress, `saved`, or
+   `error` events.
+7. A completed deck and its semantic memories are persisted through Drizzle. A
    failed generation keeps the initial row and replaces its placeholder data with
    an uncharged failed-state payload containing the prompt, options, error, and
    any research sources collected before failure.
@@ -100,7 +109,7 @@ owning modules.
 
 ### Presentation Document
 
-New presentations use schema version `2`. A content slide chooses one of the
+New presentations use schema version `3`. A content slide chooses one of the
 `title`, `content`, `two-column`, `quote`, or `image-right` layouts and contains
 bounded paragraph, bullet, table, image, image-placeholder, quote, callout, or
 statistic blocks. Image placeholders reserve a stable visual area and describe
@@ -116,13 +125,19 @@ HTML decks are parsed as inert documents by a compatibility adapter that extract
 only text, known semantic elements, and HTTPS images before passing the result to
 the same component renderer. New decks never enter this legacy path.
 
-Generation exposes separate theme and layout-preference dropdowns. The viewer
-exposes separate theme and current-slide layout dropdowns; changing to the
-image-right layout creates a structured image placeholder when the slide has no
-visual block. That layout-owned placeholder is removed when the slide returns to
-a single-column layout, while authored placeholders and real images remain.
-Viewer changes update the active deck model immediately and are included in the
-current PowerPoint export.
+Generation exposes a theme dropdown while the scene pipeline chooses composition
+automatically. The viewer retains its current-slide layout dropdown for compatible
+schema-v3 content slides; changing to the image-right layout creates a structured
+image placeholder when the slide has no visual block. That layout-owned
+placeholder is removed when the slide returns to a single-column layout, while
+authored placeholders and real images remain. Viewer changes update the active
+deck model immediately and are included in the current PowerPoint export.
+
+The viewer supports Arrow Left/Right and J/L for previous/next navigation, with
+Arrow Up/Down jumping to the first/last slide. Holding a navigation key follows
+a viewer-controlled cadence: the first repeat occurs after 250 milliseconds,
+then navigation advances every 120 milliseconds until key release or focus
+loss. Keyboard navigation remains disabled while typing in editable controls.
 
 ### Presentation Downloads
 
@@ -173,6 +188,7 @@ semantic-memory tables:
 - `style_memories`
 - `feedback_memories`
 - `semantic_commands`
+- `semantic_cache_entries`
 
 The public schema entry point remains `packages/database/src/db/schema.ts`. It
 re-exports domain modules from `packages/database/src/db/schema/`: authentication,
@@ -190,6 +206,40 @@ supporting `services/ai/` modules separately own message construction, research
 source resolution, presentation-content normalization, and resilient OpenRouter
 stream orchestration. Keep provider transport and retry behavior out of the
 facade so generation and iteration share one streaming implementation.
+
+The staged generation modules also separate outline generation from deterministic
+design. `presentation-outline.ts` owns the planning schema and normalization;
+`presentation-design.ts` owns content-aware layout selection without another
+model call. This is intentionally a hybrid pipeline: AI controls meaning and
+narrative while application code controls renderable composition.
+
+The route persists the canonical completed generation document rather than
+reconstructing a fixed subset of its fields. This preserves the outline,
+dimensions, and future composition metadata. Incremental slide events are
+upserted by index in both the API and web client so a later compiled revision can
+replace an earlier draft without duplicating the slide.
+
+New generation compiles semantic model output into schema-version-4 scene slides.
+The scene graph supports nested stack, grid, overlay, and absolute composition,
+responsive profile variants, validated versioned widgets, and bounded per-slide
+art direction. The model never emits executable components, HTML, CSS, or raw
+geometry. A deterministic compiler selects and authors the scene from narrative
+role, visual intent, semantic blocks, available assets, and slide position.
+
+The shared scene engine resolves authored constraints into canonical geometry for
+the React renderer and PowerPoint exporter. Scene documents pass through explicit
+normalization rather than the legacy block normalizer, and existing schema-v3
+slides remain supported as compatibility inputs. Scene editing uses immutable,
+replayable commands for text, style, geometry, node insertion/deletion/reordering,
+and responsive overrides.
+
+Scene presentations use document schema version `4` and include the pinned scene
+engine version plus explicit canvas dimensions. Schema-version-3 documents remain
+readable as compatibility input. Streaming and persistence preserve the same
+canonical document metadata, while iteration always receives the authoritative
+current deck and returns scene slides through the same outline and compiler path.
+Responsive variant patches and group alignment settings survive normalization and
+mutation round trips.
 
 ## Web Routing
 
