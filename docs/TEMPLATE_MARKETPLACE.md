@@ -33,6 +33,10 @@ from renderer IDs so future catalog records cannot bypass presentation validatio
 themes require a versioned format shared by the web renderer, API validation, generation schema, and
 PowerPoint export.
 
+Preview rendering is noninteractive. Content blocks use plain containers unless the viewer supplies
+an editing callback, preventing editor controls from being nested inside the marketplace preview
+button while retaining the same visual renderer.
+
 Installed marketplace themes remain named entries in the dropdown but resolve to their supported
 base `ThemeId` when selected. This keeps generation, persistence, and export validation intact.
 

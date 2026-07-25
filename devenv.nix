@@ -64,9 +64,13 @@ in
             exec = ''
                 DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun --cwd apps/APIs --watch src/index.ts
             '';
+            cwd = ".";
             after = [ "db:migrate" ];
         };
-        web.exec = "bun run dev:web";
+        web = {
+            exec = "bun run dev:web";
+            cwd = ".";
+        };
     };
 
     env = {

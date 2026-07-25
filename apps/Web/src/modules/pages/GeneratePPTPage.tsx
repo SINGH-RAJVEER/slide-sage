@@ -1,7 +1,6 @@
 import type {
     AIConfigurationResponse,
     AIModelSelection,
-    PresentationLayoutPreference,
     PresentationRetryOptions,
     ThemeId,
 } from "@slide-sage/types";
@@ -38,9 +37,6 @@ export default function GeneratePPTPage() {
     const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
     const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
     const [theme, setTheme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
-    const [layoutPreference, setLayoutPreference] = useState<PresentationLayoutPreference>(
-        retry?.layout_preference ?? "auto",
-    );
     const [aiConfig, setAIConfig] = useState<AIConfigurationResponse | null>(null);
     const [aiSelection, setAISelection] = useState<AIModelSelection | null>(retry?.ai ?? null);
     const navigate = useNavigate();
@@ -133,7 +129,6 @@ export default function GeneratePPTPage() {
                     detailLevel,
                     tonality,
                     theme,
-                    layoutPreference,
                     retryPresentationId,
                     ai: aiSelection,
                 },
@@ -150,7 +145,6 @@ export default function GeneratePPTPage() {
             undefined,
             retryPresentationId,
             theme,
-            layoutPreference,
             aiSelection ?? undefined,
         );
         navigate(ROUTES.presentation, {
@@ -227,7 +221,6 @@ export default function GeneratePPTPage() {
                     slideCount={slideCount}
                     customSlideCount={customSlideCount}
                     theme={theme}
-                    layoutPreference={layoutPreference}
                     onDetailLevelChange={setDetailLevel}
                     onTonalityChange={setTonality}
                     onUseWebResearchChange={setUseWebResearch}
@@ -235,7 +228,6 @@ export default function GeneratePPTPage() {
                     onSlideCountChange={setSlideCount}
                     onCustomSlideCountChange={setCustomSlideCount}
                     onThemeChange={setTheme}
-                    onLayoutPreferenceChange={setLayoutPreference}
                     onAISelectionChange={handleAISelectionChange}
                 />
             </div>

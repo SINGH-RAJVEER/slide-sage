@@ -10,7 +10,7 @@
         "build": "bun run build:web",
         "build:web": "bun --cwd apps/Web build",
         "deploy:apis": "bun --cwd apps/APIs deploy",
-        "dev": "just apps",
+        "dev": "just dev",
         "dev:stream": "bun run dev",
         "dev:apis": "bun --cwd apps/APIs dev",
         "dev:web": "bun --cwd apps/Web dev",

@@ -10,11 +10,13 @@ import {
     type ContentSlide,
     isChartSlide,
     isLegacyHtmlSlide,
+    isSceneSlide,
     type Slide,
     type SlideBlock,
     type SlideRegion,
 } from "@/modules/types/presentation";
 import { AVAILABLE_TEMPLATES, type TemplateStyles } from "@/modules/types/template";
+import { SceneRenderer } from "./SceneRenderer";
 
 function keyed<T>(items: T[], keyFor: (item: T) => string): Array<{ item: T; key: string }> {
     const occurrences = new Map<string, number>();
@@ -665,6 +667,15 @@ export const SlideRenderer = React.memo(
         onEditBlock?: (block: SlideBlock) => void;
         editingTarget?: string;
     }) => {
+        if (isSceneSlide(slide)) {
+            return (
+                <SceneRenderer
+                    slide={slide}
+                    currentTemplate={currentTemplate}
+                    isActive={isActive}
+                />
+            );
+        }
         const template =
             AVAILABLE_TEMPLATES.find((item) => item.id === currentTemplate) ||
             AVAILABLE_TEMPLATES.find((item) => item.id === "corporate-blue");

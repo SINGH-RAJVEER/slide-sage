@@ -16,6 +16,7 @@ const presentationRepository = {
 };
 
 const presentationService = {
+    calculateActualTokenCost: mock(),
     calculateEstimatedTokens: mock(),
     deletePresentation: mock(),
     generatePresentationStream: mock(),
@@ -80,6 +81,7 @@ mock.module("@slide-sage/database", () => ({
 
 mock.module("../../services/presentation.service", () => ({
     PresentationService: class {
+        calculateActualTokenCost = presentationService.calculateActualTokenCost;
         calculateEstimatedTokens = presentationService.calculateEstimatedTokens;
         deletePresentation = presentationService.deletePresentation;
         generatePresentationStream = presentationService.generatePresentationStream;
@@ -124,6 +126,13 @@ async function* successfulStream() {
             tokens_used: 100,
             slides: [{ id: "slide_1", type: "content", title: "Intro", content: "Hello" }],
             sources: [{ url: "https://example.com", title: "Example" }],
+            dimensions: { width: 1600, height: 900 },
+            outline: {
+                title: "Quarterly Plan",
+                audience: "Leadership",
+                thesis: "Focus the quarter on execution.",
+                cards: [],
+            },
         },
     };
 }
@@ -137,6 +146,7 @@ describe("presentation routes", () => {
         presentationRepository.update.mockReset();
         presentationRepository.updateOwnedAtRevision.mockReset();
         presentationService.calculateEstimatedTokens.mockReset();
+        presentationService.calculateActualTokenCost.mockReset();
         presentationService.deletePresentation.mockReset();
         presentationService.generatePresentationStream.mockReset();
         presentationService.getPresentation.mockReset();
@@ -149,6 +159,10 @@ describe("presentation routes", () => {
         aiConnectionService.markUsed.mockReset();
 
         presentationService.calculateEstimatedTokens.mockReturnValue(3);
+        presentationService.calculateActualTokenCost.mockImplementation(
+            (tokensUsed: number, quote: number) =>
+                tokensUsed > 0 ? Math.min(quote, tokensUsed / 1000) : quote
+        );
         userRepository.hasSufficientTokens.mockResolvedValue({
             sufficient: true,
             user: { slideTokens: 20 },
@@ -211,7 +225,7 @@ describe("presentation routes", () => {
                 detail_level: "balanced",
                 tonality: "professional",
                 theme: "nature-green",
-                layout_preference: "image-led",
+                research: { enabled: true },
                 research_payload: {
                     sources: [{ url: " https://example.com ", title: "Example" }],
                 },
@@ -235,15 +249,31 @@ describe("presentation routes", () => {
                 title: "Generating...",
             }
         );
-        expect(presentationUpdates[0]?.id).toBe("presentation_1");
+        const finalUpdate = presentationUpdates.find(({ updates }) => "slidesData" in updates);
+        expect(finalUpdate?.id).toBe("presentation_1");
+        expect(finalUpdate?.updates).toEqual(
+            expect.objectContaining({
+                slidesData: expect.objectContaining({
+                    dimensions: { width: 1600, height: 900 },
+                    outline: expect.objectContaining({ audience: "Leadership" }),
+                }),
+            })
+        );
         expect(presentationService.generatePresentationStream).toHaveBeenCalledWith(
             expect.objectContaining({
                 theme: "nature-green",
-                layoutPreference: "image-led",
             })
         );
-        expect(presentationService.calculateEstimatedTokens).not.toHaveBeenCalled();
-        expect(userRepository.deductTokens).not.toHaveBeenCalled();
+        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
+            3,
+            "balanced",
+            "professional",
+            "Quarterly planning",
+            { sources: [{ url: "https://example.com", title: "Example" }] }
+        );
+        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
+        expect(body).toContain('"slide_tokens_charged":3');
+        expect(aiConnectionService.markUsed).toHaveBeenCalledWith(currentUserId, "openai");
         expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
             expect.objectContaining({
                 presentationId: "presentation_1",
@@ -378,7 +408,6 @@ describe("presentation routes", () => {
                             tonality: "persuasive",
                             research_enabled: true,
                             theme: "corporate-blue",
-                            layout_preference: "auto",
                             ai: {
                                 provider: "openai",
                                 model: "gpt-4.1",
@@ -444,6 +473,39 @@ describe("presentation routes", () => {
         expect(finalUpdate.slidesData?.schemaVersion).toBe(5);
         expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
         expect(userRepository.deductTokens).not.toHaveBeenCalled();
+    });
+
+    it("upserts streamed slides by index before persistence", async () => {
+        presentationService.generatePresentationStream.mockImplementation(async function* () {
+            yield {
+                event: "slide",
+                data: { slide: { id: "draft", type: "content", html: "Draft" }, index: 0 },
+            };
+            yield {
+                event: "slide",
+                data: { slide: { id: "final", type: "content", html: "Final" }, index: 0 },
+            };
+            yield {
+                event: "complete",
+                data: {
+                    title: "Upserted",
+                    theme: "modern",
+                    slides: [{ id: "final", type: "content", html: "Final" }],
+                },
+            };
+        });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic: "Upsert slides", slide_count: 1 }),
+        });
+
+        expect(response.status).toBe(200);
+        await text(response);
+        const update = presentationUpdates.find(({ updates }) => "slidesData" in updates)
+            ?.updates as { slidesData?: { slides?: Array<{ id?: string }> } } | undefined;
+        expect(update?.slidesData?.slides?.map((slide) => slide.id)).toEqual(["final"]);
     });
 
     it("researches presentation topics and returns sources", async () => {

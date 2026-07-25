@@ -5,7 +5,8 @@ import { API_URL, readJsonResponse } from "@/lib/api";
 import { publishPresentationUpdated } from "@/lib/presentation-events";
 import type {
     PresentationData,
-    PresentationLayoutPreference,
+    PresentationGenerationStage,
+    PresentationOutline,
     ResearchPayload,
     Slide,
     Source,
@@ -26,6 +27,11 @@ export interface StreamingState {
     isComplete: boolean;
     researchSources?: Source[];
     researchStatus?: "idle" | "searching" | "ready" | "generating";
+    generationStage?: PresentationGenerationStage;
+    generationMessage?: string;
+    generationProgress?: { completed: number; total: number };
+    outline?: PresentationOutline;
+    completedDocument?: PresentationData;
 }
 
 type ResearchPreviewStatus = "idle" | "loading" | "ready" | "error";
@@ -62,7 +68,6 @@ interface StreamingContextValue {
         researchPayload?: ResearchPayload,
         retryPresentationId?: string,
         theme?: ThemeId,
-        layoutPreference?: PresentationLayoutPreference,
         ai?: AIModelSelection,
     ) => Promise<boolean>;
     startIterating: (
@@ -308,6 +313,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
     const getPresentation = useCallback((): PresentationData | null => {
         if (streamingState.slides.length === 0) return null;
         return {
+            ...streamingState.completedDocument,
             title: streamingState.title,
             theme: streamingState.theme,
             slides: streamingState.slides,
@@ -325,7 +331,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             researchPayload?: ResearchPayload,
             retryPresentationId?: string,
             theme: ThemeId = "corporate-blue",
-            layoutPreference: PresentationLayoutPreference = "auto",
             ai?: AIModelSelection,
         ): Promise<boolean> => {
             if (activeStreamRef.current) return false;
@@ -363,7 +368,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                         research_payload: researchPayload,
                         retry_presentation_id: retryPresentationId,
                         theme,
-                        layout_preference: layoutPreference,
                         ai,
                     }),
                     signal: abortControllerRef.current.signal,
@@ -488,6 +492,26 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 }));
                                                 break;
 
+                                            case "stage":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    generationStage: data.stage,
+                                                    generationMessage: data.message,
+                                                    generationProgress: {
+                                                        completed: data.completed,
+                                                        total: data.total,
+                                                    },
+                                                }));
+                                                break;
+
+                                            case "outline":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    outline: data,
+                                                    title: data.title || prev.title,
+                                                }));
+                                                break;
+
                                             case "created":
                                                 // Presentation record created - store the ID immediately
                                                 setStreamingState((prev) => ({
@@ -517,7 +541,20 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "slide":
                                                 setStreamingState((prev) => {
-                                                    const newSlides = [...prev.slides, data.slide];
+                                                    const newSlides = [...prev.slides];
+                                                    const index = Number(data.index);
+                                                    if (Number.isInteger(index) && index >= 0) {
+                                                        newSlides[index] = data.slide;
+                                                    } else {
+                                                        const existingIndex = newSlides.findIndex(
+                                                            (slide) => slide.id === data.slide.id,
+                                                        );
+                                                        if (existingIndex >= 0) {
+                                                            newSlides[existingIndex] = data.slide;
+                                                        } else {
+                                                            newSlides.push(data.slide);
+                                                        }
+                                                    }
                                                     console.log(
                                                         "Adding slide",
                                                         data.slide.id,
@@ -537,6 +574,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 receivedComplete = true;
                                                 setStreamingState((prev) => ({
                                                     ...prev,
+                                                    completedDocument: data,
                                                     isComplete: true,
                                                     theme: data.theme || prev.theme,
                                                     title: data.title || prev.title,
@@ -816,6 +854,26 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 }));
                                                 break;
 
+                                            case "stage":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    generationStage: data.stage,
+                                                    generationMessage: data.message,
+                                                    generationProgress: {
+                                                        completed: data.completed,
+                                                        total: data.total,
+                                                    },
+                                                }));
+                                                break;
+
+                                            case "outline":
+                                                setStreamingState((prev) => ({
+                                                    ...prev,
+                                                    outline: data,
+                                                    title: data.title || prev.title,
+                                                }));
+                                                break;
+
                                             case "theme":
                                                 setStreamingState((prev) => ({
                                                     ...prev,
@@ -837,7 +895,20 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "slide":
                                                 setStreamingState((prev) => {
-                                                    const newSlides = [...prev.slides, data.slide];
+                                                    const newSlides = [...prev.slides];
+                                                    const index = Number(data.index);
+                                                    if (Number.isInteger(index) && index >= 0) {
+                                                        newSlides[index] = data.slide;
+                                                    } else {
+                                                        const existingIndex = newSlides.findIndex(
+                                                            (slide) => slide.id === data.slide.id,
+                                                        );
+                                                        if (existingIndex >= 0) {
+                                                            newSlides[existingIndex] = data.slide;
+                                                        } else {
+                                                            newSlides.push(data.slide);
+                                                        }
+                                                    }
                                                     console.log(
                                                         "Adding slide",
                                                         data.slide.id,
@@ -857,6 +928,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 receivedComplete = true;
                                                 setStreamingState((prev) => ({
                                                     ...prev,
+                                                    completedDocument: data,
                                                     isComplete: true,
                                                     theme: data.theme || prev.theme,
                                                     title: data.title || prev.title,

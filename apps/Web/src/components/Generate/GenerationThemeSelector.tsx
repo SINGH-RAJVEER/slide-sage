@@ -22,6 +22,7 @@ const THEMES: Array<{
     { id: "elegant-serif", label: "Elegant Serif", colors: ["#f5f5f4", "#292524", "#78716c"] },
     { id: "nature-green", label: "Nature Green", colors: ["#f0fdf4", "#15803d", "#22c55e"] },
 ];
+const DEFAULT_THEME = THEMES[0] as (typeof THEMES)[number];
 
 interface GenerationThemeSelectorProps {
     theme: ThemeId;
@@ -36,11 +37,12 @@ export const GenerationThemeSelector: React.FC<GenerationThemeSelectorProps> = (
     const installedOptions = installedThemes.map((item) => ({
         id: item.themeId,
         label: item.name,
-        colors: THEMES.find((themeOption) => themeOption.id === item.themeId)?.colors ||
-            THEMES[0]?.colors || ["#0f172a", "#38bdf8", "#818cf8"],
+        colors:
+            THEMES.find((themeOption) => themeOption.id === item.themeId)?.colors ||
+            DEFAULT_THEME.colors,
         marketplaceId: item.marketplaceId,
     }));
-    const selected = THEMES.find((item) => item.id === theme) || THEMES[0];
+    const selected = THEMES.find((item) => item.id === theme) || DEFAULT_THEME;
 
     return (
         <DropdownMenu>

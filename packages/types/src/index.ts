@@ -19,6 +19,42 @@ export interface ChartConfig {
 
 export const PRESENTATION_SCHEMA_VERSION = 5 as const;
 
+export type {
+    ResolvedScene,
+    ResolvedSceneNode,
+    SceneAlignment,
+    SceneArtDirection,
+    SceneChartWidgetProps,
+    SceneDiagnostic,
+    SceneDirection,
+    SceneDistribution,
+    SceneGridPlacement,
+    SceneGroupNode,
+    SceneImageNode,
+    SceneInsets,
+    SceneLayoutMode,
+    SceneNode,
+    SceneNodeBase,
+    SceneNodePatch,
+    SceneNodeStyle,
+    ScenePresentationDocument,
+    SceneRect,
+    SceneResponsiveProfile,
+    SceneShapeNode,
+    SceneSizeConstraint,
+    SceneSlide,
+    SceneTextNode,
+    SceneTextRole,
+    SceneThemeTokens,
+    SceneVariant,
+    SceneWidgetKind,
+    SceneWidgetNode,
+} from "./scene";
+export { SCENE_ENGINE_VERSION, SCENE_PRESENTATION_SCHEMA_VERSION } from "./scene";
+export type { SceneCommand } from "./scene-commands";
+export { applySceneCommand, findSceneNode, invertSceneCommand } from "./scene-commands";
+export { resolveScene, sceneForProfile, slideToScene, validateSceneSlide } from "./scene-engine";
+
 export interface PresentationDimensions {
     width: number;
     height: number;
@@ -50,15 +86,55 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const PRESENTATION_LAYOUT_PREFERENCES = [
-    "auto",
-    "content",
-    "two-column",
-    "image-led",
-    "data-led",
+export const PRESENTATION_NARRATIVE_ROLES = [
+    "opening",
+    "context",
+    "problem",
+    "insight",
+    "solution",
+    "evidence",
+    "comparison",
+    "process",
+    "recommendation",
+    "closing",
 ] as const;
 
-export type PresentationLayoutPreference = (typeof PRESENTATION_LAYOUT_PREFERENCES)[number];
+export type PresentationNarrativeRole = (typeof PRESENTATION_NARRATIVE_ROLES)[number];
+
+export const PRESENTATION_VISUAL_INTENTS = [
+    "none",
+    "image",
+    "chart",
+    "table",
+    "quote",
+    "stats",
+] as const;
+
+export type PresentationVisualIntent = (typeof PRESENTATION_VISUAL_INTENTS)[number];
+
+export interface PresentationOutlineCard {
+    id: string;
+    title: string;
+    objective: string;
+    keyPoints: string[];
+    narrativeRole: PresentationNarrativeRole;
+    visualIntent: PresentationVisualIntent;
+    sourceIds: string[];
+}
+
+export interface PresentationOutline {
+    title: string;
+    audience: string;
+    thesis: string;
+    cards: PresentationOutlineCard[];
+}
+
+export type PresentationGenerationStage =
+    | "researching"
+    | "planning"
+    | "drafting"
+    | "designing"
+    | "finalizing";
 
 export const SLIDE_LAYOUTS = [
     "cover",
@@ -258,18 +334,22 @@ export interface ChartSlide extends BaseSlide {
 }
 
 export type StructuredSlide = ContentSlide | ChartSlide;
-export type Slide = StructuredSlide | LegacyHtmlSlide;
+export type Slide = StructuredSlide | LegacyHtmlSlide | import("./scene").SceneSlide;
+
+export function isSceneSlide(slide: Slide): slide is import("./scene").SceneSlide {
+    return slide.type === "scene";
+}
 
 export function isLegacyHtmlSlide(slide: Slide): slide is LegacyHtmlSlide {
-    return "html" in slide;
+    return slide.type !== "scene" && "html" in slide;
 }
 
 export function isChartSlide(slide: Slide): slide is ChartSlide {
-    return !isLegacyHtmlSlide(slide) && slide.type === "chart";
+    return !isSceneSlide(slide) && !isLegacyHtmlSlide(slide) && slide.type === "chart";
 }
 
 export function isContentSlide(slide: Slide): slide is ContentSlide {
-    return !isLegacyHtmlSlide(slide) && slide.type === "content";
+    return !isSceneSlide(slide) && !isLegacyHtmlSlide(slide) && slide.type === "content";
 }
 
 export interface Source {
@@ -352,6 +432,9 @@ export interface PresentationData {
     totalSlides: number;
     sources?: Source[];
     tokens_used?: number;
+    engineVersion?: string;
+    outline?: PresentationOutline;
+    outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 }
 
 export type PresentationStatus = "ready" | "failed";
@@ -363,7 +446,6 @@ export interface PresentationRetryOptions {
     tonality: string;
     research_enabled: boolean;
     theme?: ThemeId;
-    layout_preference?: PresentationLayoutPreference;
     research_payload?: ResearchPayload;
     ai?: AIModelSelection;
 }
@@ -384,6 +466,8 @@ export interface PresentationJSON {
     totalSlides?: number;
     tokens_used?: number;
     sources?: Source[];
+    outline?: PresentationOutline;
+    outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
     [key: string]: unknown;
 }
 
@@ -425,6 +509,21 @@ export interface StreamResearchEvent {
     };
 }
 
+export interface StreamStageEvent {
+    event: "stage";
+    data: {
+        stage: PresentationGenerationStage;
+        message: string;
+        completed: number;
+        total: number;
+    };
+}
+
+export interface StreamOutlineEvent {
+    event: "outline";
+    data: PresentationOutline;
+}
+
 export interface StreamSlideEvent {
     event: "slide";
     data: {
@@ -451,7 +550,12 @@ export interface StreamCompleteEvent {
 
 export interface StreamSavedEvent {
     event: "saved";
-    data: { presentation_id: string | number };
+    data: {
+        presentation_id: string | number;
+        success?: boolean;
+        slide_tokens_remaining?: number | null;
+        slide_tokens_charged?: number;
+    };
 }
 
 export interface StreamErrorEvent {
@@ -468,6 +572,8 @@ export type PresentationStreamEvent =
     | StreamStartEvent
     | StreamCreatedEvent
     | StreamResearchEvent
+    | StreamStageEvent
+    | StreamOutlineEvent
     | StreamThemeEvent
     | StreamRetryEvent
     | StreamSlideEvent

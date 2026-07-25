@@ -5,9 +5,8 @@ import { fireEvent, render } from "@testing-library/react";
 import { GenerateOptionsBar } from "@/components/Generate";
 
 describe("GenerateOptionsBar", () => {
-    it("changes theme and layout preference from separate dropdowns", () => {
+    it("changes the generation theme", () => {
         const onThemeChange = mock();
-        const onLayoutPreferenceChange = mock();
         const view = render(
             <GenerateOptionsBar
                 aiConfig={null}
@@ -19,7 +18,6 @@ describe("GenerateOptionsBar", () => {
                 slideCount="5"
                 customSlideCount="5"
                 theme="corporate-blue"
-                layoutPreference="auto"
                 onDetailLevelChange={mock()}
                 onTonalityChange={mock()}
                 onUseWebResearchChange={mock()}
@@ -27,7 +25,6 @@ describe("GenerateOptionsBar", () => {
                 onSlideCountChange={mock()}
                 onCustomSlideCountChange={mock()}
                 onThemeChange={onThemeChange}
-                onLayoutPreferenceChange={onLayoutPreferenceChange}
                 onAISelectionChange={mock()}
             />,
         );
@@ -38,12 +35,5 @@ describe("GenerateOptionsBar", () => {
         });
         fireEvent.click(view.getByRole("menuitem", { name: "Nature Green" }));
         expect(onThemeChange).toHaveBeenCalledWith("nature-green");
-
-        fireEvent.pointerDown(view.getByRole("button", { name: /Layout: Auto mix/ }), {
-            button: 0,
-            ctrlKey: false,
-        });
-        fireEvent.click(view.getByRole("menuitem", { name: /Image-led/ }));
-        expect(onLayoutPreferenceChange).toHaveBeenCalledWith("image-led");
     });
 });

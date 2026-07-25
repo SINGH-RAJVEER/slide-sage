@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import IterateModal from "@/components/Viewer/IterateModal";
-import { useAuth } from "@/contexts/AuthContext";
 import { useAutoHideControls } from "@/hooks/useAutoHideControls";
 import { useFullscreenMode } from "@/hooks/useFullscreenMode";
 import { usePlayback } from "@/hooks/usePlayback";
@@ -20,7 +19,7 @@ import { applySlideLayout } from "@/lib/slide-layout";
 import { useStreaming } from "@/modules/contexts/StreamingContext";
 import {
     type ContentSlide,
-    isChartSlide,
+    isContentSlide,
     isLegacyHtmlSlide,
     type PresentationData,
     type SlideLayout,
@@ -43,22 +42,6 @@ export default function PresentationViewerPage() {
     const navigate = useNavigate();
     const params = useParams();
     const { streamingState, getPresentation, startIterating } = useStreaming();
-    const { refreshSession } = useAuth();
-
-    // Points are deducted server-side when a generation/iteration finishes; re-sync the
-    // session on each streaming->complete transition so the balance shown in the header (and
-    // everywhere reading useAuth) reflects the new total — including after re-iterating.
-    const wasStreamingForBalanceRef = useRef(streamingState.isStreaming);
-    useEffect(() => {
-        const finishedStreaming =
-            wasStreamingForBalanceRef.current &&
-            !streamingState.isStreaming &&
-            streamingState.isComplete;
-        wasStreamingForBalanceRef.current = streamingState.isStreaming;
-        if (finishedStreaming) {
-            void refreshSession();
-        }
-    }, [streamingState.isStreaming, streamingState.isComplete, refreshSession]);
     const { currentTemplate, changeTemplate } = useTemplate();
 
     const locationState = location.state as ViewerLocationState | undefined;
@@ -274,13 +257,27 @@ export default function PresentationViewerPage() {
             totalSlides: 0,
         } satisfies PresentationData);
     const hasSlides = viewerPresentation.slides.length > 0;
+    const generationMessage =
+        streamingState.generationMessage ||
+        (streamingState.researchStatus === "searching"
+            ? "Finding relevant sources"
+            : "Preparing your presentation");
+    const generationPercent = Math.min(
+        100,
+        Math.max(
+            0,
+            ((streamingState.generationProgress?.completed || 0) /
+                Math.max(1, streamingState.generationProgress?.total || 4)) *
+                100,
+        ),
+    );
     const activeSlide = viewerPresentation.slides[navigation.currentSlide];
     const activeContentSlide =
-        activeSlide && !isChartSlide(activeSlide)
-            ? isLegacyHtmlSlide(activeSlide)
-                ? adaptLegacyHtmlSlide(activeSlide)
-                : activeSlide
-            : undefined;
+        activeSlide && isContentSlide(activeSlide)
+            ? activeSlide
+            : activeSlide && isLegacyHtmlSlide(activeSlide)
+              ? adaptLegacyHtmlSlide(activeSlide)
+              : undefined;
 
     const handleTemplateChange = async (templateId: string) => {
         const saveSequence = ++templateSaveSequenceRef.current;
@@ -306,7 +303,7 @@ export default function PresentationViewerPage() {
     const handleLayoutChange = async (layout: SlideLayout) => {
         if (!presentation) return;
         const selected = presentation.slides[navigation.currentSlide];
-        if (!selected || isChartSlide(selected)) return;
+        if (!selected || (!isContentSlide(selected) && !isLegacyHtmlSlide(selected))) return;
         const contentSlide = isLegacyHtmlSlide(selected)
             ? adaptLegacyHtmlSlide(selected)
             : selected;
@@ -380,10 +377,33 @@ export default function PresentationViewerPage() {
                         selectedLayout={activeContentSlide?.layout}
                         onLayoutChange={handleLayoutChange}
                         layoutDisabled={!activeContentSlide}
+                        showLayoutSelector={false}
                         onIterate={() => setShowIterateModal((current) => !current)}
                         onPresent={() => void enterFullscreen()}
                         presentDisabled={!hasSlides}
                     />
+                )}
+
+                {!isFullscreenMode && streamingState.isStreaming && (
+                    <div className="mx-auto mb-2 flex w-full max-w-5xl items-center gap-3 rounded-xl border border-border/70 bg-background/85 px-4 py-3 shadow-sm backdrop-blur">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div
+                                role="progressbar"
+                                aria-label={generationMessage}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={Math.round(generationPercent)}
+                                className="h-full rounded-full bg-primary transition-all duration-500"
+                                style={{ width: `${Math.max(8, generationPercent)}%` }}
+                            />
+                        </div>
+                        <p
+                            aria-live="polite"
+                            className="min-w-52 text-sm font-medium text-foreground"
+                        >
+                            {generationMessage}
+                        </p>
+                    </div>
                 )}
 
                 {!isFullscreenMode && (

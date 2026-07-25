@@ -6,7 +6,12 @@ import {
     type ContentSlide,
     isChartSlide,
     isLegacyHtmlSlide,
+    isSceneSlide,
     type PresentationData,
+    type PresentationDimensions,
+    type ResolvedSceneNode,
+    resolveScene,
+    type SceneSlide,
     type SlideBlock,
     type SlideRegion,
     type WidgetBlockLike,
@@ -260,6 +265,181 @@ const addSlideFrame = (
         objectName: "Theme accent",
     });
     slide.addText(String(slideNumber), {
+        x: 12.25,
+        y: 7.08,
+        w: 0.45,
+        h: 0.18,
+        fontFace: theme.bodyFont,
+        fontSize: 9,
+        color: theme.muted,
+        align: "right",
+        margin: 0,
+        objectName: "Slide number",
+    });
+};
+
+const sceneColor = (value: string | undefined, fallback: string) => {
+    if (!value) return fallback;
+    const normalized = value.trim().replace(/^#/, "");
+    return /^[0-9a-f]{6}$/i.test(normalized) ? normalized.toUpperCase() : fallback;
+};
+
+const renderSceneNode = (
+    output: PptxGenJS.Slide,
+    pptx: PptxGenJS,
+    node: ResolvedSceneNode,
+    dimensions: PresentationDimensions,
+    theme: PptxTheme,
+) => {
+    if (node.hidden || node.type === "group") {
+        node.children?.forEach((child) => {
+            renderSceneNode(output, pptx, child, dimensions, theme);
+        });
+        return;
+    }
+    const x = (node.bounds.x / dimensions.width) * SLIDE_WIDTH;
+    const y = (node.bounds.y / dimensions.height) * SLIDE_HEIGHT;
+    const w = (node.bounds.width / dimensions.width) * SLIDE_WIDTH;
+    const h = (node.bounds.height / dimensions.height) * SLIDE_HEIGHT;
+    if (node.type === "text") {
+        const fallbackSize =
+            node.role === "display"
+                ? 34
+                : node.role === "title"
+                  ? 28
+                  : node.role === "subtitle"
+                    ? 18
+                    : 14;
+        output.addText(node.text || "", {
+            x,
+            y,
+            w,
+            h,
+            fontFace:
+                node.style?.fontFamily ||
+                (node.role === "display" || node.role === "title"
+                    ? theme.headingFont
+                    : theme.bodyFont),
+            fontSize: node.style?.fontSize ? Math.max(8, node.style.fontSize * 0.55) : fallbackSize,
+            bold: (node.style?.fontWeight || 400) >= 600,
+            color: sceneColor(node.style?.color, node.role === "title" ? theme.title : theme.text),
+            margin: 0,
+            valign: node.role === "title" || node.role === "display" ? "bottom" : "top",
+            breakLine: false,
+            fit: "shrink",
+            objectName: node.id,
+        });
+        return;
+    }
+    if (node.type === "image" && node.url) {
+        output.addImage({ path: node.url, x, y, w, h, objectName: node.id });
+        return;
+    }
+    if (node.type === "shape") {
+        const shape = node.shape === "ellipse" ? pptx.ShapeType.ellipse : pptx.ShapeType.rect;
+        output.addShape(shape, {
+            x,
+            y,
+            w,
+            h,
+            fill: { color: sceneColor(node.style?.fill, theme.surface) },
+            line: {
+                color: sceneColor(node.style?.stroke, theme.accent),
+                width: node.style?.strokeWidth || 0,
+            },
+            objectName: node.id,
+        });
+        return;
+    }
+    const values = node.props || {};
+    if (node.type === "widget" && node.kind === "stats" && Array.isArray(values["items"])) {
+        const items = values["items"] as Array<{ value?: string; label?: string }>;
+        const itemWidth = w / Math.max(1, items.length);
+        items.forEach((item, index) => {
+            output.addText(String(item.value || ""), {
+                x: x + index * itemWidth,
+                y,
+                w: itemWidth - 0.08,
+                h: h * 0.58,
+                fontFace: theme.headingFont,
+                fontSize: 26,
+                bold: true,
+                color: theme.accent,
+                margin: 0,
+                valign: "bottom",
+                objectName: `${node.id}-value-${index}`,
+            });
+            output.addText(String(item.label || ""), {
+                x: x + index * itemWidth,
+                y: y + h * 0.62,
+                w: itemWidth - 0.08,
+                h: h * 0.3,
+                fontFace: theme.bodyFont,
+                fontSize: 11,
+                color: theme.muted,
+                margin: 0,
+                objectName: `${node.id}-label-${index}`,
+            });
+        });
+        return;
+    }
+    if (node.type === "widget" && (node.kind === "quote" || node.kind === "callout")) {
+        const text = String(values["text"] || "");
+        const heading = String(values["heading"] || values["attribution"] || "");
+        output.addText(heading ? `${heading}\n${text}` : text, {
+            x,
+            y,
+            w,
+            h,
+            fontFace: theme.bodyFont,
+            fontSize: node.kind === "quote" ? 21 : 15,
+            italic: node.kind === "quote",
+            color: theme.text,
+            fill: node.kind === "callout" ? { color: theme.surface } : undefined,
+            line: node.kind === "callout" ? { color: theme.accent, transparency: 40 } : undefined,
+            margin: 0.16,
+            fit: "shrink",
+            objectName: node.id,
+        });
+        return;
+    }
+    output.addShape(pptx.ShapeType.roundRect, {
+        x,
+        y,
+        w,
+        h,
+        fill: { color: theme.surface },
+        line: { color: theme.accent, transparency: 45 },
+        objectName: node.id,
+    });
+    output.addText(node.kind || "Widget", {
+        x,
+        y,
+        w,
+        h,
+        align: "center",
+        valign: "middle",
+        fontFace: theme.bodyFont,
+        fontSize: 13,
+        color: theme.muted,
+        margin: 0.1,
+        objectName: `${node.id}-fallback`,
+    });
+};
+
+const renderSceneSlide = async (
+    pptx: PptxGenJS,
+    scene: SceneSlide,
+    theme: PptxTheme,
+    slideNumber: number,
+    dimensions: PresentationDimensions = { width: 1280, height: 720 },
+) => {
+    const output = pptx.addSlide();
+    const artBackground = sceneColor(scene.artDirection?.background, theme.background);
+    output.background = { color: artBackground };
+    const resolved = resolveScene(scene, dimensions, "wide");
+    renderSceneNode(output, pptx, resolved.root, dimensions, theme);
+    output.addText(String(slideNumber), {
         x: 12.25,
         y: 7.08,
         w: 0.45,
@@ -1472,6 +1652,10 @@ export const buildEditablePptx = async (presentation: PresentationData) => {
     };
 
     for (const [index, slide] of presentation.slides.entries()) {
+        if (isSceneSlide(slide)) {
+            await renderSceneSlide(pptx, slide, theme, index + 1, presentation.dimensions);
+            continue;
+        }
         if (isChartSlide(slide)) {
             renderChartSlide(pptx, slide.chartConfig, theme, index + 1);
             continue;

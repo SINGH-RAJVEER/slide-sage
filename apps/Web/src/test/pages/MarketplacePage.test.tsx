@@ -35,6 +35,30 @@ describe("MarketplacePage", () => {
         expect(getByText("Dedicated theme preview")).toBeInTheDocument();
     });
 
+    it("does not render interactive controls inside the preview button", async () => {
+        mock.restore();
+        const { default: MarketplaceCard } = await import(
+            "@/components/Marketplace/MarketplaceCard"
+        );
+        const { MARKETPLACE_ITEMS } = await import("@/modules/marketplace/catalog");
+        const item = MARKETPLACE_ITEMS[0];
+        if (!item) throw new Error("Expected marketplace fixture");
+
+        const { getByRole } = render(
+            <MarketplaceCard
+                item={item}
+                voted={false}
+                installed={false}
+                onOpen={() => undefined}
+                onVote={() => undefined}
+                onInstall={() => undefined}
+            />,
+        );
+        const preview = getByRole("button", { name: `Preview ${item.name} theme` });
+
+        expect(preview.querySelector("button")).toBeNull();
+    });
+
     it("adds a marketplace theme to the installed collection", async () => {
         localStorage.clear();
         const { default: MarketplacePage } = await import("@/modules/pages/MarketplacePage");

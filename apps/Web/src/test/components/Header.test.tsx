@@ -108,4 +108,27 @@ describe("Header", () => {
 
         expect(getByText("RS")).toBeInTheDocument();
     });
+
+    it("uses initials instead of loading a third-party profile image", async () => {
+        mockAuthState.user = {
+            id: "user_1",
+            name: "Rajveer Singh",
+            email: "rajveer@example.com",
+            image: "https://lh3.googleusercontent.com/a/profile=s96-c",
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            slideTokens: 10,
+        };
+
+        const { default: Header } = await import("../../components/Header");
+        const { container, getByText } = render(
+            <BrowserRouter>
+                <Header />
+            </BrowserRouter>,
+        );
+
+        expect(getByText("RS")).toBeInTheDocument();
+        expect(container.querySelector('img[src^="https://lh3.googleusercontent.com"]')).toBeNull();
+    });
 });

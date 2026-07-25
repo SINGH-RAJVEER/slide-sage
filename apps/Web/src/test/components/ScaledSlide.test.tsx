@@ -37,7 +37,7 @@ describe("ScaledSlide", () => {
 
         act(() => resizeCallback?.([], {} as ResizeObserver));
 
-        expect(frame.dataset.slideScale).toBe(String(400 / 720));
+        expect(frame.dataset["slideScale"]).toBe(String(400 / 720));
         expect((frame.firstElementChild as HTMLElement).style.transform).toBe(
             `scale(${400 / 720})`,
         );
@@ -53,11 +53,11 @@ describe("ScaledSlide", () => {
         setContainerSize(frame, 320, 180);
 
         act(() => resizeCallback?.([], {} as ResizeObserver));
-        expect(frame.dataset.slideScale).toBe("0.25");
+        expect(frame.dataset["slideScale"]).toBe("0.25");
 
         setContainerSize(frame, 640, 360);
         act(() => resizeCallback?.([], {} as ResizeObserver));
-        expect(frame.dataset.slideScale).toBe("0.5");
+        expect(frame.dataset["slideScale"]).toBe("0.5");
     });
 
     it("reports readiness after the frame has a measurable size", () => {

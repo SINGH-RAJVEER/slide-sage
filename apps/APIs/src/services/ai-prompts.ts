@@ -1,6 +1,6 @@
 // AI Service Prompts and Configuration
 
-import type { PresentationLayoutPreference, ThemeId } from "@slide-sage/types";
+import type { ThemeId } from "@slide-sage/types";
 
 const DETAIL_LEVEL_GUIDE = {
     brief: {
@@ -59,18 +59,6 @@ const TONALITY_GUIDE = {
             'Use strong calls-to-action, rhetorical questions, and benefit-driven language. Focus on the "why" and the value proposition.',
     },
 } satisfies Record<string, { description: string; example: string }>;
-
-const LAYOUT_PREFERENCE_GUIDE: Record<PresentationLayoutPreference, string> = {
-    auto: "Choose a varied mix of supported layouts based on each slide's information hierarchy.",
-    content:
-        "Prefer body layouts with clear narrative blocks. Use other layouts when the material benefits from a different hierarchy.",
-    "two-column":
-        "Prefer split and comparison layouts for paired ideas while keeping the opening slide as a cover layout.",
-    "image-led":
-        "Prefer media-left, media-right, spotlight, and canvas layouts when imagery advances the story.",
-    "data-led":
-        "Prefer charts, tables, callouts, stats, and widgets. Use body, split, or comparison for supporting explanation.",
-};
 
 const STRUCTURED_PRESENTATION_CONTRACT = `
 OUTPUT CONTRACT:
@@ -172,7 +160,7 @@ REQUIRED JSON SHAPE:
 }`;
 
 const GENERATION_SYSTEM_PROMPT_TEMPLATE = `
-You are an expert presentation content designer. Create the requested number of slides using only the structured content contract below. Select layouts based on the information hierarchy, but leave all visual styling to the application.
+You are an expert presentation content designer. Draft the requested number of slides from the supplied semantic outline using only the structured content contract below. Preserve every outline card's order, objective, factual grounding, and source intent. The application will deterministically finalize layouts and styling.
 
 ${STRUCTURED_PRESENTATION_CONTRACT}
 
@@ -185,6 +173,8 @@ LAYOUT GUIDANCE:
 - canvas: a coordinated composition of mixed blocks when no simpler layout communicates the idea.
 - chart: quantitative comparisons or trends using the dedicated chart slide shape.
 - Choose layout from information hierarchy rather than cycling mechanically. Vary layouts naturally and use section breaks in longer decks.
+- Treat the supplied outline as the narrative contract. Produce exactly one slide for each outline card in the same order.
+- Do not invent statistics or citations. Use chart slides only when the outline and supplied sources contain sufficient numeric evidence.
 
 DETAIL LEVEL REQUIREMENT:
 {detail_description}
@@ -196,9 +186,6 @@ Example: {tonality_example}
 
 THEME REQUIREMENT:
 - Set the presentation theme to exactly "{theme_id}".
-
-LAYOUT PREFERENCE:
-{layout_preference}
 
 Follow the requested detail level ({detail_level}) and tonality ({tonality}). Use tables, charts, statistics, and images only when they improve the story.
 `;
@@ -228,8 +215,7 @@ Example: {tonality_example}
 export function buildGenerationPrompt(
     detailLevel = "balanced",
     tonality = "professional",
-    theme: ThemeId = "corporate-blue",
-    layoutPreference: PresentationLayoutPreference = "auto"
+    theme: ThemeId = "corporate-blue"
 ): string {
     const selectedDetail =
         detailLevel in DETAIL_LEVEL_GUIDE
@@ -248,7 +234,6 @@ export function buildGenerationPrompt(
         .replace("{tonality_description}", selectedTonality.description)
         .replace("{tonality_example}", selectedTonality.example)
         .replace("{theme_id}", theme)
-        .replace("{layout_preference}", LAYOUT_PREFERENCE_GUIDE[layoutPreference])
         .replace("{detail_level}", detailLevel)
         .replace("{tonality}", tonality);
 }

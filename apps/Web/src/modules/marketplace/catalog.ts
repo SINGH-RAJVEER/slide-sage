@@ -129,8 +129,7 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
                 {
                     id: "market-midnight-stats",
                     type: "stats",
-                    region: "primary",
-                    emphasis: "hero",
+                    region: "main",
                     items: [
                         { label: "Activation", value: "+42%" },
                         { label: "Time saved", value: "18h" },

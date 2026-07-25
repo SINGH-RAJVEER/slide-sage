@@ -31,6 +31,18 @@ export class OpenRouterStreamError extends Error {
     }
 }
 
+function providerErrorMessage(status: number, responseText: string, statusText: string): string {
+    try {
+        const payload = JSON.parse(responseText) as { error?: { message?: unknown } };
+        if (typeof payload.error?.message === "string" && payload.error.message.trim()) {
+            return payload.error.message.trim();
+        }
+    } catch {
+        // The provider may return plain text or an upstream HTML error page.
+    }
+    return responseText.trim() || statusText || `OpenRouter returned ${status}`;
+}
+
 function parseRetryAfter(value: string | null): number | undefined {
     if (!value) return undefined;
 
@@ -141,7 +153,7 @@ export async function requestOpenRouterStream(
         const retryable = RETRYABLE_STATUS_CODES.has(response.status);
         const retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
         throw new OpenRouterStreamError(
-            `OpenRouter returned ${response.status}: ${responseText || response.statusText}`,
+            providerErrorMessage(response.status, responseText, response.statusText),
             retryable,
             retryAfterMs
         );

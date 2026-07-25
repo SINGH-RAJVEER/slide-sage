@@ -9,8 +9,10 @@ import {
     type OpenRouterMessage,
     PRESENTATION_SCHEMA_VERSION,
     type PresentationJSON,
-    type PresentationLayoutPreference,
+    type PresentationOutline,
     type PresentationStreamEvent,
+    SCENE_ENGINE_VERSION,
+    SCENE_PRESENTATION_SCHEMA_VERSION,
     SLIDE_DENSITIES,
     SLIDE_LAYOUTS,
     SLIDE_PATTERNS,
@@ -36,6 +38,7 @@ import {
     parsePresentationContent,
     processSlide,
 } from "./presentation-content";
+import { compilePresentationScenes } from "./presentation-design";
 
 interface OpenRouterEnvironment {
     OPEN_ROUTER_API_BASE?: string;
@@ -52,7 +55,7 @@ interface StructuredPresentationOptions {
     sources: Source[];
     operation: "generation" | "iteration";
     preferredTheme?: ThemeId;
-    layoutPreference?: PresentationLayoutPreference;
+    outline?: PresentationOutline;
 }
 
 const THEME_ID_SET = new Set<string>(THEME_IDS);
@@ -528,7 +531,11 @@ export async function* streamStructuredPresentation(
                     }
                     const processedSlide = processSlide(slide, index);
                     if (!processedSlide) continue;
-                    streamedSlides.set(index, processedSlide);
+                    const compiledSlide = options.outline
+                        ? compilePresentationScenes([processedSlide], options.outline, index)[0] ||
+                          processedSlide
+                        : processedSlide;
+                    streamedSlides.set(index, compiledSlide);
 
                     if (processor.titleExtracted === null) {
                         processor.titleExtracted = processor.extractTitleFromSlide(
@@ -538,7 +545,7 @@ export async function* streamStructuredPresentation(
                     yield {
                         event: "slide",
                         data: {
-                            slide: processedSlide,
+                            slide: compiledSlide,
                             index,
                             title: processor.titleExtracted,
                         },
@@ -556,7 +563,25 @@ export async function* streamStructuredPresentation(
             }
 
             const parsedContent = parsePresentationContent(cleanContent);
-            const slides = normalizePresentationSlides(parsedContent, options.expectedSlideCount);
+            const semanticSlides = normalizePresentationSlides(
+                parsedContent,
+                options.expectedSlideCount
+            );
+            const slides = options.outline
+                ? compilePresentationScenes(semanticSlides, options.outline)
+                : semanticSlides;
+
+            if (options.outline) {
+                yield {
+                    event: "stage",
+                    data: {
+                        stage: "designing",
+                        message: "Selecting layouts and visual structure",
+                        completed: 3,
+                        total: 4,
+                    },
+                };
+            }
 
             if (processor.titleExtracted === null) {
                 const firstSlide = slides[0];
@@ -582,15 +607,32 @@ export async function* streamStructuredPresentation(
 
             const parsedTitle = typeof parsedContent.title === "string" ? parsedContent.title : "";
             const presentation: PresentationJSON = {
-                schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                schemaVersion: options.outline
+                    ? SCENE_PRESENTATION_SCHEMA_VERSION
+                    : PRESENTATION_SCHEMA_VERSION,
+                engineVersion: options.outline ? SCENE_ENGINE_VERSION : undefined,
+                dimensions: { width: 1280, height: 720 },
                 slides,
                 title: processor.titleExtracted || parsedTitle || options.fallbackTitle,
                 theme: options.preferredTheme || normalizeTheme(parsedContent["theme"]),
                 totalSlides: slides.length,
                 tokens_used: processor.currentTotalTokensUsed,
+                outline: options.outline,
             };
             if (options.sources.length) {
                 presentation.sources = options.sources;
+            }
+
+            if (options.outline) {
+                yield {
+                    event: "stage",
+                    data: {
+                        stage: "finalizing",
+                        message: "Finalizing the presentation",
+                        completed: 4,
+                        total: 4,
+                    },
+                };
             }
 
             yield {
@@ -613,12 +655,17 @@ export async function* streamStructuredPresentation(
                 completeStreamedSlides.every((slide): slide is Slide => slide !== undefined)
             ) {
                 const presentation: PresentationJSON = {
-                    schemaVersion: PRESENTATION_SCHEMA_VERSION,
+                    schemaVersion: options.outline
+                        ? SCENE_PRESENTATION_SCHEMA_VERSION
+                        : PRESENTATION_SCHEMA_VERSION,
+                    engineVersion: options.outline ? SCENE_ENGINE_VERSION : undefined,
+                    dimensions: { width: 1280, height: 720 },
                     slides: completeStreamedSlides,
                     title: processor.titleExtracted || options.fallbackTitle,
                     theme: options.preferredTheme || streamedTheme || "corporate-blue",
                     totalSlides: completeStreamedSlides.length,
                     tokens_used: processor.currentTotalTokensUsed,
+                    outline: options.outline,
                 };
                 if (options.sources.length) {
                     presentation.sources = options.sources;

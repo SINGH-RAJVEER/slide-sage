@@ -9,7 +9,6 @@ import {
     type AIModelSelection,
     buildResearchSystemMessage,
     type PresentationJSON,
-    type PresentationLayoutPreference,
     type PresentationMutation,
     type PresentationStreamEvent,
     type ResearchOptions,
@@ -32,7 +31,6 @@ export interface GeneratePresentationParams {
     research?: ResearchOptions;
     researchPayload?: ResearchPayload;
     theme?: ThemeId;
-    layoutPreference?: PresentationLayoutPreference;
     ai?: AIModelSelection & { apiKey: string };
 }
 
@@ -45,6 +43,7 @@ export interface IteratePresentationParams {
     tonality?: string;
     research?: ResearchOptions;
     ai?: AIModelSelection & { apiKey: string };
+    slideCount?: number;
 }
 
 export interface StorePresentationMemoryParams {
@@ -91,6 +90,12 @@ export class PresentationService {
         return estimate.estimatedTokens;
     }
 
+    calculateActualTokenCost(aiTokensUsed: number, quotedTokenCost: number): number {
+        if (!Number.isFinite(aiTokensUsed) || aiTokensUsed <= 0) return quotedTokenCost;
+        const actualCost = TokenCalculator.calculateActualTokenDeduction(aiTokensUsed);
+        return Math.min(quotedTokenCost, Math.round(actualCost * 1000) / 1000);
+    }
+
     /**
      * Generate presentation with token management and streaming
      */
@@ -105,7 +110,6 @@ export class PresentationService {
             research,
             researchPayload,
             theme = "corporate-blue",
-            layoutPreference = "auto",
         } = params;
 
         try {
@@ -119,7 +123,6 @@ export class PresentationService {
                 researchPayload,
                 params.userId,
                 theme,
-                layoutPreference,
                 params.ai
             )) {
                 yield event;
@@ -169,8 +172,9 @@ export class PresentationService {
                 return;
             }
 
-            // Note: currentSlides are stored in the vector database and retrieved via RAG
-            // No need to pass them directly to the AI service
+            const currentPresentation = normalizePresentationDocument(
+                existingPresentation.slidesData
+            );
 
             try {
                 // Stream presentation iteration
@@ -181,6 +185,9 @@ export class PresentationService {
                     detailLevel,
                     tonality,
                     research,
+                    currentPresentation,
+                    params.slideCount,
+                    currentPresentation.theme as ThemeId,
                     params.ai
                 )) {
                     yield event;

@@ -36,6 +36,7 @@ mock.module("@slide-sage/database", () => {
             findIterations = repository.findIterations;
         },
         TokenCalculator: {
+            calculateActualTokenDeduction: (tokens: number) => tokens / 1000,
             calculateEstimatedTokens: ({
                 slideCount,
                 detailLevel,
@@ -64,6 +65,7 @@ mock.module("@slide-sage/database", () => {
         feedbackMemories: {},
         promptEvents: {},
         ragContext: {},
+        semanticCacheEntries: {},
         semanticCommands: {},
         slideEmbeddings: {},
         slideTemplates: {},
@@ -102,6 +104,14 @@ describe("PresentationService", () => {
                 sources: [{ url: "https://example.com", summary: "Research context" }],
             })
         ).toBe(6);
+    });
+
+    it("uses measured AI tokens without exceeding the quoted cost", () => {
+        const service = new PresentationService();
+
+        expect(service.calculateActualTokenCost(2400, 5)).toBe(2.4);
+        expect(service.calculateActualTokenCost(8000, 5)).toBe(5);
+        expect(service.calculateActualTokenCost(0, 5)).toBe(5);
     });
 
     it("returns a presentation when the requesting user owns it", async () => {

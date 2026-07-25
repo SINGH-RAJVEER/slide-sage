@@ -43,3 +43,10 @@ describe("TokenCalculator research estimates", () => {
         expect(estimate.researchTokenCost).toBe(0);
     });
 });
+
+describe("TokenCalculator actual usage", () => {
+    it("converts provider tokens to slide tokens", () => {
+        expect(TokenCalculator.calculateActualTokenDeduction(0)).toBe(0);
+        expect(TokenCalculator.calculateActualTokenDeduction(2500)).toBe(2.5);
+    });
+});

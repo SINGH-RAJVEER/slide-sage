@@ -38,7 +38,6 @@ Run these from the repository root inside `devenv shell`.
 | Command | Action |
 | --- | --- |
 | `just dev` | Start the complete development stack |
-| `just apps` | Start the API and web development servers in parallel |
 | `just apis` | Start the API with watch mode |
 | `just web` | Start Vite |
 | `just db-shell` | Connect to the local database with `psql` |
@@ -58,7 +57,7 @@ directly through Bun without a separate monorepo task runner.
 
 | Command | Action |
 | --- | --- |
-| `bun run dev` | Run `just apps` |
+| `bun run dev` | Run the complete `just dev` development stack |
 | `bun run build` | Build the web application |
 | `bun run deploy:apis` | Deploy the API with Wrangler |
 | `bun run test` | Run API and web tests |
@@ -95,6 +94,10 @@ moving keyboard focus to it expands the indicator to reveal its title, detail,
 progress, and destination action. The complete accessible label remains on the
 collapsed button for assistive technology and touch activation.
 
+The application header renders user initials rather than loading third-party OAuth
+avatar URLs. This avoids cross-origin image blocking and keeps account navigation
+available when an identity provider image is unavailable.
+
 The workspace uses the native TypeScript 7 compiler pinned in the root package.
 Run `bun run type-check` to check the API, web app, database package, and shared
 types with their project-specific configurations.
@@ -115,6 +118,8 @@ Run `just dev` to initialize it again.
 - Missing `bun`, `just`, or PostgreSQL commands: enter `devenv shell` first.
 - Port collision: stop the existing process on `5173`, `8000`, or `5432`, or
   override the relevant environment variable.
+- API exits immediately under `just dev`: ensure the devenv API and web process
+  definitions retain a repository-root `cwd`; their commands use workspace-relative paths.
 - Failed AI requests: confirm `OPEN_ROUTER_API_KEY` and the configured model.
 - Failed research: set `EXA_API_KEY`; research is skipped when it is absent.
 - Failed email delivery: set `RESEND_API_KEY`; development mode logs OTPs when

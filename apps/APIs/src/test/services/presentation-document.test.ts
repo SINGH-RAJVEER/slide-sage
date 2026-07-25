@@ -276,4 +276,45 @@ describe("presentation document", () => {
             edges: [{ from: "client", to: "api", label: "HTTPS" }],
         });
     });
+
+    it("round trips scene versions and responsive patches", () => {
+        const document = normalizePresentationDocument({
+            schemaVersion: 6,
+            engineVersion: "1.0.0",
+            title: "Scene deck",
+            theme: "modern-dark",
+            slides: [
+                {
+                    id: "scene-1",
+                    type: "scene",
+                    root: {
+                        id: "root",
+                        type: "group",
+                        order: 0,
+                        layout: "stack",
+                        align: "center",
+                        distribute: "space-between",
+                        children: [
+                            { id: "title", type: "text", order: 0, role: "title", text: "Title" },
+                        ],
+                    },
+                    variants: [
+                        {
+                            profile: "compact",
+                            patches: [{ nodeId: "title", hidden: true, order: 2 }],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        expect(document.schemaVersion).toBe(6);
+        expect(document["engineVersion"]).toBe("1.0.0");
+        const slide = document.slides[0];
+        expect(slide && "root" in slide ? slide.root.align : undefined).toBe("center");
+        expect(slide && "root" in slide ? slide.root.distribute : undefined).toBe("space-between");
+        expect(slide && "root" in slide ? slide.variants?.[0]?.patches[0] : undefined).toEqual(
+            expect.objectContaining({ nodeId: "title", hidden: true, order: 2 })
+        );
+    });
 });

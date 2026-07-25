@@ -46,14 +46,13 @@ All profile routes require authentication.
 
 Generation requires `topic` and `slide_count`; the web client supports custom
 slide counts from 1 through 40. Generation also accepts `detail_level`,
-`tonality`, `theme`, `layout_preference`, `research`, and an optional
-`research_payload`. `theme` accepts a built-in theme ID. `layout_preference`
-accepts `auto`, `content`, `two-column`, `image-led`, or `data-led`. Research options can
-include `freshness`, `maxResults`, included or excluded domains, publication date
-bounds, and `maxAgeHours`. The research endpoint and payload contain source
-records only. The web client presents those records in a compact source table
-with a dedicated outbound link for each result. The research review fills the
-available workspace and supports Enter as a shortcut to begin generation.
+`tonality`, `theme`, `research`, and an optional `research_payload`. `theme`
+accepts a built-in theme ID. Research options can include `freshness`,
+`maxResults`, included or excluded domains, publication date bounds, and
+`maxAgeHours`. The research endpoint and payload contain source records only. The
+web client presents those records in a compact source table with a dedicated
+outbound link for each result. The research review fills the available workspace
+and supports Enter as a shortcut to begin generation.
 
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
@@ -91,18 +90,20 @@ Writes use the owned row's `updated_at` value as a compare-and-swap revision. A
 concurrent write returns `409` instead of overwriting another editor mutation.
 
 Generation and iteration return `402` before streaming when the account lacks
-enough slide tokens. The response includes the remaining, required, and shortfall
-amounts. Generation estimates add the input-token cost of the exact serialized
-research context at one point per 1,000 AI tokens. The research endpoint returns
-`estimated_tokens` when slide count and generation options are supplied, allowing
-the review screen and final server-side charge to show the same estimate.
+enough slide tokens for the quoted maximum. The response includes the remaining,
+required, and shortfall amounts. Generation estimates add the input-token cost of
+the exact serialized research context at one point per 1,000 AI tokens. The
+research endpoint returns `estimated_tokens` when slide count and generation
+options are supplied. Successful generation charges measured aggregate
+OpenRouter usage at one point per 1,000 tokens without exceeding that quote. A
+shared outline-cache hit contributes no new outline tokens. The final `saved`
+event includes `slide_tokens_charged` and `slide_tokens_remaining`.
 
 Presentation summaries include `status` (`ready` or `failed`) and
 `has_research`. A failed generation remains in the presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
-the original prompt, slide count, detail level, tonality, theme, layout
-preference, research setting, error message, and any sources collected before
-the failure. Failed generations are
+the original prompt, slide count, detail level, tonality, theme, research setting,
+error message, and any sources collected before the failure. Failed generations are
 not charged. Clients fetch the full presentation on click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they
 do not. The same retry action is available directly from `/presentation-error`,
@@ -118,8 +119,21 @@ generation replaces it. A retry therefore never adds another failed card.
 
 Streaming endpoints respond with server-sent events over a POST response. The
 stream begins with `created` for new decks, forwards generation events such as
-theme and slide updates, and ends with `saved`. The API sends SSE keepalive
-comments while OpenRouter is silent. A `retry` event means the current partial
+`stage`, `outline`, theme, and slide updates, and ends with `saved`. Generation
+stages are `researching`, `planning`, `drafting`, `designing`, and `finalizing`;
+each stage includes a display message and bounded progress counts. The outline
+contains the presentation title, audience, thesis, and one semantic card per
+requested slide. Generated slides are compiled into safe scene slides containing
+nested data-only nodes, responsive variants, versioned widget properties,
+composition strategy metadata, and bounded per-slide art direction. Clients must
+treat slide events as index-based upserts because a compiled revision can replace
+an earlier event for the same index. The completed document persists the outline
+and scene metadata. Scene documents use schema version `6`, include an
+`engineVersion`, and retain explicit dimensions. Iteration uses the current deck
+as authoritative context, preserves existing sources when research is disabled,
+and returns the same scene format rather than downgrading the presentation. The
+API sends SSE keepalive
+comments while the selected provider is silent. A `retry` event means the current partial
 attempt must be discarded; its payload includes the next attempt, attempt limit,
 delay, and reason. If every requested slide was parsed before the provider stream
 failed or returned a malformed trailing envelope, the API preserves those slides
@@ -129,11 +143,15 @@ event and persist retry metadata without partial slides. Clients should parse th
 response stream rather than use the browser `EventSource` API, which only
 supports GET. Web clients also treat non-JSON deployment and proxy error pages as
 service failures rather than exposing a JSON parser exception.
+Provider errors that happen before slide streaming, including account rate limits,
+are preserved in the failed presentation so the retry screen can show an
+actionable cause instead of a generic generation message.
 
-The API validates the requested theme and layout preference before generation.
-Invalid or omitted values fall back to the `corporate-blue` theme and `auto`
-layout preference. Generated image placeholders contain descriptive text but no
-URL; grounded image blocks require HTTPS URLs.
+The API validates the requested theme before generation. Invalid or omitted
+values fall back to the `corporate-blue` theme. Layout and visual composition are
+selected automatically from each slide's narrative role, visual intent, semantic
+blocks, and available assets. Generated image placeholders contain descriptive
+text but no URL; grounded image blocks require HTTPS URLs.
 
 ## Billing
 

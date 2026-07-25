@@ -6,11 +6,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useStreaming } from "@/modules/presentations";
-import type {
-    PresentationLayoutPreference,
-    ResearchPayload,
-    ThemeId,
-} from "@/modules/types/presentation";
+import type { ResearchPayload, ThemeId } from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
 
 interface ResearchRouteState {
@@ -19,10 +15,9 @@ interface ResearchRouteState {
     detailLevel: string;
     tonality: string;
     theme: ThemeId;
-    layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     retryPresentationId?: string;
-    ai: AIModelSelection;
+    ai?: AIModelSelection;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -39,7 +34,6 @@ export default function GenerateResearchPage() {
     const detailLevel = routeState?.detailLevel ?? "balanced";
     const tonality = routeState?.tonality ?? "professional";
     const theme = routeState?.theme ?? "corporate-blue";
-    const layoutPreference = routeState?.layoutPreference ?? "auto";
     const savedResearch = routeState?.researchPayload;
     const retryPresentationId = routeState?.retryPresentationId;
     const ai = routeState?.ai;
@@ -117,7 +111,6 @@ export default function GenerateResearchPage() {
             payload,
             retryPresentationId,
             theme,
-            layoutPreference,
             ai,
         );
         navigate(ROUTES.presentation, { state: { isStreaming: true } });
@@ -134,7 +127,6 @@ export default function GenerateResearchPage() {
         researchStatus,
         retryPresentationId,
         theme,
-        layoutPreference,
         ai,
         navigate,
         slideCount,

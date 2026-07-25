@@ -2,11 +2,10 @@ import type { AIConfigurationResponse, AIModelSelection } from "@slide-sage/type
 import { Globe } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import type { PresentationLayoutPreference, ThemeId } from "@/modules/types/presentation";
+import type { ThemeId } from "@/modules/types/presentation";
 import { AIModelSelector } from "./AIModelSelector";
 import { DetailLevelSelector } from "./DetailLevelSelector";
 import { GenerationThemeSelector } from "./GenerationThemeSelector";
-import { LayoutPreferenceSelector } from "./LayoutPreferenceSelector";
 import { SlideCountSelector } from "./SlideCountSelector";
 import { TonalitySelector } from "./TonalitySelector";
 
@@ -20,7 +19,6 @@ interface GenerateOptionsBarProps {
     slideCount: string;
     customSlideCount: string;
     theme: ThemeId;
-    layoutPreference: PresentationLayoutPreference;
     onDetailLevelChange: (level: string) => void;
     onTonalityChange: (tonality: string) => void;
     onUseWebResearchChange: (enabled: boolean) => void;
@@ -28,7 +26,6 @@ interface GenerateOptionsBarProps {
     onSlideCountChange: (count: string) => void;
     onCustomSlideCountChange: (count: string) => void;
     onThemeChange: (theme: ThemeId) => void;
-    onLayoutPreferenceChange: (preference: PresentationLayoutPreference) => void;
     onAISelectionChange: (selection: AIModelSelection) => void;
 }
 
@@ -42,7 +39,6 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
     slideCount,
     customSlideCount,
     theme,
-    layoutPreference,
     onDetailLevelChange,
     onTonalityChange,
     onUseWebResearchChange,
@@ -50,7 +46,6 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
     onSlideCountChange,
     onCustomSlideCountChange,
     onThemeChange,
-    onLayoutPreferenceChange,
     onAISelectionChange,
 }) => {
     return (
@@ -87,10 +82,6 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
                 />
                 <TonalitySelector tonality={tonality} onTonalityChange={onTonalityChange} />
                 <GenerationThemeSelector theme={theme} onThemeChange={onThemeChange} />
-                <LayoutPreferenceSelector
-                    layoutPreference={layoutPreference}
-                    onLayoutPreferenceChange={onLayoutPreferenceChange}
-                />
                 <SlideCountSelector
                     slideCountMode={slideCountMode}
                     slideCount={slideCount}

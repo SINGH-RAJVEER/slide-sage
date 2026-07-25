@@ -67,6 +67,14 @@ The frontend retries transient session lookup failures before treating a user
 as signed out, preventing route-guard loops during brief Worker or database
 startup failures.
 
+The frontend checks the session once at startup. Returning focus to the app only
+revalidates a session when its last check is at least five minutes old, and
+overlapping background checks share one request. Authentication transitions
+bypass an older in-flight check so a pre-sign-in response cannot overwrite the
+new session. Point balance changes from generation and payment verification are
+applied from those operations' server responses instead of fetching the entire
+session again.
+
 Sign-out invalidates pending session refreshes before clearing the Better Auth
 session. This prevents an older session response from restoring the signed-out
 user in the frontend.

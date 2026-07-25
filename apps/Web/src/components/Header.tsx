@@ -138,17 +138,9 @@ export default function Header({ sticky = false }: { sticky?: boolean }) {
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="focus:outline-none rounded-full ring-offset-black focus:ring-2 focus:ring-white/20 transition-all">
                                     <div className="h-10 w-10 overflow-hidden rounded-full border border-white/20 bg-white/10 transition-colors hover:border-white/40 flex items-center justify-center shadow-sm">
-                                        {user.image ? (
-                                            <img
-                                                src={user.image}
-                                                alt="Profile"
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <span className="text-base font-semibold text-white/90 uppercase flex-shrink-0">
-                                                {getUserInitials()}
-                                            </span>
-                                        )}
+                                        <span className="text-base font-semibold text-white/90 uppercase flex-shrink-0">
+                                            {getUserInitials()}
+                                        </span>
                                     </div>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
