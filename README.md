@@ -74,4 +74,3 @@ The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector, OpenRout
 - [API reference](docs/API_OVERVIEW.md)
 - [Authentication](docs/AUTH_API.md)
 - [RAG and semantic memory](docs/RAG_IMPLEMENTATION.md)
-
