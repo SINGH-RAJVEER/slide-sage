@@ -1,4 +1,5 @@
 import type {
+    AIModelSelection,
     PresentationLayoutPreference,
     PresentationStreamEvent,
     ResearchOptions,
@@ -35,7 +36,8 @@ export class AIService {
         researchPayload?: ResearchPayload,
         userId?: string,
         theme: ThemeId = "corporate-blue",
-        layoutPreference: PresentationLayoutPreference = "auto"
+        layoutPreference: PresentationLayoutPreference = "auto",
+        ai?: AIModelSelection & { apiKey: string }
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting generate presentation for: ${userPrompt.substring(0, 50)}... with ${slideCount} slides`
@@ -77,7 +79,7 @@ export class AIService {
                 userPrompt,
                 slideCount,
             });
-            const model = process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
+            const model = ai?.model || process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
 
             if (isSearching) {
                 yield { event: "research", data: { status: "generating" } };
@@ -85,6 +87,8 @@ export class AIService {
             yield { event: "start", data: { status: "generating" } };
             yield* streamStructuredPresentation({
                 model,
+                provider: ai?.provider,
+                apiKey: ai?.apiKey,
                 messages,
                 expectedSlideCount: slideCount,
                 fallbackTitle: "Untitled Presentation",
@@ -108,7 +112,8 @@ export class AIService {
         feedback: string,
         detailLevel = "balanced",
         tonality = "professional",
-        research?: ResearchOptions
+        research?: ResearchOptions,
+        ai?: AIModelSelection & { apiKey: string }
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
         console.log(
             `Starting presentation iteration with feedback: ${feedback.substring(0, 100)}...`
@@ -147,7 +152,7 @@ export class AIService {
                 researchSources: sources,
                 feedback,
             });
-            const model = process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
+            const model = ai?.model || process.env["OPEN_ROUTER_MODEL"] || DEFAULT_MODEL;
 
             if (isSearching) {
                 yield { event: "research", data: { status: "generating" } };
@@ -155,6 +160,8 @@ export class AIService {
             yield { event: "start", data: { status: "iterating" } };
             yield* streamStructuredPresentation({
                 model,
+                provider: ai?.provider,
+                apiKey: ai?.apiKey,
                 messages,
                 fallbackTitle: "Updated Presentation",
                 sources,

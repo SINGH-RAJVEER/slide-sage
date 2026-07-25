@@ -11,6 +11,8 @@ export const presentations = pgTable("presentations", {
     title: varchar("title", { length: 255 }).notNull(),
     prompt: text("prompt").notNull(),
     slidesData: jsonb("slides_data").notNull(),
+    aiProvider: varchar("ai_provider", { length: 20 }),
+    aiModel: varchar("ai_model", { length: 160 }),
     parentPresentationId: text("parent_presentation_id").references(
         // biome-ignore lint/suspicious/noExplicitAny: Drizzle circular reference
         (): any => presentations.id,

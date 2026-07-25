@@ -25,6 +25,7 @@ export type {
 } from "@slide-sage/types";
 export * from "./db";
 export * from "./db/schema";
+export { AIConnectionRepository } from "./repositories/ai-connection.repository";
 export { PresentationRepository } from "./repositories/presentation.repository";
 // Repository exports
 export { UserRepository } from "./repositories/user.repository";

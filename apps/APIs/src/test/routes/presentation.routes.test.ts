@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 
 const currentUserId = "user_1";
-const presentationUpdates: Array<{ id: string; updates: unknown }> = [];
+const presentationUpdates: Array<{ id: string; updates: Record<string, unknown> }> = [];
 
 const userRepository = {
     deductTokens: mock(),
@@ -31,6 +31,18 @@ const searchService = {
     webSearch: mock(),
 };
 
+const aiConnectionService = {
+    resolveSelection: mock(),
+    markUsed: mock(),
+};
+
+mock.module("../../services/ai-connections.service", () => ({
+    AIConnectionService: class {
+        resolveSelection = aiConnectionService.resolveSelection;
+        markUsed = aiConnectionService.markUsed;
+    },
+}));
+
 mock.module("../../services/auth", () => ({
     authMiddleware: async (
         c: { set: (key: string, value: string) => void },
@@ -47,9 +59,10 @@ mock.module("../../services/auth", () => ({
 
 mock.module("@slide-sage/database", () => ({
     UserRepository: userRepository,
+    AIConnectionRepository: class {},
     PresentationRepository: class {
         create = presentationRepository.create;
-        update = (id: string, updates: unknown) => {
+        update = (id: string, updates: Record<string, unknown>) => {
             presentationUpdates.push({ id, updates });
             return presentationRepository.update(id, updates);
         };
@@ -57,7 +70,7 @@ mock.module("@slide-sage/database", () => ({
             id: string,
             _userId: string,
             _updatedAt: Date,
-            updates: unknown
+            updates: Record<string, unknown>
         ) => {
             presentationUpdates.push({ id, updates });
             return presentationRepository.updateOwnedAtRevision(id, updates);
@@ -132,6 +145,8 @@ describe("presentation routes", () => {
         presentationService.storePresentationMemory.mockReset();
         searchService.storeSourceChunks.mockReset();
         searchService.webSearch.mockReset();
+        aiConnectionService.resolveSelection.mockReset();
+        aiConnectionService.markUsed.mockReset();
 
         presentationService.calculateEstimatedTokens.mockReturnValue(3);
         userRepository.hasSufficientTokens.mockResolvedValue({
@@ -151,6 +166,12 @@ describe("presentation routes", () => {
         presentationService.generatePresentationStream.mockImplementation(successfulStream);
         presentationService.iteratePresentationStream.mockImplementation(successfulStream);
         presentationService.storePresentationMemory.mockResolvedValue(undefined);
+        aiConnectionService.resolveSelection.mockResolvedValue({
+            provider: "openai",
+            model: "gpt-4.1",
+            apiKey: "secret",
+        });
+        aiConnectionService.markUsed.mockResolvedValue(undefined);
     });
 
     it("validates generation requests and insufficient points", async () => {
@@ -175,7 +196,7 @@ describe("presentation routes", () => {
         expect(await json(insufficient)).toEqual({
             error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
             slide_tokens_remaining: 1,
-            slide_tokens_required: 3,
+            slide_tokens_required: 0,
             slide_tokens_shortfall: 2,
         });
     });
@@ -221,14 +242,8 @@ describe("presentation routes", () => {
                 layoutPreference: "image-led",
             })
         );
-        expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
-            3,
-            "balanced",
-            "professional",
-            "Quarterly planning",
-            { sources: [{ url: "https://example.com", title: "Example" }] }
-        );
-        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
+        expect(presentationService.calculateEstimatedTokens).not.toHaveBeenCalled();
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
         expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
             expect.objectContaining({
                 presentationId: "presentation_1",
@@ -270,7 +285,7 @@ describe("presentation routes", () => {
             "failed_presentation",
             currentUserId
         );
-        expect(presentationUpdates[0]).toEqual(
+        expect(presentationUpdates.find(({ updates }) => "prompt" in updates)).toEqual(
             expect.objectContaining({
                 id: "failed_presentation",
                 updates: expect.objectContaining({ prompt: "Retry the same deck" }),
@@ -341,8 +356,8 @@ describe("presentation routes", () => {
 
         expect(body).toContain("event: error");
         expect(body).not.toContain("event: saved");
-        expect(presentationRepository.update).toHaveBeenCalledTimes(1);
-        expect(presentationUpdates[0]).toEqual({
+        expect(presentationRepository.update).toHaveBeenCalledTimes(2);
+        expect(presentationUpdates[1]).toEqual({
             id: "presentation_1",
             updates: {
                 title: "Failure handling",
@@ -364,6 +379,10 @@ describe("presentation routes", () => {
                             research_enabled: true,
                             theme: "corporate-blue",
                             layout_preference: "auto",
+                            ai: {
+                                provider: "openai",
+                                model: "gpt-4.1",
+                            },
                             research_payload: {
                                 sources: [
                                     {
@@ -377,7 +396,7 @@ describe("presentation routes", () => {
                                         summary: undefined,
                                     },
                                 ],
-                                estimated_tokens: 3,
+                                estimated_tokens: 0,
                             },
                         },
                     },
@@ -418,12 +437,13 @@ describe("presentation routes", () => {
 
         expect(body).toContain("event: retry");
         expect(body).toContain("event: saved");
-        const finalUpdate = presentationUpdates[0]?.updates as {
+        const finalUpdate = presentationUpdates.find(({ updates }) => "slidesData" in updates)
+            ?.updates as {
             slidesData?: { schemaVersion?: number; slides?: Array<{ id?: string }> };
         };
         expect(finalUpdate.slidesData?.schemaVersion).toBe(5);
         expect(finalUpdate.slidesData?.slides?.map((slide) => slide.id)).toEqual(["slide_1"]);
-        expect(userRepository.deductTokens).toHaveBeenCalledTimes(1);
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
     });
 
     it("researches presentation topics and returns sources", async () => {
@@ -508,7 +528,7 @@ describe("presentation routes", () => {
             })
         );
         expect(presentationUpdates[0]?.id).toBe("presentation_1");
-        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 3);
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
         expect(presentationService.storePresentationMemory).toHaveBeenCalledWith(
             expect.objectContaining({
                 presentationId: "presentation_1",

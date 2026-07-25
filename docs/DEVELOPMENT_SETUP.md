@@ -84,6 +84,17 @@ and the standard shadcn spinner in `apps/Web/src/components/ui/spinner.tsx`.
 The full-screen spinner uses the same solid white foreground as the rest of the
 application.
 
+The presentation viewer switches to a touch-first layout whenever the viewport
+is portrait-oriented. This layout uses a compact two-row header, a full-width
+slide stage, swipeable thumbnails, and a safe-area-aware bottom navigation bar.
+Landscape viewports retain the desktop viewer, including landscape phones and
+tablets. Test both orientations when changing viewer controls or slide sizing.
+
+Background generation status is shown as a compact fixed icon. Hovering it or
+moving keyboard focus to it expands the indicator to reveal its title, detail,
+progress, and destination action. The complete accessible label remains on the
+collapsed button for assistive technology and touch activation.
+
 The workspace uses the native TypeScript 7 compiler pinned in the root package.
 Run `bun run type-check` to check the API, web app, database package, and shared
 types with their project-specific configurations.

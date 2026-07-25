@@ -38,6 +38,7 @@ it("shows live slide progress and opens the active generation", () => {
     });
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("top-24", "right-4", "sm:right-5");
+    expect(button).toHaveClass("h-10", "w-10", "hover:w-80", "focus-visible:w-80");
     expect(button).not.toHaveClass("bottom-4", "left-4");
     expect(button.querySelector('[style*="scaleX(0.4)"]')).toBeInTheDocument();
 

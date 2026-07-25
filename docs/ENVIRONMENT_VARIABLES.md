@@ -88,3 +88,13 @@ sensitive values with `wrangler secret put`. Keep `BASE_URL` and trusted origins
 as Worker variables or secrets appropriate to the environment. The API refuses
 to initialize authentication on an HTTPS base URL without a sufficiently strong
 `AUTH_SECRET`.
+# BYOK credential encryption
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` | For BYOK | Active encryption key version, normally `1` initially |
+| `BYOK_ENCRYPTION_KEY_V1` | For BYOK | Base64-encoded 32-byte AES-GCM key |
+
+Provider API keys are supplied by users and encrypted with these deployment
+secrets. They are used only for presentation generation. OpenRouter remains the
+exclusive embedding provider.

@@ -83,7 +83,7 @@ it("opens the viewer immediately while generation waits for the stream", async (
 
         fireEvent.click(view.getByRole("button", { name: "Start Generating" }));
 
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(1));
         expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
     } finally {
         globalThis.fetch = originalFetch;

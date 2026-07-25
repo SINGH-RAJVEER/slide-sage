@@ -50,7 +50,7 @@ it("keeps empty-presentation controls visible and disabled", () => {
     );
 
     expect(view.getByRole("button", { name: "Download" })).toBeDisabled();
-    expect(view.getByRole("button", { name: "Previous" })).toBeDisabled();
-    expect(view.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(view.getByRole("button", { name: "Previous slide" })).toBeDisabled();
+    expect(view.getByRole("button", { name: "Next slide" })).toBeDisabled();
     expect(view.getByRole("button", { name: "Delete" })).toBeDisabled();
 });

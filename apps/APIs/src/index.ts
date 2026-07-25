@@ -2,6 +2,7 @@ import { createDatabase, runWithDatabase } from "@slide-sage/database";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import aiConnectionRoutes from "./routes/ai-connections.routes";
 import authRoutes from "./routes/auth.routes";
 import billingRoutes from "./routes/billing.routes";
 import presentationRoutes from "./routes/presentation.routes";
@@ -48,6 +49,7 @@ app.get("/", (c) => {
 });
 
 app.route("/api/auth", authRoutes);
+app.route("/api/ai", aiConnectionRoutes);
 app.route("/api/profile", profileRoutes);
 app.route("/api", presentationRoutes);
 app.route("/api/billing", billingRoutes);

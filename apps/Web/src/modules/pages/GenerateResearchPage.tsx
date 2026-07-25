@@ -1,3 +1,4 @@
+import type { AIModelSelection } from "@slide-sage/types";
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -21,6 +22,7 @@ interface ResearchRouteState {
     layoutPreference: PresentationLayoutPreference;
     researchPayload?: ResearchPayload;
     retryPresentationId?: string;
+    ai: AIModelSelection;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -40,6 +42,7 @@ export default function GenerateResearchPage() {
     const layoutPreference = routeState?.layoutPreference ?? "auto";
     const savedResearch = routeState?.researchPayload;
     const retryPresentationId = routeState?.retryPresentationId;
+    const ai = routeState?.ai;
 
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
@@ -115,6 +118,7 @@ export default function GenerateResearchPage() {
             retryPresentationId,
             theme,
             layoutPreference,
+            ai,
         );
         navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
@@ -131,6 +135,7 @@ export default function GenerateResearchPage() {
         retryPresentationId,
         theme,
         layoutPreference,
+        ai,
         navigate,
         slideCount,
         sources,

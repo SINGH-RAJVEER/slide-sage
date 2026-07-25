@@ -288,6 +288,46 @@ export interface ResearchPayload {
     estimated_tokens?: number;
 }
 
+export const AI_PROVIDERS = ["openai", "google", "anthropic"] as const;
+export type AIProvider = (typeof AI_PROVIDERS)[number];
+
+export interface AIModelSelection {
+    provider: AIProvider;
+    model: string;
+}
+
+export interface AIModelDescriptor extends AIModelSelection {
+    label: string;
+    description: string;
+    recommended?: boolean;
+}
+
+export interface AIConnectionSummary {
+    provider: AIProvider;
+    status: "valid" | "invalid";
+    keyHint: string;
+    validatedAt: string;
+    lastUsedAt?: string;
+}
+
+export interface AIConfigurationResponse {
+    eligibility: {
+        eligible: boolean;
+        slideTokens: number;
+        minimumPointsExclusive: 50;
+    };
+    connections: AIConnectionSummary[];
+    models: AIModelDescriptor[];
+    selection: AIModelSelection | null;
+}
+
+export interface UpsertAIConnectionRequest {
+    provider: AIProvider;
+    apiKey: string;
+}
+
+export interface UpdateAISelectionRequest extends AIModelSelection {}
+
 export { buildResearchSystemMessage, estimateMessageInputTokens } from "./research-context";
 
 export type ResearchFreshness = "day" | "week" | "month" | "year";
@@ -325,6 +365,7 @@ export interface PresentationRetryOptions {
     theme?: ThemeId;
     layout_preference?: PresentationLayoutPreference;
     research_payload?: ResearchPayload;
+    ai?: AIModelSelection;
 }
 
 export interface PresentationFailure {

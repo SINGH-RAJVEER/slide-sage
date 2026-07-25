@@ -13,7 +13,10 @@ export const ViewerThumbnails: React.FC<{
     onSelect: (index: number) => void;
 }> = ({ slides, currentSlide, isStreamingMode, isStreaming, currentTemplate, onSelect }) => {
     return (
-        <div className="w-full overflow-hidden flex-shrink-0 relative" style={{ minHeight: 40 }}>
+        <div
+            className="viewer-thumbnails w-full overflow-hidden flex-shrink-0 relative"
+            style={{ minHeight: 40 }}
+        >
             <div className="slide-thumbnails-container flex gap-3 overflow-x-auto py-6 px-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                 {slides.map((slide, index) => {
                     const isFirstThumbnail = index === 0;

@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm";
+import { aiProviderConnections, userAiPreferences } from "./ai-connections";
 import { accounts, sessions, users } from "./auth";
 import { payments } from "./billing";
 import { exampleGenerations } from "./generation-memory";
@@ -8,10 +9,26 @@ import { deckMemories, slideEmbeddings } from "./slide-memory";
 import { promptEvents, sourceChunks } from "./source-memory";
 import { feedbackMemories, styleMemories } from "./style-memory";
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
     presentations: many(presentations),
     accounts: many(accounts),
     sessions: many(sessions),
+    aiProviderConnections: many(aiProviderConnections),
+    aiPreference: one(userAiPreferences),
+}));
+
+export const aiProviderConnectionsRelations = relations(aiProviderConnections, ({ one }) => ({
+    user: one(users, {
+        fields: [aiProviderConnections.userId],
+        references: [users.id],
+    }),
+}));
+
+export const userAiPreferencesRelations = relations(userAiPreferences, ({ one }) => ({
+    user: one(users, {
+        fields: [userAiPreferences.userId],
+        references: [users.id],
+    }),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({

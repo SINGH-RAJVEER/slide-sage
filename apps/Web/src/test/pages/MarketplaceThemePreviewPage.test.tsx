@@ -66,7 +66,7 @@ describe("MarketplaceThemePreviewPage", () => {
         expect(view.getByText("Midnight Signal")).toBeInTheDocument();
         expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
         expect(view.queryByRole("combobox")).toBeNull();
-        expect(view.getByRole("button", { name: "Present" })).toBeInTheDocument();
+        expect(view.getByRole("button", { name: "Present slideshow" })).toBeInTheDocument();
     });
 
     it("redirects unknown themes to the marketplace", async () => {

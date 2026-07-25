@@ -151,3 +151,17 @@ be between 10 and 1000.
 
 The API permits credentialed requests from `CORS_ORIGINS` or `CORS_ORIGIN`.
 Local defaults are `http://localhost:5173` and `http://127.0.0.1:5173`.
+# AI Provider Connections
+
+Authenticated users with more than 50 points can manage encrypted BYOK
+connections under `/api/ai`:
+
+- `GET /api/ai/config`
+- `POST /api/ai/connections`
+- `PUT /api/ai/connections/:provider`
+- `DELETE /api/ai/connections/:provider`
+- `PUT /api/ai/selection`
+
+Supported providers are `openai`, `google`, and `anthropic`. Generation requests
+may include `ai: { provider, model }`; iteration resolves the user's current
+selection server-side. Keys are never returned by these endpoints.

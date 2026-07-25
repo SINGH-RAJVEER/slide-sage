@@ -32,7 +32,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 }) => {
     return (
         <div
-            className="flex-1 mt-3 flex flex-col"
+            className="viewer-slide-area flex-1 mt-3 flex flex-col"
             style={{ maxHeight: "calc(100vh - 40px - 28px - 48px - 56px)" }}
         >
             <div

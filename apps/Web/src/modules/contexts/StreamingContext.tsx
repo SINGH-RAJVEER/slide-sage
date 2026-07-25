@@ -1,3 +1,4 @@
+import type { AIModelSelection } from "@slide-sage/types";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_URL, readJsonResponse } from "@/lib/api";
@@ -62,6 +63,7 @@ interface StreamingContextValue {
         retryPresentationId?: string,
         theme?: ThemeId,
         layoutPreference?: PresentationLayoutPreference,
+        ai?: AIModelSelection,
     ) => Promise<boolean>;
     startIterating: (
         prompt: string,
@@ -324,6 +326,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             retryPresentationId?: string,
             theme: ThemeId = "corporate-blue",
             layoutPreference: PresentationLayoutPreference = "auto",
+            ai?: AIModelSelection,
         ): Promise<boolean> => {
             if (activeStreamRef.current) return false;
             activeStreamRef.current = true;
@@ -361,6 +364,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                         retry_presentation_id: retryPresentationId,
                         theme,
                         layout_preference: layoutPreference,
+                        ai,
                     }),
                     signal: abortControllerRef.current.signal,
                 });

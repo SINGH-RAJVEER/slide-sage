@@ -357,14 +357,14 @@ export default function PresentationViewerPage() {
 
     return (
         <div
-            className="flex min-h-screen bg-transparent p-0"
+            className="presentation-viewer flex min-h-screen bg-transparent p-0"
             style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
         >
             <div
                 className={
                     isFullscreenMode
                         ? "h-screen w-screen flex flex-col"
-                        : "mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
+                        : "presentation-viewer__shell mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
                 }
                 style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
             >

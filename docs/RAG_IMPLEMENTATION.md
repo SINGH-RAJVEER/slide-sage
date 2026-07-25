@@ -66,3 +66,9 @@ just test-apis
 The RAG service tests cover retrieval, persistence, source storage, and degraded
 behavior. A live generation check additionally requires PostgreSQL and valid
 OpenRouter credentials.
+# BYOK Isolation
+
+User-owned OpenAI, Gemini, and Anthropic credentials are used only for direct
+presentation generation. All source, slide, deck, and retrieval embeddings
+continue to use `OPEN_ROUTER_API_KEY`, `OPEN_ROUTER_EMBEDDINGS_URL`, and
+`EMBEDDING_MODEL`.

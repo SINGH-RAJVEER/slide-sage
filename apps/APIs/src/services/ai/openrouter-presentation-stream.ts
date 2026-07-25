@@ -1,4 +1,5 @@
 import {
+    type AIProvider,
     BACKGROUND_FOCAL_POINTS,
     BACKGROUND_OVERLAYS,
     BLOCK_EMPHASES,
@@ -42,6 +43,8 @@ interface OpenRouterEnvironment {
 }
 
 interface StructuredPresentationOptions {
+    provider?: AIProvider;
+    apiKey?: string;
     model: string;
     messages: OpenRouterMessage[];
     expectedSlideCount?: number;
@@ -76,7 +79,7 @@ async function wait(delayMs: number): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
-function presentationResponseFormat(expectedSlideCount?: number): Record<string, unknown> {
+export function presentationResponseFormat(expectedSlideCount?: number): Record<string, unknown> {
     const region = { enum: SLIDE_REGIONS };
     const blockSemantics = {
         emphasis: { enum: BLOCK_EMPHASES },
@@ -457,13 +460,15 @@ export async function* streamStructuredPresentation(
     const maxResponseBytes = positiveInteger("OPEN_ROUTER_MAX_RESPONSE_BYTES", 8 * 1024 * 1024);
     const environment = process.env as OpenRouterEnvironment;
     const endpoint =
-        environment.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions";
-    const apiKey = environment.OPEN_ROUTER_API_KEY;
+        options.provider === undefined
+            ? environment.OPEN_ROUTER_API_BASE || "https://openrouter.ai/api/v1/chat/completions"
+            : undefined;
+    const apiKey = options.apiKey || environment.OPEN_ROUTER_API_KEY;
 
     if (!apiKey) {
         yield {
             event: "error",
-            data: { error: "OpenRouter is not configured. Set OPEN_ROUTER_API_KEY." },
+            data: { error: "The selected AI provider is not configured." },
         };
         return;
     }
@@ -477,6 +482,7 @@ export async function* streamStructuredPresentation(
         try {
             const response = await requestOpenRouterStream({
                 endpoint,
+                provider: options.provider,
                 apiKey,
                 model: options.model,
                 messages: options.messages,

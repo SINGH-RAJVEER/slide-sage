@@ -6,6 +6,7 @@
 import type { Presentation } from "@slide-sage/database";
 import { PresentationRepository, TokenCalculator } from "@slide-sage/database";
 import {
+    type AIModelSelection,
     buildResearchSystemMessage,
     type PresentationJSON,
     type PresentationLayoutPreference,
@@ -32,6 +33,7 @@ export interface GeneratePresentationParams {
     researchPayload?: ResearchPayload;
     theme?: ThemeId;
     layoutPreference?: PresentationLayoutPreference;
+    ai?: AIModelSelection & { apiKey: string };
 }
 
 export interface IteratePresentationParams {
@@ -42,6 +44,7 @@ export interface IteratePresentationParams {
     detailLevel?: string;
     tonality?: string;
     research?: ResearchOptions;
+    ai?: AIModelSelection & { apiKey: string };
 }
 
 export interface StorePresentationMemoryParams {
@@ -116,7 +119,8 @@ export class PresentationService {
                 researchPayload,
                 params.userId,
                 theme,
-                layoutPreference
+                layoutPreference,
+                params.ai
             )) {
                 yield event;
             }
@@ -176,7 +180,8 @@ export class PresentationService {
                     feedback,
                     detailLevel,
                     tonality,
-                    research
+                    research,
+                    params.ai
                 )) {
                     yield event;
                 }

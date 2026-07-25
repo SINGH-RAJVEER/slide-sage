@@ -8,6 +8,7 @@ import type {
 } from "@slide-sage/types";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
+import { AIProviderConnections } from "@/components/Profile/AIProviderConnections";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { API_URL } from "@/lib/api";
 
@@ -270,6 +271,8 @@ export default function ProfilePage() {
                             Manage your account settings and preferences
                         </p>
                     </div>
+
+                    <AIProviderConnections />
 
                     {/* Avatar Section */}
                     <div className="space-y-4 rounded-xl border border-white/10 bg-black/20 p-6">

@@ -30,14 +30,14 @@ const renderHeader = (
 it("uses Present as the fullscreen action", () => {
     const { view, onPresent } = renderHeader();
 
-    fireEvent.click(view.getByRole("button", { name: "Present" }));
+    fireEvent.click(view.getByRole("button", { name: "Present slideshow" }));
 
     expect(onPresent).toHaveBeenCalledTimes(1);
 });
 
 it("disables Present until slides are available", () => {
     const { view, onPresent } = renderHeader({ presentDisabled: true });
-    const present = view.getByRole("button", { name: "Present" });
+    const present = view.getByRole("button", { name: "Present slideshow" });
 
     expect(present).toBeDisabled();
     fireEvent.click(present);
@@ -53,6 +53,6 @@ it("shows a fixed theme indicator and omits generation controls in preview mode"
     });
 
     expect(view.getByText("Midnight Signal")).toBeInTheDocument();
-    expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
+    expect(view.queryByRole("button", { name: "Iterate presentation" })).toBeNull();
     expect(view.queryByRole("combobox")).toBeNull();
 });

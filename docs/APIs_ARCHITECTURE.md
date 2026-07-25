@@ -207,6 +207,9 @@ React Router defines public authentication routes and a signed-in application
 area. Protected routes include `/`, `/profile`, `/generate`,
 `/generate/research`, `/presentations`, `/presentations/:presentationId`, and
 `/purchase`. Presentation-heavy pages are lazy-loaded.
+The presentations library renders its header and search controls immediately;
+only the results section displays a loading indicator while its database-backed
+list request is pending.
 
 The `/presentation` route is retained for an in-progress stream before a saved
 presentation ID is available. Navigating between client routes does not cancel
@@ -217,3 +220,13 @@ application shell and links back to the saved retry item in the presentation
 library. The global stopped-generation control automatically disappears after an
 eight-second cooldown, while the failed record remains available until retried or
 deleted.
+# Direct AI Providers
+
+Presentation generation can use encrypted per-user OpenAI, Gemini, or Anthropic
+keys. Provider adapters normalize native streaming events into the existing
+presentation parser and SlideSage SSE event contract. Connections and model
+selection are managed by `/api/ai`.
+
+Research remains an Exa workflow. Embeddings and semantic memory always use the
+server OpenRouter configuration; BYOK credentials are never passed into RAG or
+search services.

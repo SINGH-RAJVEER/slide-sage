@@ -1,7 +1,9 @@
+import type { AIConfigurationResponse, AIModelSelection } from "@slide-sage/types";
 import { Globe } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import type { PresentationLayoutPreference, ThemeId } from "@/modules/types/presentation";
+import { AIModelSelector } from "./AIModelSelector";
 import { DetailLevelSelector } from "./DetailLevelSelector";
 import { GenerationThemeSelector } from "./GenerationThemeSelector";
 import { LayoutPreferenceSelector } from "./LayoutPreferenceSelector";
@@ -9,6 +11,8 @@ import { SlideCountSelector } from "./SlideCountSelector";
 import { TonalitySelector } from "./TonalitySelector";
 
 interface GenerateOptionsBarProps {
+    aiConfig: AIConfigurationResponse | null;
+    aiSelection: AIModelSelection | null;
     detailLevel: string;
     tonality: string;
     useWebResearch: boolean;
@@ -25,9 +29,12 @@ interface GenerateOptionsBarProps {
     onCustomSlideCountChange: (count: string) => void;
     onThemeChange: (theme: ThemeId) => void;
     onLayoutPreferenceChange: (preference: PresentationLayoutPreference) => void;
+    onAISelectionChange: (selection: AIModelSelection) => void;
 }
 
 export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
+    aiConfig,
+    aiSelection,
     detailLevel,
     tonality,
     useWebResearch,
@@ -44,10 +51,18 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
     onCustomSlideCountChange,
     onThemeChange,
     onLayoutPreferenceChange,
+    onAISelectionChange,
 }) => {
     return (
         <div className="mb-2 w-full flex items-center justify-center">
             <div className="flex w-fit max-w-full flex-nowrap items-center justify-start gap-3 overflow-x-auto whitespace-nowrap rounded-lg border border-white/10 bg-black/20 px-4 py-3 custom-scrollbar xl:justify-center">
+                {aiConfig ? (
+                    <AIModelSelector
+                        config={aiConfig}
+                        selection={aiSelection}
+                        onChange={onAISelectionChange}
+                    />
+                ) : null}
                 <div className="flex items-center gap-2 shrink-0">
                     <Button
                         type="button"

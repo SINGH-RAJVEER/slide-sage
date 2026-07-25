@@ -1,4 +1,6 @@
 import type {
+    AIConfigurationResponse,
+    AIModelSelection,
     PresentationLayoutPreference,
     PresentationRetryOptions,
     ThemeId,
@@ -8,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GenerateForm, GenerateOptionsBar } from "@/components/Generate";
 import Header from "@/components/Header";
+import { fetchAIConfiguration, selectAIModel } from "@/lib/ai-connections";
 import { useStreaming } from "@/modules/presentations";
 import { ROUTES } from "@/router/paths";
 
@@ -38,8 +41,24 @@ export default function GeneratePPTPage() {
     const [layoutPreference, setLayoutPreference] = useState<PresentationLayoutPreference>(
         retry?.layout_preference ?? "auto",
     );
+    const [aiConfig, setAIConfig] = useState<AIConfigurationResponse | null>(null);
+    const [aiSelection, setAISelection] = useState<AIModelSelection | null>(retry?.ai ?? null);
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
+
+    useEffect(() => {
+        void fetchAIConfiguration()
+            .then((config) => {
+                setAIConfig(config);
+                setAISelection((current) => current || config.selection);
+            })
+            .catch(() => undefined);
+    }, []);
+
+    const handleAISelectionChange = (selection: AIModelSelection) => {
+        setAISelection(selection);
+        void selectAIModel(selection).catch(() => undefined);
+    };
 
     useEffect(() => {
         if (streamingState.error) {
@@ -116,6 +135,7 @@ export default function GeneratePPTPage() {
                     theme,
                     layoutPreference,
                     retryPresentationId,
+                    ai: aiSelection,
                 },
             });
             return;
@@ -131,6 +151,7 @@ export default function GeneratePPTPage() {
             retryPresentationId,
             theme,
             layoutPreference,
+            aiSelection ?? undefined,
         );
         navigate(ROUTES.presentation, {
             state: { isStreaming: true },
@@ -197,6 +218,8 @@ export default function GeneratePPTPage() {
 
             <div className="w-full flex items-center justify-center px-4 pt-6 md:pt-8">
                 <GenerateOptionsBar
+                    aiConfig={aiConfig}
+                    aiSelection={aiSelection}
                     detailLevel={detailLevel}
                     tonality={tonality}
                     useWebResearch={useWebResearch}
@@ -213,6 +236,7 @@ export default function GeneratePPTPage() {
                     onCustomSlideCountChange={setCustomSlideCount}
                     onThemeChange={setTheme}
                     onLayoutPreferenceChange={setLayoutPreference}
+                    onAISelectionChange={handleAISelectionChange}
                 />
             </div>
 
