@@ -22,4 +22,6 @@ Rules for AI agents in this repository.
 
 ## Don’ts
 
+- Never generate any 'card within card' type of UI for this application keep it abstract and without broundaries unless specifically required.
 - Never use emojis in documentation or messages.
+

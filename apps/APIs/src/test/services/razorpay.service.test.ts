@@ -23,15 +23,15 @@ afterEach(() => {
 
 describe("razorpay service", () => {
     it("resolves fixed pack prices", () => {
-        expect(resolvePackPrice("starter")).toEqual({ tokens: 10, amountPaise: 5000 });
-        expect(resolvePackPrice("pro")).toEqual({ tokens: 100, amountPaise: 45000 });
-        expect(resolvePackPrice("premium")).toEqual({ tokens: 250, amountPaise: 100000 });
+        expect(resolvePackPrice("starter")).toEqual({ tokens: 25, amountPaise: 5000 });
+        expect(resolvePackPrice("pro")).toEqual({ tokens: 250, amountPaise: 45000 });
+        expect(resolvePackPrice("premium")).toEqual({ tokens: 625, amountPaise: 100000 });
     });
 
     it("resolves custom prices with volume discounts", () => {
-        expect(resolvePackPrice("custom", 10)).toEqual({ tokens: 10, amountPaise: 5000 });
-        expect(resolvePackPrice("custom", 101)).toEqual({ tokens: 101, amountPaise: 45450 });
-        expect(resolvePackPrice("custom", 251)).toEqual({ tokens: 251, amountPaise: 100400 });
+        expect(resolvePackPrice("custom", 25)).toEqual({ tokens: 25, amountPaise: 5000 });
+        expect(resolvePackPrice("custom", 250)).toEqual({ tokens: 250, amountPaise: 45000 });
+        expect(resolvePackPrice("custom", 625)).toEqual({ tokens: 625, amountPaise: 100000 });
     });
 
     it("verifies checkout signatures with the configured key secret", () => {

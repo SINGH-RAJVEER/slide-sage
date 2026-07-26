@@ -3,9 +3,9 @@ import type { BillingCheckoutResponse, BillingPackName } from "@slide-sage/types
 import Razorpay from "razorpay";
 
 const PACKS: Record<Exclude<BillingPackName, "custom">, { tokens: number; amountPaise: number }> = {
-    starter: { tokens: 10, amountPaise: 5000 },
-    pro: { tokens: 100, amountPaise: 45000 },
-    premium: { tokens: 250, amountPaise: 100000 },
+    starter: { tokens: 25, amountPaise: 5000 },
+    pro: { tokens: 250, amountPaise: 45000 },
+    premium: { tokens: 625, amountPaise: 100000 },
 };
 
 export function resolvePackPrice(
@@ -16,10 +16,10 @@ export function resolvePackPrice(
         return PACKS[pack];
     }
 
-    const tokens = quantity ?? 10;
-    let priceRs = tokens * 5;
-    if (tokens > 250) priceRs *= 0.8;
-    else if (tokens > 100) priceRs *= 0.9;
+    const tokens = quantity ?? 25;
+    let priceRs = tokens * 2;
+    if (tokens >= 625) priceRs *= 0.8;
+    else if (tokens >= 250) priceRs *= 0.9;
 
     return { tokens, amountPaise: Math.round(priceRs * 100) };
 }

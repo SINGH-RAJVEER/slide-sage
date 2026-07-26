@@ -2,53 +2,37 @@
 
 ## Workspace
 
-SlideSage is a native Bun workspace. Root scripts coordinate commands across
-applications and shared packages directly through Bun.
+SlideSage is a Bun workspace.
 
 ```text
-apps/APIs       Hono routes, Better Auth, middleware, and services
-apps/Web        React 19 application built by Vite
-packages/database
-                Drizzle schema, migrations, repositories, token accounting
-packages/types  Shared API, presentation, research, profile, and billing contracts
+apps/APIs          Hono routes, Better Auth, middleware, and services
+apps/Web           React 19 application built by Vite
+packages/database  Drizzle schema, migrations, repositories, token accounting
+packages/types     Shared API, presentation, research, profile, and billing contracts
 ```
 
-Biome handles formatting and linting. Bun's test runner executes both API and web
-tests; API tests use isolation because modules hold database and auth state.
+Biome handles formatting and linting. Bun's test runner executes both API and web tests; API tests use isolation because modules hold database and auth state.
 
 ## Runtime
 
-The local stack is defined and coordinated by devenv's native service, task, and
-process management:
+The local stack is defined and coordinated by devenv's native service, task, and process management:
 
 ```text
-PostgreSQL ready -> Drizzle migrations complete -> API starts
-                                           Vite web starts
+PostgreSQL ready -> Drizzle migrations complete -> API starts -> Vite web starts
 ```
 
-PostgreSQL 17 includes pgvector. Local state is stored in
-`.devenv/state/postgres/`.
+PostgreSQL 17 includes pgvector. Local dev state is stored in `.devenv/state/postgres/`.
 
-The production API entry point is `apps/APIs/src/index.ts`. Authentication is
-implemented in `apps/APIs/src/services/auth.ts` and its middleware companion, so
-the Worker deploy does not depend on a separate auth workspace package. The API
-mounts:
+The production API entry point is `apps/APIs/src/index.ts`. Authentication is implemented in `apps/APIs/src/services/auth.ts` and its middleware companion, so the Worker deploy does not depend on a separate auth workspace package. The API mounts:
 
 - Better Auth at `/api/auth`
 - Profile routes at `/api/profile`
 - Presentation and research routes at `/api`
 - Billing routes at `/api/billing`
 
-Authenticated routes validate the Better Auth session cookie. Presentation
-generation and revision check the user's slide-token balance before opening an
-SSE stream.
+Authenticated routes validate the Better Auth session cookie. Presentation generation and revision check the user's slide-token balance before opening an SSE stream.
 
-Transport contracts shared by the Worker and web app belong in
-`packages/types`. This includes presentation list/detail responses, profile
-requests and responses, billing checkout and verification payloads, common API
-errors, and streaming events. Database row types remain in `packages/database`,
-while component props and service-only implementation types stay with their
-owning modules.
+Transport contracts shared by the Worker and web app belong in `packages/types`. This includes presentation list/detail responses, profile requests and responses, billing checkout and verification payloads, common API errors, and streaming events. Database row types remain in `packages/database`, while component props and service-only implementation types stay with their owning modules.
 
 ## Presentation Flow
 

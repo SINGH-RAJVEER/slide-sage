@@ -68,10 +68,10 @@ mock.module("@slide-sage/database", () => ({
 mock.module("../../services/razorpay.service", () => ({
     createOrder,
     resolvePackPrice: (pack: string, quantity?: number) => {
-        if (pack === "starter") return { tokens: 10, amountPaise: 5000 };
-        if (pack === "pro") return { tokens: 100, amountPaise: 45000 };
-        if (pack === "premium") return { tokens: 250, amountPaise: 100000 };
-        return { tokens: quantity ?? 10, amountPaise: (quantity ?? 10) * 500 };
+        if (pack === "starter") return { tokens: 25, amountPaise: 5000 };
+        if (pack === "pro") return { tokens: 250, amountPaise: 45000 };
+        if (pack === "premium") return { tokens: 625, amountPaise: 100000 };
+        return { tokens: quantity ?? 25, amountPaise: (quantity ?? 25) * 200 };
     },
     verifyPaymentSignature: () => paymentSignatureValid,
     verifyWebhookSignature: () => webhookSignatureValid,
@@ -126,7 +126,7 @@ describe("billing routes", () => {
         expect(await json(invalidPack)).toEqual({ error: { message: "Invalid pack" } });
         expect(invalidCustom.status).toBe(400);
         expect(await json(invalidCustom)).toEqual({
-            error: { message: "Custom quantity must be 10–1000" },
+            error: { message: "Custom quantity must be 25–2500" },
         });
     });
 
@@ -135,7 +135,7 @@ describe("billing routes", () => {
             orderId: "order_1",
             amount: 5000,
             currency: "INR",
-            tokens: 10,
+            tokens: 25,
             keyId: "rzp_key",
         });
 
@@ -150,7 +150,7 @@ describe("billing routes", () => {
             orderId: "order_1",
             amount: 5000,
             currency: "INR",
-            tokens: 10,
+            tokens: 25,
             keyId: "rzp_key",
         });
         expect(createOrder).toHaveBeenCalledWith(currentUserId, "starter", undefined);
@@ -159,7 +159,7 @@ describe("billing routes", () => {
                 userId: currentUserId,
                 razorpayOrderId: "order_1",
                 amountPaise: 5000,
-                tokensGranted: 10,
+                tokensGranted: 25,
                 status: "created",
             },
         ]);

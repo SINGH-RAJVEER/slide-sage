@@ -43,8 +43,8 @@ billing.post("/checkout", authMiddleware, async (c) => {
         }
 
         if (pack === "custom") {
-            if (!quantity || typeof quantity !== "number" || quantity < 10 || quantity > 1000) {
-                return c.json({ error: { message: "Custom quantity must be 10–1000" } }, 400);
+            if (!quantity || typeof quantity !== "number" || quantity < 25 || quantity > 2500) {
+                return c.json({ error: { message: "Custom quantity must be 25–2500" } }, 400);
             }
         }
 
