@@ -11,6 +11,10 @@ Rules for AI agents in this repository.
 - Always use 4 spaces for indentation everywhere in this repository.
 - Do not use 2 spaces or tabs for indentation.
 
+## Version Control System
+
+- This repo uses Jusjutsu(jj) for its version control.
+
 ## Documentation updates
 
 - Always update documentation in `/docs` after updating a feature.

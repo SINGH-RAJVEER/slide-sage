@@ -39,6 +39,7 @@ Run commands inside `devenv shell`.
 | Command | Purpose |
 | --- | --- |
 | `just dev` | Start PostgreSQL, migrations, API, and web app |
+| `just docker` | Build and start the production Docker stack |
 | `just apis` | Start only the API |
 | `just web` | Start only the web app |
 | `just migrate` | Apply database migrations |
@@ -60,6 +61,7 @@ packages/
     database/   Drizzle schema, migrations, and repositories
     types/      Shared TypeScript contracts
 docs/           Maintainer documentation
+docker/         Production images, Nginx configuration, and Compose stack
 devenv.nix      Local toolchain and service orchestration
 Justfile        Common development commands
 ```
@@ -69,6 +71,7 @@ The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector, OpenRout
 ## Documentation
 
 - [Development setup](docs/DEVELOPMENT_SETUP.md)
+- [Production Docker deployment](docs/DOCKER_DEPLOYMENT.md)
 - [Environment variables](docs/ENVIRONMENT_VARIABLES.md)
 - [Architecture](docs/APIs_ARCHITECTURE.md)
 - [API reference](docs/API_OVERVIEW.md)

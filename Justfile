@@ -8,6 +8,10 @@ default:
 dev:
     devenv up
 
+# Build and start the production Docker stack
+docker:
+    docker compose --env-file .env -f docker/compose.yaml up --build -d
+
 # Open a psql shell to the local dev database
 db-shell:
     psql -h 127.0.0.1 -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER:-slidesage}" -d "${POSTGRES_DB:-slidesage}"
