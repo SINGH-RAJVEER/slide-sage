@@ -187,23 +187,23 @@ export default function PurchaseTokensPage() {
 
     const handleCustomPurchase = () => {
         const amount = parseInt(customAmount, 10);
-        if (amount >= 10 && amount <= 1000) {
+        if (amount >= 25 && amount <= 2500) {
             handlePurchase(amount, "custom");
         }
     };
 
     const isCustomAmountValid = () => {
         const amount = parseInt(customAmount, 10);
-        return !Number.isNaN(amount) && amount >= 10 && amount <= 1000;
+        return !Number.isNaN(amount) && amount >= 25 && amount <= 2500;
     };
 
     const calculateCustomPrice = (amountStr: string) => {
         const amount = parseInt(amountStr, 10);
         if (Number.isNaN(amount)) return 0;
-        let price = amount * 5;
-        if (amount > 250) {
+        let price = amount * 2;
+        if (amount >= 625) {
             price = price * 0.8;
-        } else if (amount > 100) {
+        } else if (amount >= 250) {
             price = price * 0.9;
         }
         return price;
@@ -246,7 +246,7 @@ export default function PurchaseTokensPage() {
 
                     {/* Purchase Options */}
                     <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        {/* Option 1: 10 Tokens */}
+                        {/* Option 1: 25 Tokens */}
                         <Card className="flex flex-col border border-white/10 bg-black/20 transition-colors hover:bg-white/5">
                             <CardHeader>
                                 <CardTitle className="text-white text-2xl">Starter Pack</CardTitle>
@@ -257,7 +257,7 @@ export default function PurchaseTokensPage() {
                             <CardContent className="flex-1 flex flex-col">
                                 <div className="flex-1 space-y-4">
                                     <div className="text-center py-4">
-                                        <div className="text-5xl font-bold text-white mb-2">10</div>
+                                        <div className="text-5xl font-bold text-white mb-2">25</div>
                                         <div className="text-white/60">points</div>
                                     </div>
                                     <div className="text-center text-3xl font-bold text-blue-400">
@@ -278,7 +278,7 @@ export default function PurchaseTokensPage() {
                                 </div>
                                 <Button
                                     className="w-full bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/10 text-white transition-all duration-300 h-12 font-semibold mt-4"
-                                    onClick={() => handlePurchase(10, "starter")}
+                                    onClick={() => handlePurchase(25, "starter")}
                                     disabled={isProcessing}
                                 >
                                     {isProcessing && selectedOption === "starter" ? (
@@ -293,7 +293,7 @@ export default function PurchaseTokensPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Option 2: 100 Tokens */}
+                        {/* Option 2: 250 Tokens */}
                         <Card className="relative flex flex-col border border-white/10 bg-black/20 transition-colors hover:bg-white/5">
                             <CardHeader>
                                 <CardTitle className="text-white text-2xl">Pro Pack</CardTitle>
@@ -305,7 +305,7 @@ export default function PurchaseTokensPage() {
                                 <div className="flex-1 space-y-4">
                                     <div className="text-center py-4">
                                         <div className="text-5xl font-bold text-white mb-2">
-                                            100
+                                            250
                                         </div>
                                         <div className="text-white/60">points</div>
                                     </div>
@@ -332,7 +332,7 @@ export default function PurchaseTokensPage() {
                                 </div>
                                 <Button
                                     className="w-full bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/10 text-white transition-all duration-300 h-12 font-semibold mt-4"
-                                    onClick={() => handlePurchase(100, "pro")}
+                                    onClick={() => handlePurchase(250, "pro")}
                                     disabled={isProcessing}
                                 >
                                     {isProcessing && selectedOption === "pro" ? (
@@ -347,7 +347,7 @@ export default function PurchaseTokensPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Option 3: 250 Tokens */}
+                        {/* Option 3: 625 Tokens */}
                         <div className="relative">
                             <div className="absolute -top-3 right-3 z-10 rounded-full border border-blue-400/30 bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-200">
                                 BEST VALUE
@@ -365,7 +365,7 @@ export default function PurchaseTokensPage() {
                                     <div className="flex-1 space-y-4">
                                         <div className="text-center py-4">
                                             <div className="text-5xl font-bold text-white mb-2">
-                                                250
+                                                625
                                             </div>
                                             <div className="text-white/60">points</div>
                                         </div>
@@ -405,7 +405,7 @@ export default function PurchaseTokensPage() {
                                     </div>
                                     <Button
                                         className="w-full bg-blue-500/10 hover:bg-blue-500/20 backdrop-blur-lg border border-blue-500/30 text-white transition-all duration-300 h-12 font-semibold mt-4"
-                                        onClick={() => handlePurchase(250, "premium")}
+                                        onClick={() => handlePurchase(625, "premium")}
                                         disabled={isProcessing}
                                     >
                                         {isProcessing && selectedOption === "premium" ? (
@@ -426,7 +426,7 @@ export default function PurchaseTokensPage() {
                             <CardHeader>
                                 <CardTitle className="text-white text-2xl">Custom Amount</CardTitle>
                                 <CardDescription className="text-white/60">
-                                    Choose your own (10-1000)
+                                    Choose your own (25-2500)
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex-1 flex flex-col">
@@ -436,16 +436,16 @@ export default function PurchaseTokensPage() {
                                             <Input
                                                 id="customAmount"
                                                 type="number"
-                                                min="10"
-                                                max="1000"
+                                                min="25"
+                                                max="2500"
                                                 placeholder="Enter number of points"
                                                 value={customAmount}
                                                 onChange={(e) => setCustomAmount(e.target.value)}
                                                 onInput={(e) => {
                                                     const target = e.target as HTMLInputElement;
-                                                    if (parseInt(target.value, 10) > 1000) {
-                                                        target.value = "1000";
-                                                        setCustomAmount("1000");
+                                                    if (parseInt(target.value, 10) > 2500) {
+                                                        target.value = "2500";
+                                                        setCustomAmount("2500");
                                                     }
                                                 }}
                                                 onKeyPress={(e) => {
@@ -457,7 +457,7 @@ export default function PurchaseTokensPage() {
                                             />
                                             {customAmount && !isCustomAmountValid() && (
                                                 <p className="text-red-400 text-sm">
-                                                    Must be 10-1000
+                                                    Must be 25-2500
                                                 </p>
                                             )}
                                         </div>
@@ -467,13 +467,13 @@ export default function PurchaseTokensPage() {
                                             <div className="text-3xl font-bold text-blue-400">
                                                 ₹{calculateCustomPrice(customAmount).toFixed(0)}
                                             </div>
-                                            {parseInt(customAmount, 10) > 250 && (
+                                            {parseInt(customAmount, 10) >= 625 && (
                                                 <div className="text-sm text-green-400 mt-1">
                                                     20% Discount Applied
                                                 </div>
                                             )}
-                                            {parseInt(customAmount, 10) > 100 &&
-                                                parseInt(customAmount, 10) <= 250 && (
+                                            {parseInt(customAmount, 10) >= 250 &&
+                                                parseInt(customAmount, 10) < 625 && (
                                                     <div className="text-sm text-green-400 mt-1">
                                                         10% Discount Applied
                                                     </div>

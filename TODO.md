@@ -11,6 +11,9 @@
 - Make streaming partially returned slide data possible
 - Add widget generation functionality into slides
 - Implement background images
+- Have the images embedded in the ppts have different levels of possible belnding with the background of the theme
+- Make the deletion of a presentation a one click process with an undo colldown
+- Introduce a vim mode to navigate the entire application
 
 ## Issues
 
@@ -19,3 +22,9 @@
 - The second generate is pressed it should lead to the viewer page with loaders waiting for the stream to start
 - The charts showing percentages and other metrics on hover should instead have it displayed from the get go
 - Points should be consumed for every successful search
+- Fix the pricing model and make the discounts apply to the custom values
+- Upvote button should only turn blue after the current user has upvoted the theme in the marketplace
+- Opening a seperate ppt when another is already generating leads to the generating ppt on the viewer page
+- Generation indicator on hover too small
+- the indicator for a generating ppt shows as retry instead of generating in the viewer page
+

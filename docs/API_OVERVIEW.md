@@ -165,8 +165,10 @@ text but no URL; grounded image blocks require HTTPS URLs.
 | `POST` | `/api/billing/verify` | Yes | Verify payment and grant tokens idempotently |
 | `POST` | `/api/billing/webhook` | Signature | Process `payment.captured` |
 
-Checkout accepts `starter`, `pro`, `premium`, or `custom`. Custom quantities must
-be between 10 and 1000.
+Checkout accepts `starter`, `pro`, `premium`, or `custom`. Starter grants 25
+points for ₹50, Pro grants 250 points for ₹450, and Premium grants 625 points for
+₹1000. Custom quantities must be between 25 and 2500 points and use the same
+₹2-per-point base rate with 10% and 20% volume discounts at 250 and 625 points.
 
 ## CORS
 
