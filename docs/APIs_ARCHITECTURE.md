@@ -21,7 +21,7 @@ The local stack is defined and coordinated by devenv's native service, task, and
 PostgreSQL ready -> Drizzle migrations complete -> API starts -> Vite web starts
 ```
 
-PostgreSQL 17 includes pgvector. Local dev state is stored in `.devenv/state/postgres/`.
+PostgreSQL 18 includes pgvector. Local dev state is stored in `.devenv/state/postgres/`.
 
 The production API entry point is `apps/APIs/src/index.ts`. Authentication is implemented in `apps/APIs/src/services/auth.ts` and its middleware companion, so the Worker deploy does not depend on a separate auth workspace package. The API mounts:
 
