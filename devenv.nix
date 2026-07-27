@@ -16,7 +16,7 @@ in
 
     services.postgres = {
         enable = true;
-        package = pkgs.postgresql_17;
+        package = pkgs.postgresql_18;
         extensions = extensions: [ extensions.pgvector ];
         createDatabase = false;
         listen_addresses = "127.0.0.1";

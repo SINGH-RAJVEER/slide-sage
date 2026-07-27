@@ -5,7 +5,7 @@
 - Nix with flakes enabled
 - [devenv](https://devenv.sh/getting-started/)
 
-Bun, PostgreSQL 17 with pgvector, and `just` are supplied by `devenv.nix`.
+Bun, PostgreSQL 18 with pgvector, and `just` are supplied by `devenv.nix`.
 
 ## First Run
 
@@ -122,6 +122,35 @@ rm -rf .devenv/state/postgres
 ```
 
 Run `just dev` to initialize it again.
+
+## Upgrading Local PostgreSQL 17 Data
+
+PostgreSQL major versions cannot open each other's data directories. If the local
+PostgreSQL 17 database contains data you need, export it before entering the updated
+development environment:
+
+```bash
+devenv up -d postgres
+pg_dump -h 127.0.0.1 -p 5432 -U slidesage -d slidesage --format=custom --file=slidesage-pg17.dump
+devenv processes down
+```
+
+After updating, initialize PostgreSQL 18 and restore the dump:
+
+```bash
+devenv processes down
+rm -rf .devenv/state/postgres
+devenv up -d postgres
+devenv tasks run db:setup
+pg_restore -h 127.0.0.1 -p 5432 -U slidesage -d slidesage --clean --if-exists --no-owner slidesage-pg17.dump
+devenv tasks run db:migrate
+devenv processes down
+just dev
+```
+
+Keep the dump until the restored application and vector searches have been
+verified. If the local database is disposable, use the reset procedure above
+instead.
 
 ## Troubleshooting
 

@@ -66,7 +66,7 @@ devenv.nix      Local toolchain and service orchestration
 Justfile        Common development commands
 ```
 
-The workspace uses Bun, TypeScript, Biome, PostgreSQL 17 with pgvector, OpenRouter, Exa, Better Auth, Resend, and Razorpay.
+The workspace uses Bun, TypeScript, Biome, PostgreSQL 18 with pgvector, OpenRouter, Exa, Better Auth, Resend, and Razorpay.
 
 ## Documentation
 
