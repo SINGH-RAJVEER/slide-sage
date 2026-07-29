@@ -1,7 +1,9 @@
+import { isSceneSlide, type SceneSlide } from "@slide-sage/types";
 import type React from "react";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import type { ContentSlide, Slide } from "@/modules/types/presentation";
+import { EditableSceneCanvas } from "./EditableSceneCanvas";
 import { EditableSlideCanvas } from "./EditableSlideCanvas";
 import { SlideRenderer } from "./SlideRenderer";
 
@@ -16,7 +18,7 @@ interface ViewerSlideCarouselProps {
     generationMessage?: string;
     generationProgress?: number;
     savingEdit?: boolean;
-    onSaveEdit?: (slide: ContentSlide) => Promise<void>;
+    onSaveEdit?: (slide: ContentSlide | SceneSlide) => Promise<void>;
     onCancelEdit?: () => void;
 }
 
@@ -103,17 +105,30 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
                         >
                             <div className="ss-slide-stage flex-shrink-0 cursor-pointer">
                                 <Card className="w-full h-full rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 flex items-stretch">
-                                    {currentSlide === idx &&
-                                    "blocks" in slide &&
-                                    onSaveEdit &&
-                                    onCancelEdit ? (
-                                        <EditableSlideCanvas
-                                            slide={slide}
-                                            currentTemplate={currentTemplate}
-                                            saving={savingEdit}
-                                            onSave={onSaveEdit}
-                                            onCancel={onCancelEdit}
-                                        />
+                                    {currentSlide === idx && onSaveEdit && onCancelEdit ? (
+                                        isSceneSlide(slide) ? (
+                                            <EditableSceneCanvas
+                                                slide={slide}
+                                                currentTemplate={currentTemplate}
+                                                saving={savingEdit}
+                                                onSave={onSaveEdit}
+                                                onCancel={onCancelEdit}
+                                            />
+                                        ) : "blocks" in slide ? (
+                                            <EditableSlideCanvas
+                                                slide={slide}
+                                                currentTemplate={currentTemplate}
+                                                saving={savingEdit}
+                                                onSave={onSaveEdit}
+                                                onCancel={onCancelEdit}
+                                            />
+                                        ) : (
+                                            <SlideRenderer
+                                                slide={slide}
+                                                currentTemplate={currentTemplate}
+                                                isActive={currentSlide === idx}
+                                            />
+                                        )
                                     ) : (
                                         <SlideRenderer
                                             slide={slide}

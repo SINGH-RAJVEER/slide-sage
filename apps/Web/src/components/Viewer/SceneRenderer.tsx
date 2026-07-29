@@ -95,6 +95,11 @@ function SceneNodeView({
     muted,
     accent,
     isActive,
+    editingTarget,
+    onSelectText,
+    onEditText,
+    onSelectWidget,
+    onEditWidget,
 }: {
     node: ResolvedSceneNode;
     parent: ResolvedSceneNode;
@@ -102,6 +107,11 @@ function SceneNodeView({
     muted: string;
     accent: string;
     isActive: boolean;
+    editingTarget?: string;
+    onSelectText?: (nodeId: string) => void;
+    onEditText?: (nodeId: string, text: string) => void;
+    onSelectWidget?: (nodeId: string) => void;
+    onEditWidget?: (nodeId: string, props: Record<string, unknown>) => void;
 }) {
     if (node.hidden) return null;
     const style = nodeCss(node, parent);
@@ -117,6 +127,11 @@ function SceneNodeView({
                         muted={muted}
                         accent={accent}
                         isActive={isActive}
+                        editingTarget={editingTarget}
+                        onSelectText={onSelectText}
+                        onEditText={onEditText}
+                        onSelectWidget={onSelectWidget}
+                        onEditWidget={onEditWidget}
                     />
                 ))}
             </div>
@@ -132,34 +147,59 @@ function SceneNodeView({
             label: 14,
         }[node.role || "body"];
         const TextElement = node.role === "title" || node.role === "display" ? "h1" : "div";
+        const textStyle: React.CSSProperties = {
+            ...style,
+            display: "flex",
+            alignItems:
+                node.role === "title" || node.role === "display" ? "flex-end" : "flex-start",
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            color:
+                node.style?.color ||
+                (node.role === "subtitle" || node.role === "caption" ? muted : foreground),
+            fontFamily:
+                node.style?.fontFamily ||
+                (node.role === "display" ? "Georgia, serif" : "Avenir Next, Segoe UI, sans-serif"),
+            fontSize: node.style?.fontSize || roleSize,
+            fontWeight:
+                node.style?.fontWeight ||
+                (node.role === "title" || node.role === "display" ? 650 : 400),
+            lineHeight: node.style?.lineHeight || 1.16,
+            letterSpacing: node.style?.letterSpacing,
+            textAlign: node.style?.textAlign,
+        };
+        if (editingTarget === node.id) {
+            return (
+                <textarea
+                    aria-label={`Edit slide ${node.role || "body"} text`}
+                    className="ss-scene-text-editor"
+                    data-scene-node-id={node.id}
+                    maxLength={20000}
+                    value={node.text || ""}
+                    onClick={(event) => event.stopPropagation()}
+                    onInput={(event) => onEditText?.(node.id, event.currentTarget.value)}
+                    style={textStyle}
+                />
+            );
+        }
         return (
             <TextElement
                 data-scene-node-id={node.id}
-                style={{
-                    ...style,
-                    display: "flex",
-                    alignItems:
-                        node.role === "title" || node.role === "display"
-                            ? "flex-end"
-                            : "flex-start",
-                    whiteSpace: "pre-wrap",
-                    overflowWrap: "anywhere",
-                    color:
-                        node.style?.color ||
-                        (node.role === "subtitle" || node.role === "caption" ? muted : foreground),
-                    fontFamily:
-                        node.style?.fontFamily ||
-                        (node.role === "display"
-                            ? "Georgia, serif"
-                            : "Avenir Next, Segoe UI, sans-serif"),
-                    fontSize: node.style?.fontSize || roleSize,
-                    fontWeight:
-                        node.style?.fontWeight ||
-                        (node.role === "title" || node.role === "display" ? 650 : 400),
-                    lineHeight: node.style?.lineHeight || 1.16,
-                    letterSpacing: node.style?.letterSpacing,
-                    textAlign: node.style?.textAlign,
+                role={onSelectText ? "button" : undefined}
+                tabIndex={onSelectText ? 0 : undefined}
+                className={onSelectText ? "ss-editable-object" : undefined}
+                onKeyDown={(event) => {
+                    if (onSelectText && (event.key === "Enter" || event.key === " ")) {
+                        event.preventDefault();
+                        onSelectText(node.id);
+                    }
                 }}
+                onClick={(event) => {
+                    if (!onSelectText) return;
+                    event.stopPropagation();
+                    onSelectText(node.id);
+                }}
+                style={textStyle}
             >
                 <span
                     style={{
@@ -196,9 +236,33 @@ function SceneNodeView({
             />
         );
     }
+    const widgetInteractionProps: React.HTMLAttributes<HTMLDivElement> = onSelectWidget
+        ? {
+              role: "button",
+              tabIndex: 0,
+              className: "ss-editable-object",
+              onKeyDown: (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectWidget(node.id);
+                  }
+              },
+              onClick: (event) => {
+                  event.stopPropagation();
+                  onSelectWidget(node.id);
+              },
+          }
+        : {};
     return (
-        <div data-scene-node-id={node.id} style={style}>
-            <SceneWidget node={node} foreground={foreground} accent={accent} isActive={isActive} />
+        <div data-scene-node-id={node.id} {...widgetInteractionProps} style={style}>
+            <SceneWidget
+                node={node}
+                foreground={foreground}
+                accent={accent}
+                isActive={isActive}
+                editing={editingTarget === node.id}
+                onEditProps={(props) => onEditWidget?.(node.id, props)}
+            />
         </div>
     );
 }
@@ -255,12 +319,22 @@ export function SceneRenderer({
     isActive,
     profile,
     dimensions = { width: 1280, height: 720 },
+    editingTarget,
+    onSelectText,
+    onEditText,
+    onSelectWidget,
+    onEditWidget,
 }: {
     slide: SceneSlide;
     currentTemplate: string;
     isActive: boolean;
     profile?: SceneResponsiveProfile;
     dimensions?: { width: number; height: number };
+    editingTarget?: string;
+    onSelectText?: (nodeId: string) => void;
+    onEditText?: (nodeId: string, text: string) => void;
+    onSelectWidget?: (nodeId: string) => void;
+    onEditWidget?: (nodeId: string, props: Record<string, unknown>) => void;
 }) {
     const viewportProfile = React.useSyncExternalStore(
         subscribeToViewport,
@@ -293,6 +367,11 @@ export function SceneRenderer({
                     muted={muted}
                     accent={accent}
                     isActive={isActive}
+                    editingTarget={editingTarget}
+                    onSelectText={onSelectText}
+                    onEditText={onEditText}
+                    onSelectWidget={onSelectWidget}
+                    onEditWidget={onEditWidget}
                 />
             ))}
         </div>

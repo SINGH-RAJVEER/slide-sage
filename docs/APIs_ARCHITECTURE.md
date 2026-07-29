@@ -240,9 +240,17 @@ Scene diagrams consume their semantic nodes in the web viewer, and scene charts,
 tables, and diagrams export as native editable PowerPoint objects rather than
 generic fallback boxes. Scene documents pass through explicit
 normalization rather than the legacy block normalizer. Existing schema-v5 and
-older slides remain supported as compatibility inputs. Scene editing uses
-immutable, replayable commands for text, style, geometry, node
-insertion/deletion/reordering, and responsive overrides.
+older slides remain supported as compatibility inputs. The viewer exposes scene
+text nodes as inline editable controls. Text changes use immutable, replayable
+commands, synchronize matching replacement roots for responsive layouts, update
+existing title/subtitle semantic metadata, and persist through the normalized
+whole-slide mutation path. Revert leaves the stored slide untouched, failed saves
+retain the local draft, and successful saves flow into later exports and
+iteration input. Tables, statistics, quotes, callouts, diagrams, and chart labels
+use structured field editors so their data remains native widget content rather
+than being flattened into freeform text. The command layer also supports style,
+geometry, node insertion/deletion/reordering, and responsive overrides for future
+editing surfaces.
 The web renderer selects wide, standard, portrait, or compact variants from the
 current viewport and updates the resolved scene when the viewport changes.
 

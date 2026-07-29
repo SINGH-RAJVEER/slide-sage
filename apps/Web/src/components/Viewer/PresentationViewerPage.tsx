@@ -1,3 +1,4 @@
+import type { SceneSlide } from "@slide-sage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -319,7 +320,7 @@ export default function PresentationViewerPage() {
         }
     };
 
-    const saveCanvasEdit = async (slide: ContentSlide) => {
+    const saveCanvasEdit = async (slide: ContentSlide | SceneSlide) => {
         if (!presentation) return;
         setSavingEdit(true);
         const previous = presentation;
@@ -337,6 +338,7 @@ export default function PresentationViewerPage() {
         } catch (error) {
             setPresentation(previous);
             console.error("Failed to save canvas edit:", error);
+            throw error;
         } finally {
             setSavingEdit(false);
         }

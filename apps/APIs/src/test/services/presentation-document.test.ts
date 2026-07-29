@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { isSceneSlide } from "@slide-sage/types";
 import {
     applyPresentationMutations,
     normalizePresentationDocument,
@@ -316,5 +317,62 @@ describe("presentation document", () => {
         expect(slide && "root" in slide ? slide.variants?.[0]?.patches[0] : undefined).toEqual(
             expect.objectContaining({ nodeId: "title", hidden: true, order: 2 })
         );
+    });
+
+    it("persists edited scene text through normalized slide updates", () => {
+        const document = normalizePresentationDocument({
+            schemaVersion: 6,
+            title: "Scene deck",
+            theme: "modern-dark",
+            slides: [
+                {
+                    id: "scene-1",
+                    type: "scene",
+                    semantic: { title: "Edited title" },
+                    root: {
+                        id: "root",
+                        type: "group",
+                        order: 0,
+                        layout: "stack",
+                        children: [
+                            {
+                                id: "title",
+                                type: "text",
+                                order: 0,
+                                role: "title",
+                                text: "Original title",
+                            },
+                        ],
+                    },
+                },
+            ],
+        });
+        const current = document.slides[0];
+        if (!current || !isSceneSlide(current)) throw new Error("Expected a scene slide");
+        const updated = {
+            ...current,
+            root: {
+                ...current.root,
+                children: current.root.children.map((node) =>
+                    node.id === "title" && node.type === "text"
+                        ? { ...node, text: "Edited title" }
+                        : node
+                ),
+            },
+        };
+
+        const saved = applyPresentationMutations(document, [
+            { type: "update-slide", slideId: current.id, slide: updated },
+        ]);
+        const savedSlide = saved.slides[0];
+
+        expect(
+            savedSlide && isSceneSlide(savedSlide) && savedSlide.root.children[0]?.type === "text"
+                ? savedSlide.root.children[0].text
+                : undefined
+        ).toBe("Edited title");
+        expect(
+            savedSlide && isSceneSlide(savedSlide) ? savedSlide.semantic?.["title"] : undefined
+        ).toBe("Edited title");
     });
 });

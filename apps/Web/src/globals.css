@@ -348,6 +348,32 @@ input.hide-number-spin[type="number"] {
     outline-offset: 4px;
 }
 
+.ss-scene-text-editor {
+    margin: 0;
+    border: 0;
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    padding: 0;
+    resize: none;
+    outline: 2px solid color-mix(in srgb, currentColor 55%, transparent);
+    outline-offset: 5px;
+}
+
+.ss-scene-widget-editor {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    padding: 0.5rem;
+    outline: 2px solid color-mix(in srgb, currentColor 55%, transparent);
+    outline-offset: -2px;
+}
+
+.ss-scene-widget-editor textarea {
+    min-height: 4rem;
+    resize: none;
+}
+
 .ss-slide-table-scroll {
     max-height: 24rem;
     overflow: auto;

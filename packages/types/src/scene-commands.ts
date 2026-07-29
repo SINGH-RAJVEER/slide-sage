@@ -2,6 +2,7 @@ import type { SceneNode, SceneNodePatch, SceneSlide } from "./scene";
 
 export type SceneCommand =
     | { type: "set-text"; nodeId: string; text: string }
+    | { type: "set-widget-props"; nodeId: string; props: Record<string, unknown> }
     | { type: "set-style"; nodeId: string; style: NonNullable<SceneNode["style"]> }
     | { type: "set-bounds"; nodeId: string; bounds: NonNullable<SceneNode["bounds"]> }
     | { type: "insert-node"; parentId: string; node: SceneNode }
@@ -62,9 +63,52 @@ export function applySceneCommand(slide: SceneSlide, command: SceneCommand): Sce
         if (command.nodeId === slide.root.id) throw new Error("The scene root cannot be deleted");
         nextRoot = updateNode(slide.root, command.nodeId, () => null);
     } else if (command.type === "set-text") {
+        const text = command.text.slice(0, 20000);
+        const sourceNode =
+            findSceneNode(slide.root, command.nodeId) ||
+            slide.variants
+                ?.map((variant) =>
+                    variant.root ? findSceneNode(variant.root, command.nodeId) : undefined,
+                )
+                .find((node) => node?.type === "text");
         nextRoot = updateNode(slide.root, command.nodeId, (node) =>
-            node.type === "text" ? { ...node, text: command.text.slice(0, 20000) } : node,
+            node.type === "text" ? { ...node, text } : node,
         );
+        const variants = slide.variants?.map((variant) => {
+            if (!variant.root) return variant;
+            const root = updateNode(variant.root, command.nodeId, (node) =>
+                node.type === "text" ? { ...node, text } : node,
+            );
+            return root?.type === "group" ? { ...variant, root } : variant;
+        });
+        const semantic = slide.semantic ? { ...slide.semantic } : undefined;
+        if (sourceNode?.type === "text") {
+            if (
+                semantic &&
+                (sourceNode.role === "display" || sourceNode.role === "title") &&
+                Object.hasOwn(semantic, "title")
+            ) {
+                semantic["title"] = text;
+            }
+            if (semantic && sourceNode.role === "subtitle" && Object.hasOwn(semantic, "subtitle")) {
+                semantic["subtitle"] = text;
+            }
+        }
+        if (!nextRoot || nextRoot.type !== "group") throw new Error("Invalid scene command result");
+        return { ...slide, root: nextRoot, variants, semantic };
+    } else if (command.type === "set-widget-props") {
+        nextRoot = updateNode(slide.root, command.nodeId, (node) =>
+            node.type === "widget" ? { ...node, props: command.props } : node,
+        );
+        const variants = slide.variants?.map((variant) => {
+            if (!variant.root) return variant;
+            const root = updateNode(variant.root, command.nodeId, (node) =>
+                node.type === "widget" ? { ...node, props: command.props } : node,
+            );
+            return root?.type === "group" ? { ...variant, root } : variant;
+        });
+        if (!nextRoot || nextRoot.type !== "group") throw new Error("Invalid scene command result");
+        return { ...slide, root: nextRoot, variants };
     } else if (command.type === "set-style") {
         nextRoot = updateNode(slide.root, command.nodeId, (node) => ({
             ...node,
@@ -92,6 +136,9 @@ export function invertSceneCommand(slide: SceneSlide, command: SceneCommand): Sc
     if (!node) return null;
     if (command.type === "set-text" && node.type === "text") {
         return { type: "set-text", nodeId: node.id, text: node.text };
+    }
+    if (command.type === "set-widget-props" && node.type === "widget") {
+        return { type: "set-widget-props", nodeId: node.id, props: node.props };
     }
     if (command.type === "set-style") {
         return { type: "set-style", nodeId: node.id, style: node.style || {} };

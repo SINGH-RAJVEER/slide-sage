@@ -8,6 +8,8 @@ interface SceneWidgetProps {
     foreground: string;
     accent: string;
     isActive: boolean;
+    editing?: boolean;
+    onEditProps?: (props: Record<string, unknown>) => void;
 }
 
 type SceneWidgetRenderer = React.ComponentType<SceneWidgetProps>;
@@ -208,10 +210,247 @@ const REGISTRY: Partial<Record<NonNullable<ResolvedSceneNode["kind"]>, SceneWidg
 };
 
 export function SceneWidget(componentProps: SceneWidgetProps) {
+    if (componentProps.editing) {
+        return <SceneWidgetEditor {...componentProps} />;
+    }
     const Renderer = componentProps.node.kind ? REGISTRY[componentProps.node.kind] : undefined;
     return Renderer ? (
         <Renderer {...componentProps} />
     ) : (
         <WidgetFallback node={componentProps.node} />
+    );
+}
+
+const editorFieldClass =
+    "min-w-0 rounded border border-current/20 bg-transparent px-2 py-1 text-sm outline-none focus:border-current/60";
+
+function SceneWidgetEditor({ node, foreground, onEditProps }: SceneWidgetProps) {
+    const values = widgetProps(node);
+    const update = (props: Record<string, unknown>) => onEditProps?.({ ...values, ...props });
+
+    if (node.kind === "chart") {
+        const chartConfig = values["chartConfig"] as ChartConfig | undefined;
+        if (!chartConfig) return <WidgetFallback node={node} />;
+        const updateChart = (next: Partial<ChartConfig>) =>
+            update({ chartConfig: { ...chartConfig, ...next } });
+        return (
+            <div className="ss-scene-widget-editor grid gap-2" style={{ color: foreground }}>
+                <input
+                    aria-label="Edit chart title"
+                    className={editorFieldClass}
+                    value={chartConfig.title || ""}
+                    onInput={(event) => updateChart({ title: event.currentTarget.value })}
+                />
+                <input
+                    aria-label="Edit chart description"
+                    className={editorFieldClass}
+                    value={chartConfig.description || ""}
+                    onInput={(event) => updateChart({ description: event.currentTarget.value })}
+                />
+                <input
+                    aria-label="Edit chart category labels"
+                    className={editorFieldClass}
+                    value={chartConfig.data.labels.join(" | ")}
+                    onInput={(event) =>
+                        updateChart({
+                            data: {
+                                ...chartConfig.data,
+                                labels: event.currentTarget.value
+                                    .split("|")
+                                    .map((label) => label.trim()),
+                            },
+                        })
+                    }
+                />
+                {chartConfig.data.datasets.map((dataset, index) => (
+                    <input
+                        aria-label={`Edit chart series ${index + 1} label`}
+                        className={editorFieldClass}
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Chart series cannot be reordered in this editor.
+                        key={`${node.id}-series-${index}`}
+                        value={dataset.label || ""}
+                        onInput={(event) =>
+                            updateChart({
+                                data: {
+                                    ...chartConfig.data,
+                                    datasets: chartConfig.data.datasets.map((entry, itemIndex) =>
+                                        itemIndex === index
+                                            ? { ...entry, label: event.currentTarget.value }
+                                            : entry,
+                                    ),
+                                },
+                            })
+                        }
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    if (node.kind === "table") {
+        const headers = Array.isArray(values["headers"]) ? (values["headers"] as string[]) : [];
+        const rows = Array.isArray(values["rows"]) ? (values["rows"] as string[][]) : [];
+        return (
+            <div className="ss-scene-widget-editor grid gap-2" style={{ color: foreground }}>
+                <input
+                    aria-label="Edit table headers"
+                    className={editorFieldClass}
+                    value={headers.join(" | ")}
+                    onInput={(event) =>
+                        update({
+                            headers: event.currentTarget.value
+                                .split("|")
+                                .map((item) => item.trim()),
+                        })
+                    }
+                />
+                <textarea
+                    aria-label="Edit table rows"
+                    className={editorFieldClass}
+                    value={rows.map((row) => row.join(" | ")).join("\n")}
+                    onInput={(event) =>
+                        update({
+                            rows: event.currentTarget.value
+                                .split("\n")
+                                .map((row) => row.split("|").map((item) => item.trim())),
+                        })
+                    }
+                />
+            </div>
+        );
+    }
+
+    if (node.kind === "stats") {
+        const items = Array.isArray(values["items"])
+            ? (values["items"] as Array<{ value?: string; label?: string }>)
+            : [];
+        return (
+            <div className="ss-scene-widget-editor grid gap-2" style={{ color: foreground }}>
+                {items.map((item, index) => (
+                    <div
+                        className="grid grid-cols-[1fr_2fr] gap-2"
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Statistics cannot be reordered in this editor.
+                        key={`${node.id}-stat-${index}`}
+                    >
+                        <input
+                            aria-label={`Edit statistic ${index + 1} value`}
+                            className={editorFieldClass}
+                            value={item.value || ""}
+                            onInput={(event) =>
+                                update({
+                                    items: items.map((entry, itemIndex) =>
+                                        itemIndex === index
+                                            ? { ...entry, value: event.currentTarget.value }
+                                            : entry,
+                                    ),
+                                })
+                            }
+                        />
+                        <input
+                            aria-label={`Edit statistic ${index + 1} label`}
+                            className={editorFieldClass}
+                            value={item.label || ""}
+                            onInput={(event) =>
+                                update({
+                                    items: items.map((entry, itemIndex) =>
+                                        itemIndex === index
+                                            ? { ...entry, label: event.currentTarget.value }
+                                            : entry,
+                                    ),
+                                })
+                            }
+                        />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    if (node.kind === "quote" || node.kind === "callout") {
+        return (
+            <div className="ss-scene-widget-editor grid gap-2" style={{ color: foreground }}>
+                {node.kind === "callout" ? (
+                    <input
+                        aria-label="Edit callout heading"
+                        className={editorFieldClass}
+                        value={String(values["heading"] || "")}
+                        onInput={(event) => update({ heading: event.currentTarget.value })}
+                    />
+                ) : null}
+                <textarea
+                    aria-label={`Edit ${node.kind} text`}
+                    className={editorFieldClass}
+                    value={String(values["text"] || "")}
+                    onInput={(event) => update({ text: event.currentTarget.value })}
+                />
+                {node.kind === "quote" ? (
+                    <input
+                        aria-label="Edit quote attribution"
+                        className={editorFieldClass}
+                        value={String(values["attribution"] || "")}
+                        onInput={(event) => update({ attribution: event.currentTarget.value })}
+                    />
+                ) : null}
+            </div>
+        );
+    }
+
+    const key = Array.isArray(values["nodes"]) ? "nodes" : "items";
+    const items = Array.isArray(values[key])
+        ? (values[key] as Array<
+              string | { label?: string; value?: string; title?: string; description?: string }
+          >)
+        : [];
+    return (
+        <div className="ss-scene-widget-editor grid gap-2" style={{ color: foreground }}>
+            {items.map((item, index) => {
+                const record = typeof item === "string" ? undefined : item;
+                const title =
+                    typeof item === "string"
+                        ? item
+                        : record?.label || record?.value || record?.title || "";
+                return (
+                    <div
+                        className="grid grid-cols-2 gap-2"
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Diagram items cannot be reordered in this editor.
+                        key={`${node.id}-item-${index}`}
+                    >
+                        <input
+                            aria-label={`Edit ${node.kind} item ${index + 1} title`}
+                            className={editorFieldClass}
+                            value={title}
+                            onInput={(event) => {
+                                const next = [...items];
+                                if (typeof item === "string")
+                                    next[index] = event.currentTarget.value;
+                                else if (record && "label" in record) {
+                                    next[index] = { ...record, label: event.currentTarget.value };
+                                } else if (record && "value" in record) {
+                                    next[index] = { ...record, value: event.currentTarget.value };
+                                } else {
+                                    next[index] = { ...record, title: event.currentTarget.value };
+                                }
+                                update({ [key]: next });
+                            }}
+                        />
+                        {typeof item !== "string" ? (
+                            <input
+                                aria-label={`Edit ${node.kind} item ${index + 1} description`}
+                                className={editorFieldClass}
+                                value={record?.description || ""}
+                                onInput={(event) => {
+                                    const next = [...items];
+                                    next[index] = {
+                                        ...record,
+                                        description: event.currentTarget.value,
+                                    };
+                                    update({ [key]: next });
+                                }}
+                            />
+                        ) : null}
+                    </div>
+                );
+            })}
+        </div>
     );
 }

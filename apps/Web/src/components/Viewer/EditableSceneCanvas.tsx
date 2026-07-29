@@ -1,24 +1,24 @@
+import { applySceneCommand, type SceneSlide } from "@slide-sage/types";
 import { Check, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { ContentSlide, SlideBlock } from "@/modules/types/presentation";
-import { SlideRenderer } from "./SlideRenderer";
+import { SceneRenderer } from "./SceneRenderer";
 
-interface EditableSlideCanvasProps {
-    slide: ContentSlide;
+interface EditableSceneCanvasProps {
+    slide: SceneSlide;
     currentTemplate: string;
     saving: boolean;
-    onSave: (slide: ContentSlide) => Promise<void>;
+    onSave: (slide: SceneSlide) => Promise<void>;
     onCancel: () => void;
 }
 
-export function EditableSlideCanvas({
+export function EditableSceneCanvas({
     slide,
     currentTemplate,
     saving,
     onSave,
     onCancel,
-}: EditableSlideCanvasProps) {
+}: EditableSceneCanvasProps) {
     const [draft, setDraft] = useState(() => structuredClone(slide));
     const [dirty, setDirty] = useState(false);
     const [editingTarget, setEditingTarget] = useState<string>();
@@ -32,13 +32,15 @@ export function EditableSlideCanvas({
 
     useEffect(() => {
         if (!editingTarget) return;
+        shellRef.current
+            ?.querySelector<HTMLElement>(".ss-scene-text-editor, .ss-scene-widget-editor input")
+            ?.focus();
         const closeOnOutsidePointer = (event: PointerEvent) => {
             const target = event.target;
             if (!(target instanceof Node)) return;
             if (
-                shellRef.current
-                    ?.querySelector(".ss-inplace-input:focus, .ss-inplace-text:focus")
-                    ?.contains(target)
+                target instanceof Element &&
+                target.closest(".ss-scene-text-editor, .ss-scene-widget-editor")
             ) {
                 return;
             }
@@ -48,39 +50,34 @@ export function EditableSlideCanvas({
         return () => document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
     }, [editingTarget]);
 
-    const updateBlock = (block: SlideBlock) => {
-        setDirty(true);
-        setDraft((current) => ({
-            ...current,
-            blocks: current.blocks.map((item) => (item.id === block.id ? block : item)),
-        }));
-    };
-
     const revert = () => {
         setDraft(structuredClone(slide));
         setDirty(false);
+        setEditingTarget(undefined);
         onCancel();
     };
 
     return (
         <div ref={shellRef} className="ss-edit-shell">
-            <SlideRenderer
+            <SceneRenderer
                 slide={draft}
                 currentTemplate={currentTemplate}
                 isActive
                 editingTarget={editingTarget}
-                onSelectTitle={() => setEditingTarget("title")}
-                onSelectSubtitle={() => setEditingTarget("subtitle")}
-                onSelectBlock={(block) => block.id && setEditingTarget(block.id)}
-                onEditTitle={(title) => {
+                onSelectText={setEditingTarget}
+                onSelectWidget={setEditingTarget}
+                onEditText={(nodeId, text) => {
                     setDirty(true);
-                    setDraft((current) => ({ ...current, title }));
+                    setDraft((current) =>
+                        applySceneCommand(current, { type: "set-text", nodeId, text }),
+                    );
                 }}
-                onEditSubtitle={(subtitle) => {
+                onEditWidget={(nodeId, props) => {
                     setDirty(true);
-                    setDraft((current) => ({ ...current, subtitle }));
+                    setDraft((current) =>
+                        applySceneCommand(current, { type: "set-widget-props", nodeId, props }),
+                    );
                 }}
-                onEditBlock={updateBlock}
             />
             {dirty && (
                 <div className="ss-edit-toolbar ss-edit-toolbar--visible">
@@ -89,7 +86,7 @@ export function EditableSlideCanvas({
                     </Button>
                     <Button
                         size="sm"
-                        disabled={saving || !draft.title.trim()}
+                        disabled={saving}
                         onClick={async () => {
                             try {
                                 await onSave(draft);

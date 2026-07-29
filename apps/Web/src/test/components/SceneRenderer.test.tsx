@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { expect, it } from "bun:test";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { SceneRenderer } from "@/components/Viewer/SceneRenderer";
 
 it("renders arbitrary scene nodes, art direction, and widgets", () => {
@@ -140,4 +140,87 @@ it("renders semantic diagram nodes from generated widget props", () => {
 
     expect(view.getByText("Plan")).toBeInTheDocument();
     expect(view.getByText("Ship")).toBeInTheDocument();
+});
+
+it("allows scene text to be selected and edited when editing callbacks are provided", () => {
+    const edits: Array<{ nodeId: string; text: string }> = [];
+    const view = render(
+        <SceneRenderer
+            currentTemplate="corporate-blue"
+            isActive={true}
+            editingTarget="headline"
+            onSelectText={() => undefined}
+            onEditText={(nodeId, text) => edits.push({ nodeId, text })}
+            slide={{
+                id: "editable-scene",
+                type: "scene",
+                root: {
+                    id: "root",
+                    type: "group",
+                    order: 0,
+                    layout: "absolute",
+                    children: [
+                        {
+                            id: "headline",
+                            type: "text",
+                            order: 0,
+                            role: "title",
+                            text: "Original title",
+                            bounds: { x: 80, y: 90, width: 720, height: 180 },
+                        },
+                    ],
+                },
+            }}
+        />,
+    );
+
+    const editor = view.getByRole("textbox", { name: "Edit slide title text" });
+    fireEvent.input(editor, { target: { value: "Edited title" } });
+
+    expect(edits).toEqual([{ nodeId: "headline", text: "Edited title" }]);
+});
+
+it("edits structured text without flattening scene widgets", () => {
+    const edits: Array<{ nodeId: string; props: Record<string, unknown> }> = [];
+    const view = render(
+        <SceneRenderer
+            currentTemplate="corporate-blue"
+            isActive={true}
+            editingTarget="quote"
+            onSelectWidget={() => undefined}
+            onEditWidget={(nodeId, props) => edits.push({ nodeId, props })}
+            slide={{
+                id: "editable-widget-scene",
+                type: "scene",
+                root: {
+                    id: "root",
+                    type: "group",
+                    order: 0,
+                    layout: "absolute",
+                    children: [
+                        {
+                            id: "quote",
+                            type: "widget",
+                            order: 0,
+                            kind: "quote",
+                            version: 1,
+                            bounds: { x: 80, y: 90, width: 720, height: 300 },
+                            props: { text: "Original quote", attribution: "Author" },
+                        },
+                    ],
+                },
+            }}
+        />,
+    );
+
+    fireEvent.input(view.getByRole("textbox", { name: "Edit quote text" }), {
+        target: { value: "Edited quote" },
+    });
+
+    expect(edits).toEqual([
+        {
+            nodeId: "quote",
+            props: { text: "Edited quote", attribution: "Author" },
+        },
+    ]);
 });
