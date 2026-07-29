@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "bun --env-file=../../.env --watch src/index.ts",
-        "deploy": "bunx --bun wrangler deploy --config wrangler.jsonc",
+        "deploy": "bunx wrangler deploy --config wrangler.jsonc",
         "test": "bun test --isolate",
         "lint": "bunx --bun biome check .",
         "lint:fix": "bunx --bun biome check --write .",

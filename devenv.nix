@@ -12,6 +12,7 @@ in
     packages = [
         pkgs.bun
         pkgs.just
+        pkgs.nodejs_24
     ];
 
     services.postgres = {

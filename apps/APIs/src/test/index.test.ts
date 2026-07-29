@@ -29,6 +29,13 @@ describe("API app", () => {
         expect(await response.json()).toEqual({ error: { message: "Resource not found" } });
     });
 
+    it("mounts the protected AI configuration routes", async () => {
+        const response = await server.fetch(new Request("http://localhost/api/ai/config"));
+
+        expect(response.status).toBe(401);
+        expect(await response.json()).toEqual({ error: { message: "Unauthorized" } });
+    });
+
     it("applies CORS for configured allowed origins with trailing slashes", async () => {
         const response = await server.fetch(
             new Request("http://localhost/", {

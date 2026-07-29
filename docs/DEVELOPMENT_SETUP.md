@@ -59,7 +59,7 @@ directly through Bun without a separate monorepo task runner.
 | --- | --- |
 | `bun run dev` | Run the complete `just dev` development stack |
 | `bun run build` | Build the web application |
-| `bun run deploy:apis` | Deploy the API with Wrangler |
+| `bun run deploy:apis` | Deploy the API with Wrangler; the devenv supplies Node for Wrangler while Bun remains the package manager |
 | `bun run test` | Run API and web tests |
 | `bun run type-check` | Type-check all workspace projects |
 | `bun run lint` | Lint every workspace package |
