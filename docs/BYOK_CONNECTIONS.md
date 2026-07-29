@@ -44,5 +44,9 @@ releases that add or change these endpoints must deploy the API Worker as well a
 the web application; an unauthenticated request to this route should return `401`,
 not the Worker-wide `404` response.
 
+Apply committed database migrations before deploying the Worker. BYOK requires
+`0009_add_ai_provider_connections.sql` and the production
+`BYOK_ENCRYPTION_KEY_CURRENT_VERSION` and versioned encryption-key secrets.
+
 Research uses Exa. Source, presentation, and retrieval embeddings always use
 the server-owned OpenRouter embedding configuration and never a user BYOK key.
