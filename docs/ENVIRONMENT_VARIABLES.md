@@ -14,7 +14,7 @@ Copy `.env.example` to `.env`. API development script passes it to Bun with `--e
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
-| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses same-origin `/api/*` routes, while the local value uses Vite's proxy |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; custom production domains use same-origin `/api/*`, Cloudflare Pages falls back to `https://api.slidesage.app`, and local development uses Vite's proxy |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
 | `NODE_ENV` | No | `development` in devenv | Enables development-only behavior such as logging unsent OTPs |
 

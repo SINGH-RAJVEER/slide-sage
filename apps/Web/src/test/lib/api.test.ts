@@ -65,6 +65,15 @@ describe("resolveApiUrl", () => {
             ),
         ).toBe("https://api.slidesage.app");
     });
+
+    it("uses the deployed API for Cloudflare Pages when the build variable is missing", () => {
+        expect(resolveApiUrl(undefined, true, "https://slide-sage.pages.dev/settings")).toBe(
+            "https://api.slidesage.app",
+        );
+        expect(
+            resolveApiUrl(undefined, true, "https://feature.slide-sage.pages.dev/settings"),
+        ).toBe("https://api.slidesage.app");
+    });
 });
 
 describe("readJsonResponse", () => {

@@ -24,13 +24,13 @@ const DETAIL_LEVEL_GUIDE = {
         description:
             "Detailed - Comprehensive information with elaboration. Suitable for technical or academic topics.",
         example:
-            "Use 5-6 bullet points (15-25 words). Full sentences with supporting details. Thorough explanations.",
+            "Use up to 5 bullet points (12-18 words) or two short paragraphs. Put overflow detail in speaker-ready phrasing across later slides.",
     },
     comprehensive: {
         description:
             "Comprehensive - In-depth coverage with extensive details. For reading decks or documentation.",
         example:
-            "Use 6+ bullet points or paragraphs. Extensive text (25+ words). Deep analysis, context, and footnotes.",
+            "Use up to 6 concise bullets or three short content blocks. Cover more angles across slides instead of shrinking document-length prose onto one slide.",
     },
 } satisfies Record<string, { description: string; example: string }>;
 
@@ -87,7 +87,8 @@ SUPPORTED BLOCKS:
 - widget: { "type": "widget", "region": "main|primary|secondary", "version": 1, "kind": "timeline|flow|architecture|comparison", "direction": "horizontal|vertical", "nodes": [{ "id": "local-id", "label": "string", "description": "string", "value": "string", "role": "default|start|end|decision|actor|system|data", "tone": "neutral|accent|positive|warning|danger", "parentId": "string" }], "edges": [{ "from": "node-id", "to": "node-id", "label": "string" }] }
 
 CONTENT LIMITS:
-- At most 8 bullets per block and 12 blocks per slide.
+- At most 6 bullets per block and 8 blocks per slide. Keep each bullet under 20 words.
+- Keep paragraphs under 90 words, quotes under 60 words, and callouts under 50 words.
 - At most 6 table columns and 8 table rows. Every row must match the header count.
 - At most 6 statistics per stats block.
 - Widgets contain 2-16 semantic nodes and at most 32 edges. Every edge and non-empty parentId must reference node IDs in the same widget.
@@ -101,6 +102,7 @@ CONTENT LIMITS:
 - Do not put chart data in a table when a chart communicates it better.
 - Across the deck, mix concise text, images or placeholders, and semantic widgets when each format is useful. Do not repeat one block or layout formula on every slide.
 - Prefer composition controls that reinforce meaning: hero emphasis for one focal idea, supporting emphasis for context, card/outline/accent treatments sparingly, and compact density only for genuinely dense material.
+- Treat layouts as semantic families: choose the family that fits the slide's communication goal, then vary families across the deck without random or mechanical cycling.
 
 REQUIRED JSON SHAPE:
 {

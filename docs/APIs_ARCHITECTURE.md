@@ -220,11 +220,25 @@ New generation compiles semantic model output into schema-version-6 scene slides
 The scene graph supports nested stack, grid, overlay, and absolute composition,
 responsive profile variants, validated versioned widgets, and bounded per-slide
 art direction. The model never emits executable components, HTML, CSS, or raw
-geometry. A deterministic compiler selects and authors the scene from narrative
-role, visual intent, semantic blocks, available assets, and slide position.
+geometry. A deterministic compiler preserves the requested semantic layout family,
+then selects a stable content-compatible variant within that family. Cover,
+section, split, comparison, sidebar, media, quote, spotlight, canvas, and body
+families each have distinct bounded compositions; variation is derived from slide
+identity and content rather than random coordinates or mechanical index cycling.
+The selected variant and requested family are retained in scene semantics for
+diagnostics and future recompilation. Legacy body slides receive an adaptive media
+composition only when their outline or blocks would otherwise lose a visual.
 
 The shared scene engine resolves authored constraints into canonical geometry for
-the React renderer and PowerPoint exporter. Scene documents pass through explicit
+the React renderer and PowerPoint exporter. Stack layout uses intrinsic text and
+widget sizes before distributing remaining space. Text is fitted to its allocated
+box within role-specific font floors and line limits, with overflow recorded as a
+scene diagnostic instead of relying on equal-height boxes or target-specific
+clipping. The drafting contract also applies slide-capacity limits so detailed
+content is distributed across slides rather than reduced to unreadable type.
+Scene diagrams consume their semantic nodes in the web viewer, and scene charts,
+tables, and diagrams export as native editable PowerPoint objects rather than
+generic fallback boxes. Scene documents pass through explicit
 normalization rather than the legacy block normalizer. Existing schema-v5 and
 older slides remain supported as compatibility inputs. Scene editing uses
 immutable, replayable commands for text, style, geometry, node
@@ -269,6 +283,14 @@ managed by `/api/ai` and the protected `/settings` page. Generation requests omi
 provider credentials and resolve the saved server-side preference, while the
 semantic outline, scene compilation, and cache contract remain
 provider-independent. Removing the final valid connection restores OpenRouter.
+The settings route uses the shared loading indicator and exits loading into an
+explicit error state when configuration retrieval fails, preventing an indefinite
+or visually inconsistent loader. Cloudflare Pages builds without `VITE_API_URL`
+fall back to `https://api.slidesage.app` instead of sending `/api/*` requests into
+the Pages SPA rewrite. The Worker is routed for apex and `www` API paths and allows
+the production Pages origin. Web and Worker deployments remain separate, so any
+release that changes `/api/*` routes must deploy the Worker before the matching
+Pages bundle.
 
 Research remains an Exa workflow. Embeddings and semantic memory always use the
 server OpenRouter configuration; BYOK credentials are never passed into RAG or

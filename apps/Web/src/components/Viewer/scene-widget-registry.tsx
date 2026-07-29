@@ -132,13 +132,32 @@ function CalloutWidget({ node, foreground, accent }: SceneWidgetProps) {
 }
 
 function DiagramWidget({ node, foreground, accent }: SceneWidgetProps) {
-    const items = Array.isArray(widgetProps(node)["items"])
-        ? (widgetProps(node)["items"] as Array<string | { title?: string; description?: string }>)
-        : [];
+    const values = widgetProps(node);
+    const items = Array.isArray(values["nodes"])
+        ? (values["nodes"] as Array<{
+              label?: string;
+              value?: string;
+              description?: string;
+          }>)
+        : Array.isArray(values["items"])
+          ? (values["items"] as Array<string | { title?: string; description?: string }>)
+          : [];
     return (
         <div className="grid h-full w-full grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] items-center gap-4">
             {items.map((item, index) => {
-                const title = typeof item === "string" ? item : item.title || `Step ${index + 1}`;
+                const record =
+                    typeof item === "string"
+                        ? undefined
+                        : (item as {
+                              label?: string;
+                              value?: string;
+                              title?: string;
+                              description?: string;
+                          });
+                const title =
+                    typeof item === "string"
+                        ? item
+                        : record?.label || record?.value || record?.title || `Step ${index + 1}`;
                 const description = typeof item === "string" ? "" : item.description || "";
                 return (
                     <div

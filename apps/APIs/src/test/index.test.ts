@@ -43,7 +43,11 @@ describe("API app", () => {
     });
 
     it("allows the production frontend origins by default", async () => {
-        for (const origin of ["https://slide-sage.pages.dev", "https://slidesage.app"]) {
+        for (const origin of [
+            "https://slide-sage.pages.dev",
+            "https://slidesage.app",
+            "https://www.slidesage.app",
+        ]) {
             const response = await server.fetch(
                 new Request("http://localhost/", {
                     method: "OPTIONS",
