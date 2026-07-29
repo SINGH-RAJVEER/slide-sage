@@ -95,7 +95,7 @@ export function presentationResponseFormat(expectedSlideCount?: number): Record<
             properties: {
                 type: { const: "paragraph" },
                 region,
-                text: { type: "string", maxLength: 1200 },
+                text: { type: "string", maxLength: 700 },
                 ...blockSemantics,
             },
             required: [...blockRequired, "text"],
@@ -108,8 +108,8 @@ export function presentationResponseFormat(expectedSlideCount?: number): Record<
                 region,
                 items: {
                     type: "array",
-                    maxItems: 8,
-                    items: { type: "string", maxLength: 350 },
+                    maxItems: 6,
+                    items: { type: "string", maxLength: 180 },
                 },
                 ordered: { type: "boolean" },
                 ...blockSemantics,
@@ -172,7 +172,7 @@ export function presentationResponseFormat(expectedSlideCount?: number): Record<
             properties: {
                 type: { const: "quote" },
                 region,
-                text: { type: "string", maxLength: 800 },
+                text: { type: "string", maxLength: 500 },
                 attribution: { type: "string", maxLength: 200 },
                 ...blockSemantics,
             },
@@ -185,7 +185,7 @@ export function presentationResponseFormat(expectedSlideCount?: number): Record<
                 type: { const: "callout" },
                 region,
                 heading: { type: "string", maxLength: 180 },
-                text: { type: "string", maxLength: 700 },
+                text: { type: "string", maxLength: 400 },
                 ...blockSemantics,
             },
             required: [...blockRequired, "heading", "text"],
@@ -309,7 +309,7 @@ export function presentationResponseFormat(expectedSlideCount?: number): Record<
                         },
                         blocks: {
                             type: "array",
-                            maxItems: 12,
+                            maxItems: 8,
                             items: { anyOf: blockSchemas },
                         },
                     },

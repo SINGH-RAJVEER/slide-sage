@@ -144,11 +144,11 @@ function normalizeBlock(
 
     switch (block["type"]) {
         case "paragraph": {
-            const value = text(block["text"], 1200);
+            const value = text(block["text"], 700);
             return value ? { type: "paragraph", region, text: value, ...semantics } : null;
         }
         case "bullets": {
-            const items = stringArray(block["items"], 8, 350);
+            const items = stringArray(block["items"], 6, 180);
             return items.length > 0
                 ? {
                       type: "bullets",
@@ -194,7 +194,7 @@ function normalizeBlock(
                 ...semantics,
             };
         case "quote": {
-            const value = text(block["text"], 800);
+            const value = text(block["text"], 500);
             return value
                 ? {
                       type: "quote",
@@ -206,7 +206,7 @@ function normalizeBlock(
                 : null;
         }
         case "callout": {
-            const value = text(block["text"], 700);
+            const value = text(block["text"], 400);
             return value
                 ? {
                       type: "callout",
@@ -432,7 +432,7 @@ export function processSlide(input: unknown, index: number): StructuredSlide | n
     const layout = normalizeLayout(rawLayout);
     const blocks = Array.isArray(slide["blocks"])
         ? slide["blocks"]
-              .slice(0, 12)
+              .slice(0, 8)
               .map((block) => normalizeBlock(block, layout, rawLayout))
               .filter((block): block is SlideBlock => block !== null)
               .map((block, blockIndex) => ({

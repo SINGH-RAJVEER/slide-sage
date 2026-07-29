@@ -1,7 +1,8 @@
 import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slide-sage/types";
-import { Check, KeyRound, LoaderCircle, Trash2 } from "lucide-react";
+import { Check, KeyRound, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
     Select,
     SelectContent,
@@ -11,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import {
     connectAIProvider,
     deleteAIProvider,
@@ -35,13 +37,15 @@ export function AISettings() {
     const [keys, setKeys] = useState<Partial<Record<AIProvider, string>>>({});
     const [busy, setBusy] = useState<AIProvider | "selection" | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const refresh = async () => setConfig(await fetchAIConfiguration());
 
     useEffect(() => {
         void fetchAIConfiguration()
             .then(setConfig)
-            .catch((error) => setMessage(error instanceof Error ? error.message : String(error)));
+            .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
+            .finally(() => setIsLoading(false));
     }, []);
 
     const connect = async (provider: AIProvider) => {
@@ -89,14 +93,17 @@ export function AISettings() {
         }
     };
 
+    if (isLoading) {
+        return <LoadingScreen label="Loading AI settings" />;
+    }
+
     if (!config) {
         return (
             <div
-                role="status"
-                aria-label="Loading AI settings"
-                className="flex min-h-64 items-center justify-center"
+                role="alert"
+                className="flex min-h-64 items-center justify-center text-sm text-red-200"
             >
-                <LoaderCircle className="size-5 animate-spin text-white/45" />
+                {message || "AI settings could not be loaded."}
             </div>
         );
     }
@@ -281,7 +288,7 @@ export function AISettings() {
                                         className="h-10 w-full bg-white text-black hover:bg-white/90 sm:w-auto"
                                     >
                                         {busy === provider.id ? (
-                                            <LoaderCircle className="size-4 animate-spin" />
+                                            <Spinner className="size-4" aria-hidden="true" />
                                         ) : connection ? (
                                             "Replace"
                                         ) : (

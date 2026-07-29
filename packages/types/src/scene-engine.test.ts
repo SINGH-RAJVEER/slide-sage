@@ -91,4 +91,53 @@ describe("scene engine", () => {
             height: 300,
         });
     });
+
+    it("uses intrinsic text sizes and fits long copy within its allocation", () => {
+        const resolved = resolveScene(
+            {
+                id: "fitted-copy",
+                type: "scene",
+                root: {
+                    id: "root",
+                    type: "group",
+                    order: 0,
+                    layout: "stack",
+                    direction: "vertical",
+                    gap: 24,
+                    padding: { top: 60, right: 70, bottom: 60, left: 70 },
+                    children: [
+                        {
+                            id: "title",
+                            type: "text",
+                            order: 0,
+                            role: "title",
+                            text: "A deliberately long title that must fit on no more than two lines",
+                            maxLines: 2,
+                            minFontSize: 28,
+                        },
+                        {
+                            id: "body",
+                            type: "text",
+                            order: 1,
+                            role: "body",
+                            text: Array.from(
+                                { length: 30 },
+                                () => "measured presentation copy",
+                            ).join(" "),
+                            maxLines: 8,
+                            minFontSize: 16,
+                        },
+                    ],
+                },
+            },
+            { width: 1280, height: 720 },
+        );
+        const title = resolved.root.children?.[0];
+        const body = resolved.root.children?.[1];
+
+        expect(title?.bounds.height).toBeLessThan(body?.bounds.height || 0);
+        expect(title?.style?.fontSize).toBeGreaterThanOrEqual(28);
+        expect(body?.style?.fontSize).toBeGreaterThanOrEqual(16);
+        expect((body?.bounds.y || 0) + (body?.bounds.height || 0)).toBeLessThanOrEqual(660);
+    });
 });

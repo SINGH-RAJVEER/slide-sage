@@ -1,4 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
+import { resolveScene } from "@slide-sage/types";
 import { normalizePresentationSlides, processSlide } from "../../services/ai/presentation-content";
 import { compilePresentationScenes } from "../../services/ai/presentation-design";
 import {
@@ -402,14 +403,72 @@ describe("AI presentation design", () => {
         });
 
         expect(designed[0]?.strategy).toBe("typographic-cover");
-        expect(designed[1]?.strategy).toBe("media-left");
-        expect(
-            designed[1]?.root.children.some(
-                (node) =>
-                    node.type === "image" ||
-                    (node.type === "group" && node.children.some((child) => child.type === "image"))
-            )
-        ).toBe(true);
+        expect(designed[1]?.strategy).toMatch(/^media-(left|right)-adaptive$/);
+        expect(designed[1]?.semantic).toMatchObject({
+            requestedLayout: "body",
+            resolvedLayout: "body",
+        });
+        expect(JSON.stringify(designed[1]?.root)).toContain('"type":"image"');
+    });
+
+    it("preserves semantic layout families while selecting bounded variants", () => {
+        const layouts = [
+            "split",
+            "comparison",
+            "sidebar",
+            "media-left",
+            "quote",
+            "spotlight",
+            "canvas",
+        ] as const;
+        const slides = normalizePresentationSlides({
+            slides: layouts.map((layout, index) => ({
+                id: `layout-${layout}`,
+                type: "content",
+                layout,
+                title: `${layout} composition`,
+                subtitle: "A supporting line",
+                density: "standard",
+                tone: "default",
+                pattern: "none",
+                blocks: [
+                    {
+                        type: "paragraph",
+                        region: layout === "split" || layout === "comparison" ? "primary" : "main",
+                        text: `Primary idea ${index + 1}`,
+                    },
+                    {
+                        type: layout === "media-left" ? "image-placeholder" : "callout",
+                        region: layout === "media-left" ? "media" : "secondary",
+                        alt: "Supporting visual",
+                        caption: "",
+                        heading: "Evidence",
+                        text: "Supporting evidence",
+                    },
+                ],
+            })),
+        });
+
+        const designed = compilePresentationScenes(slides, undefined);
+
+        expect(designed.map((slide) => slide.semantic?.["requestedLayout"])).toEqual([...layouts]);
+        expect(new Set(designed.map((slide) => slide.strategy)).size).toBe(layouts.length);
+        expect(designed.map((slide) => slide.strategy)).toEqual([
+            expect.stringMatching(/^split-/),
+            expect.stringMatching(/^comparison-/),
+            expect.stringMatching(/^sidebar-/),
+            expect.stringMatching(/^media-left-/),
+            expect.stringMatching(/^quote-/),
+            expect.stringMatching(/^spotlight-/),
+            expect.stringMatching(/^mosaic-/),
+        ]);
+        for (const slide of designed) {
+            expect(
+                resolveScene(slide, { width: 1280, height: 720 }).diagnostics.filter(
+                    (diagnostic) => diagnostic.code === "overflow"
+                )
+            ).toEqual([]);
+        }
     });
 });
 

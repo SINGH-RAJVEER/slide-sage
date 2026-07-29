@@ -287,4 +287,95 @@ describe("editable PPTX export", () => {
         expect(slide).toContain("Build");
         expect(slide).toContain("approved");
     });
+
+    test("keeps scene charts and diagrams editable instead of exporting fallback boxes", async () => {
+        const archive = await archiveFor([
+            {
+                id: "scene-diagram",
+                type: "scene",
+                root: {
+                    id: "scene-root",
+                    type: "group",
+                    order: 0,
+                    layout: "absolute",
+                    children: [
+                        {
+                            id: "scene-process",
+                            type: "widget",
+                            order: 0,
+                            kind: "process",
+                            version: 1,
+                            bounds: { x: 80, y: 100, width: 1120, height: 500 },
+                            props: {
+                                type: "widget",
+                                region: "main",
+                                version: 1,
+                                kind: "flow",
+                                direction: "horizontal",
+                                nodes: [
+                                    {
+                                        id: "draft",
+                                        role: "start",
+                                        label: "Draft",
+                                        description: "",
+                                        value: "",
+                                        tone: "neutral",
+                                        parentId: "",
+                                    },
+                                    {
+                                        id: "present",
+                                        role: "end",
+                                        label: "Present",
+                                        description: "",
+                                        value: "",
+                                        tone: "positive",
+                                        parentId: "",
+                                    },
+                                ],
+                                edges: [{ from: "draft", to: "present", label: "reviewed" }],
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                id: "scene-chart",
+                type: "scene",
+                root: {
+                    id: "chart-root",
+                    type: "group",
+                    order: 0,
+                    layout: "absolute",
+                    children: [
+                        {
+                            id: "native-scene-chart",
+                            type: "widget",
+                            order: 0,
+                            kind: "chart",
+                            version: 1,
+                            bounds: { x: 80, y: 80, width: 1120, height: 540 },
+                            props: {
+                                chartConfig: {
+                                    type: "bar",
+                                    title: "Scene revenue",
+                                    description: "Editable chart",
+                                    data: {
+                                        labels: ["Q1", "Q2"],
+                                        datasets: [{ label: "Revenue", data: [10, 14] }],
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+        const diagram = await archive.file("ppt/slides/slide1.xml")?.async("string");
+        const chartSlide = await archive.file("ppt/slides/slide2.xml")?.async("string");
+
+        expect(diagram).toContain("Widget node 1");
+        expect(diagram).toContain("Draft");
+        expect(diagram).not.toContain("scene-process-fallback");
+        expect(chartSlide).toContain("<c:chart");
+    });
 });

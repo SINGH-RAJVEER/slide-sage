@@ -6,12 +6,16 @@
     "vars": {
         "NODE_ENV": "production",
         "BASE_URL": "https://slidesage.app",
-        "CORS_ORIGINS": "https://slidesage.app",
-        "BETTER_AUTH_TRUSTED_ORIGINS": "https://slidesage.app"
+        "CORS_ORIGINS": "https://slidesage.app,https://www.slidesage.app,https://slide-sage.pages.dev",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "https://slidesage.app,https://www.slidesage.app,https://slide-sage.pages.dev"
     },
     "routes": [
         {
             "pattern": "slidesage.app/api/*",
+            "zone_name": "slidesage.app"
+        },
+        {
+            "pattern": "www.slidesage.app/api/*",
             "zone_name": "slidesage.app"
         },
         {

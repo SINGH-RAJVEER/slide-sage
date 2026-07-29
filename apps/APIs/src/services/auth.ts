@@ -144,6 +144,7 @@ function resolveTrustedOrigins(env: Env): string[] {
         "http://localhost:5173",
         "https://slide-sage.pages.dev",
         "https://slidesage.app",
+        "https://www.slidesage.app",
     ];
     const raw = [
         getEnvVar(env, "BETTER_AUTH_TRUSTED_ORIGINS"),

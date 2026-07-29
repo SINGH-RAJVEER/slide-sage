@@ -103,3 +103,41 @@ it("applies the requested responsive scene variant", () => {
     expect(view.queryByText("Wide composition")).toBeNull();
     expect(view.container.querySelector("[data-scene-profile='compact']")).toBeInTheDocument();
 });
+
+it("renders semantic diagram nodes from generated widget props", () => {
+    const view = render(
+        <SceneRenderer
+            currentTemplate="corporate-blue"
+            isActive={true}
+            slide={{
+                id: "diagram-scene",
+                type: "scene",
+                root: {
+                    id: "diagram-root",
+                    type: "group",
+                    order: 0,
+                    layout: "absolute",
+                    children: [
+                        {
+                            id: "process",
+                            type: "widget",
+                            order: 0,
+                            kind: "process",
+                            version: 1,
+                            bounds: { x: 80, y: 80, width: 1120, height: 520 },
+                            props: {
+                                nodes: [
+                                    { label: "Plan", description: "Set direction" },
+                                    { label: "Ship", description: "Deliver value" },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            }}
+        />,
+    );
+
+    expect(view.getByText("Plan")).toBeInTheDocument();
+    expect(view.getByText("Ship")).toBeInTheDocument();
+});

@@ -10,6 +10,7 @@ import type {
     SceneRect,
     SceneResponsiveProfile,
     SceneSlide,
+    SceneTextNode,
     Slide,
     SlideBlock,
 } from "./index";
@@ -17,6 +18,14 @@ import { isSceneSlide } from "./index";
 
 const MAX_SCENE_DEPTH = 12;
 const MAX_SCENE_NODES = 240;
+const ROLE_FONT_SIZE = {
+    display: 64,
+    title: 48,
+    subtitle: 25,
+    body: 22,
+    caption: 15,
+    label: 14,
+} as const;
 
 function clamp(value: number, minimum: number, maximum: number): number {
     return Math.min(maximum, Math.max(minimum, value));
@@ -139,6 +148,100 @@ function constrainedRect(node: SceneNode, rect: SceneRect): SceneRect {
     return { ...rect, width, height };
 }
 
+function estimatedLineCount(text: string, width: number, fontSize: number): number {
+    const charactersPerLine = Math.max(1, Math.floor(width / Math.max(1, fontSize * 0.52)));
+    return text.split("\n").reduce((total, paragraph) => {
+        if (!paragraph) return total + 1;
+        let lines = 1;
+        let occupied = 0;
+        for (const word of paragraph.trim().split(/\s+/)) {
+            const length = Math.min(word.length, charactersPerLine);
+            if (occupied > 0 && occupied + length + 1 > charactersPerLine) {
+                lines++;
+                occupied = length;
+            } else {
+                occupied += length + (occupied > 0 ? 1 : 0);
+            }
+        }
+        return total + lines;
+    }, 0);
+}
+
+function textHeight(node: SceneTextNode, width: number, fontSize: number): number {
+    const lineHeight = finite(node.style?.lineHeight, 1.16);
+    const lines = estimatedLineCount(node.text, width, fontSize);
+    return lines * fontSize * lineHeight;
+}
+
+function preferredExtent(node: SceneNode, horizontal: boolean, crossExtent: number): number {
+    if (node.type === "text") {
+        if (horizontal) return Math.min(crossExtent, Math.max(120, node.text.length * 9));
+        const fontSize = finite(node.style?.fontSize, ROLE_FONT_SIZE[node.role]);
+        const lineHeight = finite(node.style?.lineHeight, 1.16);
+        const lines = Math.min(
+            node.maxLines || Number.MAX_SAFE_INTEGER,
+            estimatedLineCount(node.text, crossExtent, fontSize),
+        );
+        return Math.max(fontSize * lineHeight, lines * fontSize * lineHeight);
+    }
+    if (node.type === "image") return horizontal ? 320 : 280;
+    if (node.type === "widget") {
+        if (horizontal) return 360;
+        if (node.kind === "chart") return 360;
+        if (
+            node.kind === "table" ||
+            node.kind === "timeline" ||
+            node.kind === "process" ||
+            node.kind === "architecture"
+        )
+            return 300;
+        if (node.kind === "stats") return 170;
+        return 210;
+    }
+    return horizontal ? 320 : 260;
+}
+
+function minimumExtent(node: SceneNode, horizontal: boolean, crossExtent: number): number {
+    if (node.type !== "text") return horizontal ? Math.min(140, crossExtent) : 96;
+    const minimumFont = finite(node.minFontSize, Math.min(ROLE_FONT_SIZE[node.role], 14));
+    const lines = Math.min(
+        node.maxLines || Number.MAX_SAFE_INTEGER,
+        estimatedLineCount(node.text, crossExtent, minimumFont),
+    );
+    return Math.max(minimumFont * 1.08, lines * minimumFont * 1.08);
+}
+
+function fitTextNode(
+    node: SceneTextNode,
+    bounds: SceneRect,
+    diagnostics: SceneDiagnostic[],
+): ResolvedSceneNode {
+    const preferredFont = finite(node.style?.fontSize, ROLE_FONT_SIZE[node.role]);
+    const minimumFont = Math.min(preferredFont, finite(node.minFontSize, 12));
+    const maxLines = node.maxLines || Number.MAX_SAFE_INTEGER;
+    let fontSize = preferredFont;
+    let lines = estimatedLineCount(node.text, bounds.width, fontSize);
+    while (
+        fontSize > minimumFont &&
+        (lines > maxLines || textHeight(node, bounds.width, fontSize) > bounds.height)
+    ) {
+        fontSize--;
+        lines = estimatedLineCount(node.text, bounds.width, fontSize);
+    }
+    if (lines > maxLines || textHeight(node, bounds.width, fontSize) > bounds.height + 0.5) {
+        diagnostics.push({
+            code: "overflow",
+            nodeId: node.id,
+            message: `Text exceeds its ${maxLines === Number.MAX_SAFE_INTEGER ? "available" : `${maxLines}-line`} capacity at the minimum font size`,
+        });
+    }
+    return {
+        ...node,
+        bounds,
+        style: { ...node.style, fontSize },
+    };
+}
+
 function resolveNode(
     node: SceneNode,
     allocated: SceneRect,
@@ -146,6 +249,7 @@ function resolveNode(
 ): ResolvedSceneNode {
     const bounds = constrainedRect(node, allocated);
     if (node.hidden) return { ...node, bounds, children: [] };
+    if (node.type === "text") return fitTextNode(node, bounds, diagnostics);
     if (node.type !== "group") return { ...node, bounds };
 
     const padding = insets(node);
@@ -167,21 +271,35 @@ function resolveNode(
             0,
             (horizontal ? content.width : content.height) - gap * Math.max(0, children.length - 1),
         );
-        const fixed = children.reduce(
-            (sum, child) => sum + finite(horizontal ? child.size?.width : child.size?.height, 0),
-            0,
-        );
-        const remaining = Math.max(0, available - fixed);
-        const growTotal = children.reduce((sum, child) => {
-            const explicit = horizontal ? child.size?.width : child.size?.height;
-            return sum + (explicit ? 0 : Math.max(0, finite(child.size?.grow, 1)));
-        }, 0);
-        let cursor = horizontal ? content.x : content.y;
-        for (const child of children) {
+        const crossExtent = horizontal ? content.height : content.width;
+        const sizing = children.map((child) => {
             const explicit = finite(horizontal ? child.size?.width : child.size?.height, 0);
-            const extent =
-                explicit ||
-                (growTotal > 0 ? (remaining * finite(child.size?.grow, 1)) / growTotal : 0);
+            const basis = explicit || preferredExtent(child, horizontal, crossExtent);
+            const minimum =
+                explicit || Math.min(basis, minimumExtent(child, horizontal, crossExtent));
+            const defaultGrow = child.type === "text" ? 0 : 1;
+            const grow = explicit ? 0 : Math.max(0, finite(child.size?.grow, defaultGrow));
+            return { basis, minimum, grow };
+        });
+        const basisTotal = sizing.reduce((sum, item) => sum + item.basis, 0);
+        const minimumTotal = sizing.reduce((sum, item) => sum + item.minimum, 0);
+        const growTotal = sizing.reduce((sum, item) => sum + item.grow, 0);
+        const extra = Math.max(0, available - basisTotal);
+        let cursor = horizontal ? content.x : content.y;
+        for (const [index, child] of children.entries()) {
+            const item = sizing[index] || { basis: 0, minimum: 0, grow: 0 };
+            let extent = item.basis;
+            if (basisTotal <= available && growTotal > 0) {
+                extent += (extra * item.grow) / growTotal;
+            } else if (basisTotal > available && basisTotal > minimumTotal) {
+                const compressible = item.basis - item.minimum;
+                const availableAboveMinimum = Math.max(0, available - minimumTotal);
+                extent =
+                    item.minimum +
+                    (compressible * availableAboveMinimum) / (basisTotal - minimumTotal);
+            } else if (minimumTotal > available && minimumTotal > 0) {
+                extent = (item.minimum * available) / minimumTotal;
+            }
             const childRect = horizontal
                 ? { x: cursor, y: content.y, width: extent, height: content.height }
                 : { x: content.x, y: cursor, width: content.width, height: extent };

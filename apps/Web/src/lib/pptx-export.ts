@@ -320,7 +320,7 @@ const renderSceneNode = (
                 (node.role === "display" || node.role === "title"
                     ? theme.headingFont
                     : theme.bodyFont),
-            fontSize: node.style?.fontSize ? Math.max(8, node.style.fontSize * 0.55) : fallbackSize,
+            fontSize: node.style?.fontSize ? Math.max(8, node.style.fontSize * 0.75) : fallbackSize,
             bold: (node.style?.fontWeight || 400) >= 600,
             color: sceneColor(node.style?.color, node.role === "title" ? theme.title : theme.text),
             margin: 0,
@@ -352,6 +352,76 @@ const renderSceneNode = (
         return;
     }
     const values = node.props || {};
+    if (node.type === "widget" && node.kind === "chart") {
+        const chartConfig = values["chartConfig"] as ChartConfig | undefined;
+        if (chartConfig) {
+            const chartType: PptxGenJS.CHART_NAME =
+                chartConfig.type === "polarArea" ? "radar" : chartConfig.type;
+            const series = chartConfig.data.datasets.map((dataset, index) => ({
+                name: cleanText(dataset.label) || `Series ${index + 1}`,
+                labels: chartConfig.data.labels.map((label) => cleanText(label)),
+                values: dataset.data.map((value) => Number(value) || 0),
+            }));
+            output.addChart(chartType, series, {
+                x,
+                y,
+                w,
+                h,
+                showTitle: false,
+                showLegend: series.length > 1 || ["pie", "doughnut"].includes(chartType),
+                legendPos: "b",
+                legendColor: theme.text,
+                chartColors: chartConfig.data.datasets.map((dataset, index) =>
+                    normalizeColor(
+                        dataset.backgroundColor || dataset.borderColor,
+                        [theme.accent, theme.accentAlt, theme.title, theme.muted][index % 4] ||
+                            theme.accent,
+                    ),
+                ),
+                catAxisLabelColor: theme.muted,
+                valAxisLabelColor: theme.muted,
+                border: { color: theme.muted, pt: 0.75 },
+                objectName: node.id,
+                altText: chartConfig.description || chartConfig.title || "Chart",
+            });
+            return;
+        }
+    }
+    if (
+        node.type === "widget" &&
+        node.kind === "table" &&
+        Array.isArray(values["headers"]) &&
+        Array.isArray(values["rows"])
+    ) {
+        addStructuredTable(
+            {
+                slide: output,
+                pptx,
+                theme,
+                region: { x, y, w, h },
+                cursorY: y,
+            },
+            values as unknown as Extract<SlideBlock, { type: "table" }>,
+        );
+        return;
+    }
+    if (
+        node.type === "widget" &&
+        ["timeline", "process", "comparison", "architecture"].includes(node.kind || "") &&
+        values["type"] === "widget"
+    ) {
+        addStructuredWidget(
+            {
+                slide: output,
+                pptx,
+                theme,
+                region: { x, y, w, h },
+                cursorY: y,
+            },
+            values as unknown as WidgetBlockLike,
+        );
+        return;
+    }
     if (node.type === "widget" && node.kind === "stats" && Array.isArray(values["items"])) {
         const items = values["items"] as Array<{ value?: string; label?: string }>;
         const itemWidth = w / Math.max(1, items.length);

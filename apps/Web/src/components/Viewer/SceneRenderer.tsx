@@ -161,7 +161,17 @@ function SceneNodeView({
                     textAlign: node.style?.textAlign,
                 }}
             >
-                {node.text}
+                <span
+                    style={{
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: node.maxLines,
+                        overflow: "hidden",
+                    }}
+                >
+                    {node.text}
+                </span>
             </TextElement>
         );
     }

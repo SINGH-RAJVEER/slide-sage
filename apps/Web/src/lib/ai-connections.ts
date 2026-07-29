@@ -8,8 +8,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         headers: { "Content-Type": "application/json", ...init?.headers },
     });
     const data = await readJsonResponse<T & { error?: { message?: string } }>(response);
+    if (!data) {
+        throw new Error(
+            response.ok
+                ? "The AI settings service returned an invalid response."
+                : "AI provider request failed",
+        );
+    }
     if (!response.ok) throw new Error(data?.error?.message || "AI provider request failed");
-    return data as T;
+    return data;
 }
 
 export function fetchAIConfiguration(): Promise<AIConfigurationResponse> {

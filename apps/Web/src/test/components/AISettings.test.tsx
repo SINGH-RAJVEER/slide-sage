@@ -105,3 +105,32 @@ it("updates the saved default model from settings", async () => {
         model: "gpt-4.1-mini",
     });
 });
+
+it("replaces the loading indicator with an error when settings fail to load", async () => {
+    globalThis.fetch = mock(() =>
+        Promise.reject(new Error("Settings service unavailable")),
+    ) as unknown as typeof fetch;
+
+    const view = render(<AISettings />);
+
+    expect(view.getByLabelText("Loading AI settings")).toBeInTheDocument();
+    expect(await view.findByRole("alert")).toHaveTextContent("Settings service unavailable");
+    expect(view.queryByLabelText("Loading AI settings")).toBeNull();
+});
+
+it("reports a Cloudflare HTML fallback instead of treating it as settings", async () => {
+    globalThis.fetch = mock(() =>
+        Promise.resolve(
+            new Response("<!DOCTYPE html><title>SlideSage</title>", {
+                status: 200,
+                headers: { "Content-Type": "text/html" },
+            }),
+        ),
+    ) as unknown as typeof fetch;
+
+    const view = render(<AISettings />);
+
+    expect(await view.findByRole("alert")).toHaveTextContent(
+        "The AI settings service returned an invalid response.",
+    );
+});

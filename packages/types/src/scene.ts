@@ -219,6 +219,8 @@ export interface ResolvedSceneNode extends SceneNodeBase {
     children?: ResolvedSceneNode[];
     text?: string;
     role?: SceneTextRole;
+    maxLines?: number;
+    minFontSize?: number;
     url?: string;
     alt?: string;
     fit?: "cover" | "contain";

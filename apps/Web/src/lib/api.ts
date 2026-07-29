@@ -11,6 +11,8 @@ export function normalizeApiUrl(value: string | undefined): string {
 
 const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
 const SAME_ORIGIN_API_HOSTNAMES = new Set(["slidesage.app", "www.slidesage.app"]);
+const CLOUDFLARE_PAGES_HOST_SUFFIX = ".pages.dev";
+const DEPLOYED_API_URL = "https://api.slidesage.app";
 
 export function resolveApiUrl(
     value: string | undefined,
@@ -18,7 +20,19 @@ export function resolveApiUrl(
     frontendOrigin?: string,
 ): string {
     const normalizedUrl = normalizeApiUrl(value);
-    if (!normalizedUrl || normalizedUrl.startsWith("/")) return normalizedUrl;
+    if (!normalizedUrl || normalizedUrl.startsWith("/")) {
+        if (isProduction && !normalizedUrl && frontendOrigin) {
+            try {
+                const frontendHostname = new URL(frontendOrigin).hostname.toLowerCase();
+                if (frontendHostname.endsWith(CLOUDFLARE_PAGES_HOST_SUFFIX)) {
+                    return DEPLOYED_API_URL;
+                }
+            } catch {
+                return normalizedUrl;
+            }
+        }
+        return normalizedUrl;
+    }
 
     try {
         if (frontendOrigin) {
