@@ -39,5 +39,10 @@ Removing the final valid connection restores OpenRouter automatically. When one
 or more connections exist, SlideSage uses the saved provider and never silently
 falls back to another direct provider.
 
+The settings page loads its configuration from `GET /api/ai/config`. Production
+releases that add or change these endpoints must deploy the API Worker as well as
+the web application; an unauthenticated request to this route should return `401`,
+not the Worker-wide `404` response.
+
 Research uses Exa. Source, presentation, and retrieval embeddings always use
 the server-owned OpenRouter embedding configuration and never a user BYOK key.
