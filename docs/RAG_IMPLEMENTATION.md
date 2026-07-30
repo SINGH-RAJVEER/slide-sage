@@ -5,7 +5,7 @@ during generation and revision.
 
 ## Responsibilities
 
-`apps/APIs/src/services/rag.service.ts` is the public service facade. Modules
+`apps/api/src/services/rag.service.ts` is the public service facade. Modules
 under `services/rag/` separate retrieval, storage, seeding, defaults, types, and
 utilities. Presentation and search services call this facade rather than writing
 memory tables directly.

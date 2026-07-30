@@ -1,0 +1,18 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "composite": true,
+        "jsx": "react-jsx",
+        "types": ["react"],
+        "paths": {
+            "@slide-sage/ui": ["./index.ts"],
+            "@slide-sage/ui/components": ["./components"],
+            "@slide-sage/ui/components/*": ["./components/*"],
+            "@slide-sage/ui/hooks": ["./hooks"],
+            "@slide-sage/ui/hooks/*": ["./hooks/*"],
+            "@slide-sage/ui/lib": ["./lib"],
+            "@slide-sage/ui/lib/*": ["./lib/*"]
+        }
+    },
+    "include": ["*.ts", "components/**/*.tsx", "hooks/**/*.ts", "lib/**/*.ts"]
+}

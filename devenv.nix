@@ -56,14 +56,14 @@ in
             exec = ''
                 DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun run db:migrate
             '';
-            cwd = "packages/database";
+            cwd = "apps/api";
         };
     };
 
     processes = {
-        apis = {
+        api = {
             exec = ''
-                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun --cwd apps/APIs --watch src/index.ts
+                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun --cwd apps/api --watch src/index.ts
             '';
             cwd = ".";
             after = [ "db:migrate" ];

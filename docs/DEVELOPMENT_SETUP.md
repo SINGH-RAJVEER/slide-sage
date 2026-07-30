@@ -18,7 +18,7 @@ just dev
 
 At minimum, replace `AUTH_SECRET` and set `OPEN_ROUTER_API_KEY` in `.env`.
 See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for optional services.
-The auth implementation is part of `apps/APIs`; there is no separate auth
+The auth implementation is part of `apps/api`; there is no separate auth
 package to build or deploy.
 
 `just dev` performs the complete startup sequence:
@@ -59,7 +59,7 @@ directly through Bun without a separate monorepo task runner.
 | --- | --- |
 | `bun run dev` | Run the complete `just dev` development stack |
 | `bun run build` | Build the web application |
-| `bun run deploy:apis` | Deploy the API with Wrangler; the devenv supplies Node for Wrangler while Bun remains the package manager |
+| `bun run deploy:api` | Deploy the API with Wrangler; the devenv supplies Node for Wrangler while Bun remains the package manager |
 | `bun run test` | Run API and web tests |
 | `bun run type-check` | Type-check all workspace projects |
 | `bun run lint` | Lint every workspace package |
@@ -78,8 +78,8 @@ Vite proxies API requests to port `8000`. `VITE_API_URL` therefore defaults to
 the web origin during the all-in-one devenv workflow.
 
 Full-screen route, session, and presentation loading states, including the
-router hydration fallback, use `apps/Web/src/components/ui/loading-screen.tsx`
-and the standard shadcn spinner in `apps/Web/src/components/ui/spinner.tsx`.
+router hydration fallback, use `libs/ui/components/loading-screen.tsx` and the standard
+shadcn spinner in `libs/ui/components/spinner.tsx` through the `@slide-sage/ui` package.
 The full-screen spinner uses the same solid white foreground as the rest of the
 application.
 
@@ -109,8 +109,8 @@ keys and their default generation model. With no valid connection, generation
 uses the server OpenRouter model and consumes SlideSage points.
 
 The workspace uses the native TypeScript 7 compiler pinned in the root package.
-Run `bun run type-check` to check the API, web app, database package, and shared
-types with their project-specific configurations.
+Run `bun run type-check` to check the API, web app, shared types library, and UI
+library with their project-specific configurations.
 
 ## Resetting PostgreSQL
 

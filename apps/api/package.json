@@ -1,0 +1,34 @@
+{
+    "name": "slide-sage-api",
+    "version": "0.0.1",
+    "module": "src/index.ts",
+    "type": "module",
+    "scripts": {
+        "dev": "bun --env-file=../../.env --watch src/index.ts",
+        "deploy": "bunx wrangler deploy --config wrangler.jsonc",
+        "db:generate": "bunx --bun drizzle-kit generate --config drizzle.config.ts",
+        "db:push": "bunx --bun drizzle-kit push --config drizzle.config.ts",
+        "db:migrate": "bunx --bun drizzle-kit migrate --config drizzle.config.ts",
+        "db:studio": "bunx --bun drizzle-kit studio --config drizzle.config.ts",
+        "test": "bun test --isolate",
+        "lint": "bunx --bun biome check .",
+        "lint:fix": "bunx --bun biome check --write .",
+        "format": "bunx --bun biome format --write ."
+    },
+    "dependencies": {
+        "@slide-sage/types": "workspace:*",
+        "better-auth": "^1.4.18",
+        "drizzle-orm": "^0.36.4",
+        "exa-js": "^2.15.0",
+        "hono": "^4.6.14",
+        "postgres": "^3.4.5",
+        "razorpay": "^2.9.6",
+        "resend": "^6.9.2"
+    },
+    "devDependencies": {
+        "@types/bun": "1.3.13",
+        "@biomejs/biome": "^2.4.7",
+        "drizzle-kit": "^0.28.1"
+    },
+    "packageManager": "bun@1.3.10"
+}

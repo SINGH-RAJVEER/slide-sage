@@ -5,7 +5,7 @@ six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
 The Better Auth configuration and authorization middleware are owned by the API
-application in `apps/APIs/src/services`. They deploy as part of the same
+application in `apps/api/src/services`. They deploy as part of the same
 Cloudflare Worker bundle as the auth routes.
 
 ## Configuration
@@ -95,7 +95,7 @@ user in the frontend.
 | `GET` | `/api/auth/callback/github` | GitHub callback |
 
 Other Better Auth endpoints remain available under the same base path. Use the
-Better Auth client in `apps/Web/src/lib/auth-client.ts` instead of hand-building
+Better Auth client in `apps/web/src/lib/auth-client.ts` instead of hand-building
 browser requests.
 
 ## Behavior
