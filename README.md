@@ -2,6 +2,8 @@
 
 SlideSage is an AI-assisted presentation builder. It generates, researches, revises, stores, previews, and exports slide decks from a React web application.
 
+---
+
 ## Features
 
 - Streaming presentation generation and revision
