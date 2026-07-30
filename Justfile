@@ -4,7 +4,7 @@ set shell := ["bash", "-cu"]
 default:
     @just --list
 
-# Start all services and apps (postgres, apis, web)
+# Start all services and apps (postgres, api, web)
 dev:
     devenv up
 
@@ -14,33 +14,33 @@ db-shell:
 
 # Run drizzle-kit migrations
 migrate:
-    cd packages/database && bun run db:migrate
+    cd apps/api && bun run db:migrate
 
 # Generate a new drizzle migration from schema changes
 db-generate:
-    cd packages/database && bun run db:generate
+    cd apps/api && bun run db:generate
 
 # Push schema changes directly (no migration file)
 db-push:
-    cd packages/database && bun run db:push
+    cd apps/api && bun run db:push
 
 # Open drizzle studio
 db-studio:
-    cd packages/database && bun run db:studio
+    cd apps/api && bun run db:studio
 
 # Run the API server only
-apis:
-    bun --cwd apps/APIs dev
+api:
+    bun --cwd apps/api dev
 
 # Run the Web dev server only
 web:
-    bun --cwd apps/Web dev
+    bun --cwd apps/web dev
 
 test:
     bun run test
 
-test-apis:
-    bun run test:apis
+test-api:
+    bun run test:api
 
 test-web:
     bun run test:web

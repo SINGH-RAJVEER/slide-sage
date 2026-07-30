@@ -45,7 +45,7 @@ Run commands inside `devenv shell`.
 | `just migrate` | Apply database migrations |
 | `just db-generate` | Generate a Drizzle migration |
 | `just db-studio` | Open Drizzle Studio |
-| `just test` | Run API and web tests |
+| `just test` | Run API, web, and shared type tests |
 | `just lint` | Run Biome checks |
 | `just format` | Format the repository |
 | `bun run build` | Build the web application with Bun and Vite |
@@ -54,14 +54,12 @@ Run commands inside `devenv shell`.
 
 ```text
 apps/
-    APIs/       Hono API and application services
-    Web/        React and Vite web application
-packages/
-    auth/       Better Auth configuration and middleware
-    database/   Drizzle schema, migrations, and repositories
+    api/        Hono API, database, migrations, and application services
+    web/        React and Vite web application
+libs/
     types/      Shared TypeScript contracts
+    ui/         Shared React UI primitives
 docs/           Maintainer documentation
-docker/         Production images, Nginx configuration, and Compose stack
 devenv.nix      Local toolchain and service orchestration
 Justfile        Common development commands
 ```
@@ -73,7 +71,7 @@ The workspace uses Bun, TypeScript, Biome, PostgreSQL 18 with pgvector, OpenRout
 - [Development setup](docs/DEVELOPMENT_SETUP.md)
 - [Production Docker deployment](docs/DOCKER_DEPLOYMENT.md)
 - [Environment variables](docs/ENVIRONMENT_VARIABLES.md)
-- [Architecture](docs/APIs_ARCHITECTURE.md)
+- [Architecture](docs/API_ARCHITECTURE.md)
 - [API reference](docs/API_OVERVIEW.md)
 - [Authentication](docs/AUTH_API.md)
 - [RAG and semantic memory](docs/RAG_IMPLEMENTATION.md)

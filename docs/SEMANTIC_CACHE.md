@@ -6,7 +6,7 @@ user-scoped RAG memories are never served from this cache.
 
 ## Lookup
 
-`apps/APIs/src/services/semantic-cache.service.ts` performs cache resolution in
+`apps/api/src/services/semantic-cache.service.ts` performs cache resolution in
 this order:
 
 1. Hash the normalized query and hard request variant, then check an exact key.

@@ -1,7 +1,0 @@
-{
-    "extends": ["../../biome.json"],
-    "vcs": {
-        "useIgnoreFile": false,
-        "defaultBranch": "main"
-    }
-}
