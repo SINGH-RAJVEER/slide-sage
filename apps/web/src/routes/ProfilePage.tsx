@@ -5,13 +5,18 @@ import type {
     UpdateAvatarRequest,
     UpdateProfileRequest,
     UserProfile,
-} from "@slide-sage/types";
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+} from "@slidesage/types";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { API_URL } from "@/lib/api";
 import Header from "@/modules/Header";
+import { ROUTES } from "@/router/paths";
 
 export default function ProfilePage() {
+    const { refreshSession } = useAuth();
+    const navigate = useNavigate();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,6 +28,7 @@ export default function ProfilePage() {
 
     const [editingEmail, setEditingEmail] = useState(false);
     const [newEmail, setNewEmail] = useState("");
+    const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
 
     const [editingPassword, setEditingPassword] = useState(false);
     const [currentPassword, setCurrentPassword] = useState("");
@@ -78,9 +84,9 @@ export default function ProfilePage() {
             );
         };
 
-        window.addEventListener("slide-sage:points-updated", handlePointsUpdated);
+        window.addEventListener("slidesage:points-updated", handlePointsUpdated);
         return () => {
-            window.removeEventListener("slide-sage:points-updated", handlePointsUpdated);
+            window.removeEventListener("slidesage:points-updated", handlePointsUpdated);
         };
     }, []);
 
@@ -105,6 +111,7 @@ export default function ProfilePage() {
 
             const data = (await res.json()) as ProfileResponse;
             setProfile(data.user);
+            await refreshSession({ force: true });
             setEditingName(false);
             setSuccess("Name updated successfully");
         } catch (err) {
@@ -125,7 +132,10 @@ export default function ProfilePage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ email: newEmail } satisfies UpdateProfileRequest),
+                body: JSON.stringify({
+                    email: newEmail,
+                    currentPassword: emailCurrentPassword,
+                } satisfies UpdateProfileRequest),
             });
 
             if (!res.ok) {
@@ -133,9 +143,21 @@ export default function ProfilePage() {
                 throw new Error(data.error?.message || "Failed to update email");
             }
 
-            const data = (await res.json()) as ProfileResponse;
+            const data = (await res.json()) as ProfileResponse & {
+                pending_email?: string;
+                verification_required?: boolean;
+            };
             setProfile(data.user);
             setEditingEmail(false);
+            setEmailCurrentPassword("");
+            if (data.verification_required && data.pending_email) {
+                navigate(
+                    `/sign-up/verify-email?email=${encodeURIComponent(data.pending_email)}&redirect_url=${encodeURIComponent(ROUTES.profile)}&mode=email-change`,
+                );
+                return;
+            }
+
+            await refreshSession({ force: true });
             setSuccess("Email updated successfully");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to update email");
@@ -178,6 +200,7 @@ export default function ProfilePage() {
                 throw new Error(data.error?.message || "Failed to update password");
             }
 
+            await refreshSession({ force: true });
             setEditingPassword(false);
             setCurrentPassword("");
             setNewPassword("");
@@ -221,6 +244,7 @@ export default function ProfilePage() {
             setProfile((currentProfile) =>
                 currentProfile ? { ...currentProfile, ...data.user } : currentProfile,
             );
+            await refreshSession({ force: true });
             setSuccess("Avatar updated successfully");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to update avatar");
@@ -411,6 +435,17 @@ export default function ProfilePage() {
                                         placeholder="your@email.com"
                                         required
                                     />
+                                    <input
+                                        type="password"
+                                        autoComplete="current-password"
+                                        value={emailCurrentPassword}
+                                        onChange={(event) =>
+                                            setEmailCurrentPassword(event.target.value)
+                                        }
+                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                        placeholder="Current password"
+                                        required
+                                    />
                                 </div>
 
                                 <div className="flex gap-2">
@@ -426,6 +461,7 @@ export default function ProfilePage() {
                                         onClick={() => {
                                             setEditingEmail(false);
                                             setNewEmail(profile.email);
+                                            setEmailCurrentPassword("");
                                         }}
                                         className="flex-1 bg-white/10 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 hover:bg-white/20"
                                     >

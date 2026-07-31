@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import IterateModal from "@slide-sage/ui/components/Viewer/IterateModal";
+import IterateModal from "@slidesage/ui/components/Viewer/IterateModal";
 import { fireEvent, render } from "@testing-library/react";
 
 it("renders a single accessible form only while open", () => {

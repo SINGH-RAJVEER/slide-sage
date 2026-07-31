@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { SlideLayoutSelector } from "@slide-sage/ui/components/Viewer/SlideLayoutSelector";
+import { SlideLayoutSelector } from "@slidesage/ui/components/Viewer/SlideLayoutSelector";
 import { fireEvent, render } from "@testing-library/react";
 
 describe("SlideLayoutSelector", () => {

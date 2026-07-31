@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { afterEach, expect, it, jest, mock } from "bun:test";
-import { GenerationStatusIndicatorView } from "@slide-sage/ui/components/GenerationStatusIndicator";
+import { GenerationStatusIndicatorView } from "@slidesage/ui/components/GenerationStatusIndicator";
 import { act, fireEvent, render } from "@testing-library/react";
 
 afterEach(() => {

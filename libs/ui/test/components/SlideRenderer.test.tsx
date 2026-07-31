@@ -1,8 +1,8 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it } from "bun:test";
-import type { ContentSlide, Slide, SlideBlock, SlideLayout } from "@slide-sage/types";
-import { SlideRenderer } from "@slide-sage/ui/components/Viewer/SlideRenderer";
+import type { ContentSlide, Slide, SlideBlock, SlideLayout } from "@slidesage/types";
+import { SlideRenderer } from "@slidesage/ui/components/Viewer/SlideRenderer";
 import { render } from "@testing-library/react";
 
 function contentSlide(

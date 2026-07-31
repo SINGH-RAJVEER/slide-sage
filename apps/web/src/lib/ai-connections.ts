@@ -1,4 +1,4 @@
-import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slide-sage/types";
+import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slidesage/types";
 import { API_URL, readJsonResponse } from "./api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -7,6 +7,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         ...init,
         headers: { "Content-Type": "application/json", ...init?.headers },
     });
+    if (response.ok && response.status === 204) return undefined as T;
+
     const data = await readJsonResponse<T & { error?: { message?: string } }>(response);
     if (!data) {
         throw new Error(

@@ -1,7 +1,8 @@
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+import type { ApiErrorResponse, PresentationsResponse } from "@slidesage/types";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "@/lib/api";
+import { API_URL, readJsonResponse } from "@/lib/api";
 import { ROUTES } from "@/router/paths";
 
 export default function HomePage() {
@@ -11,17 +12,26 @@ export default function HomePage() {
 
     const checkPresentations = useCallback(async () => {
         try {
-            const response = await fetch(`${API_URL}/api/presentations`, {
+            const response = await fetch(`${API_URL}/api/presentations?limit=1`, {
                 credentials: "include",
             });
+            const result = await readJsonResponse<PresentationsResponse | ApiErrorResponse>(
+                response,
+            );
 
-            if (response.status === 401) {
-                setHasPresentations(false);
-                return;
+            if (!response.ok) {
+                if (response.status === 401) {
+                    setHasPresentations(false);
+                    return;
+                }
+
+                const message = result && "error" in result ? result.error.message : undefined;
+                throw new Error(message || `Failed to load presentations (${response.status})`);
             }
 
-            const result = await response.json();
-            setHasPresentations(result.success && result.presentations.length > 0);
+            setHasPresentations(
+                Boolean(result && "presentations" in result && result.presentations.length > 0),
+            );
         } catch (err) {
             console.error("Error checking presentations:", err);
             setHasPresentations(false);

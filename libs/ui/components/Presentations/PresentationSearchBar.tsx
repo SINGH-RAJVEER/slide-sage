@@ -1,4 +1,4 @@
-import { Input } from "@slide-sage/ui/components/input";
+import { Input } from "@slidesage/ui/components/input";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 

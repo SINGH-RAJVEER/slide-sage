@@ -25,14 +25,20 @@ PostgreSQL 18 includes pgvector. Local dev state is stored in `.devenv/state/pos
 
 The production API entry point is `apps/api/src/index.ts`. Authentication is implemented in `apps/api/src/services/auth.ts` and its middleware companion, so the Worker deploy does not depend on a separate auth workspace package. The API mounts:
 
+- Public health status at `/api/health`
 - Better Auth at `/api/auth`
+- Encrypted provider connection routes at `/api/ai`
 - Profile routes at `/api/profile`
 - Presentation and research routes at `/api`
 - Billing routes at `/api/billing`
 
-Authenticated routes validate the Better Auth session cookie. Presentation generation and revision check the user's slide-token balance before opening an SSE stream.
+Authenticated routes validate the Better Auth session cookie. OpenRouter-backed
+presentation generation and revision atomically reserve the full point quote
+before opening an SSE stream. BYOK generation is billed by the provider and uses
+a zero-point operation so lifecycle and presentation writes follow the same
+transactional path without deducting SlideSage points.
 
-Transport contracts shared by the Worker and web app belong in `libs/types` and use the `@slide-sage/types` alias. This includes presentation list/detail responses, profile requests and responses, billing checkout and verification payloads, common API errors, and streaming events. Database row types remain in `apps/api`, reusable UI primitives belong in `libs/ui` and use the `@slide-sage/ui` alias, and service-only implementation types stay with their owning modules.
+Transport contracts shared by the Worker and web app belong in `libs/types` and use the `@slidesage/types` alias. This includes presentation list/detail responses, profile requests and responses, billing checkout and verification payloads, common API errors, and streaming events. Database row types remain in `apps/api`, reusable UI primitives belong in `libs/ui` and use the `@slidesage/ui` alias, and service-only implementation types stay with their owning modules.
 
 ## Presentation Flow
 
@@ -43,7 +49,9 @@ Transport contracts shared by the Worker and web app belong in `libs/types` and 
    dedicated preview state while Exa sources load. The source preview remains
    visible for review, the request continues if the user leaves the research
    page, completed sources are reused when they return, and generation stays
-   disabled until that request finishes.
+   disabled until that request finishes. Exa receives the caller's abort signal
+   and a bounded request timeout, so client cancellation stops the provider
+   request rather than leaving detached work.
 3. RAG retrieves relevant deck, slide, style, feedback, template, and source
    context from PostgreSQL.
 4. The API checks the shared pgvector outline cache using the topic and exact
@@ -58,13 +66,19 @@ Transport contracts shared by the Worker and web app belong in `libs/types` and 
    layout system, normalizes block regions, and reserves image placeholders when
    an image-led card has no grounded asset. The model does not return HTML, CSS,
    component code, or arbitrary styling.
-6. The API streams `created`, `stage`, `outline`, slide progress, `saved`, or
-   `error` events.
-7. A completed deck and its semantic memories are persisted through Drizzle. A
-   failed generation keeps the initial row and replaces its placeholder data with
-   an uncharged failed-state payload containing the prompt, options, error, and
-   any research sources collected before failure.
-7. The app-level streaming provider keeps consuming the response when the user
+6. The API streams `created`, `stage`, `outline`, slide progress, `complete`,
+   `saved`, or `error` events. `complete` is provider completion only; `saved` is
+   emitted after durable persistence and point settlement.
+7. One transaction settles the point operation, compare-and-swap writes the
+   completed deck, refunds quote minus measured usage, and records the resulting
+   balance. Semantic-memory writes follow as non-critical work. A failed
+   generation keeps the initial row and replaces its placeholder data with a
+   failed-state payload containing the prompt, options, error, and any research
+   sources collected before failure. A separate refund transaction atomically
+   transitions the active reservation and restores the quote. If the process
+   stops first, reservations expire after one hour and are recovered lazily by a
+   later point-accounting transaction.
+8. The app-level streaming provider keeps consuming the response when the user
    navigates to another route. A persistent top-right status control reports
    generated-slide progress on every route except login, including the Generate
    page after a user starts generation from Research Insights, and returns to the
@@ -82,13 +96,13 @@ Transport contracts shared by the Worker and web app belong in `libs/types` and 
    The global active-generation indicator is suppressed on that generation's own
    viewer route because progress is already represented inside the viewer; it
    remains available when the user navigates elsewhere.
-8. The web app treats `saved`, rather than `complete`, as the persistence signal.
+9. The web app treats `saved`, rather than `complete`, as the persistence signal.
    It refreshes an open Presentations page after that event and links the completed
    status to the stored deck.
-9. Failed items are marked as ready to retry in Presentations. Clicking one loads
+10. Failed items are marked as ready to retry in Presentations. Clicking one loads
    its detail and routes to the saved sources review when research is available,
    or to the main generation form with its prompt and options preselected.
-10. The web viewer renders the deck and can export an editable PowerPoint file in
+11. The web viewer renders the deck and can export an editable PowerPoint file in
    the browser.
 
 ### Presentation Document
@@ -163,18 +177,30 @@ keeps the PDF visually aligned with the current viewer, including charts, theme
 changes, and per-slide layout edits. PDF output uses the presentation title and
 the `.pdf` extension.
 
-The Cloudflare Worker creates its Postgres.js client inside each request and
-keeps Drizzle access scoped to that invocation. Database clients must not be
-cached across Worker requests because Cloudflare isolates request I/O contexts.
+Database lifetime differs by runtime. Bun reuses a process-wide Postgres.js pool
+per connection string and puts the selected Drizzle instance in
+`AsyncLocalStorage` for each request. Defaults are 10 seconds to connect, 20
+seconds idle, and five pooled connections.
+
+The Cloudflare Worker prefers `HYPERDRIVE.connectionString`, then falls back to
+`DATABASE_URL`. It creates one Postgres.js client with `max: 1` for each request,
+keeps Drizzle access scoped to that invocation, and closes the client only after
+the response body is consumed or cancelled. Delayed closure is required for SSE
+because stream work continues after the response object is created. Worker
+clients must not be cached across requests because Cloudflare isolates request
+I/O contexts; Hyperdrive should be used to absorb connection churn when the
+deployment provides that binding.
 
 Iteration follows the same path but uses an existing presentation and user
 feedback as context.
 
 ## Data
 
-The Drizzle schema includes Better Auth tables, presentations, payments, and the
-semantic-memory tables:
+The Drizzle schema includes Better Auth tables, presentations, payments,
+operational ledgers, and semantic-memory tables:
 
+- `generation_point_operations`
+- `api_rate_limits`
 - `rag_context`
 - `slide_embeddings`
 - `deck_memories`
@@ -197,6 +223,43 @@ to the matching domain module, and define relationships that cross modules in
 Repository classes own persistence. Route handlers should validate HTTP input and
 translate service results, while AI, research, RAG, profile, and billing logic
 remain in services.
+
+`generation_point_operations` is the reservation ledger for generation and
+iteration. New-presentation reservation includes creation of the placeholder row
+in one transaction. Settlement includes the final owned-revision write and
+partial quote refund in one transaction; failure refunds atomically transition a
+still-reserved operation and restore its full quote. One-hour expiry protects
+against points remaining reserved after a process or stream disappears, while an
+active stream renews its lease every five minutes. BYOK requests use zero-point
+operations for the same lifecycle guarantees.
+
+`api_rate_limits` contains hashed fixed-window identities and counters shared by
+all instances. Counter writes are atomic PostgreSQL upserts. The middleware
+returns `429` and `Retry-After` when a policy is exceeded, but deliberately fails
+closed with `503` on database or secret errors. See
+[RATE_LIMITING.md](RATE_LIMITING.md) before deploying because a missing migration
+or unavailable database blocks protected requests.
+
+## Request Safety
+
+Presentation routes enforce byte limits before JSON parsing and then validate
+types, lengths, enumerations, dates, domains, source counts, URLs, and pagination
+ranges. Oversized bodies return `413`; other invalid input returns `400`.
+Generated model output is constrained with strict JSON Schema and normalized
+again before streaming or persistence.
+
+Custom `POST`, `PUT`, `PATCH`, and `DELETE` routes reject browser requests whose
+`Origin` is neither the API origin nor a configured CORS origin. Requests without
+an `Origin` are also rejected when Fetch Metadata marks them as cross-site. Better
+Auth retains its own trusted-origin validation, and direct signed webhooks remain
+compatible because non-browser requests do not send cross-site browser metadata.
+
+The request logger records only event name, method, URL path without query
+parameters, response status, and duration. Safe error logs retain an allowlisted
+error class name but omit messages, stack traces, request bodies, headers,
+provider payloads, OTPs, API keys, and database details. Routes return generic
+errors where an upstream or internal message could disclose credentials or
+provider data.
 
 `apps/api/src/services/ai.service.ts` is the stable presentation-AI facade. Its
 supporting `services/ai/` modules separately own message construction, research
@@ -281,6 +344,7 @@ application shell and links back to the saved retry item in the presentation
 library. The global stopped-generation control automatically disappears after an
 eight-second cooldown, while the failed record remains available until retried or
 deleted.
+
 ## Direct AI Providers
 
 Presentation generation defaults to the server OpenRouter model and point billing
@@ -290,7 +354,10 @@ and SlideSage SSE event contract. Connections and the persisted default model ar
 managed by `/api/ai` and the protected `/settings` page. Generation requests omit
 provider credentials and resolve the saved server-side preference, while the
 semantic outline, scene compilation, and cache contract remain
-provider-independent. Removing the final valid connection restores OpenRouter.
+provider-independent. New and replacement credentials are checked against each
+provider's official model-list endpoint with caller cancellation and a 15-second
+default timeout before encrypted storage. Removing the final valid connection
+restores OpenRouter.
 The settings route uses the shared loading indicator and exits loading into an
 explicit error state when configuration retrieval fails, preventing an indefinite
 or visually inconsistent loader. Cloudflare Pages builds without `VITE_API_URL`
@@ -300,6 +367,8 @@ the production Pages origin. Web and Worker deployments remain separate, so any
 release that changes `/api/*` routes must deploy the Worker before the matching
 Pages bundle.
 
-Research remains an Exa workflow. Embeddings and semantic memory always use the
-server OpenRouter configuration; BYOK credentials are never passed into RAG or
-search services.
+Research remains an Exa workflow. Requests use caller cancellation and a
+10-second default timeout. Timeout and provider failures produce an empty source
+set, while explicit caller cancellation propagates so the enclosing request can
+stop. Embeddings and semantic memory always use the server OpenRouter
+configuration; BYOK credentials are never passed into RAG or search services.

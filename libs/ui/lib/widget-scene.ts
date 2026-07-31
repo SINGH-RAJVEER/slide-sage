@@ -4,7 +4,7 @@ import type {
     WidgetEdge,
     WidgetKind,
     WidgetNode,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 type WidgetSpecV1 = Pick<WidgetBlock, "version" | "kind" | "direction" | "nodes" | "edges">;
 

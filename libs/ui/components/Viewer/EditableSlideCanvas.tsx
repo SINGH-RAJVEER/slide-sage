@@ -1,5 +1,5 @@
-import type { ContentSlide, SlideBlock } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+import type { ContentSlide, SlideBlock } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import { Check, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SlideRenderer } from "./SlideRenderer";

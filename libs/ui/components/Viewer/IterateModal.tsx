@@ -1,7 +1,7 @@
-import { Button } from "@slide-sage/ui/components/button";
-import { DialogHeader } from "@slide-sage/ui/components/dialog";
-import { Spinner } from "@slide-sage/ui/components/spinner";
-import { Textarea } from "@slide-sage/ui/components/textarea";
+import { Button } from "@slidesage/ui/components/button";
+import { DialogHeader } from "@slidesage/ui/components/dialog";
+import { Spinner } from "@slidesage/ui/components/spinner";
+import { Textarea } from "@slidesage/ui/components/textarea";
 import { Globe, Sparkles, X } from "lucide-react";
 import { useRef, useState } from "react";
 

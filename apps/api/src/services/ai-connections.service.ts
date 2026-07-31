@@ -5,7 +5,7 @@ import {
     type AIModelDescriptor,
     type AIModelSelection,
     type AIProvider,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import { AIConnectionRepository, UserRepository } from "@/database";
 import { configuredOpenRouterModel, findAIModel, modelsForProvider } from "./ai/model-catalog";
 import { validateProviderKey } from "./ai/provider-validation";
@@ -69,14 +69,15 @@ export class AIConnectionService {
     async connect(
         userId: string,
         provider: AIProvider,
-        apiKey: string
+        apiKey: string,
+        signal?: AbortSignal
     ): Promise<{ connection: AIConnectionSummary; availableModels: AIModelDescriptor[] }> {
         await this.requireEligibility(userId);
         const normalized = apiKey.trim();
         if (normalized.length < 8 || normalized.length > 512 || /[\r\n\0]/.test(normalized)) {
             throw new Error("Enter a valid API key.");
         }
-        const availableModels = await validateProviderKey(provider, normalized);
+        const availableModels = await validateProviderKey(provider, normalized, signal);
         const connection = await this.repository.upsert(
             userId,
             provider,

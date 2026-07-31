@@ -1,11 +1,11 @@
-import type { ThemeId } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+import type { ThemeId } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@slide-sage/ui/components/dropdown-menu";
+} from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown } from "lucide-react";
 import type React from "react";
 

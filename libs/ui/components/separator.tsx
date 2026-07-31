@@ -1,5 +1,5 @@
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
-import { cn } from "@slide-sage/ui/lib/utils";
+import { cn } from "@slidesage/ui/lib/utils";
 import type * as React from "react";
 
 function Separator({

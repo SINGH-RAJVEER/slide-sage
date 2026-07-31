@@ -6,7 +6,7 @@ import {
     type Slide,
     type SlideBlock,
     type SlideRegion,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import { Image as ImageIcon } from "lucide-react";
 import React from "react";
 import { adaptLegacyHtmlSlide } from "../../lib/legacy-slide-adapter";

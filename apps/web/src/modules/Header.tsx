@@ -1,4 +1,4 @@
-import { type HeaderRoutes, Header as HeaderView } from "@slide-sage/ui/components/Header";
+import { type HeaderRoutes, Header as HeaderView } from "@slidesage/ui/components/Header";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/router/paths";

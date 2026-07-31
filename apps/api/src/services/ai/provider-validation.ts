@@ -1,13 +1,19 @@
-import type { AIModelDescriptor, AIProvider } from "@slide-sage/types";
+import type { AIModelDescriptor, AIProvider } from "@slidesage/types";
+import { abortReason, combineAbortSignal } from "../../utils/abort";
 import { modelsForProvider } from "./model-catalog";
 
 export class ProviderValidationError extends Error {
     readonly rejected: boolean;
+    readonly incompatible: boolean;
 
-    constructor(message: string, rejected = false) {
+    constructor(
+        message: string,
+        kind: "rejected" | "incompatible" | "unavailable" = "unavailable"
+    ) {
         super(message);
         this.name = "ProviderValidationError";
-        this.rejected = rejected;
+        this.rejected = kind === "rejected";
+        this.incompatible = kind === "incompatible";
     }
 }
 
@@ -44,21 +50,42 @@ function extractModelIds(provider: AIProvider, payload: unknown): Set<string> {
 
 export async function validateProviderKey(
     provider: AIProvider,
-    apiKey: string
+    apiKey: string,
+    signal?: AbortSignal,
+    fetchImpl: typeof fetch = fetch
 ): Promise<AIModelDescriptor[]> {
     const [url, headers] = providerRequest(provider, apiKey);
-    let response: Response;
+    const configuredTimeout = Number.parseInt(
+        process.env["PROVIDER_VALIDATION_TIMEOUT_MS"] ?? "",
+        10
+    );
+    const timeoutMs =
+        Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : 15_000;
+    const combined = combineAbortSignal(signal, timeoutMs, "Provider validation timed out");
     try {
-        response = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
-    } catch {
+        const response = await fetchImpl(url, { headers, signal: combined.signal });
+        if (response.status === 401 || response.status === 403) {
+            throw new ProviderValidationError("The provider rejected this API key.", "rejected");
+        }
+        if (!response.ok) {
+            throw new ProviderValidationError("The provider could not validate this API key.");
+        }
+        const available = extractModelIds(provider, await response.json().catch(() => ({})));
+        const compatible = modelsForProvider(provider).filter((model) =>
+            available.has(model.model)
+        );
+        if (compatible.length === 0) {
+            throw new ProviderValidationError(
+                "This account has no supported structured-output models.",
+                "incompatible"
+            );
+        }
+        return compatible;
+    } catch (error) {
+        if (error instanceof ProviderValidationError) throw error;
+        if (signal?.aborted) throw abortReason(signal);
         throw new ProviderValidationError("The provider could not be reached. Try again shortly.");
+    } finally {
+        combined.dispose();
     }
-    if (response.status === 401 || response.status === 403) {
-        throw new ProviderValidationError("The provider rejected this API key.", true);
-    }
-    if (!response.ok) {
-        throw new ProviderValidationError("The provider could not validate this API key.");
-    }
-    const available = extractModelIds(provider, await response.json().catch(() => ({})));
-    return modelsForProvider(provider).filter((model) => available.has(model.model));
 }

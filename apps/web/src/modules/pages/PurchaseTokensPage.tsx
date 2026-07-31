@@ -6,16 +6,16 @@ import type {
     BillingPackName,
     BillingVerifyRequest,
     BillingVerifyResponse,
-} from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+} from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@slide-sage/ui/components/card";
-import { Input } from "@slide-sage/ui/components/input";
+} from "@slidesage/ui/components/card";
+import { Input } from "@slidesage/ui/components/input";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_URL } from "@/lib/api";

@@ -3,8 +3,8 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@slide-sage/ui/components/dropdown-menu";
-import MarketplaceCard from "@slide-sage/ui/components/Marketplace/MarketplaceCard";
+} from "@slidesage/ui/components/dropdown-menu";
+import MarketplaceCard from "@slidesage/ui/components/Marketplace/MarketplaceCard";
 import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";

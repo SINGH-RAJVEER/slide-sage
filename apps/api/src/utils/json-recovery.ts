@@ -1,8 +1,6 @@
 // JSON Recovery Utilities
 
-import { writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { logSafeError } from "./safe-logging";
 
 export class JSONRecoveryError extends Error {
     constructor(message: string) {
@@ -25,8 +23,7 @@ export interface RecoveryResult {
 */
 
 export function recoverJson(content: string, error: Error): RecoveryResult {
-    console.error("JSON parsing error:", error.message);
-    console.error(`Content length: ${content.length}`, content);
+    logSafeError("model_json_parse_failed", error);
 
     // Strategy 1: Extract the first JSON value (handles model adding trailing text).
     try {
@@ -66,9 +63,8 @@ export function recoverJson(content: string, error: Error): RecoveryResult {
             strategy: "close",
         };
     } catch (closeError) {
-        console.error("Could not recover from JSON error:", closeError);
-        saveMalformedJson(content);
-        throw new JSONRecoveryError(`Unable to recover JSON: ${closeError}`);
+        logSafeError("model_json_recovery_failed", closeError);
+        throw new JSONRecoveryError("Unable to recover model JSON");
     }
 }
 
@@ -236,16 +232,4 @@ function removeTrailingCommas(input: string): string {
     }
 
     return out;
-}
-
-// Save malformed JSON to a temp file for debugging
-
-function saveMalformedJson(content: string): void {
-    try {
-        const tempFile = join(tmpdir(), `openrouter_error_${Date.now()}.json`);
-        writeFileSync(tempFile, content);
-        console.error(`Saved malformed JSON to: ${tempFile}`);
-    } catch (e) {
-        console.warn("Could not save malformed JSON:", e);
-    }
 }

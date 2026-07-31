@@ -1,5 +1,5 @@
-import { adaptLegacyHtmlSlide } from "@slide-sage/ui/lib/legacy-slide-adapter";
-import { compileWidgetScene, isWidgetBlock } from "@slide-sage/ui/lib/widget-scene";
+import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
+import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
 import PptxGenJS from "pptxgenjs";
 import {
     type ChartConfig,

@@ -1,7 +1,7 @@
-import type { PresentationSummary } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@slide-sage/ui/components/card";
-import { Spinner } from "@slide-sage/ui/components/spinner";
+import type { PresentationSummary } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@slidesage/ui/components/card";
+import { Spinner } from "@slidesage/ui/components/spinner";
 import { Calendar, RotateCcw, Trash2 } from "lucide-react";
 import type React from "react";
 

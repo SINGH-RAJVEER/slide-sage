@@ -14,7 +14,7 @@ import {
     type SlideBlock,
     THEME_IDS,
     type ThemeId,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import { processSlide } from "./ai/presentation-content";
 
 const DEFAULT_DIMENSIONS: PresentationDimensions = { width: 1280, height: 720 };

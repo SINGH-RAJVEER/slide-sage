@@ -1,4 +1,4 @@
-import type { SlideBlock, SlideLayout, SlideRegion, WidgetBlock } from "@slide-sage/types";
+import type { SlideBlock, SlideLayout, SlideRegion, WidgetBlock } from "@slidesage/types";
 import { normalizeWidgetSpec } from "./widget-scene";
 
 export type SlideBlockKind = SlideBlock["type"];

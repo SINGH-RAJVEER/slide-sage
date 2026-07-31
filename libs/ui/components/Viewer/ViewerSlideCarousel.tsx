@@ -1,7 +1,7 @@
-import type { ContentSlide, Slide } from "@slide-sage/types";
-import { isSceneSlide, type SceneSlide } from "@slide-sage/types";
-import { Card } from "@slide-sage/ui/components/card";
-import { Spinner } from "@slide-sage/ui/components/spinner";
+import type { ContentSlide, Slide } from "@slidesage/types";
+import { isSceneSlide, type SceneSlide } from "@slidesage/types";
+import { Card } from "@slidesage/ui/components/card";
+import { Spinner } from "@slidesage/ui/components/spinner";
 import type React from "react";
 import { EditableSceneCanvas } from "./EditableSceneCanvas";
 import { EditableSlideCanvas } from "./EditableSlideCanvas";

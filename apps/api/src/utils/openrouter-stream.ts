@@ -1,4 +1,5 @@
-import type { AIProvider, OpenRouterMessage } from "@slide-sage/types";
+import type { AIProvider, OpenRouterMessage } from "@slidesage/types";
+import { abortReason, combineAbortSignal } from "./abort";
 import type { StreamChunk } from "./stream-processor";
 
 const RETRYABLE_STATUS_CODES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
@@ -12,6 +13,7 @@ export interface OpenRouterRequestOptions {
     requestTimeoutMs: number;
     maxTokens: number;
     responseFormat: Record<string, unknown>;
+    signal?: AbortSignal;
 }
 
 export interface OpenRouterStreamOptions {
@@ -63,13 +65,34 @@ function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
 
+function strictOpenAIJsonSchema(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(strictOpenAIJsonSchema);
+    if (!value || typeof value !== "object") return value;
+
+    const schema = value as Record<string, unknown>;
+    const normalized: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(schema)) {
+        normalized[key] = strictOpenAIJsonSchema(entry);
+    }
+
+    if (schema["properties"] && typeof schema["properties"] === "object") {
+        normalized["required"] = Object.keys(schema["properties"] as Record<string, unknown>);
+        normalized["additionalProperties"] = false;
+    }
+    return normalized;
+}
+
 export async function requestOpenRouterStream(
     options: OpenRouterRequestOptions,
     fetchImpl: typeof fetch = fetch
 ): Promise<Response> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options.requestTimeoutMs);
+    const combined = combineAbortSignal(
+        options.signal,
+        options.requestTimeoutMs,
+        "AI provider response timeout"
+    );
     const baseUrl = (process.env as { BASE_URL?: string }).BASE_URL;
+    let responseReturned = false;
 
     try {
         const provider = options.provider;
@@ -126,13 +149,26 @@ export async function requestOpenRouterStream(
                 headers["HTTP-Referer"] = baseUrl || "http://localhost:8000";
                 headers["X-OpenRouter-Title"] = "Slide Sage";
             }
+            const responseFormat =
+                provider === "openai"
+                    ? {
+                          ...options.responseFormat,
+                          json_schema: {
+                              ...(options.responseFormat["json_schema"] as Record<string, unknown>),
+                              schema: strictOpenAIJsonSchema(
+                                  (options.responseFormat["json_schema"] as { schema?: unknown })
+                                      ?.schema
+                              ),
+                          },
+                      }
+                    : options.responseFormat;
             body = {
                 model: options.model,
                 messages: options.messages,
                 stream: true,
                 stream_options: { include_usage: true },
                 max_tokens: options.maxTokens,
-                response_format: options.responseFormat,
+                response_format: responseFormat,
                 ...(!provider
                     ? { provider: { allow_fallbacks: true, require_parameters: true } }
                     : {}),
@@ -142,11 +178,13 @@ export async function requestOpenRouterStream(
             method: "POST",
             headers,
             body: JSON.stringify(body),
-            signal: controller.signal,
+            signal: combined.signal,
         });
 
         if (response.ok) {
-            return response;
+            combined.clearTimeout();
+            responseReturned = true;
+            return responseWithDispose(response, combined.dispose);
         }
 
         const responseText = (await response.text()).slice(0, 2000);
@@ -162,7 +200,11 @@ export async function requestOpenRouterStream(
             throw error;
         }
 
-        if (controller.signal.aborted) {
+        if (options.signal?.aborted) {
+            throw abortReason(options.signal);
+        }
+
+        if (combined.timedOut()) {
             throw new OpenRouterStreamError(
                 `OpenRouter did not start responding within ${options.requestTimeoutMs}ms`
             );
@@ -170,8 +212,45 @@ export async function requestOpenRouterStream(
 
         throw new OpenRouterStreamError(`OpenRouter request failed: ${errorMessage(error)}`);
     } finally {
-        clearTimeout(timeout);
+        if (!responseReturned) combined.dispose();
     }
+}
+
+function responseWithDispose(response: Response, dispose: () => void): Response {
+    if (!response.body) {
+        dispose();
+        return response;
+    }
+
+    const reader = response.body.getReader();
+    const body = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+            try {
+                const result = await reader.read();
+                if (result.done) {
+                    dispose();
+                    controller.close();
+                } else {
+                    controller.enqueue(result.value);
+                }
+            } catch (error) {
+                dispose();
+                controller.error(error);
+            }
+        },
+        async cancel(reason) {
+            try {
+                await reader.cancel(reason);
+            } finally {
+                dispose();
+            }
+        },
+    });
+    return new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+    });
 }
 
 async function readWithTimeout(reader: ReadableStreamDefaultReader<Uint8Array>, timeoutMs: number) {
@@ -197,7 +276,12 @@ async function readWithTimeout(reader: ReadableStreamDefaultReader<Uint8Array>, 
     }
 }
 
-function parseEventBlock(block: string): StreamChunk | null {
+interface AnthropicUsageState {
+    inputTokens: number;
+    outputTokens: number;
+}
+
+function parseEventBlock(block: string, anthropicUsage: AnthropicUsageState): StreamChunk | null {
     const data = block
         .split(/\r?\n/)
         .filter((line) => line.startsWith("data:"))
@@ -251,9 +335,13 @@ function parseEventBlock(block: string): StreamChunk | null {
             };
         }
         if (parsed.type) {
-            const totalTokens =
-                (parsed.usage?.input_tokens || parsed.message?.usage?.input_tokens || 0) +
-                (parsed.usage?.output_tokens || parsed.message?.usage?.output_tokens || 0);
+            const inputTokens = parsed.usage?.input_tokens ?? parsed.message?.usage?.input_tokens;
+            const outputTokens =
+                parsed.usage?.output_tokens ?? parsed.message?.usage?.output_tokens;
+            if (inputTokens !== undefined) anthropicUsage.inputTokens = inputTokens;
+            if (outputTokens !== undefined) anthropicUsage.outputTokens = outputTokens;
+            const hasUsage = inputTokens !== undefined || outputTokens !== undefined;
+            const totalTokens = anthropicUsage.inputTokens + anthropicUsage.outputTokens;
             return {
                 choices: [
                     {
@@ -270,7 +358,7 @@ function parseEventBlock(block: string): StreamChunk | null {
                                 : parsed.delta?.stop_reason || null,
                     },
                 ],
-                usage: totalTokens ? { total_tokens: totalTokens } : undefined,
+                usage: hasUsage ? { total_tokens: totalTokens } : undefined,
             };
         }
         return parsed;
@@ -297,6 +385,7 @@ export async function* readOpenRouterStream(
     let buffer = "";
     let totalBytes = 0;
     let parsedEvents = 0;
+    const anthropicUsage = { inputTokens: 0, outputTokens: 0 };
 
     try {
         while (true) {
@@ -316,7 +405,7 @@ export async function* readOpenRouterStream(
             buffer = blocks.pop() || "";
 
             for (const block of blocks) {
-                const chunk = parseEventBlock(block);
+                const chunk = parseEventBlock(block, anthropicUsage);
                 if (chunk) {
                     parsedEvents++;
                     yield chunk;
@@ -326,7 +415,7 @@ export async function* readOpenRouterStream(
 
         buffer += decoder.decode();
         if (buffer.trim()) {
-            const chunk = parseEventBlock(buffer);
+            const chunk = parseEventBlock(buffer, anthropicUsage);
             if (chunk) {
                 parsedEvents++;
                 yield chunk;

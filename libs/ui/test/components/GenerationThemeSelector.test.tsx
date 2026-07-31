@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { GenerationThemeSelector } from "@slide-sage/ui/components/Generate/GenerationThemeSelector";
+import { GenerationThemeSelector } from "@slidesage/ui/components/Generate/GenerationThemeSelector";
 import { fireEvent, render } from "@testing-library/react";
 
 describe("GenerationThemeSelector", () => {

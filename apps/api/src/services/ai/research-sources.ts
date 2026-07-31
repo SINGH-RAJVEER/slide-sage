@@ -1,14 +1,15 @@
-import type { ResearchOptions, ResearchPayload, Source } from "@slide-sage/types";
+import type { ResearchOptions, ResearchPayload, Source } from "@slidesage/types";
 
 interface ResearchSearchClient {
-    webSearch(query: string, options: ResearchOptions): Promise<Source[]>;
+    webSearch(query: string, options: ResearchOptions, signal?: AbortSignal): Promise<Source[]>;
 }
 
 interface ResearchSourceRanker {
     rankSourcesBySemanticRelevance(
         query: string,
         sources: Source[],
-        limit: number
+        limit: number,
+        signal?: AbortSignal
     ): Promise<Source[]>;
 }
 
@@ -18,6 +19,7 @@ interface ResolveResearchSourcesParams {
     researchPayload?: ResearchPayload;
     searchClient: ResearchSearchClient;
     sourceRanker: ResearchSourceRanker;
+    signal?: AbortSignal;
 }
 
 export function normalizeResearchOptions(research?: ResearchOptions): ResearchOptions | undefined {
@@ -40,13 +42,25 @@ export async function resolveResearchSources(
         sources = params.researchPayload.sources;
     } else {
         sources = params.research?.enabled
-            ? await params.searchClient.webSearch(params.query, {
-                  ...params.research,
-                  enabled: true,
-              })
+            ? await params.searchClient.webSearch(
+                  params.query,
+                  {
+                      ...params.research,
+                      enabled: true,
+                  },
+                  params.signal
+              )
             : [];
     }
 
     if (!sources.length) return sources;
-    return await params.sourceRanker.rankSourcesBySemanticRelevance(params.query, sources, 8);
+    params.signal?.throwIfAborted();
+    const ranked = await params.sourceRanker.rankSourcesBySemanticRelevance(
+        params.query,
+        sources,
+        8,
+        params.signal
+    );
+    params.signal?.throwIfAborted();
+    return ranked;
 }

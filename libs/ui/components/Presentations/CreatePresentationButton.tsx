@@ -1,4 +1,4 @@
-import { Button } from "@slide-sage/ui/components/button";
+import { Button } from "@slidesage/ui/components/button";
 import { Plus } from "lucide-react";
 import type React from "react";
 

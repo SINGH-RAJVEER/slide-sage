@@ -1,4 +1,4 @@
-export { AVAILABLE_TEMPLATES } from "@slide-sage/ui/lib/templates";
+export { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
 export {
     StreamingProvider,
     useStreaming,

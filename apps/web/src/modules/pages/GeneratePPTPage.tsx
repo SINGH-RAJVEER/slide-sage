@@ -1,5 +1,5 @@
-import type { PresentationRetryOptions, ThemeId } from "@slide-sage/types";
-import { GenerateForm, GenerateOptionsBar } from "@slide-sage/ui/components/Generate";
+import type { PresentationRetryOptions, ThemeId } from "@slidesage/types";
+import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -91,6 +91,7 @@ export default function GeneratePPTPage() {
                     tonality,
                     theme,
                     retryPresentationId,
+                    ...(retry?.ai ? { ai: retry.ai } : {}),
                 },
             });
             return;
@@ -105,6 +106,7 @@ export default function GeneratePPTPage() {
             undefined,
             retryPresentationId,
             theme,
+            retry?.ai,
         );
         navigate(ROUTES.presentation, {
             state: { isStreaming: true },

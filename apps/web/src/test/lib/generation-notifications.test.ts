@@ -59,7 +59,7 @@ describe("generation notifications", () => {
         expect(createdNotifications[0]?.options).toEqual(
             expect.objectContaining({
                 body: "Quarterly plan",
-                tag: "slide-sage-generation-presentation_1",
+                tag: "slidesage-generation-presentation_1",
             }),
         );
         createdNotifications[0]?.onclick?.();

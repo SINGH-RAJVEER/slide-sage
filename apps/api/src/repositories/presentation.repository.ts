@@ -1,4 +1,4 @@
-import type { PresentationJSON } from "@slide-sage/types";
+import type { PresentationJSON } from "@slidesage/types";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { type Presentation, presentations } from "../db/schema";
@@ -58,7 +58,7 @@ export class PresentationRepository {
             .select()
             .from(presentations)
             .where(eq(presentations.userId, userId))
-            .orderBy(desc(presentations.createdAt))
+            .orderBy(desc(presentations.createdAt), desc(presentations.id))
             .limit(limit)
             .offset(offset);
 
@@ -79,7 +79,11 @@ export class PresentationRepository {
     ): Promise<Presentation | undefined> {
         const [presentation] = await db
             .update(presentations)
-            .set({ ...updates, updatedAt: new Date() })
+            .set({
+                ...updates,
+                revision: sql`${presentations.revision} + 1`,
+                updatedAt: new Date(),
+            })
             .where(eq(presentations.id, presentationId))
             .returning();
 
@@ -89,20 +93,21 @@ export class PresentationRepository {
     async updateOwnedAtRevision(
         presentationId: string,
         userId: string,
-        expectedUpdatedAt: Date,
+        expectedRevision: number,
         updates: Partial<Presentation>
     ): Promise<Presentation | undefined> {
         const [presentation] = await db
             .update(presentations)
             .set({
                 ...updates,
-                updatedAt: new Date(Math.max(Date.now(), expectedUpdatedAt.getTime() + 1)),
+                revision: sql`${presentations.revision} + 1`,
+                updatedAt: new Date(),
             })
             .where(
                 and(
                     eq(presentations.id, presentationId),
                     eq(presentations.userId, userId),
-                    eq(presentations.updatedAt, expectedUpdatedAt)
+                    eq(presentations.revision, expectedRevision)
                 )
             )
             .returning();
@@ -115,7 +120,7 @@ export class PresentationRepository {
             .select()
             .from(presentations)
             .where(eq(presentations.parentPresentationId, presentationId))
-            .orderBy(desc(presentations.createdAt));
+            .orderBy(desc(presentations.createdAt), desc(presentations.id));
 
         return iterations;
     }

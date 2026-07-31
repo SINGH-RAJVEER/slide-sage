@@ -1,6 +1,6 @@
-import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import {
     Select,
     SelectContent,
@@ -9,8 +9,8 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue,
-} from "@slide-sage/ui/components/select";
-import { Spinner } from "@slide-sage/ui/components/spinner";
+} from "@slidesage/ui/components/select";
+import { Spinner } from "@slidesage/ui/components/spinner";
 import { Check, KeyRound, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 

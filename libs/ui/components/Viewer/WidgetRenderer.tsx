@@ -1,4 +1,4 @@
-import type { WidgetBlock } from "@slide-sage/types";
+import type { WidgetBlock } from "@slidesage/types";
 import React from "react";
 import type { TemplateStyles } from "../../lib/templates";
 import { compileWidgetScene, type WidgetWidth } from "../../lib/widget-scene";

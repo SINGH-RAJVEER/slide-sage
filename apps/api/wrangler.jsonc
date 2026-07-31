@@ -1,13 +1,13 @@
 {
-    "name": "slide-sage",
+    "name": "slidesage",
     "main": "src/index.ts",
     "compatibility_date": "2026-03-19",
     "compatibility_flags": ["nodejs_compat"],
     "vars": {
         "NODE_ENV": "production",
         "BASE_URL": "https://slidesage.app",
-        "CORS_ORIGINS": "https://slidesage.app,https://www.slidesage.app,https://slide-sage.pages.dev",
-        "BETTER_AUTH_TRUSTED_ORIGINS": "https://slidesage.app,https://www.slidesage.app,https://slide-sage.pages.dev"
+        "CORS_ORIGINS": "https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev",
+        "BETTER_AUTH_TRUSTED_ORIGINS": "https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev"
     },
     "routes": [
         {

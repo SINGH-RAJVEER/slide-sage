@@ -1,4 +1,4 @@
-import type { Slide, Source, WidgetBlock } from "@slide-sage/types";
+import type { Slide, Source, WidgetBlock } from "@slidesage/types";
 
 export type WidgetSpecV1 = Pick<WidgetBlock, "version" | "kind" | "direction" | "nodes" | "edges">;
 export type WidgetBlockLike = WidgetBlock;
@@ -66,7 +66,7 @@ export type {
     WidgetNode,
     WidgetNodeRole,
     WidgetTone,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 export {
     isChartSlide,
@@ -76,7 +76,7 @@ export {
     PRESENTATION_SCHEMA_VERSION,
     resolveScene,
     slideToScene,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 // Streaming presentation state
 export interface StreamingPresentationState {

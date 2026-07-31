@@ -4,7 +4,7 @@ import type {
     SlideBlock,
     SlideLayout,
     SlideRegion,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 function cleanText(value: string | null | undefined, maximum = 1200): string {
     return (value || "").replace(/\s+/g, " ").trim().slice(0, maximum);

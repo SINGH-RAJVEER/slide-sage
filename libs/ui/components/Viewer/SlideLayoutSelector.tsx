@@ -1,6 +1,6 @@
-import type { SlideLayout } from "@slide-sage/types";
-import { Badge } from "@slide-sage/ui/components/badge";
-import { Button } from "@slide-sage/ui/components/button";
+import type { SlideLayout } from "@slidesage/types";
+import { Badge } from "@slidesage/ui/components/badge";
+import { Button } from "@slidesage/ui/components/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@slide-sage/ui/components/dropdown-menu";
+} from "@slidesage/ui/components/dropdown-menu";
 import {
     AlignLeft,
     Check,

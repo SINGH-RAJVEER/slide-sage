@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { and, cosineDistance, desc, eq, gt, sql } from "drizzle-orm";
 import { db, semanticCacheEntries } from "@/database";
+import { logSafeError } from "../utils/safe-logging";
 import { DEFAULT_EMBEDDING_MODEL } from "./rag/defaults";
 import { RAGService } from "./rag.service";
 
@@ -147,7 +148,7 @@ export class SemanticCacheService {
         try {
             embeddingResult = await this.generateEmbedding(normalizedQuery);
         } catch (error) {
-            console.warn(`Semantic ${params.namespace} cache embedding failed:`, error);
+            logSafeError(`semantic_cache_embedding_failed:${params.namespace}`, error);
         }
 
         if (!params.bypassRead && embeddingResult) {
@@ -196,7 +197,7 @@ export class SemanticCacheService {
                 .where(sql`${semanticCacheEntries.expiresAt} <= ${now}`);
             return result.count || 0;
         } catch (error) {
-            console.warn("Failed to delete expired semantic cache entries:", error);
+            logSafeError("semantic_cache_expiry_delete_failed", error);
             return 0;
         }
     }
@@ -219,7 +220,7 @@ export class SemanticCacheService {
                 .limit(1);
             return rows[0];
         } catch (error) {
-            console.warn(`Exact ${namespace} cache lookup failed:`, error);
+            logSafeError(`semantic_cache_exact_read_failed:${namespace}`, error);
             return undefined;
         }
     }
@@ -258,7 +259,7 @@ export class SemanticCacheService {
 
             return rows.find((row) => sameQueryMetadata(metadata, row.queryMetadata));
         } catch (error) {
-            console.warn(`Semantic ${namespace} cache lookup failed:`, error);
+            logSafeError(`semantic_cache_similarity_read_failed:${namespace}`, error);
             return undefined;
         }
     }
@@ -273,7 +274,7 @@ export class SemanticCacheService {
                 })
                 .where(eq(semanticCacheEntries.id, id));
         } catch (error) {
-            console.warn("Failed to record semantic cache hit:", error);
+            logSafeError("semantic_cache_hit_write_failed", error);
         }
     }
 
@@ -316,7 +317,7 @@ export class SemanticCacheService {
                 });
             await this.deleteExpired();
         } catch (error) {
-            console.warn(`Failed to store ${params.namespace} semantic cache entry:`, error);
+            logSafeError(`semantic_cache_write_failed:${params.namespace}`, error);
         }
     }
 }

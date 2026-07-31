@@ -1,5 +1,6 @@
 import { index, jsonb, pgTable, text, timestamp, varchar, vector } from "drizzle-orm/pg-core";
 import { users } from "./auth";
+import { presentations } from "./presentation";
 
 export const slideTemplates = pgTable(
     "slide_templates",
@@ -35,6 +36,9 @@ export const exampleGenerations = pgTable(
         userId: text("user_id")
             .notNull()
             .references(() => users.id, { onDelete: "cascade" }),
+        presentationId: text("presentation_id").references(() => presentations.id, {
+            onDelete: "cascade",
+        }),
         prompt: text("prompt").notNull(),
         summary: text("summary").notNull(),
         outputJson: jsonb("output_json").notNull(),
@@ -45,6 +49,9 @@ export const exampleGenerations = pgTable(
     },
     (table) => ({
         userIdIdx: index("example_generations_user_id_idx").on(table.userId),
+        presentationIdIdx: index("example_generations_presentation_id_idx").on(
+            table.presentationId
+        ),
         embeddingIdx: index("example_generations_embedding_idx").using(
             "hnsw",
             table.embedding.op("vector_cosine_ops")

@@ -1,5 +1,5 @@
-import { Spinner } from "@slide-sage/ui/components/spinner";
-import { cn } from "@slide-sage/ui/lib/utils";
+import { Spinner } from "@slidesage/ui/components/spinner";
+import { cn } from "@slidesage/ui/lib/utils";
 import type { HTMLAttributes } from "react";
 
 interface LoadingScreenProps extends HTMLAttributes<HTMLDivElement> {

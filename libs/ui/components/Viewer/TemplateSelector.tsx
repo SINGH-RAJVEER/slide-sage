@@ -1,5 +1,5 @@
-import { Badge } from "@slide-sage/ui/components/badge";
-import { Button } from "@slide-sage/ui/components/button";
+import { Badge } from "@slidesage/ui/components/badge";
+import { Button } from "@slidesage/ui/components/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@slide-sage/ui/components/dropdown-menu";
+} from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
 import { AVAILABLE_TEMPLATES } from "../../lib/templates";

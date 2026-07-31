@@ -5,7 +5,8 @@ import type {
     ResearchOptions,
     ResearchPayload,
     ThemeId,
-} from "@slide-sage/types";
+} from "@slidesage/types";
+import { abortReason } from "../utils/abort";
 import { configuredOpenRouterModel } from "./ai/model-catalog";
 import { streamStructuredPresentation } from "./ai/openrouter-presentation-stream";
 import {
@@ -27,10 +28,6 @@ export class AIService {
     private searchService = new SearchService();
     private ragService = new RAGService();
 
-    constructor() {
-        console.log("AI Service initialized");
-    }
-
     async *generatePresentationStream(
         userPrompt: string,
         slideCount = 8,
@@ -40,16 +37,18 @@ export class AIService {
         researchPayload?: ResearchPayload,
         userId?: string,
         theme: ThemeId = "corporate-blue",
-        ai?: AIModelSelection & { apiKey: string }
+        ai?: AIModelSelection & { apiKey: string },
+        signal?: AbortSignal
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
-        console.log(
-            `Starting generate presentation for: ${userPrompt.substring(0, 50)}... with ${slideCount} slides`
-        );
-
         try {
+            signal?.throwIfAborted();
             const systemPrompt = buildGenerationPrompt(detailLevel, tonality, theme);
             const generationMemoryContext = userId
-                ? await this.ragService.buildGenerationMemoryContextString(userId, userPrompt)
+                ? await this.ragService.buildGenerationMemoryContextString(
+                      userId,
+                      userPrompt,
+                      signal
+                  )
                 : "";
             const effectiveResearch = normalizeResearchOptions(research);
             const isSearching = shouldSearchForResearch(effectiveResearch, researchPayload);
@@ -64,6 +63,7 @@ export class AIService {
                 researchPayload,
                 searchClient: this.searchService,
                 sourceRanker: this.ragService,
+                signal,
             });
 
             if (isSearching) {
@@ -120,6 +120,7 @@ export class AIService {
                               })),
                           },
                       },
+                signal,
             });
             const { outline } = outlineResult;
             console.info(`Outline cache status=${outlineResult.cacheStatus}`);
@@ -145,6 +146,7 @@ export class AIService {
                 operation: "generation",
                 preferredTheme: theme,
                 outline,
+                signal,
             })) {
                 if (event.event === "complete") {
                     yield {
@@ -159,16 +161,11 @@ export class AIService {
                     yield event;
                 }
             }
-        } catch (error) {
-            console.error("Error during generation:", error);
+        } catch (_error) {
+            if (signal?.aborted) throw abortReason(signal);
             yield {
                 event: "error",
-                data: {
-                    error:
-                        error instanceof Error
-                            ? error.message
-                            : "An error occurred while generating the presentation.",
-                },
+                data: { error: "An error occurred while generating the presentation." },
             };
         }
     }
@@ -183,17 +180,16 @@ export class AIService {
         currentPresentation?: PresentationJSON,
         slideCount?: number,
         theme?: ThemeId,
-        ai?: AIModelSelection & { apiKey: string }
+        ai?: AIModelSelection & { apiKey: string },
+        signal?: AbortSignal
     ): AsyncGenerator<PresentationStreamEvent, void, unknown> {
-        console.log(
-            `Starting presentation iteration with feedback: ${feedback.substring(0, 100)}...`
-        );
-
         try {
+            signal?.throwIfAborted();
             const ragContext = await this.ragService.buildRagContextString(
                 userId,
                 presentationId,
-                feedback
+                feedback,
+                signal
             );
             const systemPrompt = buildIterationPrompt(feedback, detailLevel, tonality);
             const enhancedSystemPrompt = ragContext
@@ -211,6 +207,7 @@ export class AIService {
                 research: effectiveResearch,
                 searchClient: this.searchService,
                 sourceRanker: this.ragService,
+                signal,
             });
 
             if (isSearching) {
@@ -242,6 +239,7 @@ export class AIService {
                       messages: buildOutlineMessages(messages),
                       slideCount: expectedSlideCount,
                       fallbackTitle: currentPresentation?.title || "Updated Presentation",
+                      signal,
                   })
                 : undefined;
             const outline = outlineResult?.outline;
@@ -258,6 +256,7 @@ export class AIService {
                 operation: "iteration",
                 preferredTheme: theme,
                 outline,
+                signal,
             })) {
                 if (event.event === "complete" && outlineResult) {
                     yield {
@@ -272,8 +271,8 @@ export class AIService {
                     yield event;
                 }
             }
-        } catch (error) {
-            console.error("Error during iteration:", error);
+        } catch (_error) {
+            if (signal?.aborted) throw abortReason(signal);
             yield {
                 event: "error",
                 data: { error: "An error occurred while updating the presentation." },

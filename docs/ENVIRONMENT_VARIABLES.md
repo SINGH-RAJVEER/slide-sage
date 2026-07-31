@@ -10,13 +10,17 @@ Copy `.env.example` to `.env`. API development script passes it to Bun with `--e
 | `BASE_URL` | No | `http://localhost:8000` | Public API and auth callback origin |
 | `PORT` | No | `8000` | API listen port |
 | `DATABASE_URL` | No locally | Local devenv database | PostgreSQL connection string |
-| `DATABASE_CONNECT_TIMEOUT` | No | Driver default | PostgreSQL connection timeout |
-| `CORS_ORIGINS` | No | Local Vite origins, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
+| `DATABASE_CONNECT_TIMEOUT` | No | `10` | PostgreSQL connection timeout in seconds |
+| `DATABASE_IDLE_TIMEOUT` | No | `20` | PostgreSQL idle connection timeout in seconds |
+| `DATABASE_POOL_MAX` | No | `5` | Maximum connections in each Bun process pool; Workers always use one per request |
+| `RATE_LIMIT_HASH_SECRET` | Production | `AUTH_SECRET` | Independent secret mixed into hashed rate-limit identities |
+| `TRUST_PROXY_HEADERS` | No | `false` | Allows Bun to use proxy-supplied client-IP headers; enable only behind a proxy that replaces them |
+| `CORS_ORIGINS` | No | Local Vite origins, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
-| `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slide-sage.pages.dev`, and `https://slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
 | `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; custom production domains use same-origin `/api/*`, Cloudflare Pages falls back to `https://api.slidesage.app`, and local development uses Vite's proxy |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
-| `NODE_ENV` | No | `development` in devenv | Enables development-only behavior such as logging unsent OTPs |
+| `NODE_ENV` | No | `development` in devenv | Controls production auth and email-delivery safeguards; OTP values are never logged |
 
 Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 `POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all
@@ -27,6 +31,17 @@ task constructs `DATABASE_URL` from the active `POSTGRES_PORT`, so values loaded
 `.env` cannot redirect migrations to a stale local port.
 The managed API process uses the same active-port connection string and does not
 reload `.env`, preventing its development command from reverting to the default port.
+
+In Bun, the API keeps a process-wide Postgres.js pool for each connection string
+and scopes Drizzle access to the active request. `DATABASE_POOL_MAX` controls that
+pool. In the Cloudflare Worker, `HYPERDRIVE.connectionString` is preferred when a
+`HYPERDRIVE` binding exists; otherwise the Worker uses `DATABASE_URL`. Each Worker
+request uses one connection regardless of `DATABASE_POOL_MAX`, and closes it only
+after a JSON or streaming response is consumed or cancelled.
+
+Set `RATE_LIMIT_HASH_SECRET` to a separate random deployment secret. Falling back
+to `AUTH_SECRET` is supported, but an independent value avoids coupling rate-limit
+identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md).
 
 ## AI and Research
 
@@ -45,7 +60,9 @@ reload `.env`, preventing its development command from reverting to the default 
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | `32768` | Maximum output-token budget; generation scales the request up to this limit based on slide count |
 | `SSE_KEEPALIVE_INTERVAL_MS` | No | `10000` | Interval for downstream SSE keepalive comments during slow generation |
 | `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
+| `EMBEDDING_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum embedding request duration; caller cancellation can stop it earlier |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
+| `EXA_REQUEST_TIMEOUT_MS` | No | `10000` | Maximum Exa request duration; caller cancellation can stop it earlier |
 | `SEMANTIC_CACHE_MODE` | No | `serve` | Semantic cache behavior: `serve`, `shadow`, or `off` |
 | `SEARCH_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared search results |
 | `OUTLINE_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared presentation outlines |
@@ -62,16 +79,19 @@ the server embedding configuration.
 
 ## Authentication and Email
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `RESEND_API_KEY` | Production email | Sends verification and password-reset OTPs |
-| `RESEND_FROM_EMAIL` | No | Sender address; defaults to `onboarding@resend.dev` |
-| `GOOGLE_CLIENT_ID` | For Google OAuth | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | For Google OAuth | Google OAuth client secret |
-| `GITHUB_CLIENT_ID` | For GitHub OAuth | GitHub OAuth client ID |
-| `GITHUB_CLIENT_SECRET` | For GitHub OAuth | GitHub OAuth client secret |
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `RESEND_API_KEY` | Production email | None | Sends verification and password-reset OTPs |
+| `RESEND_FROM_EMAIL` | No | `onboarding@resend.dev` | Sender address |
+| `EMAIL_DELIVERY_TIMEOUT_MS` | No | `10000` | Maximum wait for Resend to accept an OTP email |
+| `GOOGLE_CLIENT_ID` | For Google OAuth | None | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | For Google OAuth | None | Google OAuth client secret |
+| `GITHUB_CLIENT_ID` | For GitHub OAuth | None | GitHub OAuth client ID |
+| `GITHUB_CLIENT_SECRET` | For GitHub OAuth | None | GitHub OAuth client secret |
 
-Without `RESEND_API_KEY`, development mode logs OTPs instead of sending email.
+Without `RESEND_API_KEY`, development mode skips delivery and logs a warning but
+never logs the OTP. Production send requests fail with `503` when the key is
+missing or Resend rejects the request.
 OAuth callback URLs are `${BASE_URL}/api/auth/callback/google` and
 `${BASE_URL}/api/auth/callback/github`.
 
@@ -80,11 +100,12 @@ platform-provided `CF_PAGES_URL` or `VERCEL_URL`.
 
 ## Billing
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `RAZORPAY_KEY_ID` | For purchases | Public checkout key |
-| `RAZORPAY_KEY_SECRET` | For purchases | Creates orders and verifies payments |
-| `RAZORPAY_WEBHOOK_SECRET` | For webhooks | Verifies Razorpay webhook signatures |
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `RAZORPAY_KEY_ID` | For purchases | None | Public checkout key |
+| `RAZORPAY_KEY_SECRET` | For purchases | None | Creates orders and verifies payments |
+| `RAZORPAY_WEBHOOK_SECRET` | For webhooks | None | Verifies signatures against the exact raw Razorpay webhook body |
+| `RAZORPAY_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum Razorpay API request duration |
 
 Do not commit `.env`. Keep secrets in the deployment platform's secret store in
 production.
@@ -94,12 +115,14 @@ requests use same-origin `/api/*` routes. As a deployment safeguard, production
 builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back
 to same-origin routes instead.
 
-For the Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL`, and other
-sensitive values with `wrangler secret put`. Keep `BASE_URL` and trusted origins
-as Worker variables or secrets appropriate to the environment. The API refuses
-to initialize authentication on an HTTPS base URL without a sufficiently strong
-`AUTH_SECRET`.
-# BYOK credential encryption
+For the Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL` when Hyperdrive
+is not used, `RATE_LIMIT_HASH_SECRET`, provider keys, encryption keys, and payment
+secrets with `wrangler secret put`. Keep public configuration such as `BASE_URL`,
+trusted origins, model IDs, timeouts, and pool sizes as Worker variables rather
+than labeling them secrets. The API refuses to initialize authentication on an
+HTTPS base URL without a sufficiently strong `AUTH_SECRET`.
+
+## BYOK Credential Encryption
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -109,3 +132,7 @@ to initialize authentication on an HTTPS base URL without a sufficiently strong
 Provider API keys are supplied by users and encrypted with these deployment
 secrets. They are used only for presentation generation. OpenRouter remains the
 exclusive embedding provider.
+
+`BYOK_ENCRYPTION_KEY_CURRENT_VERSION` is a non-secret version selector. Every
+referenced `BYOK_ENCRYPTION_KEY_V<n>` is secret and must remain available while
+stored credentials still use that version.

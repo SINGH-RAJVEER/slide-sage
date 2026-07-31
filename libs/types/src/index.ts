@@ -442,7 +442,7 @@ export interface PresentationData {
     outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 }
 
-export type PresentationStatus = "ready" | "failed";
+export type PresentationStatus = "generating" | "ready" | "failed";
 
 export interface PresentationRetryOptions {
     prompt: string;
@@ -624,6 +624,10 @@ export interface PresentationSummary {
 
 export interface PresentationsResponse {
     presentations: PresentationSummary[];
+    total: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
 }
 
 export interface SavedPresentation {

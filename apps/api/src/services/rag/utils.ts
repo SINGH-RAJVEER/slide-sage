@@ -5,7 +5,7 @@ import {
     type Slide,
     type SlideBlock,
     type Source,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import type {
     MemorySourceType,
     SimilarContext,

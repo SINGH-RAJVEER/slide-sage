@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it } from "bun:test";
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { render } from "@testing-library/react";
 
 describe("LoadingScreen", () => {

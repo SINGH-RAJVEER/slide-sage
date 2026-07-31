@@ -3,7 +3,7 @@ import {
     resolveScene,
     type SceneResponsiveProfile,
     type SceneSlide,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import { Image as ImageIcon } from "lucide-react";
 import React from "react";
 import { SceneWidget } from "./scene-widget-registry";

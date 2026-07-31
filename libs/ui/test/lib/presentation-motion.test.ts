@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { tweenNumber } from "@slide-sage/ui/lib/presentation-motion";
+import { tweenNumber } from "@slidesage/ui/lib/presentation-motion";
 
 describe("presentation motion", () => {
     it("finishes synchronously when animation duration is not positive", () => {

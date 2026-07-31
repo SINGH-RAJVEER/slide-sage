@@ -80,6 +80,8 @@ describe("AuthProvider", () => {
         const user = await fetchSessionWithRetry(fetchMock as unknown as typeof fetch, [0, 0, 0]);
 
         expect(user?.email).toBe("test@example.com");
+        expect(typeof user?.createdAt).toBe("string");
+        expect(typeof user?.updatedAt).toBe("string");
         expect(fetchMock).toHaveBeenCalledTimes(2);
         expect(fetchMock).toHaveBeenLastCalledWith(
             expect.stringContaining("/api/auth/get-session"),

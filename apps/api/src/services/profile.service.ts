@@ -1,8 +1,15 @@
-import type { UpdateProfileRequest, UserProfile } from "@slide-sage/types";
-import { and, eq } from "drizzle-orm";
-import { accounts, db, users } from "@/database";
+import type { UserProfile } from "@slidesage/types";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
+import { db, users, verifications } from "@/database";
+import { logSafeError } from "../utils/safe-logging";
 
-type EditableProfileFields = Partial<Pick<typeof users.$inferInsert, "name" | "email" | "image">>;
+type EditableProfileFields = Partial<
+    Pick<typeof users.$inferInsert, "name" | "email" | "emailVerified">
+>;
+
+type UpdateProfileDetails = {
+    name?: string;
+};
 
 type ProfileMutationResult =
     | { success: true; user: UserProfile }
@@ -24,15 +31,13 @@ function toUserProfile(user: typeof users.$inferSelect): UserProfile {
     };
 }
 
-/**
- * Hash password using SHA-256
- */
-async function hashPassword(password: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+function getEmailOTPIdentifiers(email: string): string[] {
+    const normalizedEmail = email.trim().toLowerCase();
+    return [
+        `email-verification-otp-${normalizedEmail}`,
+        `sign-in-otp-${normalizedEmail}`,
+        `forget-password-otp-${normalizedEmail}`,
+    ];
 }
 
 /**
@@ -51,95 +56,125 @@ export async function getUserProfile(userId: string): Promise<ProfileMutationRes
             user: toUserProfile(user),
         };
     } catch (error) {
-        console.error("Get profile error:", error);
+        logSafeError("profile_read_failed", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to get profile",
+            error: "Failed to get profile",
         };
     }
 }
 
 /**
- * Update user profile (name, email, password)
+ * Update user profile details.
  */
 export async function updateUserProfile(
     userId: string,
-    data: UpdateProfileRequest
+    data: UpdateProfileDetails
 ): Promise<ProfileMutationResult> {
     try {
-        const user = await db.query.users.findFirst({
-            where: eq(users.id, userId),
-        });
-
-        if (!user) {
-            return { success: false, error: "User not found" };
-        }
-
-        // Prepare updates
-        const updates: EditableProfileFields = {};
-
-        if (data.name?.trim()) {
-            updates.name = data.name.trim();
-        }
-
-        if (data.email?.trim()) {
-            // Check if email is already taken
-            const existingUser = await db.query.users.findFirst({
-                where: eq(users.email, data.email.toLowerCase()),
+        return await db.transaction(async (tx) => {
+            const user = await tx.query.users.findFirst({
+                where: eq(users.id, userId),
             });
 
+            if (!user) {
+                return { success: false, error: "User not found" };
+            }
+
+            const updates: EditableProfileFields = {};
+            if (data.name?.trim()) {
+                updates.name = data.name.trim();
+            }
+
+            if (Object.keys(updates).length === 0) {
+                return { success: false, error: "No updates provided" };
+            }
+
+            const [updatedUser] = await tx
+                .update(users)
+                .set(updates)
+                .where(eq(users.id, userId))
+                .returning();
+
+            if (!updatedUser) {
+                return { success: false, error: "Failed to update profile" };
+            }
+
+            return {
+                success: true,
+                user: toUserProfile(updatedUser),
+            };
+        });
+    } catch (error) {
+        logSafeError("profile_update_failed", error);
+        return {
+            success: false,
+            error: "Failed to update profile",
+        };
+    }
+}
+
+export async function completeEmailChange(
+    userId: string,
+    normalizedEmail: string,
+    verificationId: string
+): Promise<ProfileMutationResult> {
+    try {
+        return await db.transaction(async (tx) => {
+            await tx.execute(
+                sql`SELECT pg_advisory_xact_lock(hashtextextended(${`email-change-otp-${userId}`}, 0))`
+            );
+            const user = await tx.query.users.findFirst({ where: eq(users.id, userId) });
+            if (!user) return { success: false, error: "User not found" };
+
+            const existingUser = await tx.query.users.findFirst({
+                where: eq(users.email, normalizedEmail),
+            });
             if (existingUser && existingUser.id !== userId) {
                 return { success: false, error: "Email already in use" };
             }
 
-            updates.email = data.email.toLowerCase();
-        }
-
-        if (data.newPassword) {
-            if (!data.currentPassword) {
-                return {
-                    success: false,
-                    error: "Current password required to change password",
-                };
+            const [consumedVerification] = await tx
+                .delete(verifications)
+                .where(
+                    and(
+                        eq(verifications.id, verificationId),
+                        eq(
+                            verifications.identifier,
+                            `email-change-otp-${userId}-${normalizedEmail}`
+                        ),
+                        gt(verifications.expiresAt, new Date())
+                    )
+                )
+                .returning({ id: verifications.id });
+            if (!consumedVerification) {
+                return { success: false, error: "Verification code is invalid or expired" };
             }
 
-            // Verify current password against account record
-            // Note: In production, you'd hash and compare properly
-            const hashedNewPassword = await hashPassword(data.newPassword);
-            await db
-                .update(accounts)
-                .set({ password: hashedNewPassword })
-                .where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")));
-        }
+            const [updatedUser] = await tx
+                .update(users)
+                .set({ email: normalizedEmail, emailVerified: true })
+                .where(eq(users.id, userId))
+                .returning();
+            if (!updatedUser) return { success: false, error: "Failed to update email" };
 
-        if (Object.keys(updates).length === 0) {
-            if (data.newPassword) {
-                return {
-                    success: true,
-                    user: toUserProfile(user),
-                };
-            }
+            const staleIdentifiers = Array.from(
+                new Set([
+                    ...getEmailOTPIdentifiers(user.email),
+                    ...getEmailOTPIdentifiers(normalizedEmail),
+                ])
+            );
+            await tx
+                .delete(verifications)
+                .where(inArray(verifications.identifier, staleIdentifiers));
 
-            return { success: false, error: "No updates provided" };
-        }
-
-        // Update user
-        const result = await db.update(users).set(updates).where(eq(users.id, userId)).returning();
-
-        const updatedUser = result[0];
-        if (!updatedUser) {
-            return { success: false, error: "Failed to update profile" };
-        }
-
-        return {
-            success: true,
-            user: toUserProfile(updatedUser),
-        };
+            return { success: true, user: toUserProfile(updatedUser) };
+        });
     } catch (error) {
-        console.error("Update profile error:", error);
+        logSafeError("profile_email_change_failed", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to update profile",
+            error: "Failed to update email",
         };
     }
 }
@@ -152,13 +187,38 @@ export async function updateUserAvatar(
     imageUrl: string
 ): Promise<AvatarMutationResult> {
     try {
-        if (!imageUrl || !imageUrl.trim()) {
+        const trimmedImageUrl = imageUrl.trim();
+        if (!trimmedImageUrl) {
             return { success: false, error: "Image URL is required" };
+        }
+        if (trimmedImageUrl.length > 2048) {
+            return { success: false, error: "Image URL must be 2048 characters or fewer" };
+        }
+        if (
+            Array.from(trimmedImageUrl).some((character) => {
+                const code = character.charCodeAt(0);
+                return code <= 31 || code === 127;
+            })
+        ) {
+            return { success: false, error: "Image URL contains invalid characters" };
+        }
+
+        let parsedImageUrl: URL;
+        try {
+            parsedImageUrl = new URL(trimmedImageUrl);
+        } catch {
+            return { success: false, error: "Image URL must be a valid HTTPS URL" };
+        }
+        if (parsedImageUrl.protocol !== "https:") {
+            return { success: false, error: "Image URL must use HTTPS" };
+        }
+        if (parsedImageUrl.username || parsedImageUrl.password) {
+            return { success: false, error: "Image URL must not include credentials" };
         }
 
         const result = await db
             .update(users)
-            .set({ image: imageUrl })
+            .set({ image: trimmedImageUrl })
             .where(eq(users.id, userId))
             .returning();
 
@@ -175,10 +235,10 @@ export async function updateUserAvatar(
             },
         };
     } catch (error) {
-        console.error("Update avatar error:", error);
+        logSafeError("profile_avatar_update_failed", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to update avatar",
+            error: "Failed to update avatar",
         };
     }
 }

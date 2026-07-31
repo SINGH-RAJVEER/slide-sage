@@ -1,4 +1,4 @@
-import { cn } from "@slide-sage/ui/lib/utils";
+import { cn } from "@slidesage/ui/lib/utils";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 export const SLIDE_WIDTH = 1280;

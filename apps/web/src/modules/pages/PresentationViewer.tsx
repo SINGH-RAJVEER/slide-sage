@@ -1,5 +1,5 @@
-import type { SceneSlide } from "@slide-sage/types";
-import { Card } from "@slide-sage/ui/components/card";
+import type { SceneSlide } from "@slidesage/types";
+import { Card } from "@slidesage/ui/components/card";
 import {
     CenteredStatusScreen,
     IterateModal,
@@ -11,9 +11,9 @@ import {
     ViewerNavigationControls,
     ViewerSlideCarousel,
     ViewerThumbnails,
-} from "@slide-sage/ui/components/Viewer";
-import { adaptLegacyHtmlSlide } from "@slide-sage/ui/lib/legacy-slide-adapter";
-import { AVAILABLE_TEMPLATES } from "@slide-sage/ui/lib/templates";
+} from "@slidesage/ui/components/Viewer";
+import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
+import { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAutoHideControls } from "@/hooks/useAutoHideControls";

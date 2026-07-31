@@ -10,7 +10,7 @@ import {
     type SlideBlock,
     type SlideRegion,
     type StructuredSlide,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 type ContentSlideNode = Extract<StructuredSlide, { type: "content" }>;
 

@@ -7,7 +7,7 @@ import {
     type PresentationOutline,
     type PresentationOutlineCard,
     type PresentationVisualIntent,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import { recoverJson } from "../../utils/json-recovery";
 import {
     OpenRouterStreamError,
@@ -23,6 +23,7 @@ interface PresentationOutlineOptions {
     messages: OpenRouterMessage[];
     slideCount: number;
     fallbackTitle: string;
+    signal?: AbortSignal;
     cache?: {
         query: string;
         variant: Record<string, unknown>;
@@ -256,6 +257,7 @@ async function requestPresentationOutline(
         requestTimeoutMs: positiveInteger("OPEN_ROUTER_REQUEST_TIMEOUT_MS", 180000),
         maxTokens: Math.min(8192, Math.max(2048, options.slideCount * 640)),
         responseFormat: outlineResponseFormat(options.slideCount),
+        signal: options.signal,
     });
     let content = "";
     let tokensUsed = 0;

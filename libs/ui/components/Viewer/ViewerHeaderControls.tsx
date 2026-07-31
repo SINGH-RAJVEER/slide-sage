@@ -1,5 +1,5 @@
-import type { SlideLayout } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+import type { SlideLayout } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import { ArrowLeft, Palette, Presentation, Sparkles } from "lucide-react";
 import type React from "react";
 import { SlideLayoutSelector } from "./SlideLayoutSelector";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { compileWidgetScene, normalizeWidgetSpec } from "@slide-sage/ui/lib/widget-scene";
+import { compileWidgetScene, normalizeWidgetSpec } from "@slidesage/ui/lib/widget-scene";
 
 const widget = {
     type: "widget",

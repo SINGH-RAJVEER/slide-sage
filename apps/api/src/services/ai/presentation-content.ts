@@ -16,7 +16,7 @@ import type {
     WidgetKind,
     WidgetNodeRole,
     WidgetTone,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import {
     BACKGROUND_FOCAL_POINTS,
     BACKGROUND_OVERLAYS,
@@ -28,7 +28,7 @@ import {
     SLIDE_LAYOUTS,
     SLIDE_PATTERNS,
     SLIDE_TONES,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import { JSONRecoveryError, recoverJson } from "../../utils/json-recovery";
 
 interface RawPresentation extends Record<string, unknown> {

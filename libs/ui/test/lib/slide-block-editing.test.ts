@@ -5,7 +5,7 @@ import {
     moveBlock,
     prepareEditableBlocks,
     validateBlocks,
-} from "@slide-sage/ui/lib/slide-block-editing";
+} from "@slidesage/ui/lib/slide-block-editing";
 
 describe("slide block editing", () => {
     it("prepares stable unique IDs and layout regions", () => {

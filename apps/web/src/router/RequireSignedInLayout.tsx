@@ -1,4 +1,4 @@
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 

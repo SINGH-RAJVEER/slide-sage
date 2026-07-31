@@ -99,9 +99,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             );
         };
 
-        window.addEventListener("slide-sage:points-updated", handlePointsUpdated);
+        window.addEventListener("slidesage:points-updated", handlePointsUpdated);
         return () => {
-            window.removeEventListener("slide-sage:points-updated", handlePointsUpdated);
+            window.removeEventListener("slidesage:points-updated", handlePointsUpdated);
         };
     }, []);
 

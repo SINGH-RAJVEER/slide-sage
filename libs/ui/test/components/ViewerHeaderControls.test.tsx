@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import { ViewerHeaderControls } from "@slide-sage/ui/components/Viewer/ViewerHeaderControls";
+import { ViewerHeaderControls } from "@slidesage/ui/components/Viewer/ViewerHeaderControls";
 import { fireEvent, render } from "@testing-library/react";
 import type React from "react";
 

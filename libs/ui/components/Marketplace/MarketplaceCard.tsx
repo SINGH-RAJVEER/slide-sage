@@ -1,5 +1,5 @@
-import type { Slide } from "@slide-sage/types";
-import { cn } from "@slide-sage/ui/lib/utils";
+import type { Slide } from "@slidesage/types";
+import { cn } from "@slidesage/ui/lib/utils";
 import { ArrowUp, Check, Palette, Plus } from "lucide-react";
 import { ScaledSlide } from "../Viewer/ScaledSlide";
 import { SlideRenderer } from "../Viewer/SlideRenderer";

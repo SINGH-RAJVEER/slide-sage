@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { LegacyHtmlSlide } from "@slide-sage/types";
-import { adaptLegacyHtmlSlide } from "@slide-sage/ui/lib/legacy-slide-adapter";
+import type { LegacyHtmlSlide } from "@slidesage/types";
+import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 
 function legacySlide(html: string): LegacyHtmlSlide {
     return {

@@ -15,6 +15,10 @@ function StreamingStarter({ onNavigateAway }: { onNavigateAway: () => void }) {
     return (
         <div>
             <span>{streamingState.isStreaming ? "streaming" : "idle"}</span>
+            <output data-testid="generation-state">
+                {streamingState.isComplete ? "complete" : "pending"}:
+                {streamingState.error ?? "no-error"}
+            </output>
             <button
                 type="button"
                 onClick={() => {
@@ -33,6 +37,34 @@ function StreamingStarter({ onNavigateAway }: { onNavigateAway: () => void }) {
             </button>
             <button type="button" onClick={onNavigateAway}>
                 Navigate away
+            </button>
+        </div>
+    );
+}
+
+function IterationStarter() {
+    const { startIterating, streamingState } = useStreaming();
+
+    return (
+        <div>
+            <output data-testid="iteration-state">
+                {streamingState.isStreaming ? "streaming" : "idle"}:
+                {streamingState.isComplete ? "complete" : "pending"}:
+                {streamingState.error ?? "no-error"}
+            </output>
+            <button
+                type="button"
+                onClick={() => {
+                    void startIterating(
+                        "Update this presentation",
+                        "presentation_1",
+                        2,
+                        "balanced",
+                        "professional",
+                    );
+                }}
+            >
+                Iterate
             </button>
         </div>
     );
@@ -117,6 +149,101 @@ it("continues processing and publishes the saved deck after the initiating page 
         expect(event.detail.presentationId).toBe("presentation_1");
     } finally {
         window.removeEventListener(PRESENTATIONS_UPDATED_EVENT, presentationUpdated);
+        globalThis.fetch = originalFetch;
+    }
+});
+
+it("keeps generation incomplete when the stream ends before saved", async () => {
+    const originalFetch = globalThis.fetch;
+    const encoder = new TextEncoder();
+    let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+    let requestCount = 0;
+
+    globalThis.fetch = mock(async () => {
+        requestCount++;
+        if (requestCount > 1) {
+            return Response.json({ error: { message: "Not ready" } }, { status: 404 });
+        }
+        const body = new ReadableStream<Uint8Array>({
+            start(controller) {
+                streamController = controller;
+            },
+        });
+        return new Response(body, {
+            status: 200,
+            headers: { "Content-Type": "text/event-stream" },
+        });
+    }) as unknown as typeof fetch;
+
+    try {
+        const view = render(
+            <StreamingProvider>
+                <StreamingStarter onNavigateAway={() => {}} />
+            </StreamingProvider>,
+        );
+
+        fireEvent.click(view.getByRole("button", { name: "Start" }));
+        await act(async () => {
+            streamController?.enqueue(
+                encoder.encode(
+                    'event: complete\ndata: {"title":"Unsaved deck","slides":[],"totalSlides":0}\n\n',
+                ),
+            );
+            streamController?.close();
+        });
+
+        await waitFor(() => {
+            expect(view.getByTestId("generation-state")).toHaveTextContent(
+                "pending:Generation stream ended before the presentation was completed.",
+            );
+        });
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
+it("clears iteration completion when an error follows complete and saved", async () => {
+    const originalFetch = globalThis.fetch;
+    const encoder = new TextEncoder();
+    let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+    globalThis.fetch = mock(async () => {
+        const body = new ReadableStream<Uint8Array>({
+            start(controller) {
+                streamController = controller;
+            },
+        });
+        return new Response(body, {
+            status: 200,
+            headers: { "Content-Type": "text/event-stream" },
+        });
+    }) as unknown as typeof fetch;
+
+    try {
+        const view = render(
+            <StreamingProvider>
+                <IterationStarter />
+            </StreamingProvider>,
+        );
+
+        fireEvent.click(view.getByRole("button", { name: "Iterate" }));
+        await act(async () => {
+            streamController?.enqueue(
+                encoder.encode(
+                    'event: complete\ndata: {"title":"Updated deck","slides":[],"totalSlides":0}\n\n' +
+                        'event: saved\ndata: {"presentation_id":"presentation_1"}\n\n' +
+                        'event: error\ndata: {"error":"Save confirmation was revoked"}\n\n',
+                ),
+            );
+            streamController?.close();
+        });
+
+        await waitFor(() => {
+            expect(view.getByTestId("iteration-state")).toHaveTextContent(
+                "idle:pending:Save confirmation was revoked",
+            );
+        });
+    } finally {
         globalThis.fetch = originalFetch;
     }
 });

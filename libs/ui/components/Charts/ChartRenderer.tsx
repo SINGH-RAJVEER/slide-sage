@@ -1,4 +1,4 @@
-import type { ChartConfig } from "@slide-sage/types";
+import type { ChartConfig } from "@slidesage/types";
 import type { ChartOptions } from "chart.js";
 import {
     ArcElement,

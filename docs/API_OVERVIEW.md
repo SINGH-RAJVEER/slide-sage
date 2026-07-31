@@ -9,11 +9,14 @@ The local API origin is `http://localhost:8000`. JSON errors use:
 Authenticated requests use the Better Auth session cookie and must include
 credentials from the browser.
 
+Rate-limited requests return `429`, include `Retry-After`, and use the
+`RATE_LIMITED` error code. See [RATE_LIMITING.md](RATE_LIMITING.md).
+
 ## Health
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/` | No | Returns `{ status: "ok", timestamp }` |
+| `GET` | `/api/health` | No | Returns `{ status: "ok", timestamp }` |
 
 ## Authentication
 
@@ -27,10 +30,18 @@ sign-in. See [AUTH_API.md](AUTH_API.md).
 | Method | Path | Body | Description |
 | --- | --- | --- | --- |
 | `GET` | `/api/profile` | None | Get the signed-in user's profile |
-| `PUT` | `/api/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update supplied profile fields |
+| `PUT` | `/api/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or perform a password-only Better Auth change |
 | `POST` | `/api/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
 
-All profile routes require authentication.
+All profile routes require authentication. Password changes require both the
+current and new password, are delegated to Better Auth, and revoke other
+sessions. They cannot be combined with name or email updates. Email changes
+require current-password verification, normalize the new address, mark it
+unverified, and invalidate old/new address OTPs. A user who has forgotten the
+current password must complete the verified password-reset OTP flow first.
+
+Avatar URLs must be valid HTTPS URLs no longer than 2,048 characters. URLs with
+embedded credentials or control characters are rejected.
 
 ## Presentations
 
@@ -57,12 +68,42 @@ and supports Enter as a shortcut to begin generation.
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
 
-Presentation documents use schema version 5. The API continues to load older
-documents and maps `title` to `cover`, `content` to `body`, `two-column` to
-`split`, and `image-right` to `media-right`. Legacy `left` and `right` regions
-become semantic `primary`, `secondary`, or `media` regions. New content layouts
-also include `section`, `comparison`, `sidebar`, `media-left`, `quote`,
-`spotlight`, and `canvas`.
+### Input Limits
+
+Presentation routes read and measure the body before parsing JSON. Generation
+bodies are limited to 256 KiB, research and iteration bodies to 32 KiB each, and
+mutation bodies to 1 MiB. An oversized body returns `413`; malformed JSON,
+non-object bodies, invalid types, and out-of-range values return `400`.
+
+Topics and iteration feedback contain 1 through 400 trimmed characters. Slide
+counts are integers from 1 through 40. Detail level is `brief`, `concise`,
+`balanced`, `detailed`, or `comprehensive`; tonality is `casual`, `professional`,
+`enthusiastic`, or `persuasive`. A direct-provider model identifier is limited
+to 200 characters. Invalid or omitted theme values deliberately fall back to
+`corporate-blue`.
+
+When supplied, `research` must be an object with a boolean `enabled` field.
+`maxResults` is 1 through 8, each domain list contains at most 10 non-empty
+entries of at most 253 characters, dates are real `YYYY-MM-DD` values with the
+start no later than the end, and `maxAgeHours` is an integer from 0 through
+8,760. The standalone research endpoint requires `research.enabled=true`.
+
+A generation `research_payload` is limited to 128 KiB after serialization and
+at most eight source objects. Source URLs must be HTTP or HTTPS and no longer
+than 2,048 characters. Titles are limited to 500 characters, snippets to 2,000,
+authors to 200, summaries to 4,000, and each source may have at most eight
+highlights of 1,200 characters each. Retrieval and publication date strings are
+limited to 64 characters, and optional `estimated_tokens` must be finite from 0
+through 1,000,000. Server-generated and rendered presentation image URLs remain
+HTTPS-only even though cited research links may use HTTP.
+
+New generated presentation documents use scene schema version 6. The API
+continues to load schema-v5 block documents and older documents, mapping `title`
+to `cover`, `content` to `body`, `two-column` to `split`, and `image-right` to
+`media-right`. Legacy `left` and `right` regions become semantic `primary`,
+`secondary`, or `media` regions. Schema-v5 content layouts also include
+`section`, `comparison`, `sidebar`, `media-left`, `quote`, `spotlight`, and
+`canvas`.
 
 Schema-v5 slides expose only bounded visual intent: tone, density, pattern, and
 an optional HTTPS background image with alt text, a named focal point, and a
@@ -82,32 +123,61 @@ objects. Unsupported widget data is shown explicitly rather than silently omitte
 The API normalizes older documents on read by assigning deterministic block IDs
 and defaults for dimensions, composition fields, transitions, and effects.
 `PATCH /api/presentations/:id` accepts a non-empty
-`mutations` array. Supported operations are `update-presentation`, `update-slide`,
-`delete-slide`, and `reorder-slides`. Slide IDs cannot be changed, reorder requests
-must contain every slide exactly once, and the final slide cannot be deleted. All
-mutations in one request are validated and applied to one document update.
-Writes use the owned row's `updated_at` value as a compare-and-swap revision. A
-concurrent write returns `409` instead of overwriting another editor mutation.
+`mutations` array containing at most 50 operations. Supported operations are
+`update-presentation`, `update-slide`, `delete-slide`, and `reorder-slides`.
+Slide IDs cannot be changed, reorder requests must contain every slide exactly
+once, and the final slide cannot be deleted. All mutations in one request are
+validated and applied to one document update.
+Writes use the owned row's monotonic integer `revision` as a compare-and-swap
+version. Every successful write increments it; a concurrent write returns `409`
+instead of overwriting another editor mutation.
+
+`GET /api/presentations` accepts integer `limit` and `offset` query parameters.
+`limit` defaults to 20 and is bounded from 1 through 100; `offset` defaults to 0.
+Its maximum is JavaScript's maximum safe integer. The response returns
+`presentations`, `total`, `limit`, `offset`, and `has_more`.
+`DELETE /api/presentations/:id` returns `204 No Content` with an empty body after
+deleting the owned deck. Database foreign-key rules remove or detach its related
+memory records as defined by each table.
 
 Without a valid user provider connection, generation and iteration use the
-configured SlideSage OpenRouter model and return `402` before streaming when the
-account lacks the quoted maximum. The response includes the remaining, required,
-and shortfall amounts. Successful OpenRouter generation charges measured
-aggregate usage at one point per 1,000 tokens without exceeding that quote. A
-shared outline-cache hit contributes no new outline tokens. Once a user connects
-a provider key, model generation is billed by that provider and the presentation
-request reports zero SlideSage generation points. Generation estimates include
-the exact serialized research context for OpenRouter mode, and the research
-endpoint returns a mode-aware `estimated_tokens` value when slide count and
-options are supplied. The final `saved` event includes `slide_tokens_charged` and
-`slide_tokens_remaining`.
+configured SlideSage OpenRouter model. Before opening the stream, the API
+atomically reserves the full quote; a new generation also creates its initial
+presentation row in that transaction. Insufficient funds return `402` with the
+remaining, required, and shortfall amounts.
 
-Presentation summaries include `status` (`ready` or `failed`) and
-`has_research`. A failed generation remains in the presentation library with an
+Reservation leases expire after one hour and active streams renew them every five
+minutes. Later reservations and internal
+point-accounting balance lookups lazily recover expired reservations for that
+user; the ordinary billing balance endpoint is not a recovery trigger, and there
+is no periodic recovery job.
+Ordinary failures, cancellation, incomplete streams, and final revision
+conflicts refund an active reservation. On success, one transaction marks the
+operation settled, compare-and-swap updates the presentation, refunds the
+difference between quote and measured charge, and records the resulting balance.
+Each failure refund likewise uses one transaction to transition a still-reserved
+operation and restore the full quote.
+The measured charge is one point per 1,000 aggregate AI tokens and never exceeds
+the quote. A shared outline-cache hit contributes no new outline tokens.
+
+Once a user connects a provider key, model generation is billed by that provider
+and the presentation request reports zero SlideSage generation points. Generation
+estimates include the exact serialized research context for OpenRouter mode, and
+the research endpoint returns a mode-aware `estimated_tokens` value when slide
+count and options are supplied. The final `saved` event includes
+`slide_tokens_charged` and `slide_tokens_remaining`.
+
+Presentation summaries include `status` (`generating`, `ready`, or `failed`) and
+`has_research`. A new placeholder remains `generating` until durable settlement;
+stale generating placeholders are converted to recoverable failures. A failed
+generation remains in the presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
 the original prompt, slide count, detail level, tonality, theme, research setting,
-error message, and any sources collected before the failure. Failed generations are
-not charged. Clients fetch the full presentation on click, then open the saved
+error message, and any sources collected before the failure. Failed generations
+refund their active reservation; if a process stops before refunding, one-hour
+expiry recovery returns the quote during a later reservation or internal
+point-accounting balance transaction. Clients fetch the full presentation on
+click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they
 do not. The same retry action is available directly from `/presentation-error`,
 so users do not need to return to the presentation library first. That error
@@ -140,9 +210,14 @@ comments while the selected provider is silent. A `retry` event means the curren
 attempt must be discarded; its payload includes the next attempt, attempt limit,
 delay, and reason. If every requested slide was parsed before the provider stream
 failed or returned a malformed trailing envelope, the API preserves those slides
-and completes the deck instead of emitting a destructive retry. Only a
-`complete` event is charged and stored as a ready deck. Failures use an `error`
-event and persist retry metadata without partial slides. Clients should parse the
+and completes the deck instead of emitting a destructive retry. A `complete`
+event means provider generation has produced a full in-memory
+document; it is not a persistence acknowledgement. Only after the atomic
+presentation and point settlement succeeds does the API emit `saved`. Failures
+use an `error` event and persist retry metadata without partial slides. Clients
+must use `saved` as the durable success signal and should refetch after a
+disconnect because the commit can succeed even if delivery of `saved` does not.
+Clients should parse the
 response stream rather than use the browser `EventSource` API, which only
 supports GET. Web clients also treat non-JSON deployment and proxy error pages as
 service failures rather than exposing a JSON parser exception.
@@ -162,7 +237,7 @@ text but no URL; grounded image blocks require HTTPS URLs.
 | --- | --- | --- | --- |
 | `GET` | `/api/billing/balance` | Yes | Return `slide_tokens` |
 | `POST` | `/api/billing/checkout` | Yes | Create a Razorpay order |
-| `POST` | `/api/billing/verify` | Yes | Verify payment and grant tokens idempotently |
+| `POST` | `/api/billing/verify` | Yes | Verify a captured provider payment and grant points idempotently |
 | `POST` | `/api/billing/webhook` | Signature | Process `payment.captured` |
 
 Checkout accepts `starter`, `pro`, `premium`, or `custom`. Starter grants 25
@@ -170,11 +245,29 @@ points for ₹50, Pro grants 250 points for ₹450, and Premium grants 625 point
 ₹1000. Custom quantities must be between 25 and 2500 points and use the same
 ₹2-per-point base rate with 10% and 20% volume discounts at 250 and 625 points.
 
+Checkout rejects Razorpay orders whose entity, amount, amount due, amount paid,
+currency, receipt, status, or partial-payment flag differs from the request.
+Browser verification first checks the strict hexadecimal HMAC signature, then
+fetches the payment from Razorpay and requires a captured INR payment whose
+payment ID, order ID, and amount match the local order. Webhooks verify the HMAC
+against the exact raw request body and accept only complete `payment.captured`
+entities.
+
+Claiming a created payment and adding its points happen in one database
+transaction. Repeating the same payment is idempotent and returns the current
+balance; attempts to link an order to different payment details return `409`.
+An authenticated verification for another user's order returns `403`. A webhook
+for an order not yet visible locally returns `503` so Razorpay can retry.
+
 ## CORS
 
 The API permits credentialed requests from `CORS_ORIGINS` or `CORS_ORIGIN`.
 Local defaults are `http://localhost:5173` and `http://127.0.0.1:5173`.
-# AI Provider Connections
+Allowed methods are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `OPTIONS`, so
+browser presentation mutations can complete a credentialed `PATCH` preflight.
+Allowed request headers are `Content-Type` and `Authorization`.
+
+## AI Provider Connections
 
 Authenticated users with more than 50 points can manage encrypted BYOK
 connections under `/api/ai`:
@@ -188,3 +281,4 @@ connections under `/api/ai`:
 Supported providers are `openai`, `google`, and `anthropic`. Generation requests
 may include `ai: { provider, model }`; iteration resolves the user's current
 selection server-side. Keys are never returned by these endpoints.
+Successful connection deletion returns `204 No Content`.

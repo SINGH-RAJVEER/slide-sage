@@ -1,4 +1,4 @@
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import RequireSignedInLayout from "@/router/RequireSignedInLayout";

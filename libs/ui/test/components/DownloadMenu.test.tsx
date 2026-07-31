@@ -1,10 +1,10 @@
 /// <reference lib="dom" />
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import type { PresentationData } from "@slide-sage/types";
+import type { PresentationData } from "@slidesage/types";
 import DownloadMenu, {
     type PresentationExporter,
-} from "@slide-sage/ui/components/Viewer/DownloadMenu";
+} from "@slidesage/ui/components/Viewer/DownloadMenu";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 
 const exportEditablePptx = mock(async (_presentation: PresentationData) => {});

@@ -127,6 +127,115 @@ describe("OpenRouter streaming utilities", () => {
         });
     });
 
+    it("uses Google's streaming structured-output transport", async () => {
+        let requestUrl = "";
+        let requestInit: RequestInit | undefined;
+        const fetchImpl = mock((url: string | URL | Request, init?: RequestInit) => {
+            requestUrl = String(url);
+            requestInit = init;
+            return Promise.resolve(responseFromBytes([]));
+        }) as unknown as typeof fetch;
+
+        await requestOpenRouterStream(
+            {
+                provider: "google",
+                apiKey: "google-test-key",
+                model: "gemini-2.5-flash",
+                messages: [
+                    { role: "system", content: "Return structured JSON" },
+                    { role: "user", content: "Build a deck" },
+                ],
+                requestTimeoutMs: 100,
+                maxTokens: 4096,
+                responseFormat: {
+                    type: "json_schema",
+                    json_schema: { schema: { type: "object" } },
+                },
+            },
+            fetchImpl
+        );
+
+        expect(requestUrl).toContain("models/gemini-2.5-flash:streamGenerateContent?alt=sse");
+        expect(new Headers(requestInit?.headers).get("x-goog-api-key")).toBe("google-test-key");
+        expect(JSON.parse(String(requestInit?.body))).toMatchObject({
+            systemInstruction: { parts: [{ text: "Return structured JSON" }] },
+            contents: [{ role: "user", parts: [{ text: "Build a deck" }] }],
+            generationConfig: {
+                maxOutputTokens: 4096,
+                responseMimeType: "application/json",
+                responseJsonSchema: { type: "object" },
+            },
+        });
+    });
+
+    it("uses Anthropic's streaming structured-output transport", async () => {
+        let requestInit: RequestInit | undefined;
+        const fetchImpl = mock((_url: string | URL | Request, init?: RequestInit) => {
+            requestInit = init;
+            return Promise.resolve(responseFromBytes([]));
+        }) as unknown as typeof fetch;
+
+        await requestOpenRouterStream(
+            {
+                provider: "anthropic",
+                apiKey: "anthropic-test-key",
+                model: "claude-sonnet-4-20250514",
+                messages: [
+                    { role: "system", content: "Return structured JSON" },
+                    { role: "user", content: "Build a deck" },
+                ],
+                requestTimeoutMs: 100,
+                maxTokens: 4096,
+                responseFormat: {
+                    type: "json_schema",
+                    json_schema: { schema: { type: "object" } },
+                },
+            },
+            fetchImpl
+        );
+
+        const headers = new Headers(requestInit?.headers);
+        expect(headers.get("x-api-key")).toBe("anthropic-test-key");
+        expect(headers.get("anthropic-version")).toBe("2023-06-01");
+        expect(JSON.parse(String(requestInit?.body))).toMatchObject({
+            model: "claude-sonnet-4-20250514",
+            system: "Return structured JSON",
+            messages: [{ role: "user", content: "Build a deck" }],
+            stream: true,
+            max_tokens: 4096,
+            output_config: {
+                format: { type: "json_schema", schema: { type: "object" } },
+            },
+        });
+    });
+
+    it("accumulates Anthropic input and cumulative output usage", async () => {
+        const encoder = new TextEncoder();
+        const response = responseFromBytes([
+            encoder.encode(
+                [
+                    `data: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 10, output_tokens: 1 } } })}`,
+                    "",
+                    `data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text: "{}" } })}`,
+                    "",
+                    `data: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 5 } })}`,
+                    "",
+                ].join("\n")
+            ),
+        ]);
+        const chunks = [];
+
+        for await (const chunk of readOpenRouterStream(response, {
+            idleTimeoutMs: 100,
+            maxResponseBytes: 4096,
+        })) {
+            chunks.push(chunk);
+        }
+
+        expect(chunks.map((chunk) => chunk.usage?.total_tokens)).toEqual([11, undefined, 15]);
+        expect(chunks[1]?.choices?.[0]?.delta?.content).toBe("{}");
+    });
+
     it("classifies rate limits as retryable and honors Retry-After", async () => {
         const fetchImpl = mock(() =>
             Promise.resolve(

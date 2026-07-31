@@ -11,9 +11,9 @@
         "prefix": ""
     },
     "aliases": {
-        "components": "@slide-sage/ui/components",
-        "utils": "@slide-sage/ui/lib/utils",
-        "ui": "@slide-sage/ui/components",
+        "components": "@slidesage/ui/components",
+        "utils": "@slidesage/ui/lib/utils",
+        "ui": "@slidesage/ui/components",
         "lib": "@/lib",
         "hooks": "@/hooks"
     },

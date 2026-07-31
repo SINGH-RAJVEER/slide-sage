@@ -1,9 +1,9 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import type { PresentationData } from "@slide-sage/types";
-import { ViewerNavigationControls } from "@slide-sage/ui/components/Viewer/ViewerNavigationControls";
-import { ViewerSlideCarousel } from "@slide-sage/ui/components/Viewer/ViewerSlideCarousel";
+import type { PresentationData } from "@slidesage/types";
+import { ViewerNavigationControls } from "@slidesage/ui/components/Viewer/ViewerNavigationControls";
+import { ViewerSlideCarousel } from "@slidesage/ui/components/Viewer/ViewerSlideCarousel";
 import { render } from "@testing-library/react";
 import { createRef } from "react";
 

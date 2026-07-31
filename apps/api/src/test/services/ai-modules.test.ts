@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { resolveScene } from "@slide-sage/types";
+import { resolveScene } from "@slidesage/types";
 import { normalizePresentationSlides, processSlide } from "../../services/ai/presentation-content";
 import { compilePresentationScenes } from "../../services/ai/presentation-design";
 import {
@@ -546,14 +546,19 @@ describe("AI research sources", () => {
             sourceRanker: { rankSourcesBySemanticRelevance },
         });
 
-        expect(webSearch).toHaveBeenCalledWith("Storage market", {
-            enabled: true,
-            maxResults: 4,
-        });
+        expect(webSearch).toHaveBeenCalledWith(
+            "Storage market",
+            {
+                enabled: true,
+                maxResults: 4,
+            },
+            undefined
+        );
         expect(rankSourcesBySemanticRelevance).toHaveBeenCalledWith(
             "Storage market",
             searchedSources,
-            8
+            8,
+            undefined
         );
         expect(sources).toEqual(rankedSources);
     });

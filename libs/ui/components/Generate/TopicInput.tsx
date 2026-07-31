@@ -1,5 +1,5 @@
-import { Button } from "@slide-sage/ui/components/button";
-import { Spinner } from "@slide-sage/ui/components/spinner";
+import { Button } from "@slidesage/ui/components/button";
+import { Spinner } from "@slidesage/ui/components/spinner";
 import { Maximize2, Minimize2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";

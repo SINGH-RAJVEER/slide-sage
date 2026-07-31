@@ -1,5 +1,5 @@
-import type { ThemeId } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+import type { ThemeId } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import { Globe } from "lucide-react";
 import type React from "react";
 import { DetailLevelSelector } from "./DetailLevelSelector";

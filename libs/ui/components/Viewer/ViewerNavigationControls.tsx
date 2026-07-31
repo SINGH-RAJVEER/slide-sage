@@ -1,5 +1,5 @@
-import type { PresentationData } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+import type { PresentationData } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash } from "lucide-react";
 import type React from "react";
 import DownloadMenu, { type PresentationExporter } from "./DownloadMenu";

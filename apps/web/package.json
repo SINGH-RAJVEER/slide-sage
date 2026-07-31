@@ -1,5 +1,5 @@
 {
-    "name": "slide-sage-web",
+    "name": "slidesage-web",
     "version": "0.0.1",
     "private": true,
     "type": "module",
@@ -17,8 +17,8 @@
         "format": "bunx --bun biome format --write ."
     },
     "dependencies": {
-        "@slide-sage/types": "workspace:*",
-        "@slide-sage/ui": "workspace:*",
+        "@slidesage/types": "workspace:*",
+        "@slidesage/ui": "workspace:*",
         "@tanstack/react-pacer": "^0.19.1",
         "@vitejs/plugin-react": "^4.5.2",
         "better-auth": "^1.4.18",

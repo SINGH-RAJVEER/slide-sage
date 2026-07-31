@@ -15,7 +15,7 @@ Required production values:
 ```dotenv
 AUTH_SECRET=replace-with-at-least-32-random-characters
 BASE_URL=https://slidesage.app
-BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://slide-sage.pages.dev
+BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://slidesage.pages.dev
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL=SlideSage <auth@example.com>
 ```
@@ -58,10 +58,11 @@ session.
 For local development, `BASE_URL` defaults to `http://localhost:8000` and the
 trusted origin defaults to `http://localhost:5173`.
 
-Authentication cookies are HTTP-only and `SameSite=Lax`. HTTPS deployments also
-set `Secure`. The Worker rejects HTTPS auth initialization when `AUTH_SECRET` is
-missing or shorter than 32 characters, preventing deployment from silently using
-a development secret.
+Authentication cookies are HTTP-only. Local HTTP development uses `SameSite=Lax`;
+HTTPS deployments use `Secure` and `SameSite=None` so configured cross-origin web
+deployments can send the session cookie. The Worker rejects HTTPS auth
+initialization when `AUTH_SECRET` is missing or shorter than 32 characters,
+preventing deployment from silently using a development secret.
 
 The frontend retries transient session lookup failures before treating a user
 as signed out, preventing route-guard loops during brief Worker or database
@@ -93,10 +94,65 @@ user in the frontend.
 | `POST` | `/api/auth/sign-out` | End the current session |
 | `GET` | `/api/auth/callback/google` | Google callback |
 | `GET` | `/api/auth/callback/github` | GitHub callback |
+| `POST` | `/api/profile/email/verify` | Complete a pending authenticated email change |
 
 Other Better Auth endpoints remain available under the same base path. Use the
 Better Auth client in `apps/web/src/lib/auth-client.ts` instead of hand-building
 browser requests.
+
+## Password and Email Changes
+
+`PUT /api/profile` keeps account-security mutations behind an authenticated
+session and Better Auth verification:
+
+- A password-only request must include non-empty `currentPassword` and
+  `newPassword`. The route delegates to Better Auth's `changePassword` API,
+  verifies the current password, hashes the replacement with Better Auth, and
+  revokes other sessions. Password changes cannot be combined with name or email
+  changes in the same request.
+- Starting an email change must include `currentPassword`. The route calls Better
+  Auth's password verifier, leaves the existing verified email unchanged, and
+  sends a user-bound six-digit code to the normalized new address. The response
+  returns `pending_email` and `verification_required`. A successfully delivered
+  replacement invalidates every older pending email-change code for that user.
+- `POST /api/profile/email/verify` accepts that pending `email` and `otp` from the
+  authenticated session. It atomically consumes the code, changes the email,
+  keeps the account verified because the new address has just been proven, and
+  invalidates sign-in, reset, and verification OTPs for the old and new address.
+- A user who cannot verify the current password must first complete the
+  password-reset OTP flow. Reset verifies the emailed OTP before accepting a new
+  password and revokes existing sessions; the new password can then be used as
+  the current-password proof for an email change.
+
+For older accounts, the password verifier can read a legacy 64-character
+SHA-256 hash. A successful email/password sign-in lazily replaces that hash with
+a Better Auth hash. It also converts the old `email` provider account record to
+the `credential` provider format when necessary. Failed password checks never
+trigger an upgrade.
+
+## OTP Delivery
+
+OTP email addresses are trimmed and lowercased. Verification, sign-in, and
+password-reset codes contain six digits and expire after 15 minutes.
+
+When replacing an OTP, including an authenticated email-change code, the API
+serializes replacement by identifier and keeps the previous record until Resend
+has accepted the replacement email. Success removes the superseded record. A
+Better Auth rejection or delivery failure removes only the newly-created,
+unusable record, preserving a previously valid code.
+
+If Resend reports an error, exceeds `EMAIL_DELIVERY_TIMEOUT_MS` (10 seconds by
+default), or if `RESEND_API_KEY` is missing in production, the
+send and reset-request wrappers return `503` with `Email delivery is temporarily
+unavailable`; those error cases do not report success for an undelivered code.
+Development without a Resend key skips delivery and logs a warning without
+logging the OTP. Better Auth can still return success and replace the previous
+OTP in that development-only case even though no email was sent. Use a configured
+test sender when the code must be received.
+
+OTP, sign-in, and sign-up routes are rate limited by normalized email and client
+IP. See [RATE_LIMITING.md](RATE_LIMITING.md) for the exact limits, `429` response,
+and deployment caveat.
 
 ## Behavior
 
@@ -105,11 +161,13 @@ browser requests.
 - Resending a verification OTP disables the resend action during its cooldown;
   the cooldown text is the resend confirmation.
 - Successful verification signs the user in.
-- Without `RESEND_API_KEY`, development mode logs OTPs; production does not.
+- Development without `RESEND_API_KEY` logs only that delivery was skipped; it
+  never logs the code.
 - The session user includes the server-owned `slideTokens` field.
 - API authorization uses the session cookie, not bearer tokens.
-- The sign-in wrapper upgrades legacy email credential records when the supplied
-  password matches their old hash.
+- Password-reset completion revokes existing sessions.
+- The sign-in wrapper upgrades legacy email credential records only when the
+  supplied password matches their old hash.
 
 Browser requests must send credentials. API and Better Auth trusted origins must
 both include the web origin.

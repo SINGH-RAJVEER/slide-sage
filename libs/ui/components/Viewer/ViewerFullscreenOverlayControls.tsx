@@ -1,11 +1,11 @@
-import { Button } from "@slide-sage/ui/components/button";
+import { Button } from "@slidesage/ui/components/button";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@slide-sage/ui/components/select";
+} from "@slidesage/ui/components/select";
 import { ChevronLeft, ChevronRight, Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import type React from "react";
 

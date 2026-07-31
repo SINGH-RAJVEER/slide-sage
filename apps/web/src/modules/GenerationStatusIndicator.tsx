@@ -1,4 +1,4 @@
-import { GenerationStatusIndicatorView } from "@slide-sage/ui/components/GenerationStatusIndicator";
+import { GenerationStatusIndicatorView } from "@slidesage/ui/components/GenerationStatusIndicator";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { showGenerationCompleteNotification } from "@/lib/generation-notifications";

@@ -26,12 +26,14 @@ import {
     WIDGET_KINDS,
     WIDGET_NODE_ROLES,
     WIDGET_TONES,
-} from "@slide-sage/types";
+} from "@slidesage/types";
+import { abortReason } from "../../utils/abort";
 import {
     OpenRouterStreamError,
     readOpenRouterStream,
     requestOpenRouterStream,
 } from "../../utils/openrouter-stream";
+import { logSafeError } from "../../utils/safe-logging";
 import { StreamProcessor } from "../../utils/stream-processor";
 import {
     normalizePresentationSlides,
@@ -56,6 +58,7 @@ interface StructuredPresentationOptions {
     operation: "generation" | "iteration";
     preferredTheme?: ThemeId;
     outline?: PresentationOutline;
+    signal?: AbortSignal;
 }
 
 const THEME_ID_SET = new Set<string>(THEME_IDS);
@@ -78,8 +81,24 @@ function retryDelay(attempt: number, retryAfterMs?: number): number {
     return Math.min(maxDelay, Math.max(retryAfterMs || 0, exponentialDelay));
 }
 
-async function wait(delayMs: number): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
+async function wait(delayMs: number, signal?: AbortSignal): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+        const finish = () => {
+            signal?.removeEventListener("abort", onAbort);
+            resolve();
+        };
+        const timeout = setTimeout(finish, delayMs);
+        const onAbort = () => {
+            clearTimeout(timeout);
+            signal?.removeEventListener("abort", onAbort);
+            reject(abortReason(signal as AbortSignal));
+        };
+        if (signal?.aborted) {
+            onAbort();
+            return;
+        }
+        signal?.addEventListener("abort", onAbort, { once: true });
+    });
 }
 
 export function presentationResponseFormat(expectedSlideCount?: number): Record<string, unknown> {
@@ -492,6 +511,7 @@ export async function* streamStructuredPresentation(
                 requestTimeoutMs,
                 maxTokens: outputTokenBudget(options.expectedSlideCount),
                 responseFormat: presentationResponseFormat(options.expectedSlideCount),
+                signal: options.signal,
             });
 
             for await (const chunk of readOpenRouterStream(response, {
@@ -641,6 +661,7 @@ export async function* streamStructuredPresentation(
             };
             return;
         } catch (error) {
+            if (options.signal?.aborted) throw abortReason(options.signal);
             const message = error instanceof Error ? error.message : String(error);
             const expectedSlideCount = options.expectedSlideCount;
             const completeStreamedSlides =
@@ -671,17 +692,13 @@ export async function* streamStructuredPresentation(
                     presentation.sources = options.sources;
                 }
 
-                console.warn(
-                    `${options.operation} stream ended after all requested slides were received; preserving the completed deck: ${message}`
-                );
+                logSafeError(`${options.operation}_stream_ended_after_complete_deck`, error);
                 yield { event: "complete", data: presentation };
                 return;
             }
 
             const retryable = !(error instanceof OpenRouterStreamError) || error.retryable;
-            console.warn(
-                `${options.operation} stream attempt ${attempt}/${maxAttempts} failed: ${message}`
-            );
+            logSafeError(`${options.operation}_stream_attempt_failed`, error);
 
             if (retryable && attempt < maxAttempts) {
                 const delayMs = retryDelay(
@@ -697,7 +714,7 @@ export async function* streamStructuredPresentation(
                         reason: message.slice(0, 240),
                     },
                 };
-                await wait(delayMs);
+                await wait(delayMs, options.signal);
                 continue;
             }
 

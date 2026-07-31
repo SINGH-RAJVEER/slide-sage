@@ -1,4 +1,4 @@
-import { AISettings as AISettingsView } from "@slide-sage/ui/components/Settings/AISettings";
+import { AISettings as AISettingsView } from "@slidesage/ui/components/Settings/AISettings";
 import {
     connectAIProvider,
     deleteAIProvider,

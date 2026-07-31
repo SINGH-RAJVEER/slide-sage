@@ -1,11 +1,11 @@
-import type { PresentationData } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
+import type { PresentationData } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@slide-sage/ui/components/dropdown-menu";
+} from "@slidesage/ui/components/dropdown-menu";
 import { ChevronDown, Download, FileText, LoaderCircle, Presentation } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";

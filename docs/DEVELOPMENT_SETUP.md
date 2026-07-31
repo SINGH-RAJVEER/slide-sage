@@ -28,6 +28,10 @@ package to build or deploy.
 3. Applies Drizzle migrations after PostgreSQL is ready.
 4. Starts the API on port `8000` and Vite on port `5173`.
 
+The hardened API requires migrations `0010_generation_point_operations.sql` and
+`0011_api_rate_limits.sql`. Do not deploy the API before its target database has
+both migrations; rate limiting fails open when its table is unavailable.
+
 Stop the foreground process with `Ctrl+C`. Devenv stops the managed PostgreSQL
 instance with the API and web processes.
 
@@ -56,10 +60,47 @@ Run these from the repository root inside `devenv shell`.
 The repository is a native Bun workspace. Root scripts run package commands
 directly through Bun without a separate monorepo task runner.
 
+## API Test Boundaries
+
+`just test-api` runs `bun test --isolate` for the API. Isolation is required
+because auth and database modules hold process state. The suite covers route
+validation and statuses, password compatibility, OTP replacement behavior,
+request logging, rate-limit response behavior, point-accounting branches,
+Razorpay verification rules, provider parsing, cancellation, and stream retry
+logic primarily through module mocks, fake stores, and mocked `fetch` or SDK
+clients. Database-context tests verify async request isolation and delayed Worker
+client closure without opening a PostgreSQL connection.
+
+Run `bun run build:api` to bundle the actual Worker configuration without
+deploying it. Run the opt-in PostgreSQL suite with
+`TEST_DATABASE_URL=postgresql://..._test bun run test:integration:db`. The
+database name must contain `test`; the suite applies migrations, creates
+temporary records, and verifies concurrent credits/deductions, atomic
+rate-limit increments, and one-time expired-reservation recovery.
+
+These tests do not replace the following external verification:
+
+- Live PostgreSQL tests beyond the opt-in accounting suite, especially payment
+  fulfillment, ownership checks, settlement rollback, and long-running SSE
+  connection behavior.
+- Provider or sandbox tests for Better Auth and Resend delivery, Exa cancellation,
+  OpenRouter and BYOK structured output, and Razorpay order, payment-fetch, and
+  webhook flows.
+- A staging Worker test using the deployed database path, and Hyperdrive when
+  configured, to verify per-request connection closure after SSE completion or
+  cancellation.
+- Staging proxy/browser tests for client-IP forwarding, `429` and `Retry-After`,
+  credentialed `PATCH` preflights, cookies, body-size rejection, and webhook
+  retries.
+
+Run and record those checks separately for a release. A passing Bun suite is not
+evidence that live PostgreSQL, external providers, Hyperdrive, or staging routing
+were exercised.
+
 All reusable React UI lives in `libs/ui`. Import feature components through
-`@slide-sage/ui`, `@slide-sage/ui/components/Generate`,
-`@slide-sage/ui/components/Presentations`, or
-`@slide-sage/ui/components/Viewer`. The web app keeps only connected adapters
+`@slidesage/ui`, `@slidesage/ui/components/Generate`,
+`@slidesage/ui/components/Presentations`, or
+`@slidesage/ui/components/Viewer`. The web app keeps only connected adapters
 under `apps/web/src/modules` for routing, authentication, API calls, browser
 storage, notifications, and file export. UI components must not import the
 web app's `@/` alias. Tailwind scans the complete `libs/ui` package from
@@ -75,8 +116,10 @@ assert native element behavior, child rendering, or exact utility-class lists.
 | --- | --- |
 | `bun run dev` | Run the complete `just dev` development stack |
 | `bun run build` | Build the web application |
+| `bun run build:api` | Dry-build the Cloudflare Worker without deploying |
 | `bun run deploy:api` | Deploy the API with Wrangler; the devenv supplies Node for Wrangler while Bun remains the package manager |
 | `bun run test` | Run API, shared types, UI, and web tests |
+| `bun run test:integration:db` | Run the opt-in suite against `TEST_DATABASE_URL` |
 | `bun run test:ui` | Run shared UI component and rendering tests |
 | `bun run type-check` | Type-check all workspace projects |
 | `bun run lint` | Lint every workspace package |
@@ -96,7 +139,7 @@ the web origin during the all-in-one devenv workflow.
 
 Full-screen route, session, and presentation loading states, including the
 router hydration fallback, use `libs/ui/components/loading-screen.tsx` and the standard
-shadcn spinner in `libs/ui/components/spinner.tsx` through the `@slide-sage/ui` package.
+shadcn spinner in `libs/ui/components/spinner.tsx` through the `@slidesage/ui` package.
 The full-screen spinner uses the same solid white foreground as the rest of the
 application.
 
@@ -178,8 +221,11 @@ instead.
   definitions retain a repository-root `cwd`; their commands use workspace-relative paths.
 - Failed AI requests: confirm `OPEN_ROUTER_API_KEY` and the configured model.
 - Failed research: set `EXA_API_KEY`; research is skipped when it is absent.
-- Failed email delivery: set `RESEND_API_KEY`; development mode logs OTPs when
-  the key is absent.
+- Failed email delivery: set `RESEND_API_KEY`; development without it skips
+  delivery and logs only a warning, never the OTP value.
+- Unexpected missing `429` responses: confirm migration `0011` is applied and
+  inspect `rate_limit_store_failed`; the limiter deliberately fails open on
+  PostgreSQL errors.
 
 The generation page sends one prompt string to the presentation pipeline. Its centered
 compact editor grows to a bounded height and generates on Enter. The expand control

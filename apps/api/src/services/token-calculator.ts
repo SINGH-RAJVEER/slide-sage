@@ -1,4 +1,4 @@
-import { estimateMessageInputTokens } from "@slide-sage/types";
+import { estimateMessageInputTokens } from "@slidesage/types";
 
 /*
  * Token Calculator Service

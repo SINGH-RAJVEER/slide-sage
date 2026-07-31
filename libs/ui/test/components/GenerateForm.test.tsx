@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { GenerateForm } from "@slide-sage/ui/components/Generate/GenerateForm";
+import { GenerateForm } from "@slidesage/ui/components/Generate/GenerateForm";
 import { fireEvent, render } from "@testing-library/react";
 
 function renderGenerateForm(overrides: Partial<React.ComponentProps<typeof GenerateForm>> = {}) {
