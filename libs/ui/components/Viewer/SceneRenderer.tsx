@@ -355,8 +355,6 @@ export function SceneRenderer({
             className="relative h-full w-full overflow-hidden"
             data-pdf-slide
             style={{ background, color: foreground }}
-            data-scene-slide-id={slide.id}
-            data-scene-profile={resolvedProfile}
         >
             {resolved.root.children?.map((node) => (
                 <SceneNodeView

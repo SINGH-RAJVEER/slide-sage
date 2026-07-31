@@ -57,7 +57,6 @@ export function ScaledSlide({
                 "relative flex h-full w-full items-center justify-center overflow-hidden",
                 className,
             )}
-            data-slide-scale={scale}
         >
             <div className={cn("absolute origin-center", stageClassName)} style={stageStyle}>
                 {children}

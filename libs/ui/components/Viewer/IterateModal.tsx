@@ -273,23 +273,14 @@ export default function IterateModal({
         </>
     );
 
+    if (!open) return null;
+
     return (
-        <>
-            <div
-                className={`hidden shrink-0 overflow-hidden transition-[width] duration-300 xl:block ${open ? "w-[28rem]" : "w-0"}`}
-                aria-hidden={!open}
-            >
-                <aside className={panelClassName} aria-label="Iterate on presentation">
-                    {panelContent}
-                </aside>
-            </div>
-            <aside
-                className={`${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full transition-transform duration-300 xl:hidden ${open ? "translate-x-0" : "pointer-events-none translate-x-full"}`}
-                aria-label="Iterate on presentation"
-                aria-hidden={!open}
-            >
-                {panelContent}
-            </aside>
-        </>
+        <aside
+            className={`${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0`}
+            aria-label="Iterate on presentation"
+        >
+            {panelContent}
+        </aside>
     );
 }

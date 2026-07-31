@@ -20,22 +20,6 @@ export function startKeyboardNavigationRepeat(onRepeat: () => void): () => void 
     };
 }
 
-export function getKeyboardNavigationTarget(
-    event: Pick<KeyboardEvent, "key">,
-    currentSlide: number,
-    slideCount: number,
-): number | null {
-    if (slideCount <= 0) return null;
-
-    const key = event.key.toLowerCase();
-    if (event.key === "ArrowLeft" || key === "j") return clamp(currentSlide - 1, 0, slideCount - 1);
-    if (event.key === "ArrowRight" || key === "l")
-        return clamp(currentSlide + 1, 0, slideCount - 1);
-    if (event.key === "ArrowUp") return 0;
-    if (event.key === "ArrowDown") return slideCount - 1;
-    return null;
-}
-
 export function useSlideNavigation({
     slideCount,
     slideContainerRef,

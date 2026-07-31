@@ -9,17 +9,13 @@ const { default: _defaultMatchers, ...matchers } = await import(
 expect.extend(matchers);
 const { cleanup } = await import("@testing-library/react");
 
-if (typeof document === "undefined") {
-    throw new Error("document is not defined after GlobalRegistrator.register()");
-}
-
 afterEach(() => {
     cleanup();
     document.body.innerHTML = "";
 });
 
 Object.defineProperty(window, "matchMedia", {
-    writable: true,
+    configurable: true,
     value: (query: string) => ({
         matches: false,
         media: query,
@@ -28,7 +24,7 @@ Object.defineProperty(window, "matchMedia", {
         removeListener: () => {},
         addEventListener: () => {},
         removeEventListener: () => {},
-        dispatchEvent: () => {},
+        dispatchEvent: () => false,
     }),
 });
 
@@ -38,3 +34,11 @@ Object.defineProperties(HTMLElement.prototype, {
     setPointerCapture: { configurable: true, value: () => {} },
     releasePointerCapture: { configurable: true, value: () => {} },
 });
+
+if (!("ResizeObserver" in globalThis)) {
+    globalThis.ResizeObserver = class ResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    };
+}

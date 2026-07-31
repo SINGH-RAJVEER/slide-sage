@@ -3,7 +3,7 @@
     "compilerOptions": {
         "composite": true,
         "jsx": "react-jsx",
-        "types": ["react"],
+        "types": ["react", "bun"],
         "paths": {
             "@slide-sage/types": ["../types/src/index.ts"],
             "@slide-sage/ui": ["./index.ts"],
@@ -21,6 +21,8 @@
         "components/**/*.tsx",
         "hooks/**/*.ts",
         "lib/**/*.ts",
+        "test/**/*.ts",
+        "test/**/*.tsx",
         "../types/src/**/*.ts"
     ],
     "exclude": ["../types/src/**/*.test.ts"]

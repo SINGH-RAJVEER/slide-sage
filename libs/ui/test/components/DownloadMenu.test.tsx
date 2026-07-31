@@ -1,11 +1,11 @@
 /// <reference lib="dom" />
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import type { PresentationData } from "@slide-sage/types";
 import DownloadMenu, {
     type PresentationExporter,
 } from "@slide-sage/ui/components/Viewer/DownloadMenu";
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import type { PresentationData } from "@/modules/types/presentation";
 
 const exportEditablePptx = mock(async (_presentation: PresentationData) => {});
 const exportPresentationPdf = mock(async (_title: string) => {});
@@ -74,6 +74,24 @@ describe("DownloadMenu", () => {
         );
 
         expect(view.getByRole("button", { name: "Download" })).toBeDisabled();
+    });
+
+    it("ignores a second export while the first export is pending", async () => {
+        let finishExport = () => {};
+        const pendingExport = new Promise<void>((resolve) => {
+            finishExport = resolve;
+        });
+        const onExport = mock(() => pendingExport);
+        const view = render(<DownloadMenu presentation={presentation} onExport={onExport} />);
+        openMenu(view.getByRole("button", { name: "Download" }));
+        const item = view.getByRole("menuitem", { name: "PowerPoint" });
+
+        fireEvent.click(item);
+        fireEvent.click(item);
+
+        expect(onExport).toHaveBeenCalledTimes(1);
+        finishExport();
+        await waitFor(() => expect(view.getByRole("button", { name: "Download" })).toBeEnabled());
     });
 
     it("shows a format-specific accessible error", async () => {

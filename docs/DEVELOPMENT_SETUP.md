@@ -38,7 +38,7 @@ Run these from the repository root inside `devenv shell`.
 | Command | Action |
 | --- | --- |
 | `just dev` | Start the complete development stack |
-| `just apis` | Start the API with watch mode |
+| `just api` | Start the API with watch mode |
 | `just web` | Start Vite |
 | `just db-shell` | Connect to the local database with `psql` |
 | `just migrate` | Apply committed migrations |
@@ -46,8 +46,9 @@ Run these from the repository root inside `devenv shell`.
 | `just db-push` | Push schema changes without a migration file |
 | `just db-studio` | Start Drizzle Studio |
 | `just test` | Run all tests |
-| `just test-apis` | Run isolated API tests |
+| `just test-api` | Run isolated API tests |
 | `just test-web` | Run web tests |
+| `just test-ui` | Run shared UI tests |
 | `just lint` | Run Biome checks |
 | `just lint-fix` | Apply safe Biome fixes |
 | `just format` | Format the repository |
@@ -64,12 +65,19 @@ storage, notifications, and file export. UI components must not import the
 web app's `@/` alias. Tailwind scans the complete `libs/ui` package from
 `apps/web/src/globals.css`, including class names defined by rendering helpers.
 
+Tests follow the same ownership boundary. Component behavior, rendering security,
+editing helpers, and presentation layout tests live under `libs/ui/test` and run
+with Bun plus Happy DOM. Tests under `apps/web/src/test` cover routing, API adapters,
+browser services, hooks, contexts, and page integration. Do not add tests that only
+assert native element behavior, child rendering, or exact utility-class lists.
+
 | Command | Action |
 | --- | --- |
 | `bun run dev` | Run the complete `just dev` development stack |
 | `bun run build` | Build the web application |
 | `bun run deploy:api` | Deploy the API with Wrangler; the devenv supplies Node for Wrangler while Bun remains the package manager |
-| `bun run test` | Run API and web tests |
+| `bun run test` | Run API, shared types, UI, and web tests |
+| `bun run test:ui` | Run shared UI component and rendering tests |
 | `bun run type-check` | Type-check all workspace projects |
 | `bun run lint` | Lint every workspace package |
 | `bun run format` | Format every workspace package |

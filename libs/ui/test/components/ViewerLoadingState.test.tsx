@@ -1,11 +1,11 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
+import type { PresentationData } from "@slide-sage/types";
 import { ViewerNavigationControls } from "@slide-sage/ui/components/Viewer/ViewerNavigationControls";
 import { ViewerSlideCarousel } from "@slide-sage/ui/components/Viewer/ViewerSlideCarousel";
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import type { PresentationData } from "@/modules/types/presentation";
 
 const emptyPresentation: PresentationData = {
     title: "Generating presentation",

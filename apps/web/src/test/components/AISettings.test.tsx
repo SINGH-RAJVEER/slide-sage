@@ -6,11 +6,6 @@ import { AISettings } from "@/modules/AISettings";
 
 const originalFetch = globalThis.fetch;
 
-HTMLElement.prototype.hasPointerCapture = () => false;
-HTMLElement.prototype.setPointerCapture = () => {};
-HTMLElement.prototype.releasePointerCapture = () => {};
-HTMLElement.prototype.scrollIntoView = () => {};
-
 afterEach(() => {
     globalThis.fetch = originalFetch;
 });

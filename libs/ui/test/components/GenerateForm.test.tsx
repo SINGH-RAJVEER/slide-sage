@@ -25,13 +25,10 @@ function makePromptOverflow(textarea: HTMLElement) {
 }
 
 describe("GenerateForm", () => {
-    it("renders one prompt editor without topic suggestions", () => {
+    it("renders one prompt editor and keeps expansion unavailable until content overflows", () => {
         const view = renderGenerateForm();
-        const editor = view.getByRole("textbox", { name: "Presentation prompt" });
 
-        expect(editor).toHaveClass("max-h-48", "rounded-lg", "bg-black/20", "text-center");
-        expect(view.queryByText("Product Launch Strategy")).not.toBeInTheDocument();
-        expect(view.queryByText(/add a topic/i)).not.toBeInTheDocument();
+        expect(view.getAllByRole("textbox", { name: "Presentation prompt" })).toHaveLength(1);
         expect(view.queryByRole("button", { name: "Expand prompt editor" })).toBeNull();
     });
 
@@ -103,23 +100,7 @@ describe("GenerateForm", () => {
 
         expect(expandedEditor).toBe(compactEditor);
         expect(view.getByRole("button", { name: "Generate" })).toBe(compactGenerateButton);
-        const expandedComposer = view.getByRole("group", {
-            name: "Expanded presentation prompt",
-        });
-        expect(expandedComposer).toHaveClass("fixed");
-        expect(expandedComposer).not.toHaveClass("border", "bg-[hsl(222,27%,10%)]", "shadow-2xl");
-        expect(Number.parseFloat(expandedComposer.style.width)).toBeGreaterThan(
-            window.innerWidth * 0.9,
-        );
-        expect(Number.parseFloat(expandedComposer.style.height)).toBeGreaterThan(
-            window.innerHeight * 0.8,
-        );
-        expect(expandedEditor).toHaveClass("h-full", "border", "border-white/15");
-        expect(compactGenerateButton).toHaveClass(
-            "generation-prompt-action",
-            "ml-auto",
-            "shrink-0",
-        );
+        expect(view.getByRole("group", { name: "Expanded presentation prompt" })).toBeVisible();
 
         fireEvent.keyDown(expandedEditor, { key: "Enter" });
         expect(onGenerate).not.toHaveBeenCalled();

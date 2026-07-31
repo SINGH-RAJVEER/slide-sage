@@ -44,7 +44,7 @@ it("renders arbitrary scene nodes, art direction, and widgets", () => {
 
     expect(view.getByText("An authored scene")).toBeInTheDocument();
     expect(view.getByText("42%")).toBeInTheDocument();
-    expect(view.container.querySelector("[data-scene-slide-id='scene-1']")).toHaveStyle({
+    expect(view.container.querySelector("[data-pdf-slide]")).toHaveStyle({
         background: "#123456",
     });
 });
@@ -101,7 +101,6 @@ it("applies the requested responsive scene variant", () => {
 
     expect(view.getByText("Compact composition")).toBeInTheDocument();
     expect(view.queryByText("Wide composition")).toBeNull();
-    expect(view.container.querySelector("[data-scene-profile='compact']")).toBeInTheDocument();
 });
 
 it("renders semantic diagram nodes from generated widget props", () => {
