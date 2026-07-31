@@ -1,7 +1,7 @@
 import type { ChartConfig, ResolvedSceneNode } from "@slide-sage/types";
 import { Image as ImageIcon } from "lucide-react";
 import type React from "react";
-import ChartRenderer from "@/components/Charts/ChartRenderer";
+import ChartRenderer from "../Charts/ChartRenderer";
 
 interface SceneWidgetProps {
     node: ResolvedSceneNode;

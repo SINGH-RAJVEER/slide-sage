@@ -4,7 +4,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
-mock.module("@/components/Header", () => ({
+mock.module("@/modules/Header", () => ({
     default: () => <header data-testid="app-header" />,
 }));
 

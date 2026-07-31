@@ -1,8 +1,8 @@
 /// <reference lib="dom" />
 
 import { expect, it } from "bun:test";
+import { SceneRenderer } from "@slide-sage/ui/components/Viewer/SceneRenderer";
 import { fireEvent, render } from "@testing-library/react";
-import { SceneRenderer } from "@/components/Viewer/SceneRenderer";
 
 it("renders arbitrary scene nodes, art direction, and widgets", () => {
     const view = render(

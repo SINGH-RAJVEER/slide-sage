@@ -1,8 +1,8 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
+import { GenerateOptionsBar } from "@slide-sage/ui/components/Generate";
 import { fireEvent, render } from "@testing-library/react";
-import { GenerateOptionsBar } from "@/components/Generate";
 
 describe("GenerateOptionsBar", () => {
     it("changes the generation theme", () => {

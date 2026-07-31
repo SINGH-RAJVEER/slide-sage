@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { tweenNumber } from "@/lib/presentation-motion";
+import { tweenNumber } from "@slide-sage/ui/lib/presentation-motion";
 
 describe("presentation motion", () => {
     it("finishes immediately when reduced motion is requested", () => {

@@ -1,9 +1,9 @@
+import type { SlideLayout } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import { ArrowLeft, Palette, Presentation, Sparkles } from "lucide-react";
 import type React from "react";
-import { SlideLayoutSelector } from "@/components/Viewer/SlideLayoutSelector";
-import TemplateSelector from "@/components/Viewer/TemplateSelector";
-import type { SlideLayout } from "@/modules/types/presentation";
+import { SlideLayoutSelector } from "./SlideLayoutSelector";
+import TemplateSelector, { type InstalledTemplateOption } from "./TemplateSelector";
 
 interface ViewerHeaderControlsProps {
     title?: string;
@@ -20,6 +20,7 @@ interface ViewerHeaderControlsProps {
     themeLabel?: string;
     showIterate?: boolean;
     showLayoutSelector?: boolean;
+    installedThemes?: InstalledTemplateOption[];
 }
 
 export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
@@ -37,6 +38,7 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
     themeLabel,
     showIterate = true,
     showLayoutSelector = true,
+    installedThemes = [],
 }) => {
     return (
         <header
@@ -68,6 +70,7 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
                     <TemplateSelector
                         selectedTemplate={currentTemplate}
                         onTemplateChange={onTemplateChange}
+                        installedThemes={installedThemes}
                     />
                 )}
                 {showLayoutSelector && (

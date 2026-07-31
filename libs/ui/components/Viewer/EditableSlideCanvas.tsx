@@ -1,7 +1,7 @@
+import type { ContentSlide, SlideBlock } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import { Check, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { ContentSlide, SlideBlock } from "@/modules/types/presentation";
 import { SlideRenderer } from "./SlideRenderer";
 
 interface EditableSlideCanvasProps {

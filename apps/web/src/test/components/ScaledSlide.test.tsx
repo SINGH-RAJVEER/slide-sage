@@ -1,8 +1,8 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
+import { ScaledSlide } from "@slide-sage/ui/components/Viewer/ScaledSlide";
 import { act, render } from "@testing-library/react";
-import { ScaledSlide } from "@/components/Viewer/ScaledSlide";
 
 let resizeCallback: ResizeObserverCallback | undefined;
 

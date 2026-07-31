@@ -1,8 +1,8 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
+import { SlideLayoutSelector } from "@slide-sage/ui/components/Viewer/SlideLayoutSelector";
 import { fireEvent, render } from "@testing-library/react";
-import { SlideLayoutSelector } from "@/components/Viewer/SlideLayoutSelector";
 
 describe("SlideLayoutSelector", () => {
     it("selects a layout independently from the theme control", () => {

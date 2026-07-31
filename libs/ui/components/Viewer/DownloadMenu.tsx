@@ -1,3 +1,4 @@
+import type { PresentationData } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import {
     DropdownMenu,
@@ -8,15 +9,19 @@ import {
 import { ChevronDown, Download, FileText, LoaderCircle, Presentation } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
-import type { PresentationData } from "@/modules/types/presentation";
 
 interface Props {
     presentation: PresentationData;
+    onExport?: PresentationExporter;
 }
 
-type ExportFormat = "pptx" | "pdf";
+export type ExportFormat = "pptx" | "pdf";
+export type PresentationExporter = (
+    format: ExportFormat,
+    presentation: PresentationData,
+) => Promise<void>;
 
-const DownloadMenu: React.FC<Props> = ({ presentation }) => {
+const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
     const exportInProgress = useRef(false);
     const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -28,13 +33,8 @@ const DownloadMenu: React.FC<Props> = ({ presentation }) => {
         setExportingFormat(format);
         setError(null);
         try {
-            if (format === "pptx") {
-                const { exportEditablePptx } = await import("@/lib/pptx-export");
-                await exportEditablePptx(presentation);
-            } else {
-                const { exportPresentationPdf } = await import("@/lib/pdf-export");
-                await exportPresentationPdf(presentation.title);
-            }
+            if (!onExport) throw new Error("No presentation exporter was provided.");
+            await onExport(format, presentation);
         } catch (exportError) {
             console.error(`Failed to export ${format.toUpperCase()} presentation`, exportError);
             setError(`${format.toUpperCase()} export failed. Please try again.`);

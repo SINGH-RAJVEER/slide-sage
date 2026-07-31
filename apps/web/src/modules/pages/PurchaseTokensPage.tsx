@@ -18,8 +18,8 @@ import {
 import { Input } from "@slide-sage/ui/components/input";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Header from "@/components/Header";
 import { API_URL } from "@/lib/api";
+import Header from "@/modules/Header";
 
 declare global {
     interface Window {
@@ -158,7 +158,7 @@ export default function PurchaseTokensPage() {
                                 slide_tokens: verifyData.new_balance,
                             });
                             window.dispatchEvent(
-                                new CustomEvent("slide-sage:points-updated", {
+                                new CustomEvent("slidesage:points-updated", {
                                     detail: { slideTokens: verifyData.new_balance },
                                 }),
                             );

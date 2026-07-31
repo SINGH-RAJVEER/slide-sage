@@ -22,16 +22,22 @@ mock.module("@slide-sage/ui/components/dropdown-menu", () => ({
 
 describe("GenerationThemeSelector", () => {
     it("shows installed marketplace themes and selects their base theme", async () => {
-        localStorage.setItem(
-            "slidesage-installed-marketplace-themes",
-            JSON.stringify(["midnight-signal"]),
-        );
         const onThemeChange = mock(() => {});
         const { GenerationThemeSelector } = await import(
-            "@/components/Generate/GenerationThemeSelector"
+            "@slide-sage/ui/components/Generate/GenerationThemeSelector"
         );
         const { getByRole } = render(
-            <GenerationThemeSelector theme="corporate-blue" onThemeChange={onThemeChange} />,
+            <GenerationThemeSelector
+                theme="corporate-blue"
+                onThemeChange={onThemeChange}
+                installedThemes={[
+                    {
+                        marketplaceId: "midnight-signal",
+                        themeId: "modern-dark",
+                        name: "Midnight Signal",
+                    },
+                ]}
+            />,
         );
 
         fireEvent.click(getByRole("button", { name: /Midnight Signal Marketplace/i }));

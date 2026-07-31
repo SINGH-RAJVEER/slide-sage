@@ -8,8 +8,8 @@ import type {
 } from "@slide-sage/types";
 import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import Header from "@/components/Header";
 import { API_URL } from "@/lib/api";
+import Header from "@/modules/Header";
 
 export default function ProfilePage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);

@@ -14,18 +14,18 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@slide-sage/ui/components/dialog";
-import { Spinner } from "@slide-sage/ui/components/spinner";
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
 import {
     GridSizeControl,
     PresentationCard,
     PresentationSearchBar,
-} from "@/components/Presentations";
+} from "@slide-sage/ui/components/Presentations";
+import { Spinner } from "@slide-sage/ui/components/spinner";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_URL } from "@/lib/api";
 import { PRESENTATIONS_UPDATED_EVENT } from "@/lib/presentation-events";
 import { getPresentationRetryDestination } from "@/lib/presentation-retry";
+import Header from "@/modules/Header";
 import { ROUTES } from "@/router/paths";
 
 interface SearchFilters {

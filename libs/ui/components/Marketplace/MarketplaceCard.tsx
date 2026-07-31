@@ -1,11 +1,22 @@
+import type { Slide } from "@slide-sage/types";
 import { cn } from "@slide-sage/ui/lib/utils";
 import { ArrowUp, Check, Palette, Plus } from "lucide-react";
-import { ScaledSlide } from "@/components/Viewer/ScaledSlide";
-import { SlideRenderer } from "@/components/Viewer/SlideRenderer";
-import type { MarketplaceItem } from "@/modules/marketplace/catalog";
+import { ScaledSlide } from "../Viewer/ScaledSlide";
+import { SlideRenderer } from "../Viewer/SlideRenderer";
+
+export interface MarketplaceCardItem {
+    id: string;
+    name: string;
+    author: string;
+    authorInitials: string;
+    themeId: string;
+    previewSlide: Slide;
+    votes: number;
+    isNew?: boolean;
+}
 
 interface MarketplaceCardProps {
-    item: MarketplaceItem;
+    item: MarketplaceCardItem;
     voted: boolean;
     installed: boolean;
     onOpen: (itemId: string) => void;

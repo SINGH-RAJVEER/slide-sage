@@ -1,8 +1,8 @@
+import type { PresentationData } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash } from "lucide-react";
 import type React from "react";
-import DownloadMenu from "@/components/Viewer/DownloadMenu";
-import type { PresentationData } from "@/modules/types/presentation";
+import DownloadMenu, { type PresentationExporter } from "./DownloadMenu";
 
 interface ViewerNavigationControlsProps {
     presentation: PresentationData;
@@ -16,6 +16,7 @@ interface ViewerNavigationControlsProps {
     deleteDisabled: boolean;
     showDownload?: boolean;
     showDelete?: boolean;
+    onExport?: PresentationExporter;
 }
 
 export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> = ({
@@ -30,6 +31,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
     deleteDisabled,
     showDownload = true,
     showDelete = true,
+    onExport,
 }) => {
     return (
         <nav
@@ -39,7 +41,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
         >
             {showDownload && (
                 <div className="viewer-navigation__download absolute left-0 top-1/2 -translate-y-1/2">
-                    <DownloadMenu presentation={presentation} />
+                    <DownloadMenu presentation={presentation} onExport={onExport} />
                 </div>
             )}
 

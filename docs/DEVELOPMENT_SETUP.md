@@ -55,6 +55,15 @@ Run these from the repository root inside `devenv shell`.
 The repository is a native Bun workspace. Root scripts run package commands
 directly through Bun without a separate monorepo task runner.
 
+All reusable React UI lives in `libs/ui`. Import feature components through
+`@slide-sage/ui`, `@slide-sage/ui/components/Generate`,
+`@slide-sage/ui/components/Presentations`, or
+`@slide-sage/ui/components/Viewer`. The web app keeps only connected adapters
+under `apps/web/src/modules` for routing, authentication, API calls, browser
+storage, notifications, and file export. UI components must not import the
+web app's `@/` alias. Tailwind scans the complete `libs/ui` package from
+`apps/web/src/globals.css`, including class names defined by rendering helpers.
+
 | Command | Action |
 | --- | --- |
 | `bun run dev` | Run the complete `just dev` development stack |
@@ -71,7 +80,7 @@ directly through Bun without a separate monorepo task runner.
 | --- | --- |
 | Web application | `http://localhost:5173` |
 | API | `http://localhost:8000` |
-| Health check | `http://localhost:8000/` |
+| Health check | `http://localhost:8000/api/health` |
 | PostgreSQL | `postgresql://slidesage:slidesage@127.0.0.1:5432/slidesage` |
 
 Vite proxies API requests to port `8000`. `VITE_API_URL` therefore defaults to

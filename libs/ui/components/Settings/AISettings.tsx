@@ -13,12 +13,6 @@ import {
 import { Spinner } from "@slide-sage/ui/components/spinner";
 import { Check, KeyRound, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-    connectAIProvider,
-    deleteAIProvider,
-    fetchAIConfiguration,
-    selectAIModel,
-} from "@/lib/ai-connections";
 
 const PROVIDERS: Array<{ id: AIProvider; label: string; keyUrl: string }> = [
     { id: "openai", label: "OpenAI", keyUrl: "https://platform.openai.com/api-keys" },
@@ -32,21 +26,33 @@ const PROVIDER_LABELS = {
     anthropic: "Anthropic",
 };
 
-export function AISettings() {
+interface AISettingsProps {
+    fetchConfiguration: () => Promise<AIConfigurationResponse>;
+    connectProvider: (provider: AIProvider, apiKey: string) => Promise<void>;
+    deleteProvider: (provider: AIProvider) => Promise<void>;
+    selectModel: (selection: AIModelSelection) => Promise<void>;
+}
+
+export function AISettings({
+    fetchConfiguration,
+    connectProvider,
+    deleteProvider,
+    selectModel: saveModel,
+}: AISettingsProps) {
     const [config, setConfig] = useState<AIConfigurationResponse | null>(null);
     const [keys, setKeys] = useState<Partial<Record<AIProvider, string>>>({});
     const [busy, setBusy] = useState<AIProvider | "selection" | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const refresh = async () => setConfig(await fetchAIConfiguration());
+    const refresh = async () => setConfig(await fetchConfiguration());
 
     useEffect(() => {
-        void fetchAIConfiguration()
+        void fetchConfiguration()
             .then(setConfig)
             .catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
             .finally(() => setIsLoading(false));
-    }, []);
+    }, [fetchConfiguration]);
 
     const connect = async (provider: AIProvider) => {
         const apiKey = keys[provider]?.trim();
@@ -54,7 +60,7 @@ export function AISettings() {
         setBusy(provider);
         setMessage(null);
         try {
-            await connectAIProvider(provider, apiKey);
+            await connectProvider(provider, apiKey);
             setKeys((current) => ({ ...current, [provider]: "" }));
             await refresh();
             setMessage("Provider connected. New generations will use your saved model.");
@@ -69,7 +75,7 @@ export function AISettings() {
         setBusy(provider);
         setMessage(null);
         try {
-            await deleteAIProvider(provider);
+            await deleteProvider(provider);
             await refresh();
             setMessage("Provider removed. OpenRouter resumes when no connections remain.");
         } catch (error) {
@@ -83,7 +89,7 @@ export function AISettings() {
         setBusy("selection");
         setMessage(null);
         try {
-            await selectAIModel(selection);
+            await saveModel(selection);
             await refresh();
             setMessage("Default generation model updated.");
         } catch (error) {

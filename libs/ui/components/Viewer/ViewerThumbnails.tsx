@@ -1,6 +1,6 @@
+import type { Slide } from "@slide-sage/types";
 import { Spinner } from "@slide-sage/ui/components/spinner";
 import type React from "react";
-import type { Slide } from "@/modules/types/presentation";
 import { ScaledSlide } from "./ScaledSlide";
 import { SlideRenderer } from "./SlideRenderer";
 

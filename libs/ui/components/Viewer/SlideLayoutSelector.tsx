@@ -1,3 +1,4 @@
+import type { SlideLayout } from "@slide-sage/types";
 import { Badge } from "@slide-sage/ui/components/badge";
 import { Button } from "@slide-sage/ui/components/button";
 import {
@@ -24,7 +25,6 @@ import {
     Type,
 } from "lucide-react";
 import type React from "react";
-import type { SlideLayout } from "@/modules/types/presentation";
 
 const LAYOUTS: Array<{
     id: SlideLayout;

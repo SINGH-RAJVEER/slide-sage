@@ -1,12 +1,7 @@
+import type { BlockEmphasis, BlockTreatment, SlideLayout, SlideRegion } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import { ArrowDown, ArrowUp, Copy, Trash2 } from "lucide-react";
-import type { EditableSlideBlock } from "@/lib/slide-block-editing";
-import type {
-    BlockEmphasis,
-    BlockTreatment,
-    SlideLayout,
-    SlideRegion,
-} from "@/modules/types/presentation";
+import type { EditableSlideBlock } from "../../lib/slide-block-editing";
 
 interface SlideBlockEditorProps {
     block: EditableSlideBlock;

@@ -1,12 +1,11 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
+import { GenerationStatusIndicatorView } from "@slide-sage/ui/components/GenerationStatusIndicator";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import GenerationStatusIndicator, {
-    GenerationStatusIndicatorView,
-} from "@/components/GenerationStatusIndicator";
 import { StreamingProvider, useStreaming } from "@/modules/contexts/StreamingContext";
+import GenerationStatusIndicator from "@/modules/GenerationStatusIndicator";
 
 function StartGeneration() {
     const { startStreaming } = useStreaming();

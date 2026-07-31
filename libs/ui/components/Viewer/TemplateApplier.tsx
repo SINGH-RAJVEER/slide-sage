@@ -1,5 +1,5 @@
 import type React from "react";
-import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
+import { AVAILABLE_TEMPLATES } from "../../lib/templates";
 
 interface TemplateApplierProps {
     templateId: string;

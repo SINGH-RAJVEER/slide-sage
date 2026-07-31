@@ -1,9 +1,9 @@
+import type { ThemeId } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import { Globe } from "lucide-react";
 import type React from "react";
-import type { ThemeId } from "@/modules/types/presentation";
 import { DetailLevelSelector } from "./DetailLevelSelector";
-import { GenerationThemeSelector } from "./GenerationThemeSelector";
+import { GenerationThemeSelector, type InstalledThemeOption } from "./GenerationThemeSelector";
 import { SlideCountSelector } from "./SlideCountSelector";
 import { TonalitySelector } from "./TonalitySelector";
 
@@ -22,6 +22,7 @@ interface GenerateOptionsBarProps {
     onSlideCountChange: (count: string) => void;
     onCustomSlideCountChange: (count: string) => void;
     onThemeChange: (theme: ThemeId) => void;
+    installedThemes?: InstalledThemeOption[];
 }
 
 export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
@@ -39,6 +40,7 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
     onSlideCountChange,
     onCustomSlideCountChange,
     onThemeChange,
+    installedThemes = [],
 }) => {
     return (
         <div className="mb-2 w-full flex items-center justify-center">
@@ -66,7 +68,11 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
                     onDetailLevelChange={onDetailLevelChange}
                 />
                 <TonalitySelector tonality={tonality} onTonalityChange={onTonalityChange} />
-                <GenerationThemeSelector theme={theme} onThemeChange={onThemeChange} />
+                <GenerationThemeSelector
+                    theme={theme}
+                    onThemeChange={onThemeChange}
+                    installedThemes={installedThemes}
+                />
                 <SlideCountSelector
                     slideCountMode={slideCountMode}
                     slideCount={slideCount}

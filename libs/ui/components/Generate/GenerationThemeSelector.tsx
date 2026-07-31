@@ -1,3 +1,4 @@
+import type { ThemeId } from "@slide-sage/types";
 import { Button } from "@slide-sage/ui/components/button";
 import {
     DropdownMenu,
@@ -7,8 +8,6 @@ import {
 } from "@slide-sage/ui/components/dropdown-menu";
 import { Check, ChevronDown } from "lucide-react";
 import type React from "react";
-import { useInstalledMarketplaceThemes } from "@/hooks/useInstalledMarketplaceThemes";
-import type { ThemeId } from "@/modules/types/presentation";
 
 const THEMES: Array<{
     id: ThemeId;
@@ -24,16 +23,23 @@ const THEMES: Array<{
 ];
 const DEFAULT_THEME = THEMES[0] as (typeof THEMES)[number];
 
+export interface InstalledThemeOption {
+    marketplaceId: string;
+    themeId: ThemeId;
+    name: string;
+}
+
 interface GenerationThemeSelectorProps {
     theme: ThemeId;
     onThemeChange: (theme: ThemeId) => void;
+    installedThemes?: InstalledThemeOption[];
 }
 
 export const GenerationThemeSelector: React.FC<GenerationThemeSelectorProps> = ({
     theme,
     onThemeChange,
+    installedThemes = [],
 }) => {
-    const installedThemes = useInstalledMarketplaceThemes();
     const installedOptions = installedThemes.map((item) => ({
         id: item.themeId,
         label: item.name,

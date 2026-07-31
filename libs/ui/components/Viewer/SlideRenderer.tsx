@@ -1,11 +1,3 @@
-import { Image as ImageIcon } from "lucide-react";
-import React from "react";
-import ChartRenderer from "@/components/Charts/ChartRenderer";
-import TemplateApplier from "@/components/Viewer/TemplateApplier";
-import { WidgetRenderer } from "@/components/Viewer/WidgetRenderer";
-import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
-import { tweenNumber } from "@/lib/presentation-motion";
-import { isWidgetBlock, type WidgetWidth } from "@/lib/widget-scene";
 import {
     type ContentSlide,
     isChartSlide,
@@ -14,9 +6,17 @@ import {
     type Slide,
     type SlideBlock,
     type SlideRegion,
-} from "@/modules/types/presentation";
-import { AVAILABLE_TEMPLATES, type TemplateStyles } from "@/modules/types/template";
+} from "@slide-sage/types";
+import { Image as ImageIcon } from "lucide-react";
+import React from "react";
+import { adaptLegacyHtmlSlide } from "../../lib/legacy-slide-adapter";
+import { tweenNumber } from "../../lib/presentation-motion";
+import { AVAILABLE_TEMPLATES, type TemplateStyles } from "../../lib/templates";
+import { isWidgetBlock, type WidgetWidth } from "../../lib/widget-scene";
+import ChartRenderer from "../Charts/ChartRenderer";
 import { SceneRenderer } from "./SceneRenderer";
+import TemplateApplier from "./TemplateApplier";
+import { WidgetRenderer } from "./WidgetRenderer";
 
 function keyed<T>(items: T[], keyFor: (item: T) => string): Array<{ item: T; key: string }> {
     const occurrences = new Map<string, number>();

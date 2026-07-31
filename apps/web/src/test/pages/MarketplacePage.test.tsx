@@ -8,7 +8,7 @@ mock.module("@/contexts/AuthContext", () => ({
     useAuth: () => ({ user: null, signOut: () => Promise.resolve() }),
 }));
 
-mock.module("@/components/Viewer/SlideRenderer", () => ({
+mock.module("@slide-sage/ui/components/Viewer/SlideRenderer", () => ({
     SlideRenderer: ({ slide }: { slide: { title?: string } }) => (
         <div data-testid="slide-preview">{slide.title}</div>
     ),
@@ -38,7 +38,7 @@ describe("MarketplacePage", () => {
     it("does not render interactive controls inside the preview button", async () => {
         mock.restore();
         const { default: MarketplaceCard } = await import(
-            "@/components/Marketplace/MarketplaceCard"
+            "@slide-sage/ui/components/Marketplace/MarketplaceCard"
         );
         const { MARKETPLACE_ITEMS } = await import("@/modules/marketplace/catalog");
         const item = MARKETPLACE_ITEMS[0];

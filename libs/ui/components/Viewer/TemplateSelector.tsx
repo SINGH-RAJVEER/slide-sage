@@ -10,13 +10,20 @@ import {
 } from "@slide-sage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
-import { useInstalledMarketplaceThemes } from "@/hooks/useInstalledMarketplaceThemes";
-import { AVAILABLE_TEMPLATES } from "@/modules/types/template";
+import { AVAILABLE_TEMPLATES } from "../../lib/templates";
+
+export interface InstalledTemplateOption {
+    marketplaceId: string;
+    themeId: string;
+    name: string;
+    description: string;
+}
 
 interface TemplateSelectorProps {
     selectedTemplate: string;
     onTemplateChange: (templateId: string) => void;
     className?: string;
+    installedThemes?: InstalledTemplateOption[];
 }
 
 const getTemplatePreviewColors = (templateId: string) => {
@@ -65,8 +72,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     selectedTemplate,
     onTemplateChange,
     className = "",
+    installedThemes = [],
 }) => {
-    const installedThemes = useInstalledMarketplaceThemes();
     const currentTemplate = AVAILABLE_TEMPLATES.find((t) => t.id === selectedTemplate);
 
     return (

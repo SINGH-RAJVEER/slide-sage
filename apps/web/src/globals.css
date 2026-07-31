@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/complexity/noImportantStyles: editorial rules must override legacy theme inline styles. */
 @import "tailwindcss";
-@source "../../../libs/ui/components";
+@source "../../../libs/ui";
 
 /* Prevent horizontal scrollbars */
 html,

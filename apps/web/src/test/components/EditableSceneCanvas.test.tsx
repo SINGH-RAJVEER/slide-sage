@@ -2,8 +2,8 @@
 
 import { expect, it, mock } from "bun:test";
 import type { SceneSlide } from "@slide-sage/types";
+import { EditableSceneCanvas } from "@slide-sage/ui/components/Viewer/EditableSceneCanvas";
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import { EditableSceneCanvas } from "@/components/Viewer/EditableSceneCanvas";
 
 const slide: SceneSlide = {
     id: "scene-1",

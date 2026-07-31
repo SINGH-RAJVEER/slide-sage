@@ -1,3 +1,4 @@
+import type { ChartConfig } from "@slide-sage/types";
 import type { ChartOptions } from "chart.js";
 import {
     ArcElement,
@@ -14,7 +15,6 @@ import {
 } from "chart.js";
 import type React from "react";
 import { Bar, Doughnut, Line, Pie, PolarArea, Radar } from "react-chartjs-2";
-import type { ChartConfig } from "@/modules/types/presentation";
 
 // Register Chart.js components
 ChartJS.register(

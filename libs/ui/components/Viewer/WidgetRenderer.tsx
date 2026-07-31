@@ -1,7 +1,7 @@
+import type { WidgetBlock } from "@slide-sage/types";
 import React from "react";
-import { compileWidgetScene, type WidgetWidth } from "@/lib/widget-scene";
-import type { WidgetBlockLike } from "@/modules/types/presentation";
-import type { TemplateStyles } from "@/modules/types/template";
+import type { TemplateStyles } from "../../lib/templates";
+import { compileWidgetScene, type WidgetWidth } from "../../lib/widget-scene";
 
 const cssColor = (value: unknown, fallback: string) =>
     typeof value === "string" && (/^#|^rgb|^hsl/.test(value) || /^[a-z]+$/i.test(value))
@@ -30,7 +30,7 @@ export function WidgetRenderer({
     styles,
     widthMode,
 }: {
-    block: WidgetBlockLike;
+    block: WidgetBlock;
     styles: TemplateStyles;
     widthMode: WidgetWidth;
 }) {
