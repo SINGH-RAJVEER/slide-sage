@@ -2,7 +2,7 @@
     "vcs": {
         "enabled": true,
         "clientKind": "git",
-        "useIgnoreFile": true
+        "useIgnoreFile": false
     },
     "files": {
         "ignoreUnknown": false

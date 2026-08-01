@@ -620,7 +620,11 @@ presentations.post(
             const requestedAI = parseAISelection(body["ai"]);
             let ai: (AIModelSelection & { apiKey: string }) | undefined;
             try {
-                ai = await aiConnectionService.resolveSelection(userId, requestedAI);
+                ai = await aiConnectionService.resolveSelection(
+                    userId,
+                    requestedAI,
+                    c.req.raw.signal
+                );
             } catch (error) {
                 return byokError(c, error);
             }
@@ -1172,7 +1176,11 @@ presentations.post(
             const requestedAI = parseAISelection(body["ai"]);
             let ai: (AIModelSelection & { apiKey: string }) | undefined;
             try {
-                ai = await aiConnectionService.resolveSelection(userId, requestedAI);
+                ai = await aiConnectionService.resolveSelection(
+                    userId,
+                    requestedAI,
+                    c.req.raw.signal
+                );
             } catch (error) {
                 return byokError(c, error);
             }

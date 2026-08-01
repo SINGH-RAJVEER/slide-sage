@@ -4,7 +4,7 @@ set shell := ["bash", "-cu"]
 default:
     @just --list
 
-# Start all services and apps (postgres, api, web)
+# Start all services and apps
 dev:
     devenv up
 
@@ -20,7 +20,7 @@ migrate:
 db-generate:
     cd apps/api && bun run db:generate
 
-# Push schema changes directly (no migration file)
+# Push schema changes directly
 db-push:
     cd apps/api && bun run db:push
 
@@ -56,6 +56,3 @@ lint-fix:
 
 format:
     bun run biome format --write .
-
-install:
-    bun install

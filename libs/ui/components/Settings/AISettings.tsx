@@ -233,7 +233,7 @@ export function AISettings({
                                                 <Check className="size-4 text-emerald-400" />
                                             ) : null}
                                         </div>
-                                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                                             <a
                                                 href={provider.keyUrl}
                                                 target="_blank"
@@ -246,9 +246,14 @@ export function AISettings({
                                                 <span className="text-white/45">
                                                     Connected {connection.keyHint}
                                                 </span>
-                                            ) : null}
-                                        </div>
-                                    </div>
+                                             ) : null}
+                                         </div>
+                                         {config.modelCatalogErrors?.[provider.id] ? (
+                                             <p className="mt-2 text-xs text-amber-200/80">
+                                                 {config.modelCatalogErrors[provider.id]}
+                                             </p>
+                                         ) : null}
+                                     </div>
                                     {connection ? (
                                         <Button
                                             type="button"

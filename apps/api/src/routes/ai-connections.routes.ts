@@ -63,7 +63,7 @@ function errorResponse(c: Context, error: unknown) {
 
 routes.get("/config", async (c) => {
     try {
-        const config = await service.getConfiguration(getCurrentUserId(c));
+        const config = await service.getConfiguration(getCurrentUserId(c), c.req.raw.signal);
         return c.json(config satisfies AIConfigurationResponse);
     } catch (error) {
         return errorResponse(c, error);
@@ -119,7 +119,11 @@ routes.put("/selection", providerMutationRateLimit, async (c) => {
         if (!provider || typeof body.model !== "string") {
             return c.json({ error: { message: "Provider and model are required" } }, 400);
         }
-        await service.select(getCurrentUserId(c), { provider, model: body.model });
+        await service.select(
+            getCurrentUserId(c),
+            { provider, model: body.model },
+            c.req.raw.signal
+        );
         return c.json({ selection: { provider, model: body.model } });
     } catch (error) {
         return errorResponse(c, error);

@@ -7,6 +7,7 @@ const repository = {
     setSelection: mock(),
     upsert: mock(),
     delete: mock(),
+    markInvalid: mock(),
     markUsed: mock(),
 };
 
@@ -15,6 +16,7 @@ const userRepository = {
 };
 
 const decryptApiKey = mock();
+const validateProviderKey = mock();
 
 mock.module("@/database", () => ({
     AIConnectionRepository: class {
@@ -24,6 +26,7 @@ mock.module("@/database", () => ({
         setSelection = repository.setSelection;
         upsert = repository.upsert;
         delete = repository.delete;
+        markInvalid = repository.markInvalid;
         markUsed = repository.markUsed;
     },
     UserRepository: userRepository,
@@ -34,6 +37,22 @@ mock.module("../../services/ai-credential-encryption", () => ({
     encryptApiKey: mock(),
 }));
 
+class ProviderValidationError extends Error {
+    readonly rejected: boolean;
+    readonly incompatible: boolean;
+
+    constructor(message: string, kind: "rejected" | "incompatible" | "unavailable") {
+        super(message);
+        this.rejected = kind === "rejected";
+        this.incompatible = kind === "incompatible";
+    }
+}
+
+mock.module("../../services/ai/provider-validation", () => ({
+    ProviderValidationError,
+    validateProviderKey,
+}));
+
 const { AIConnectionService } = await import("../../services/ai-connections.service");
 
 describe("AIConnectionService generation resolution", () => {
@@ -42,8 +61,26 @@ describe("AIConnectionService generation resolution", () => {
         repository.find.mockReset();
         repository.getSelection.mockReset();
         repository.setSelection.mockReset();
+        repository.markInvalid.mockReset();
         userRepository.findById.mockReset();
         decryptApiKey.mockReset();
+        validateProviderKey.mockReset();
+        validateProviderKey.mockImplementation((provider: "openai" | "google" | "anthropic") =>
+            Promise.resolve([
+                {
+                    provider,
+                    model:
+                        provider === "openai"
+                            ? "gpt-4.1"
+                            : provider === "google"
+                              ? "gemini-2.5-flash"
+                              : "claude-sonnet-4-5-20250929",
+                    label: "Provider model",
+                    description: "Discovered from provider",
+                    recommended: true,
+                },
+            ])
+        );
         process.env["OPEN_ROUTER_MODEL"] = "openrouter/default-model";
     });
 
@@ -84,6 +121,7 @@ describe("AIConnectionService generation resolution", () => {
             apiKey: "decrypted-key",
         });
         expect(userRepository.findById).not.toHaveBeenCalled();
+        expect(validateProviderKey).toHaveBeenCalledWith("openai", "decrypted-key", undefined);
     });
 
     it("repairs a missing selection from the remaining valid connection", async () => {
@@ -108,5 +146,83 @@ describe("AIConnectionService generation resolution", () => {
             provider: "google",
             model: "gemini-2.5-flash",
         });
+        expect(validateProviderKey).toHaveBeenCalledWith("google", "google-key", undefined);
+    });
+
+    it("returns the connected provider's live model catalog and repairs stale preferences", async () => {
+        const connection = {
+            provider: "google",
+            status: "valid",
+            keyLastFour: "5678",
+            validatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            lastUsedAt: null,
+        };
+        repository.list.mockResolvedValue([connection]);
+        repository.getSelection.mockResolvedValue({
+            provider: "google",
+            model: "gemini-retired",
+        });
+        userRepository.findById.mockResolvedValue({ slideTokens: 100 });
+        decryptApiKey.mockResolvedValue("google-key");
+
+        const configuration = await new AIConnectionService().getConfiguration("user_1");
+
+        expect(configuration.models.map((model) => model.model)).toEqual(["gemini-2.5-flash"]);
+        expect(configuration.selection).toEqual({
+            provider: "google",
+            model: "gemini-2.5-flash",
+        });
+        expect(repository.setSelection).toHaveBeenCalledWith("user_1", {
+            provider: "google",
+            model: "gemini-2.5-flash",
+        });
+    });
+
+    it("rejects a model that the connected provider no longer lists", async () => {
+        const connection = {
+            provider: "openai",
+            status: "valid",
+            keyLastFour: "1234",
+            validatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            lastUsedAt: null,
+        };
+        userRepository.findById.mockResolvedValue({ slideTokens: 100 });
+        repository.find.mockResolvedValue(connection);
+        decryptApiKey.mockResolvedValue("openai-key");
+
+        await expect(
+            new AIConnectionService().select("user_1", {
+                provider: "openai",
+                model: "gpt-retired",
+            })
+        ).rejects.toThrow("Unsupported AI model");
+        expect(repository.setSelection).not.toHaveBeenCalled();
+    });
+
+    it("keeps settings usable and marks a rejected provider invalid", async () => {
+        const connection = {
+            provider: "anthropic",
+            status: "valid",
+            keyLastFour: "9876",
+            validatedAt: new Date("2026-01-01T00:00:00.000Z"),
+            lastUsedAt: null,
+        };
+        repository.list.mockResolvedValue([connection]);
+        repository.getSelection.mockResolvedValue({
+            provider: "anthropic",
+            model: "claude-retired",
+        });
+        userRepository.findById.mockResolvedValue({ slideTokens: 100 });
+        decryptApiKey.mockResolvedValue("revoked-key");
+        validateProviderKey.mockRejectedValue(
+            new ProviderValidationError("Provider rejected key", "rejected")
+        );
+
+        const configuration = await new AIConnectionService().getConfiguration("user_1");
+
+        expect(configuration.generation.mode).toBe("openrouter");
+        expect(configuration.connections[0]?.status).toBe("invalid");
+        expect(configuration.modelCatalogErrors?.anthropic).toContain("rejected");
+        expect(repository.markInvalid).toHaveBeenCalledWith("user_1", "anthropic");
     });
 });
