@@ -1,4 +1,4 @@
-import type { AIModelDescriptor, AIProvider } from "@slide-sage/types";
+import type { AIModelDescriptor, AIProvider } from "@slidesage/types";
 
 export const DEFAULT_OPENROUTER_MODEL = "google/gemma-4-26b-a4b-it";
 
@@ -47,22 +47,22 @@ export const AI_MODEL_CATALOG: AIModelDescriptor[] = [
     },
     {
         provider: "anthropic",
-        model: "claude-opus-4-1-20250805",
-        label: "Claude Opus 4.1",
-        description: "Anthropic's highest-quality model",
+        model: "claude-opus-4-5-20251101",
+        label: "Claude Opus 4.5",
+        description: "High-quality Claude model with structured output support",
     },
     {
         provider: "anthropic",
-        model: "claude-sonnet-4-20250514",
-        label: "Claude Sonnet 4",
-        description: "Balanced Claude model",
+        model: "claude-sonnet-4-5-20250929",
+        label: "Claude Sonnet 4.5",
+        description: "Balanced Claude model with structured output support",
         recommended: true,
     },
     {
         provider: "anthropic",
-        model: "claude-3-5-haiku-20241022",
-        label: "Claude 3.5 Haiku",
-        description: "Fast and economical Claude model",
+        model: "claude-haiku-4-5-20251001",
+        label: "Claude Haiku 4.5",
+        description: "Fast Claude model with structured output support",
     },
 ];
 

@@ -3,18 +3,27 @@
  * Handles user data operations
  */
 
-import { eq } from "drizzle-orm";
-import { db } from "../db";
+import { and, eq, gte, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { type Database, db } from "../db";
 import { type NewUser, type User, users } from "../db/schema";
 import { TokenCalculator } from "../services/token-calculator";
+
+type UserReadDatabase = Pick<Database, "select">;
+type UserWriteDatabase = Pick<Database, "update">;
+
+function validateTokenAmount(tokens: number): void {
+    if (!Number.isFinite(tokens) || tokens <= 0) {
+        throw new Error("Token amount must be a finite positive number");
+    }
+}
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Repository uses static methods by design.
 export class UserRepository {
     /**
      * Find user by ID
      */
-    static async findById(id: string): Promise<User | null> {
-        const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    static async findById(id: string, database: UserReadDatabase = db): Promise<User | null> {
+        const result = await database.select().from(users).where(eq(users.id, id)).limit(1);
         return result[0] || null;
     }
 
@@ -43,21 +52,23 @@ export class UserRepository {
      * Used during OAuth callback/signup
      */
     static async ensureTokensInitialized(userId: string): Promise<User> {
+        const [initializedUser] = await db
+            .update(users)
+            .set({ slideTokens: 50.0, updatedAt: new Date() })
+            .where(and(eq(users.id, userId), lte(users.slideTokens, 0)))
+            .returning();
+
+        if (initializedUser) {
+            return initializedUser;
+        }
+
         const user = await UserRepository.findById(userId);
 
         if (!user) {
             throw new Error(`User ${userId} not found`);
         }
 
-        // If user has default token amount, they're already initialized
-        if (user.slideTokens > 0) {
-            return user;
-        }
-
-        // Initialize tokens if missing
-        return await UserRepository.update(userId, {
-            slideTokens: 50.0, // Default token allocation
-        });
+        return user;
     }
 
     /**
@@ -81,34 +92,52 @@ export class UserRepository {
      * Deduct tokens from user account
      */
     static async deductTokens(userId: string, tokens: number): Promise<User> {
-        const user = await UserRepository.findById(userId);
+        validateTokenAmount(tokens);
 
-        if (!user) {
+        const [updatedUser] = await db
+            .update(users)
+            .set({
+                slideTokens: sql`${users.slideTokens} - ${tokens}`,
+                updatedAt: new Date(),
+            })
+            .where(and(eq(users.id, userId), gte(users.slideTokens, tokens)))
+            .returning();
+
+        if (updatedUser) {
+            return updatedUser;
+        }
+
+        if (!(await UserRepository.findById(userId))) {
             throw new Error("User not found");
         }
 
-        if (user.slideTokens < tokens) {
-            throw new Error("Insufficient tokens");
-        }
-
-        return await UserRepository.update(userId, {
-            slideTokens: user.slideTokens - tokens,
-        });
+        throw new Error("Insufficient tokens");
     }
 
     /**
      * Add tokens to user account
      */
-    static async addTokens(userId: string, tokens: number): Promise<User> {
-        const user = await UserRepository.findById(userId);
+    static async addTokens(
+        userId: string,
+        tokens: number,
+        database: UserWriteDatabase = db
+    ): Promise<User> {
+        validateTokenAmount(tokens);
 
-        if (!user) {
+        const [updatedUser] = await database
+            .update(users)
+            .set({
+                slideTokens: sql`${users.slideTokens} + ${tokens}`,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.id, userId))
+            .returning();
+
+        if (!updatedUser) {
             throw new Error("User not found");
         }
 
-        return await UserRepository.update(userId, {
-            slideTokens: user.slideTokens + tokens,
-        });
+        return updatedUser;
     }
 
     /**
@@ -140,28 +169,36 @@ export class UserRepository {
      * Award daily login bonus if eligible
      */
     static async awardDailyLoginBonus(userId: string): Promise<{ awarded: boolean; user: User }> {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of day
+        const bonus = TokenCalculator.getDailyLoginBonus();
+        validateTokenAmount(bonus);
+        const [updatedUser] = await db
+            .update(users)
+            .set({
+                slideTokens: sql`${users.slideTokens} + ${bonus}`,
+                lastLoginDate: today,
+                updatedAt: new Date(),
+            })
+            .where(
+                and(
+                    eq(users.id, userId),
+                    or(isNull(users.lastLoginDate), lt(users.lastLoginDate, today))
+                )
+            )
+            .returning();
+
+        if (updatedUser) {
+            return { awarded: true, user: updatedUser };
+        }
+
         const user = await UserRepository.findById(userId);
 
         if (!user) {
             throw new Error("User not found");
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of day
-
-        // Check if user has already received bonus today
-        if (user.lastLoginDate && user.lastLoginDate.getTime() === today.getTime()) {
-            return { awarded: false, user };
-        }
-
-        // Award daily bonus
-        const bonus = TokenCalculator.getDailyLoginBonus();
-        const updatedUser = await UserRepository.update(userId, {
-            slideTokens: user.slideTokens + bonus,
-            lastLoginDate: today,
-        });
-
-        return { awarded: true, user: updatedUser };
+        return { awarded: false, user };
     }
 
     /**

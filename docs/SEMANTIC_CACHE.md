@@ -33,6 +33,12 @@ bypasses the cache. Default expiry is 15 minutes for day freshness, one hour for
 week or unspecified freshness, six hours for month freshness, and 24 hours for
 year freshness. `SEARCH_CACHE_TTL_SECONDS` overrides these defaults.
 
+On a miss, Exa receives the originating request's abort signal and a timeout of
+`EXA_REQUEST_TIMEOUT_MS`, which defaults to 10,000 milliseconds. Explicit caller
+cancellation propagates and stops the enclosing operation. Exa timeout, network,
+and non-success HTTP failures are safely logged and return an empty source set;
+they are not written as a cache hit.
+
 The original source `retrieved_at` is preserved. After a hit, sources still pass
 through query-specific semantic ranking and are stored separately as user-scoped
 RAG memory when a presentation uses them.
@@ -57,12 +63,18 @@ available.
 
 ## Billing
 
-When SlideSage OpenRouter is active, usage from the outline and slide-drafting
-calls is aggregated into `tokens_used`. A cached outline contributes zero new
-model tokens. Successful requests convert measured usage at one slide token per
-1,000 AI tokens and cap the charge at the preflight quote. If OpenRouter omits
-usage, the quote is used. BYOK model calls are billed by the connected provider
-instead. Failed requests remain uncharged.
+When SlideSage OpenRouter is active, the full preflight quote is reserved before
+streaming. Usage from the outline and slide-drafting calls is aggregated into
+`tokens_used`; a cached outline contributes zero new model tokens. Successful
+requests convert measured usage at one point per 1,000 AI tokens and cap the
+charge at the quote. If OpenRouter omits usage, the quote is used.
+
+Final presentation persistence, reservation settlement, and refund of unused
+quoted points occur in one transaction before `saved`. Failed or cancelled
+requests atomically refund an active reservation. A reservation left by a stopped
+process expires after one hour and is recovered lazily by a later point-accounting
+transaction. BYOK model calls are billed by the connected provider and do not
+create a SlideSage point reservation.
 
 The final `saved` event includes `slide_tokens_charged` and
 `slide_tokens_remaining`.

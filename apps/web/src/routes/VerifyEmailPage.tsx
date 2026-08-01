@@ -1,8 +1,10 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import Header from "@/components/Header";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_URL } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import Header from "@/modules/Header";
+import { ROUTES } from "@/router/paths";
 
 function sanitizeRedirectPath(value: string | null) {
     if (!value) return "/";
@@ -15,11 +17,15 @@ export default function VerifyEmailPage() {
     const [searchParams] = useSearchParams();
     const email = searchParams.get("email");
     const redirectTo = sanitizeRedirectPath(searchParams.get("redirect_url"));
+    const isEmailChange = searchParams.get("mode") === "email-change";
     const navigate = useNavigate();
+    const location = useLocation();
     const { isSignedIn, user, refreshSession } = useAuth();
     const [code, setCode] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(
+        (location.state as { deliveryError?: string | null } | null)?.deliveryError ?? null,
+    );
     const [success, setSuccess] = useState(false);
     const [resending, setResending] = useState(false);
     const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
@@ -27,10 +33,10 @@ export default function VerifyEmailPage() {
     const resendDisabled = resending || resendCooldownSeconds > 0;
 
     useEffect(() => {
-        if (isSignedIn && user?.emailVerified) {
+        if (!isEmailChange && isSignedIn && user?.emailVerified) {
             navigate(redirectTo);
         }
-    }, [isSignedIn, navigate, redirectTo, user?.emailVerified]);
+    }, [isEmailChange, isSignedIn, navigate, redirectTo, user?.emailVerified]);
 
     // Redirect if no email is provided
     useEffect(() => {
@@ -61,13 +67,27 @@ export default function VerifyEmailPage() {
         setSubmitting(true);
 
         try {
-            const { error } = await authClient.emailOtp.verifyEmail({
-                email,
-                otp: code,
-            });
-
-            if (error) {
-                throw new Error(error.message || "Verification failed");
+            if (isEmailChange) {
+                const response = await fetch(`${API_URL}/api/profile/email/verify`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp: code }),
+                });
+                if (!response.ok) {
+                    const data = (await response.json().catch(() => null)) as {
+                        error?: { message?: string };
+                    } | null;
+                    throw new Error(data?.error?.message || "Verification failed");
+                }
+            } else {
+                const { error } = await authClient.emailOtp.verifyEmail({
+                    email,
+                    otp: code,
+                });
+                if (error) {
+                    throw new Error(error.message || "Verification failed");
+                }
             }
 
             setSuccess(true);
@@ -164,25 +184,30 @@ export default function VerifyEmailPage() {
                                     {submitting ? "Verifying..." : "Verify Email"}
                                 </button>
 
-                                <button
-                                    type="button"
-                                    onClick={handleResend}
-                                    className="w-full text-white/60 hover:text-white font-medium py-2 px-4 rounded-lg transition duration-200 disabled:opacity-60"
-                                    disabled={resendDisabled}
-                                >
-                                    {resending
-                                        ? "Sending..."
-                                        : resendCooldownSeconds > 0
-                                          ? `Resend Code in ${resendCooldownSeconds}s`
-                                          : "Resend Code"}
-                                </button>
+                                {!isEmailChange ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleResend}
+                                        className="w-full text-white/60 hover:text-white font-medium py-2 px-4 rounded-lg transition duration-200 disabled:opacity-60"
+                                        disabled={resendDisabled}
+                                    >
+                                        {resending
+                                            ? "Sending..."
+                                            : resendCooldownSeconds > 0
+                                              ? `Resend Code in ${resendCooldownSeconds}s`
+                                              : "Resend Code"}
+                                    </button>
+                                ) : null}
                             </form>
                         )}
 
                         <p className="mt-6 text-center text-sm text-white/55">
                             Wrong email?{" "}
-                            <a href="/sign-up" className="text-white hover:underline font-semibold">
-                                Sign up again
+                            <a
+                                href={isEmailChange ? ROUTES.profile : "/sign-up"}
+                                className="text-white hover:underline font-semibold"
+                            >
+                                {isEmailChange ? "Return to profile" : "Sign up again"}
                             </a>
                         </p>
                     </div>

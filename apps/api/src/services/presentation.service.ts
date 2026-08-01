@@ -14,9 +14,10 @@ import {
     type Slide,
     type Source,
     type ThemeId,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 import type { Presentation } from "@/database";
 import { PresentationRepository, TokenCalculator } from "@/database";
+import { logSafeError } from "../utils/safe-logging";
 import { AIService } from "./ai.service";
 import { applyPresentationMutations, normalizePresentationDocument } from "./presentation-document";
 import { RAGService } from "./rag.service";
@@ -32,6 +33,7 @@ export interface GeneratePresentationParams {
     researchPayload?: ResearchPayload;
     theme?: ThemeId;
     ai?: AIModelSelection & { apiKey: string };
+    signal?: AbortSignal;
 }
 
 export interface IteratePresentationParams {
@@ -44,6 +46,7 @@ export interface IteratePresentationParams {
     research?: ResearchOptions;
     ai?: AIModelSelection & { apiKey: string };
     slideCount?: number;
+    signal?: AbortSignal;
 }
 
 export interface StorePresentationMemoryParams {
@@ -123,12 +126,14 @@ export class PresentationService {
                 researchPayload,
                 params.userId,
                 theme,
-                params.ai
+                params.ai,
+                params.signal
             )) {
                 yield event;
             }
         } catch (error) {
-            console.error("Error in presentation generation:", error);
+            params.signal?.throwIfAborted();
+            logSafeError("presentation_service_generation_failed", error);
             yield {
                 event: "error",
                 data: { error: "Generation failed. Please try again." },
@@ -188,18 +193,21 @@ export class PresentationService {
                     currentPresentation,
                     params.slideCount,
                     currentPresentation.theme as ThemeId,
-                    params.ai
+                    params.ai,
+                    params.signal
                 )) {
                     yield event;
                 }
 
                 // Persistence is handled by the HTTP route layer.
             } catch (error) {
-                console.error("Error during iteration:", error);
+                params.signal?.throwIfAborted();
+                logSafeError("presentation_service_iteration_stream_failed", error);
                 throw error;
             }
         } catch (error) {
-            console.error("Error in presentation iteration:", error);
+            params.signal?.throwIfAborted();
+            logSafeError("presentation_service_iteration_failed", error);
             yield {
                 event: "error",
                 data: { error: "Iteration failed. Please try again." },
@@ -254,7 +262,7 @@ export class PresentationService {
         const updated = await this.presentationRepo.updateOwnedAtRevision(
             presentationId,
             userId,
-            presentation.updatedAt,
+            presentation.revision,
             {
                 title: slidesData.title,
                 slidesData: slidesData as PresentationJSON,
@@ -302,7 +310,7 @@ export class PresentationService {
                 `Stored semantic memory for presentation ${params.presentationId} (${params.operation})`
             );
         } catch (error) {
-            console.warn("Failed to store presentation semantic memory:", error);
+            logSafeError("presentation_service_memory_write_failed", error);
         }
     }
 
@@ -317,7 +325,7 @@ export class PresentationService {
         try {
             return await this.ragService.buildRagContextString(userId, presentationId, query);
         } catch (error) {
-            console.warn("Failed to retrieve RAG context:", error);
+            logSafeError("presentation_service_rag_read_failed", error);
             return "";
         }
     }

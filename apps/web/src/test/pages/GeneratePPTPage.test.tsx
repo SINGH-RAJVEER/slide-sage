@@ -2,9 +2,14 @@
 
 import { expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { StreamingProvider } from "@/modules/contexts/StreamingContext";
 import GeneratePPTPage from "@/modules/pages/GeneratePPTPage";
+
+function RouteStateProbe() {
+    const location = useLocation();
+    return <pre>{JSON.stringify(location.state)}</pre>;
+}
 
 it("prefills a failed presentation prompt and generation options", () => {
     const view = render(
@@ -86,6 +91,10 @@ it("opens the viewer immediately while generation waits for the stream", async (
                                 detail_level: "balanced",
                                 tonality: "professional",
                                 research_enabled: false,
+                                ai: {
+                                    provider: "anthropic",
+                                    model: "claude-sonnet-4-20250514",
+                                },
                             },
                         },
                     },
@@ -122,7 +131,62 @@ it("opens the viewer immediately while generation waits for the stream", async (
         expect(requestBody["topic"]).toBe(
             "Immediate viewer navigation, with launch risks\nand pricing",
         );
-        expect(requestBody).not.toHaveProperty("ai");
+        expect(requestBody["ai"]).toEqual({
+            provider: "anthropic",
+            model: "claude-sonnet-4-20250514",
+        });
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
+it("preserves retry AI selection when routing through research", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = mock(async () =>
+        Response.json({
+            generation: { mode: "byok", model: "gpt-4.1", billing: "provider" },
+            eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+            connections: [],
+            models: [],
+            selection: null,
+        }),
+    ) as unknown as typeof fetch;
+
+    try {
+        const view = render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: "/generate",
+                        state: {
+                            retry: {
+                                prompt: "Research this retry",
+                                slide_count: 6,
+                                detail_level: "detailed",
+                                tonality: "professional",
+                                research_enabled: true,
+                                ai: { provider: "openai", model: "gpt-4.1" },
+                            },
+                            retryPresentationId: "failed_1",
+                        },
+                    },
+                ]}
+            >
+                <StreamingProvider>
+                    <Routes>
+                        <Route path="/generate" element={<GeneratePPTPage />} />
+                        <Route path="/generate/research" element={<RouteStateProbe />} />
+                    </Routes>
+                </StreamingProvider>
+            </MemoryRouter>,
+        );
+
+        fireEvent.click(view.getByRole("button", { name: "Generate" }));
+
+        await waitFor(() =>
+            expect(view.getByText(/"retryPresentationId":"failed_1"/)).toBeInTheDocument(),
+        );
+        expect(view.getByText(/"provider":"openai","model":"gpt-4.1"/)).toBeInTheDocument();
     } finally {
         globalThis.fetch = originalFetch;
     }

@@ -7,6 +7,7 @@ type PresentationRecord = {
     title: string;
     prompt: string;
     slidesData: { slides: unknown[] };
+    revision: number;
     createdAt: Date;
     updatedAt: Date;
     parentPresentationId: string | null;
@@ -121,6 +122,7 @@ describe("PresentationService", () => {
             title: "Roadmap",
             prompt: "Build a roadmap deck",
             slidesData: { slides: [] },
+            revision: 0,
             createdAt: new Date("2026-01-01T00:00:00.000Z"),
             updatedAt: new Date("2026-01-01T00:00:00.000Z"),
             parentPresentationId: null,
@@ -175,6 +177,7 @@ describe("PresentationService", () => {
             },
             createdAt: updatedAt,
             updatedAt,
+            revision: 7,
             parentPresentationId: null,
         };
         repository.findById.mockResolvedValue(presentation);
@@ -188,7 +191,7 @@ describe("PresentationService", () => {
         expect(repository.updateOwnedAtRevision).toHaveBeenCalledWith(
             "presentation_1",
             "user_1",
-            updatedAt,
+            7,
             expect.objectContaining({
                 title: "Roadmap",
                 slidesData: expect.objectContaining({ title: "Roadmap", theme: "nature-green" }),

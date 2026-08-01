@@ -1,5 +1,5 @@
 import { Slot } from "@radix-ui/react-slot";
-import { cn } from "@slide-sage/ui/lib/utils";
+import { cn } from "@slidesage/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 

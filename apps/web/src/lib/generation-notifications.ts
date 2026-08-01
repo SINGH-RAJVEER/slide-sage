@@ -19,7 +19,7 @@ export function showGenerationCompleteNotification({
     const notification = new Notification("Presentation ready", {
         body: title || "Your presentation has finished generating.",
         icon: "/icon.png",
-        tag: `slide-sage-generation-${presentationId}`,
+        tag: `slidesage-generation-${presentationId}`,
     });
     notification.onclick = () => {
         window.focus();

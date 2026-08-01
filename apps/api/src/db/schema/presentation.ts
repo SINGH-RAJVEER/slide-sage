@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 
 export const presentations = pgTable("presentations", {
@@ -17,6 +17,7 @@ export const presentations = pgTable("presentations", {
         // biome-ignore lint/suspicious/noExplicitAny: Drizzle circular reference
         (): any => presentations.id
     ),
+    revision: integer("revision").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
         .notNull()

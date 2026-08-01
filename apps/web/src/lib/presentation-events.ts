@@ -1,4 +1,4 @@
-export const PRESENTATIONS_UPDATED_EVENT = "slide-sage:presentations-updated";
+export const PRESENTATIONS_UPDATED_EVENT = "slidesage:presentations-updated";
 
 export interface PresentationUpdatedDetail {
     presentationId: string;

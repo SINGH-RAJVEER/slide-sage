@@ -1,4 +1,4 @@
-import { cn } from "@slide-sage/ui/lib/utils";
+import { cn } from "@slidesage/ui/lib/utils";
 import { LoaderIcon } from "lucide-react";
 
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {

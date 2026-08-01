@@ -72,9 +72,13 @@ describe("GenerateResearchPage", () => {
         const originalFetch = globalThis.fetch;
         let requestCount = 0;
         let resolveResearch: ((response: Response) => void) | undefined;
+        let generationBody: Record<string, unknown> | undefined;
 
-        globalThis.fetch = mock((_input: RequestInfo | URL) => {
+        globalThis.fetch = mock((input: RequestInfo | URL, init?: RequestInit) => {
             requestCount += 1;
+            if (String(input).includes("/generate-presentation-stream")) {
+                generationBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+            }
 
             return new Promise<Response>((resolve) => {
                 resolveResearch = resolve;
@@ -92,6 +96,7 @@ describe("GenerateResearchPage", () => {
                                 slideCount: 5,
                                 detailLevel: "balanced",
                                 tonality: "professional",
+                                ai: { provider: "google", model: "gemini-2.5-pro" },
                             },
                         },
                     ]}
@@ -154,6 +159,10 @@ describe("GenerateResearchPage", () => {
 
             await waitFor(() => expect(requestCount).toBe(2));
             expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+            expect(generationBody?.["ai"]).toEqual({
+                provider: "google",
+                model: "gemini-2.5-pro",
+            });
         } finally {
             globalThis.fetch = originalFetch;
         }

@@ -3,7 +3,7 @@ import {
     type OpenRouterMessage,
     type PresentationOutline,
     type Source,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 interface GenerationMessageParams {
     systemPrompt: string;

@@ -1,5 +1,5 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { cn } from "@slide-sage/ui/lib/utils";
+import { cn } from "@slidesage/ui/lib/utils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import type * as React from "react";
 

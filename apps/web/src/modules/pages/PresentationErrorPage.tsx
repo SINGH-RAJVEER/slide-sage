@@ -1,12 +1,12 @@
-import type { ApiErrorResponse, PresentationResponse } from "@slide-sage/types";
-import { Button } from "@slide-sage/ui/components/button";
-import { Spinner } from "@slide-sage/ui/components/spinner";
+import type { ApiErrorResponse, PresentationResponse } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
+import { Spinner } from "@slidesage/ui/components/spinner";
 import { CircleAlert, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
 import { API_URL, readJsonResponse } from "@/lib/api";
 import { getPresentationRetryDestination } from "@/lib/presentation-retry";
+import Header from "@/modules/Header";
 import { ROUTES } from "@/router/paths";
 
 interface PresentationErrorPageProps {

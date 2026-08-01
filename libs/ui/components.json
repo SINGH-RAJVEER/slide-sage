@@ -11,11 +11,11 @@
         "prefix": ""
     },
     "aliases": {
-        "components": "@slide-sage/ui/components",
-        "utils": "@slide-sage/ui/lib/utils",
-        "ui": "@slide-sage/ui/components",
-        "lib": "@slide-sage/ui/lib",
-        "hooks": "@slide-sage/ui/hooks"
+        "components": "@slidesage/ui/components",
+        "utils": "@slidesage/ui/lib/utils",
+        "ui": "@slidesage/ui/components",
+        "lib": "@slidesage/ui/lib",
+        "hooks": "@slidesage/ui/hooks"
     },
     "iconLibrary": "lucide"
 }

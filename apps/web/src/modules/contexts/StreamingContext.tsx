@@ -1,4 +1,4 @@
-import type { AIModelSelection } from "@slide-sage/types";
+import type { AIModelSelection } from "@slidesage/types";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_URL, readJsonResponse } from "@/lib/api";
@@ -116,10 +116,23 @@ function getResearchPreviewKey(request: ResearchPreviewRequest) {
 function publishPointsBalance(slideTokens: unknown) {
     if (typeof slideTokens !== "number" || !Number.isFinite(slideTokens)) return;
     window.dispatchEvent(
-        new CustomEvent("slide-sage:points-updated", {
+        new CustomEvent("slidesage:points-updated", {
             detail: { slideTokens },
         }),
     );
+}
+
+async function fetchPersistedPresentation(
+    presentationId: string,
+): Promise<PresentationData | null> {
+    const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+        credentials: "include",
+    });
+    if (!response.ok) return null;
+    const data = (await response.json().catch(() => null)) as {
+        presentation?: { slides_data?: PresentationData };
+    } | null;
+    return data?.presentation?.slides_data ?? null;
 }
 
 export function StreamingProvider({ children }: { children: ReactNode }) {
@@ -168,7 +181,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             readerRef.current = null;
         }
         releaseActiveStream();
-        setStreamingState((prev) => ({ ...prev, isStreaming: false }));
+        setStreamingState((prev) => ({ ...prev, isStreaming: false, isComplete: false }));
     }, [releaseActiveStream]);
 
     const startResearchPreview = useCallback(
@@ -451,6 +464,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 let receivedComplete = false;
                 let receivedError = false;
                 let receivedSaved = false;
+                let streamedPresentationId = retryPresentationId;
+                let completedData: PresentationData | null = null;
 
                 const processStream = async () => {
                     try {
@@ -513,6 +528,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 break;
 
                                             case "created":
+                                                streamedPresentationId = data.presentation_id;
                                                 // Presentation record created - store the ID immediately
                                                 setStreamingState((prev) => ({
                                                     ...prev,
@@ -572,10 +588,11 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "complete":
                                                 receivedComplete = true;
+                                                completedData = data as PresentationData;
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     completedDocument: data,
-                                                    isComplete: true,
+                                                    isComplete: receivedSaved,
                                                     theme: data.theme || prev.theme,
                                                     title: data.title || prev.title,
                                                     slides: data.slides || prev.slides,
@@ -592,6 +609,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 // Final save confirmation - update presentation ID if provided
                                                 setStreamingState((prev) => ({
                                                     ...prev,
+                                                    isComplete: receivedComplete,
                                                     presentationId:
                                                         data.presentation_id || prev.presentationId,
                                                 }));
@@ -618,6 +636,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     isStreaming: false,
+                                                    isComplete: false,
                                                     error: data.error,
                                                     researchStatus: "idle",
                                                 }));
@@ -635,9 +654,39 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                         if (!receivedComplete || !receivedSaved || receivedError) {
                             if (!receivedError) {
+                                const persisted = streamedPresentationId
+                                    ? await fetchPersistedPresentation(
+                                          streamedPresentationId,
+                                      ).catch(() => null)
+                                    : null;
+                                const persistedSlides = persisted?.slides ?? [];
+                                const generatedSlides = completedData?.slides ?? [];
+                                if (
+                                    persisted &&
+                                    (persisted as (PresentationData & { status?: string }) | null)
+                                        ?.status === "ready" &&
+                                    persistedSlides.length > 0 &&
+                                    JSON.stringify(persistedSlides) ===
+                                        JSON.stringify(generatedSlides)
+                                ) {
+                                    setStreamingState((prev) => ({
+                                        ...prev,
+                                        ...persisted,
+                                        completedDocument: persisted,
+                                        presentationId: streamedPresentationId,
+                                        slides: persistedSlides,
+                                        totalSlides: persistedSlides.length,
+                                        isStreaming: false,
+                                        isComplete: true,
+                                        error: undefined,
+                                    }));
+                                    publishPresentationUpdated(streamedPresentationId);
+                                    return;
+                                }
                                 setStreamingState((prev) => ({
                                     ...prev,
                                     isStreaming: false,
+                                    isComplete: false,
                                     error: "Generation stream ended before the presentation was completed.",
                                 }));
                             }
@@ -663,6 +712,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                             setStreamingState((prev) => ({
                                 ...prev,
                                 isStreaming: false,
+                                isComplete: false,
                                 error: `Streaming error: ${message}`,
                             }));
                         }
@@ -813,6 +863,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                 let receivedComplete = false;
                 let receivedError = false;
                 let receivedSaved = false;
+                let completedData: PresentationData | null = null;
 
                 const processStream = async () => {
                     try {
@@ -926,10 +977,11 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                                             case "complete":
                                                 receivedComplete = true;
+                                                completedData = data as PresentationData;
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     completedDocument: data,
-                                                    isComplete: true,
+                                                    isComplete: receivedSaved,
                                                     theme: data.theme || prev.theme,
                                                     title: data.title || prev.title,
                                                     // Use complete slides data if available to ensure consistency
@@ -947,6 +999,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 // Iteration saved - presentation updated in place
                                                 setStreamingState((prev) => ({
                                                     ...prev,
+                                                    isComplete: receivedComplete,
                                                     presentationId:
                                                         data.presentation_id || prev.presentationId,
                                                 }));
@@ -972,6 +1025,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                                                 setStreamingState((prev) => ({
                                                     ...prev,
                                                     isStreaming: false,
+                                                    isComplete: false,
                                                     error: data.error,
                                                     researchStatus: "idle",
                                                 }));
@@ -989,9 +1043,37 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
                         if (!receivedComplete || !receivedSaved || receivedError) {
                             if (!receivedError) {
+                                const persisted = await fetchPersistedPresentation(
+                                    parentPresentationId,
+                                ).catch(() => null);
+                                const persistedSlides = persisted?.slides ?? [];
+                                const generatedSlides = completedData?.slides ?? [];
+                                if (
+                                    persisted &&
+                                    (persisted as (PresentationData & { status?: string }) | null)
+                                        ?.status === "ready" &&
+                                    persistedSlides.length > 0 &&
+                                    JSON.stringify(persistedSlides) ===
+                                        JSON.stringify(generatedSlides)
+                                ) {
+                                    setStreamingState((prev) => ({
+                                        ...prev,
+                                        ...persisted,
+                                        completedDocument: persisted,
+                                        presentationId: parentPresentationId,
+                                        slides: persistedSlides,
+                                        totalSlides: persistedSlides.length,
+                                        isStreaming: false,
+                                        isComplete: true,
+                                        error: undefined,
+                                    }));
+                                    publishPresentationUpdated(parentPresentationId);
+                                    return;
+                                }
                                 setStreamingState((prev) => ({
                                     ...prev,
                                     isStreaming: false,
+                                    isComplete: false,
                                     error: "Update stream ended before the presentation was completed.",
                                 }));
                             }
@@ -1017,6 +1099,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
                             setStreamingState((prev) => ({
                                 ...prev,
                                 isStreaming: false,
+                                isComplete: false,
                                 error: `Streaming error: ${message}`,
                             }));
                         }

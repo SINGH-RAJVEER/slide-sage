@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { isSceneSlide } from "@slide-sage/types";
+import { isSceneSlide } from "@slidesage/types";
 import {
     applyPresentationMutations,
     normalizePresentationDocument,

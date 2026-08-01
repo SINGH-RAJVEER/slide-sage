@@ -1,4 +1,4 @@
-import type { PresentationJSON } from "@slide-sage/types";
+import type { PresentationJSON } from "@slidesage/types";
 import { ROUTES } from "@/router/paths";
 
 export function getPresentationRetryDestination(
@@ -19,6 +19,7 @@ export function getPresentationRetryDestination(
                 theme: retry.theme ?? "corporate-blue",
                 researchPayload: retry.research_payload,
                 retryPresentationId: presentationId,
+                ...(retry.ai ? { ai: retry.ai } : {}),
             },
         };
     }

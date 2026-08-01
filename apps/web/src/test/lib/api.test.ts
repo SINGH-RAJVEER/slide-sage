@@ -3,8 +3,8 @@ import { normalizeApiUrl, readJsonResponse, resolveApiUrl } from "@/lib/api";
 
 describe("normalizeApiUrl", () => {
     it("adds HTTPS to a bare deployed API hostname", () => {
-        expect(normalizeApiUrl("slide-sage.therajveersingh.workers.dev")).toBe(
-            "https://slide-sage.therajveersingh.workers.dev",
+        expect(normalizeApiUrl("slidesage.therajveersingh.workers.dev")).toBe(
+            "https://slidesage.therajveersingh.workers.dev",
         );
     });
 
@@ -58,21 +58,17 @@ describe("resolveApiUrl", () => {
 
     it("keeps the deployed API origin for Cloudflare Pages previews", () => {
         expect(
-            resolveApiUrl(
-                "https://api.slidesage.app",
-                true,
-                "https://slide-sage.pages.dev/profile",
-            ),
+            resolveApiUrl("https://api.slidesage.app", true, "https://slidesage.pages.dev/profile"),
         ).toBe("https://api.slidesage.app");
     });
 
     it("uses the deployed API for Cloudflare Pages when the build variable is missing", () => {
-        expect(resolveApiUrl(undefined, true, "https://slide-sage.pages.dev/settings")).toBe(
+        expect(resolveApiUrl(undefined, true, "https://slidesage.pages.dev/settings")).toBe(
             "https://api.slidesage.app",
         );
-        expect(
-            resolveApiUrl(undefined, true, "https://feature.slide-sage.pages.dev/settings"),
-        ).toBe("https://api.slidesage.app");
+        expect(resolveApiUrl(undefined, true, "https://feature.slidesage.pages.dev/settings")).toBe(
+            "https://api.slidesage.app",
+        );
     });
 });
 

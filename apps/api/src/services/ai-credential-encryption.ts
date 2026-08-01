@@ -1,4 +1,4 @@
-import type { AIProvider } from "@slide-sage/types";
+import type { AIProvider } from "@slidesage/types";
 
 export interface EncryptedCredential {
     encryptedApiKey: string;

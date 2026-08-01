@@ -1,4 +1,4 @@
-import type { AIModelSelection, AIProvider } from "@slide-sage/types";
+import type { AIModelSelection, AIProvider } from "@slidesage/types";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { type AIProviderConnection, aiProviderConnections, userAiPreferences } from "../db/schema";

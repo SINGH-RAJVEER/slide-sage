@@ -1,10 +1,11 @@
-import { Button } from "@slide-sage/ui/components/button";
-import { Spinner } from "@slide-sage/ui/components/spinner";
+import type { AIModelSelection } from "@slidesage/types";
+import { Button } from "@slidesage/ui/components/button";
+import { Spinner } from "@slidesage/ui/components/spinner";
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
 import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
+import Header from "@/modules/Header";
 import { useStreaming } from "@/modules/presentations";
 import type { ResearchPayload, ThemeId } from "@/modules/types/presentation";
 import { ROUTES } from "@/router/paths";
@@ -17,6 +18,7 @@ interface ResearchRouteState {
     theme: ThemeId;
     researchPayload?: ResearchPayload;
     retryPresentationId?: string;
+    ai?: AIModelSelection;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -35,6 +37,7 @@ export default function GenerateResearchPage() {
     const theme = routeState?.theme ?? "corporate-blue";
     const savedResearch = routeState?.researchPayload;
     const retryPresentationId = routeState?.retryPresentationId;
+    const ai = routeState?.ai;
 
     const [isProceeding, setIsProceeding] = useState(false);
     const [researchAttempt, setResearchAttempt] = useState(0);
@@ -110,6 +113,7 @@ export default function GenerateResearchPage() {
             payload,
             retryPresentationId,
             theme,
+            ai,
         );
         navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
@@ -121,6 +125,7 @@ export default function GenerateResearchPage() {
     }, [
         detailLevel,
         estimatedTokens,
+        ai,
         prompt,
         researchStatus,
         retryPresentationId,

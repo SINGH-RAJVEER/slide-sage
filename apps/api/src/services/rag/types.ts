@@ -1,4 +1,4 @@
-import type { Slide, Source } from "@slide-sage/types";
+import type { Slide, Source } from "@slidesage/types";
 
 export interface EmbeddingResult {
     embedding: number[];

@@ -29,7 +29,7 @@ describe("Header", () => {
         mockAuthState.user = null;
 
         // Import after mocking AuthContext.
-        const { default: Header } = await import("../../components/Header");
+        const { default: Header } = await import("../../modules/Header");
 
         const { container } = render(
             <BrowserRouter>
@@ -46,7 +46,7 @@ describe("Header", () => {
         mockAuthState.user = null;
 
         // Import after mocking AuthContext.
-        const { default: Header } = await import("../../components/Header");
+        const { default: Header } = await import("../../modules/Header");
 
         const { queryByText } = render(
             <MemoryRouter initialEntries={["/sign-in"]}>
@@ -63,7 +63,7 @@ describe("Header", () => {
         mockAuthState.user = null;
 
         // Import after mocking AuthContext.
-        const { default: Header } = await import("../../components/Header");
+        const { default: Header } = await import("../../modules/Header");
 
         const { queryByText, rerender } = render(
             <MemoryRouter initialEntries={["/sign-in/sso-callback"]}>
@@ -93,12 +93,12 @@ describe("Header", () => {
             email: "rajveer@example.com",
             image: null,
             emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             slideTokens: 10,
         };
 
-        const { default: Header } = await import("../../components/Header");
+        const { default: Header } = await import("../../modules/Header");
 
         const { getByText } = render(
             <BrowserRouter>
@@ -116,12 +116,12 @@ describe("Header", () => {
             email: "rajveer@example.com",
             image: "https://lh3.googleusercontent.com/a/profile=s96-c",
             emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             slideTokens: 10,
         };
 
-        const { default: Header } = await import("../../components/Header");
+        const { default: Header } = await import("../../modules/Header");
         const { container, getByText } = render(
             <BrowserRouter>
                 <Header />
@@ -139,12 +139,12 @@ describe("Header", () => {
             email: "rajveer@example.com",
             image: null,
             emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             slideTokens: 10,
         };
 
-        const { default: Header } = await import("../../components/Header");
+        const { default: Header } = await import("../../modules/Header");
         const view = render(
             <MemoryRouter initialEntries={["/generate"]}>
                 <Header />

@@ -45,6 +45,9 @@ test-api:
 test-web:
     bun run test:web
 
+test-ui:
+    bun run test:ui
+
 lint:
     bun run biome check .
 

@@ -1,4 +1,4 @@
-import { SCENE_PRESENTATION_SCHEMA_VERSION } from "@slide-sage/types";
+import { SCENE_PRESENTATION_SCHEMA_VERSION } from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import type { PresentationData, Slide } from "@/modules/types/presentation";
@@ -17,6 +17,7 @@ interface StreamingLikeState {
     slides: Slide[];
     theme: string;
     title: string;
+    operation?: "generation" | "iteration";
     presentationId?: string;
     error?: string;
     completedDocument?: PresentationData;
@@ -64,6 +65,9 @@ export function usePresentationData({
     );
 
     const streamingSlidesCount = streamingState.slides.length;
+    const consumesStreamingState =
+        isStreamingMode ||
+        (!!presentationIdFromParams && streamingState.presentationId === presentationIdFromParams);
 
     // Keep presentationId in sync with URL param changes
     useEffect(() => {
@@ -74,14 +78,14 @@ export function usePresentationData({
 
     // When streaming starts and we have no slides yet, clear previous state
     useEffect(() => {
-        if (streamingState.isStreaming && streamingSlidesCount === 0) {
+        if (consumesStreamingState && streamingState.isStreaming && streamingSlidesCount === 0) {
             setPresentation(undefined);
         }
-    }, [streamingState.isStreaming, streamingSlidesCount]);
+    }, [consumesStreamingState, streamingState.isStreaming, streamingSlidesCount]);
 
     // Update presentation while streaming
     useEffect(() => {
-        if (streamingState.isStreaming && streamingSlidesCount > 0) {
+        if (consumesStreamingState && streamingState.isStreaming && streamingSlidesCount > 0) {
             setPresentation({
                 ...streamingState.completedDocument,
                 schemaVersion:
@@ -104,12 +108,14 @@ export function usePresentationData({
         streamingState.theme,
         streamingState.slides,
         streamingState.completedDocument,
+        consumesStreamingState,
     ]);
 
     // Capture final presentation state when streaming completes
     useEffect(() => {
         if (
             streamingState.isComplete &&
+            consumesStreamingState &&
             !streamingState.isStreaming &&
             streamingState.slides.length > 0
         ) {
@@ -135,14 +141,15 @@ export function usePresentationData({
         streamingState.title,
         streamingState.theme,
         streamingState.completedDocument,
+        consumesStreamingState,
     ]);
 
     // If we learn the presentationId from the stream, capture it
     useEffect(() => {
-        if (streamingState.presentationId && !presentationId) {
+        if (consumesStreamingState && streamingState.presentationId && !presentationId) {
             setPresentationId(streamingState.presentationId);
         }
-    }, [streamingState.presentationId, presentationId]);
+    }, [consumesStreamingState, streamingState.presentationId, presentationId]);
 
     // Track if streaming just completed - used to avoid racing the DB fetch
     const streamingJustCompletedRef = useRef(false);
@@ -163,8 +170,23 @@ export function usePresentationData({
 
     const lastFetchedPresentationIdRef = useRef<string | undefined>(undefined);
     useEffect(() => {
+        if (
+            streamingState.operation === "iteration" &&
+            streamingState.error &&
+            streamingState.presentationId === presentationIdFromParams
+        ) {
+            lastFetchedPresentationIdRef.current = undefined;
+            setPresentation(undefined);
+        }
+    }, [
+        presentationIdFromParams,
+        streamingState.error,
+        streamingState.operation,
+        streamingState.presentationId,
+    ]);
+    useEffect(() => {
         const fetchPresentation = async () => {
-            if (streamingState.isStreaming) {
+            if (consumesStreamingState && streamingState.isStreaming) {
                 setIsLoading(false);
                 return;
             }
@@ -175,7 +197,11 @@ export function usePresentationData({
                 return;
             }
 
-            if (streamingState.isComplete && streamingState.slides.length > 0) {
+            if (
+                consumesStreamingState &&
+                streamingState.isComplete &&
+                streamingState.slides.length > 0
+            ) {
                 setIsLoading(false);
                 return;
             }
@@ -285,6 +311,7 @@ export function usePresentationData({
         fetchPresentation();
     }, [
         apiUrl,
+        consumesStreamingState,
         idToFetch,
         isStreamingMode,
         locationState?.presentation,

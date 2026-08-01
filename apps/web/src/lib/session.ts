@@ -7,8 +7,8 @@ export interface SessionUser {
     image: string | null;
     emailVerified: boolean;
     slideTokens: number;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 const SESSION_RETRY_DELAYS_MS = [0, 250, 500];

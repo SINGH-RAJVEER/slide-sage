@@ -22,7 +22,7 @@ export type {
     StreamSlideEvent,
     StreamStartEvent,
     StreamThemeEvent,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 export * from "./db";
 export * from "./db/schema";
 export { AIConnectionRepository } from "./repositories/ai-connection.repository";

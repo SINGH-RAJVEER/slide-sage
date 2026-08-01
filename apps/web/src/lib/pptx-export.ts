@@ -1,6 +1,6 @@
+import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
+import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
 import PptxGenJS from "pptxgenjs";
-import { adaptLegacyHtmlSlide } from "@/lib/legacy-slide-adapter";
-import { compileWidgetScene, isWidgetBlock } from "@/lib/widget-scene";
 import {
     type ChartConfig,
     type ContentSlide,

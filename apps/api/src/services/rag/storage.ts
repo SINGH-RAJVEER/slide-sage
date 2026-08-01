@@ -1,4 +1,4 @@
-import { PRESENTATION_SCHEMA_VERSION, type PresentationJSON, type Source } from "@slide-sage/types";
+import { PRESENTATION_SCHEMA_VERSION, type PresentationJSON, type Source } from "@slidesage/types";
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
     db,
@@ -12,6 +12,7 @@ import {
     sourceChunks,
     styleMemories,
 } from "@/database";
+import { logSafeError } from "../../utils/safe-logging";
 import type {
     GenerateEmbedding,
     MemorySourceType,
@@ -60,7 +61,7 @@ export async function storeSourceChunks(
                 },
             });
         } catch (error) {
-            console.warn("Failed to store source chunk embedding:", error);
+            logSafeError("rag_source_chunk_write_failed", error);
         }
     }
 }
@@ -91,7 +92,7 @@ export async function storeRagContext(
 
         return result[0] || null;
     } catch (error) {
-        console.error("Error storing RAG context:", error);
+        logSafeError("rag_context_write_failed", error);
         return null;
     }
 }
@@ -108,7 +109,7 @@ export async function getPresentationRagContexts(
             .orderBy(desc(ragContext.createdAt))
             .limit(limit);
     } catch (error) {
-        console.error("Error retrieving RAG contexts:", error);
+        logSafeError("rag_context_read_failed", error);
         return [];
     }
 }
@@ -195,7 +196,7 @@ export async function storeSlideMemories(
                 },
             });
         } catch (error) {
-            console.warn(`Failed to store slide ${index + 1} semantic memory:`, error);
+            logSafeError("rag_slide_memory_write_failed", error);
         }
     }
 }
@@ -272,6 +273,7 @@ export async function storeExampleGeneration(
 
     await db.insert(exampleGenerations).values({
         userId: params.userId,
+        presentationId: params.presentationId,
         prompt: params.prompt,
         summary,
         outputJson,

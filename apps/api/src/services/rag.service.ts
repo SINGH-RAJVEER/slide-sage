@@ -3,8 +3,10 @@
  * Handles embedding generation, semantic memory storage, and retrieval.
  */
 
-import type { Source } from "@slide-sage/types";
+import type { Source } from "@slidesage/types";
 import type { RagContext } from "@/database";
+import { abortReason, combineAbortSignal, throwIfAborted } from "../utils/abort";
+import { logSafeError } from "../utils/safe-logging";
 import { DEFAULT_EMBEDDING_MODEL } from "./rag/defaults";
 import {
     retrieveBestSemanticCommandIntent,
@@ -72,8 +74,18 @@ export class RAGService {
     /**
      * Generate embeddings using OpenRouter.
      */
-    async generateEmbedding(text: string): Promise<EmbeddingResult> {
+    async generateEmbedding(text: string, signal?: AbortSignal): Promise<EmbeddingResult> {
+        const timeoutMs = Number.parseInt(
+            process.env["EMBEDDING_REQUEST_TIMEOUT_MS"] ?? "15000",
+            10
+        );
+        const combined = combineAbortSignal(
+            signal,
+            Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 15000,
+            "Embedding request timed out"
+        );
         try {
+            throwIfAborted(signal);
             if (!text || text.trim().length === 0) {
                 throw new Error("Text cannot be empty");
             }
@@ -103,15 +115,24 @@ export class RAGService {
                     "X-OpenRouter-Title": "Slide Sage",
                 },
                 body: JSON.stringify(requestBody),
+                signal: combined.signal,
             });
 
             if (!response.ok) {
-                const error = await response.text();
-                console.error("OpenRouter embedding API error:", error);
+                await response.body?.cancel().catch(() => undefined);
                 throw new Error(`Failed to generate embedding: ${response.statusText}`);
             }
 
-            const data = await response.json();
+            const contentLength = Number(response.headers.get("content-length") ?? 0);
+            if (contentLength > 1024 * 1024) {
+                await response.body?.cancel().catch(() => undefined);
+                throw new Error("Embedding response is too large");
+            }
+            const raw = await response.text();
+            if (new TextEncoder().encode(raw).byteLength > 1024 * 1024) {
+                throw new Error("Embedding response is too large");
+            }
+            const data = JSON.parse(raw);
 
             if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
                 throw new Error("Invalid embedding response format");
@@ -128,8 +149,11 @@ export class RAGService {
                 model: this.embeddingModel,
             };
         } catch (error) {
-            console.error("Error generating embedding:", error);
+            if (signal?.aborted) throw abortReason(signal);
+            logSafeError("embedding_generation_failed", error);
             throw error;
+        } finally {
+            combined.dispose();
         }
     }
 
@@ -140,10 +164,11 @@ export class RAGService {
         userId: string,
         query: string,
         sources: Source[],
-        presentationId?: string
+        presentationId?: string,
+        signal?: AbortSignal
     ): Promise<void> {
         return storeSourceChunks(
-            this.generateEmbedding.bind(this),
+            (text) => this.generateEmbedding(text, signal),
             userId,
             query,
             sources,
@@ -208,19 +233,21 @@ export class RAGService {
     async rankSourcesBySemanticRelevance(
         query: string,
         sources: Source[],
-        limit = 8
+        limit = 8,
+        signal?: AbortSignal
     ): Promise<Source[]> {
         if (sources.length <= 1) return sources.slice(0, limit);
 
         try {
-            const { embedding: queryEmbedding } = await this.generateEmbedding(query);
+            const { embedding: queryEmbedding } = await this.generateEmbedding(query, signal);
             const ranked: RankedSource[] = [];
 
             for (const source of sources) {
+                throwIfAborted(signal);
                 const chunkText = buildSourceChunkText(query, source);
                 if (!chunkText) continue;
 
-                const { embedding } = await this.generateEmbedding(chunkText);
+                const { embedding } = await this.generateEmbedding(chunkText, signal);
                 ranked.push({
                     ...source,
                     similarity: cosineSimilarity(queryEmbedding, embedding),
@@ -234,7 +261,8 @@ export class RAGService {
                 .slice(0, limit)
                 .map(({ similarity: _similarity, ...source }) => source);
         } catch (error) {
-            console.warn("Semantic source ranking failed; using original search order:", error);
+            if (signal?.aborted) throw abortReason(signal);
+            logSafeError("semantic_source_ranking_failed", error);
             return sources.slice(0, limit);
         }
     }
@@ -247,11 +275,12 @@ export class RAGService {
         presentationId: string,
         query: string,
         topK = 8,
-        similarityThreshold = 0.55
+        similarityThreshold = 0.55,
+        signal?: AbortSignal
     ): Promise<SimilarContext[]> {
         try {
             await this.ensureDefaultSlideTemplatesSeeded();
-            const { embedding } = await this.generateEmbedding(query);
+            const { embedding } = await this.generateEmbedding(query, signal);
             const perTableLimit = Math.max(2, Math.ceil(topK / 2));
 
             const allContexts: SimilarContext[] = [
@@ -313,7 +342,7 @@ export class RAGService {
 
             return allContexts.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
         } catch (error) {
-            console.error("Error retrieving similar contexts:", error);
+            logSafeError("similar_context_read_failed", error);
             return [];
         }
     }
@@ -352,7 +381,8 @@ export class RAGService {
     async buildRagContextString(
         userId: string,
         presentationId: string,
-        query: string
+        query: string,
+        signal?: AbortSignal
     ): Promise<string> {
         try {
             const similarContexts = await this.retrieveSimilarContexts(
@@ -360,7 +390,8 @@ export class RAGService {
                 presentationId,
                 query,
                 8,
-                0.55
+                0.55,
+                signal
             );
 
             if (similarContexts.length === 0) {
@@ -385,7 +416,8 @@ export class RAGService {
 
             return `## RELEVANT SEMANTIC MEMORY:\n\n${contextLines.join("\n\n")}\n\n`;
         } catch (error) {
-            console.error("Error building RAG context string:", error);
+            if (signal?.aborted) throw abortReason(signal);
+            logSafeError("rag_context_build_failed", error);
             return "";
         }
     }
@@ -393,10 +425,14 @@ export class RAGService {
     /**
      * Build reusable memory for a new generation request.
      */
-    async buildGenerationMemoryContextString(userId: string, query: string): Promise<string> {
+    async buildGenerationMemoryContextString(
+        userId: string,
+        query: string,
+        signal?: AbortSignal
+    ): Promise<string> {
         try {
             await this.ensureDefaultSlideTemplatesSeeded();
-            const { embedding } = await this.generateEmbedding(query);
+            const { embedding } = await this.generateEmbedding(query, signal);
             const contexts = [
                 ...(await retrieveTemplateContexts(this.embeddingModel, embedding, 3, 0.45)),
                 ...(await retrieveExampleContexts(userId, embedding, 2, 0.5)),
@@ -414,7 +450,8 @@ export class RAGService {
 
             return `## RELEVANT GENERATION MEMORY:\n\n${lines.join("\n\n")}\n\n`;
         } catch (error) {
-            console.warn("Failed to build generation memory context:", error);
+            if (signal?.aborted) throw abortReason(signal);
+            logSafeError("generation_memory_build_failed", error);
             return "";
         }
     }
@@ -428,7 +465,7 @@ export class RAGService {
             cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
             return await cleanupStoredEmbeddings(userId, cutoffDate);
         } catch (error) {
-            console.error("Error cleaning up embeddings:", error);
+            logSafeError("embedding_cleanup_failed", error);
             return 0;
         }
     }
@@ -445,7 +482,7 @@ export class RAGService {
                 return match.intent;
             }
         } catch (error) {
-            console.warn("Semantic command classification failed:", error);
+            logSafeError("semantic_command_classification_failed", error);
         }
 
         return fallbackPromptIntent(prompt);
@@ -461,7 +498,7 @@ export class RAGService {
             );
             this.defaultTemplatesSeeded = true;
         } catch (error) {
-            console.warn("Failed to seed default slide templates:", error);
+            logSafeError("slide_template_seed_failed", error);
         }
     }
 
@@ -475,7 +512,7 @@ export class RAGService {
             );
             this.defaultSemanticCommandsSeeded = true;
         } catch (error) {
-            console.warn("Failed to seed default semantic commands:", error);
+            logSafeError("semantic_command_seed_failed", error);
         }
     }
 
@@ -483,7 +520,7 @@ export class RAGService {
         try {
             await task();
         } catch (error) {
-            console.warn(`Semantic memory task failed (${name}):`, error);
+            logSafeError(`semantic_memory_task_failed:${name}`, error);
         }
     }
 }

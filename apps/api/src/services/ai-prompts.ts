@@ -1,6 +1,6 @@
 // AI Service Prompts and Configuration
 
-import type { ThemeId } from "@slide-sage/types";
+import type { ThemeId } from "@slidesage/types";
 
 const DETAIL_LEVEL_GUIDE = {
     brief: {

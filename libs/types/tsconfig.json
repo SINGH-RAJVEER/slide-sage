@@ -5,7 +5,7 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "paths": {
-            "@slide-sage/types": ["./src/index.ts"]
+            "@slidesage/types": ["./src/index.ts"]
         }
     },
     "include": ["src/**/*.ts"],

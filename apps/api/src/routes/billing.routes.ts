@@ -4,35 +4,137 @@ import type {
     BillingCheckoutResponse,
     BillingVerifyRequest,
     BillingVerifyResponse,
-} from "@slide-sage/types";
-import { eq } from "drizzle-orm";
+} from "@slidesage/types";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { db, payments, UserRepository } from "@/database";
+import { clientAddress, rateLimit, userRateLimit } from "../middleware/rate-limit";
 import { authMiddleware, getCurrentUserId } from "../services/auth";
+import { GenerationPointAccountingService } from "../services/generation-point-accounting.service";
 import {
+    type CapturedRazorpayPayment,
     createOrder,
-    resolvePackPrice,
+    fetchRazorpayPayment,
+    parseCapturedRazorpayPayment,
     verifyPaymentSignature,
     verifyWebhookSignature,
 } from "../services/razorpay.service";
+import { logSafeError } from "../utils/safe-logging";
 
 const billing = new Hono();
+const billingBodyLimit = bodyLimit({
+    maxSize: 32 * 1024,
+    onError: (c) => c.json({ error: { message: "Request body is too large" } }, 413),
+});
+const webhookBodyLimit = bodyLimit({
+    maxSize: 256 * 1024,
+    onError: (c) => c.json({ error: { message: "Request body is too large" } }, 413),
+});
+const pointAccounting = new GenerationPointAccountingService();
+const checkoutRateLimit = userRateLimit("billing:checkout", 10, 10 * 60);
+const verifyRateLimit = userRateLimit("billing:verify", 20, 15 * 60);
+const webhookRateLimit = rateLimit([
+    {
+        scope: "billing:webhook:ip",
+        limit: 120,
+        windowSeconds: 60,
+        identity: clientAddress,
+    },
+]);
+
+type PaymentFulfillmentResult =
+    | { kind: "success"; tokensGranted: number; newBalance: number }
+    | { kind: "not-found" }
+    | { kind: "unauthorized" }
+    | { kind: "invalid" }
+    | { kind: "conflict" };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
+async function fulfillPayment(
+    capturedPayment: CapturedRazorpayPayment,
+    expectedUserId?: string
+): Promise<PaymentFulfillmentResult> {
+    return await db.transaction(async (tx) => {
+        const [claimedPayment] = await tx
+            .update(payments)
+            .set({
+                razorpayPaymentId: capturedPayment.paymentId,
+                status: "paid",
+            })
+            .where(
+                and(
+                    eq(payments.razorpayOrderId, capturedPayment.orderId),
+                    eq(payments.status, "created"),
+                    eq(payments.amountPaise, capturedPayment.amountPaise),
+                    expectedUserId ? eq(payments.userId, expectedUserId) : undefined
+                )
+            )
+            .returning();
+
+        if (claimedPayment) {
+            const user = await UserRepository.addTokens(
+                claimedPayment.userId,
+                claimedPayment.tokensGranted,
+                tx
+            );
+            return {
+                kind: "success",
+                tokensGranted: claimedPayment.tokensGranted,
+                newBalance: user.slideTokens,
+            };
+        }
+
+        const [payment] = await tx
+            .select()
+            .from(payments)
+            .where(eq(payments.razorpayOrderId, capturedPayment.orderId))
+            .limit(1);
+
+        if (!payment) {
+            return { kind: "not-found" };
+        }
+        if (expectedUserId && payment.userId !== expectedUserId) {
+            return { kind: "unauthorized" };
+        }
+        if (payment.amountPaise !== capturedPayment.amountPaise) {
+            return { kind: "invalid" };
+        }
+        if (payment.status !== "paid" || payment.razorpayPaymentId !== capturedPayment.paymentId) {
+            return { kind: "conflict" };
+        }
+
+        const user = await UserRepository.findById(payment.userId, tx);
+        if (!user) {
+            throw new Error("Payment user not found");
+        }
+
+        return {
+            kind: "success",
+            tokensGranted: payment.tokensGranted,
+            newBalance: user.slideTokens,
+        };
+    });
+}
 
 billing.get("/balance", authMiddleware, async (c) => {
     try {
         const userId = getCurrentUserId(c);
-        const { user } = await UserRepository.getTokenBalance(userId);
+        const balance = await pointAccounting.getBalance(userId);
 
         return c.json({
-            slide_tokens: user.slideTokens,
+            slide_tokens: balance,
         } satisfies BillingBalanceResponse);
     } catch (error) {
-        console.error("Balance error:", error instanceof Error ? error.message : String(error));
+        logSafeError("billing_balance_failed", error);
         return c.json({ error: { message: "Internal server error" } }, 500);
     }
 });
 
-billing.post("/checkout", authMiddleware, async (c) => {
+billing.post("/checkout", billingBodyLimit, authMiddleware, checkoutRateLimit, async (c) => {
     try {
         const userId = getCurrentUserId(c);
         const body = await c.req.json().catch(() => ({}));
@@ -43,19 +145,18 @@ billing.post("/checkout", authMiddleware, async (c) => {
         }
 
         if (pack === "custom") {
-            if (!quantity || typeof quantity !== "number" || quantity < 25 || quantity > 2500) {
+            if (!Number.isSafeInteger(quantity) || (quantity ?? 0) < 25 || (quantity ?? 0) > 2500) {
                 return c.json({ error: { message: "Custom quantity must be 25–2500" } }, 400);
             }
         }
 
-        const { tokens, amountPaise } = resolvePackPrice(pack, quantity);
         const order = await createOrder(userId, pack, quantity);
 
         await db.insert(payments).values({
             userId,
             razorpayOrderId: order.orderId,
-            amountPaise,
-            tokensGranted: tokens,
+            amountPaise: order.amount,
+            tokensGranted: order.tokens,
             status: "created",
         });
 
@@ -67,19 +168,26 @@ billing.post("/checkout", authMiddleware, async (c) => {
             keyId: order.keyId,
         } satisfies BillingCheckoutResponse);
     } catch (error) {
-        console.error("Checkout error:", error instanceof Error ? error.message : String(error));
+        logSafeError("billing_checkout_failed", error);
         return c.json({ error: { message: "Failed to create order" } }, 500);
     }
 });
 
-billing.post("/verify", authMiddleware, async (c) => {
+billing.post("/verify", billingBodyLimit, authMiddleware, verifyRateLimit, async (c) => {
     try {
         const userId = getCurrentUserId(c);
         const body = await c.req.json().catch(() => ({}));
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
             body as Partial<BillingVerifyRequest>;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        if (
+            typeof razorpay_order_id !== "string" ||
+            razorpay_order_id.length === 0 ||
+            typeof razorpay_payment_id !== "string" ||
+            razorpay_payment_id.length === 0 ||
+            typeof razorpay_signature !== "string" ||
+            razorpay_signature.length === 0
+        ) {
             return c.json({ error: { message: "Missing payment details" } }, 400);
         }
 
@@ -110,33 +218,67 @@ billing.post("/verify", authMiddleware, async (c) => {
         }
 
         if (payment.status === "paid") {
-            const user = await UserRepository.findById(userId);
+            if (payment.razorpayPaymentId !== razorpay_payment_id) {
+                return c.json({ error: { message: "Payment is already linked differently" } }, 409);
+            }
+            const fulfillment = await fulfillPayment(
+                {
+                    paymentId: razorpay_payment_id,
+                    orderId: razorpay_order_id,
+                    amountPaise: payment.amountPaise,
+                    currency: "INR",
+                },
+                userId
+            );
+            if (fulfillment.kind !== "success") {
+                return c.json({ error: { message: "Payment verification failed" } }, 500);
+            }
             return c.json({
                 success: true,
-                tokens_awarded: payment.tokensGranted,
-                new_balance: user?.slideTokens ?? 0,
+                tokens_awarded: fulfillment.tokensGranted,
+                new_balance: fulfillment.newBalance,
             } satisfies BillingVerifyResponse);
         }
 
-        await db
-            .update(payments)
-            .set({ razorpayPaymentId: razorpay_payment_id, status: "paid" })
-            .where(eq(payments.razorpayOrderId, razorpay_order_id));
+        const providerPayment = parseCapturedRazorpayPayment(
+            await fetchRazorpayPayment(razorpay_payment_id)
+        );
+        if (
+            !providerPayment ||
+            providerPayment.paymentId !== razorpay_payment_id ||
+            providerPayment.orderId !== razorpay_order_id ||
+            providerPayment.amountPaise !== payment.amountPaise
+        ) {
+            return c.json({ error: { message: "Payment details do not match order" } }, 400);
+        }
 
-        const updatedUser = await UserRepository.addTokens(userId, payment.tokensGranted);
+        const fulfillment = await fulfillPayment(providerPayment, userId);
+
+        if (fulfillment.kind === "not-found") {
+            return c.json({ error: { message: "Order not found" } }, 404);
+        }
+        if (fulfillment.kind === "unauthorized") {
+            return c.json({ error: { message: "Unauthorized" } }, 403);
+        }
+        if (fulfillment.kind === "invalid") {
+            return c.json({ error: { message: "Payment details do not match order" } }, 400);
+        }
+        if (fulfillment.kind === "conflict") {
+            return c.json({ error: { message: "Payment is already linked differently" } }, 409);
+        }
 
         return c.json({
             success: true,
-            tokens_awarded: payment.tokensGranted,
-            new_balance: updatedUser.slideTokens,
+            tokens_awarded: fulfillment.tokensGranted,
+            new_balance: fulfillment.newBalance,
         } satisfies BillingVerifyResponse);
     } catch (error) {
-        console.error("Verify error:", error instanceof Error ? error.message : String(error));
+        logSafeError("billing_verification_failed", error);
         return c.json({ error: { message: "Payment verification failed" } }, 500);
     }
 });
 
-billing.post("/webhook", async (c) => {
+billing.post("/webhook", webhookBodyLimit, webhookRateLimit, async (c) => {
     try {
         const rawBody = await c.req.text();
         const signature = c.req.header("x-razorpay-signature") ?? "";
@@ -145,49 +287,44 @@ billing.post("/webhook", async (c) => {
             return c.json({ error: { message: "Invalid webhook signature" } }, 400);
         }
 
-        const event = JSON.parse(rawBody) as {
-            event: string;
-            payload?: {
-                payment?: {
-                    entity?: {
-                        id?: string;
-                        order_id?: string;
-                        status?: string;
-                    };
-                };
-            };
-        };
+        let event: unknown;
+        try {
+            event = JSON.parse(rawBody);
+        } catch {
+            return c.json({ error: { message: "Invalid webhook payload" } }, 400);
+        }
 
-        if (event.event === "payment.captured") {
-            const paymentEntity = event.payload?.payment?.entity;
-            const orderId = paymentEntity?.order_id;
-            const paymentId = paymentEntity?.id;
+        if (!isRecord(event) || typeof event["event"] !== "string") {
+            return c.json({ error: { message: "Invalid webhook payload" } }, 400);
+        }
 
-            if (!orderId || !paymentId) {
-                return c.json({ status: "ok" });
-            }
+        if (event["event"] !== "payment.captured") {
+            return c.json({ status: "ok" });
+        }
 
-            const existing = await db
-                .select()
-                .from(payments)
-                .where(eq(payments.razorpayOrderId, orderId))
-                .limit(1);
+        const payload = event["payload"];
+        const webhookPayment = isRecord(payload) ? payload["payment"] : undefined;
+        const paymentEntity = isRecord(webhookPayment) ? webhookPayment["entity"] : undefined;
+        const capturedPayment = parseCapturedRazorpayPayment(paymentEntity);
 
-            const payment = existing[0];
+        if (!capturedPayment) {
+            return c.json({ error: { message: "Invalid captured payment" } }, 400);
+        }
 
-            if (payment && payment.status !== "paid") {
-                await db
-                    .update(payments)
-                    .set({ razorpayPaymentId: paymentId, status: "paid" })
-                    .where(eq(payments.razorpayOrderId, orderId));
-
-                await UserRepository.addTokens(payment.userId, payment.tokensGranted);
-            }
+        const fulfillment = await fulfillPayment(capturedPayment);
+        if (fulfillment.kind === "not-found") {
+            return c.json({ error: { message: "Order not found" } }, 503);
+        }
+        if (fulfillment.kind === "invalid" || fulfillment.kind === "unauthorized") {
+            return c.json({ error: { message: "Payment details do not match order" } }, 400);
+        }
+        if (fulfillment.kind === "conflict") {
+            return c.json({ error: { message: "Payment is already linked differently" } }, 409);
         }
 
         return c.json({ status: "ok" });
     } catch (error) {
-        console.error("Webhook error:", error instanceof Error ? error.message : String(error));
+        logSafeError("billing_webhook_failed", error);
         return c.json({ error: { message: "Webhook processing failed" } }, 500);
     }
 });

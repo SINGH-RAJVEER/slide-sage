@@ -5,7 +5,7 @@ import type {
     Slide,
     SlideLayout,
     ThemeId,
-} from "@slide-sage/types";
+} from "@slidesage/types";
 
 export interface MarketplaceItem {
     id: string;

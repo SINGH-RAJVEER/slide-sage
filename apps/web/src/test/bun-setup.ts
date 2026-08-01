@@ -1,9 +1,13 @@
-import { afterEach } from "bun:test";
+import { afterEach, expect } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import { cleanup } from "@testing-library/react";
-import "@testing-library/jest-dom";
 
 GlobalRegistrator.register();
+
+const { default: _defaultMatchers, ...matchers } = await import(
+    "@testing-library/jest-dom/matchers"
+);
+expect.extend(matchers);
+const { cleanup } = await import("@testing-library/react");
 
 if (typeof document === "undefined") {
     throw new Error("document is not defined after GlobalRegistrator.register()");
@@ -26,4 +30,11 @@ Object.defineProperty(window, "matchMedia", {
         removeEventListener: () => {},
         dispatchEvent: () => {},
     }),
+});
+
+Object.defineProperties(HTMLElement.prototype, {
+    scrollIntoView: { configurable: true, value: () => {} },
+    hasPointerCapture: { configurable: true, value: () => false },
+    setPointerCapture: { configurable: true, value: () => {} },
+    releasePointerCapture: { configurable: true, value: () => {} },
 });

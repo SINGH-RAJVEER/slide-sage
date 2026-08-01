@@ -1,4 +1,4 @@
-import { LoadingScreen } from "@slide-sage/ui/components/loading-screen";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { Suspense } from "react";
 import { RouterProvider } from "react-router-dom";
 import { StreamingProvider } from "@/modules/presentations";

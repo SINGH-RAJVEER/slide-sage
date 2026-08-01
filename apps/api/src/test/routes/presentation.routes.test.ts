@@ -3,6 +3,57 @@ import { Hono } from "hono";
 
 const currentUserId = "user_1";
 const presentationUpdates: Array<{ id: string; updates: Record<string, unknown> }> = [];
+let failSavedWrite = false;
+
+mock.module("../../middleware/rate-limit", () => ({
+    userRateLimit: () => async (_c: unknown, next: () => Promise<void>) => await next(),
+}));
+
+mock.module("hono/streaming", () => ({
+    stream: (
+        c: { body: (body: ReadableStream<Uint8Array>) => Response },
+        callback: (stream: {
+            write: (chunk: string) => Promise<void>;
+            onAbort: (listener: () => void | Promise<void>) => void;
+        }) => Promise<void>
+    ) => {
+        const encoder = new TextEncoder();
+        const body = new ReadableStream<Uint8Array>({
+            async start(controller) {
+                try {
+                    await callback({
+                        write: async (chunk: string) => {
+                            if (failSavedWrite && chunk.startsWith("event: saved")) {
+                                throw new Error("Client disconnected");
+                            }
+                            controller.enqueue(encoder.encode(chunk));
+                        },
+                        onAbort: () => undefined,
+                    });
+                    controller.close();
+                } catch (error) {
+                    controller.error(error);
+                }
+            },
+        });
+        return c.body(body);
+    },
+}));
+
+class InsufficientGenerationPointsError extends Error {
+    balance: number;
+    required: number;
+    shortfall: number;
+
+    constructor(balance: number, required: number) {
+        super("Insufficient points");
+        this.balance = balance;
+        this.required = required;
+        this.shortfall = required - balance;
+    }
+}
+
+class PresentationFinalizationConflictError extends Error {}
 
 const userRepository = {
     deductTokens: mock(),
@@ -38,6 +89,14 @@ const aiConnectionService = {
     markUsed: mock(),
 };
 
+const pointAccountingService = {
+    finalizePresentation: mock(),
+    getBalance: mock(),
+    refund: mock(),
+    reserveExistingPresentation: mock(),
+    reserveNewPresentation: mock(),
+};
+
 mock.module("../../services/ai-connections.service", () => ({
     AIConnectionService: class {
         getConfiguration = aiConnectionService.getConfiguration;
@@ -58,6 +117,18 @@ mock.module("../../services/auth", () => ({
         await next();
     },
     getCurrentUserId: () => currentUserId,
+}));
+
+mock.module("../../services/generation-point-accounting.service", () => ({
+    GenerationPointAccountingService: class {
+        finalizePresentation = pointAccountingService.finalizePresentation;
+        getBalance = pointAccountingService.getBalance;
+        refund = pointAccountingService.refund;
+        reserveExistingPresentation = pointAccountingService.reserveExistingPresentation;
+        reserveNewPresentation = pointAccountingService.reserveNewPresentation;
+    },
+    InsufficientGenerationPointsError,
+    PresentationFinalizationConflictError,
 }));
 
 mock.module("@/database", () => ({
@@ -141,6 +212,7 @@ async function* successfulStream() {
 
 describe("presentation routes", () => {
     beforeEach(() => {
+        failSavedWrite = false;
         presentationUpdates.length = 0;
         userRepository.deductTokens.mockReset();
         userRepository.hasSufficientTokens.mockReset();
@@ -160,6 +232,11 @@ describe("presentation routes", () => {
         aiConnectionService.getConfiguration.mockReset();
         aiConnectionService.resolveSelection.mockReset();
         aiConnectionService.markUsed.mockReset();
+        pointAccountingService.finalizePresentation.mockReset();
+        pointAccountingService.getBalance.mockReset();
+        pointAccountingService.refund.mockReset();
+        pointAccountingService.reserveExistingPresentation.mockReset();
+        pointAccountingService.reserveNewPresentation.mockReset();
 
         presentationService.calculateEstimatedTokens.mockReturnValue(3);
         presentationService.calculateActualTokenCost.mockImplementation(
@@ -175,6 +252,25 @@ describe("presentation routes", () => {
         presentationRepository.create.mockResolvedValue({ id: "presentation_1" });
         presentationRepository.update.mockResolvedValue({});
         presentationRepository.updateOwnedAtRevision.mockResolvedValue({});
+        pointAccountingService.getBalance.mockResolvedValue(20);
+        pointAccountingService.reserveNewPresentation.mockResolvedValue({
+            presentation: { id: "presentation_1" },
+            balance: 17,
+        });
+        pointAccountingService.reserveExistingPresentation.mockResolvedValue({ balance: 17 });
+        pointAccountingService.finalizePresentation.mockImplementation(
+            async ({
+                presentationId,
+                updates,
+            }: {
+                presentationId: string;
+                updates: Record<string, unknown>;
+            }) => {
+                presentationUpdates.push({ id: presentationId, updates });
+                return { presentation: { id: presentationId }, balance: 19.9 };
+            }
+        );
+        pointAccountingService.refund.mockResolvedValue(20);
         presentationService.getPresentation.mockResolvedValue({
             id: "presentation_1",
             userId: currentUserId,
@@ -207,19 +303,19 @@ describe("presentation routes", () => {
             body: JSON.stringify({ topic: "AI" }),
         });
 
-        userRepository.hasSufficientTokens.mockResolvedValueOnce({
-            sufficient: false,
-            user: { slideTokens: 1 },
-            shortfall: 2,
-        });
         aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+        pointAccountingService.reserveNewPresentation.mockRejectedValueOnce(
+            new InsufficientGenerationPointsError(1, 3)
+        );
         const insufficient = await app().request("/api/generate-presentation-stream", {
             method: "POST",
             body: JSON.stringify({ topic: "AI", slide_count: 3 }),
         });
 
         expect(missing.status).toBe(400);
-        expect(await json(missing)).toEqual({ error: { message: "Missing required fields" } });
+        expect(await json(missing)).toEqual({
+            error: { message: "slide_count must be an integer between 1 and 40" },
+        });
         expect(insufficient.status).toBe(402);
         expect(await json(insufficient)).toEqual({
             error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
@@ -227,6 +323,98 @@ describe("presentation routes", () => {
             slide_tokens_required: 3,
             slide_tokens_shortfall: 2,
         });
+    });
+
+    it("rejects malformed generation input before any side effects", async () => {
+        const invalidBodies = [
+            { topic: " ", slide_count: 3 },
+            { topic: "x".repeat(401), slide_count: 3 },
+            { topic: "AI", slide_count: "3" },
+            { topic: "AI", slide_count: 0 },
+            { topic: "AI", slide_count: 41 },
+            { topic: "AI", slide_count: 3, detail_level: null },
+            { topic: "AI", slide_count: 3, detail_level: "verbose" },
+            { topic: "AI", slide_count: 3, tonality: "urgent" },
+            { topic: "AI", slide_count: 3, research: { enabled: "true" } },
+            { topic: "AI", slide_count: 3, research: { enabled: true, maxResults: 9 } },
+            {
+                topic: "AI",
+                slide_count: 3,
+                research_payload: null,
+            },
+            {
+                topic: "AI",
+                slide_count: 3,
+                research_payload: { sources: [{ url: "ftp://example.com" }] },
+            },
+            {
+                topic: "AI",
+                slide_count: 3,
+                research_payload: {
+                    sources: Array.from({ length: 9 }, (_, index) => ({
+                        url: `https://example.com/${index}`,
+                    })),
+                },
+            },
+            {
+                topic: "AI",
+                slide_count: 3,
+                research_payload: {
+                    sources: [{ url: "https://example.com", summary: "x".repeat(8001) }],
+                },
+            },
+        ];
+
+        for (const body of invalidBodies) {
+            const response = await app().request("/api/generate-presentation-stream", {
+                method: "POST",
+                body: JSON.stringify(body),
+            });
+            expect(response.status).toBe(400);
+        }
+
+        const oversized = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            body: JSON.stringify({ topic: "x".repeat(257 * 1024), slide_count: 3 }),
+        });
+        expect(oversized.status).toBe(413);
+        expect(aiConnectionService.resolveSelection).not.toHaveBeenCalled();
+        expect(presentationRepository.create).not.toHaveBeenCalled();
+        expect(pointAccountingService.reserveNewPresentation).not.toHaveBeenCalled();
+        expect(presentationService.generatePresentationStream).not.toHaveBeenCalled();
+    });
+
+    it("accepts generation values at their documented boundaries", async () => {
+        const topic = "x".repeat(400);
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            body: JSON.stringify({
+                topic: ` ${topic} `,
+                slide_count: 40,
+                detail_level: "comprehensive",
+                tonality: "enthusiastic",
+                research: { enabled: true, maxResults: 8, maxAgeHours: 8760 },
+                research_payload: {
+                    sources: Array.from({ length: 8 }, (_, index) => ({
+                        url: `https://example.com/${index}`,
+                        highlights: ["x".repeat(1200)],
+                    })),
+                },
+            }),
+        });
+
+        expect(response.status).toBe(200);
+        await response.text();
+        expect(presentationService.generatePresentationStream).toHaveBeenCalledWith(
+            expect.objectContaining({
+                topic,
+                slideCount: 40,
+                detailLevel: "comprehensive",
+                tonality: "enthusiastic",
+                research: expect.objectContaining({ maxResults: 8, maxAgeHours: 8760 }),
+                researchPayload: expect.objectContaining({ sources: expect.any(Array) }),
+            })
+        );
     });
 
     it("streams BYOK presentations without deducting generation points", async () => {
@@ -252,17 +440,20 @@ describe("presentation routes", () => {
         expect(response.headers.get("cache-control")).toBe("no-cache, no-transform");
         expect(body).toContain("event: created");
         expect(body).toContain("event: saved");
-        expect(presentationRepository.create).toHaveBeenCalledWith(
-            currentUserId,
-            "Generating...",
-            "Quarterly planning",
-            {
+        expect(pointAccountingService.reserveNewPresentation).toHaveBeenCalledWith({
+            operationId: expect.any(String),
+            userId: currentUserId,
+            title: "Generating...",
+            prompt: "Quarterly planning",
+            quotedPoints: 0,
+            slidesData: {
                 schemaVersion: 5,
                 slides: [],
                 theme: "nature-green",
                 title: "Generating...",
-            }
-        );
+                status: "generating",
+            },
+        });
         const finalUpdate = presentationUpdates.find(({ updates }) => "slidesData" in updates);
         expect(finalUpdate?.id).toBe("presentation_1");
         expect(finalUpdate?.updates).toEqual(
@@ -318,12 +509,130 @@ describe("presentation routes", () => {
             undefined
         );
         expect(presentationService.calculateActualTokenCost).toHaveBeenCalledWith(100, 3);
-        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 0.1);
+        expect(pointAccountingService.reserveNewPresentation).toHaveBeenCalledWith(
+            expect.objectContaining({ userId: currentUserId, quotedPoints: 3 })
+        );
+        expect(pointAccountingService.finalizePresentation).toHaveBeenCalledWith(
+            expect.objectContaining({
+                userId: currentUserId,
+                presentationId: "presentation_1",
+                chargedPoints: 0.1,
+            })
+        );
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
         expect(aiConnectionService.markUsed).not.toHaveBeenCalled();
-        expect(presentationUpdates[0]?.updates).toEqual({
-            aiProvider: "openrouter",
-            aiModel: expect.any(String),
+        expect(presentationUpdates[0]?.updates).toEqual(
+            expect.objectContaining({
+                aiProvider: "openrouter",
+                aiModel: expect.any(String),
+                slidesData: expect.objectContaining({ status: "ready" }),
+            })
+        );
+    });
+
+    it("refunds a point reservation exactly once when generation fails", async () => {
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+        presentationService.generatePresentationStream.mockImplementation(async function* () {
+            yield { event: "error", data: { error: "Provider failed" } };
         });
+
+        const response = await app().request("/api/generate-presentation-stream", {
+            method: "POST",
+            body: JSON.stringify({ topic: "Failure", slide_count: 3 }),
+        });
+        const body = await response.text();
+
+        expect(body).toContain("event: error");
+        expect(pointAccountingService.reserveNewPresentation).toHaveBeenCalledTimes(1);
+        expect(pointAccountingService.refund).toHaveBeenCalledTimes(1);
+        expect(pointAccountingService.finalizePresentation).not.toHaveBeenCalled();
+    });
+
+    it("surfaces settlement failure and refunds instead of saving a free deck", async () => {
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+        pointAccountingService.finalizePresentation.mockRejectedValueOnce(
+            new Error("Settlement failed")
+        );
+        const originalError = console.error;
+        console.error = mock();
+
+        try {
+            const response = await app().request("/api/generate-presentation-stream", {
+                method: "POST",
+                body: JSON.stringify({ topic: "Settlement", slide_count: 3 }),
+            });
+            const body = await response.text();
+
+            expect(body).toContain('event: error\ndata: {"error":"Settlement failed"');
+            expect(body).not.toContain("event: saved");
+            expect(pointAccountingService.refund).toHaveBeenCalledTimes(1);
+            expect(
+                presentationUpdates.some(
+                    ({ updates }) =>
+                        (updates["slidesData"] as { status?: string } | undefined)?.status ===
+                        "ready"
+                )
+            ).toBe(false);
+        } finally {
+            console.error = originalError;
+        }
+    });
+
+    it("does not fail or refund a finalized deck when the saved SSE write fails", async () => {
+        aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+        failSavedWrite = true;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        console.error = mock();
+        console.warn = mock();
+
+        try {
+            const response = await app().request("/api/generate-presentation-stream", {
+                method: "POST",
+                body: JSON.stringify({ topic: "Committed deck", slide_count: 3 }),
+            });
+            const body = await response.text();
+
+            expect(response.status).toBe(200);
+            expect(body).not.toContain("event: saved");
+            expect(pointAccountingService.finalizePresentation).toHaveBeenCalledTimes(1);
+            expect(pointAccountingService.refund).not.toHaveBeenCalled();
+            expect(
+                presentationUpdates.some(
+                    ({ updates }) =>
+                        (updates["slidesData"] as { status?: string } | undefined)?.status ===
+                        "failed"
+                )
+            ).toBe(false);
+        } finally {
+            console.error = originalError;
+            console.warn = originalWarn;
+        }
+    });
+
+    it("treats post-commit provider metadata as best effort", async () => {
+        aiConnectionService.markUsed.mockRejectedValueOnce(new Error("Metadata unavailable"));
+        const originalWarn = console.warn;
+        console.warn = mock();
+
+        try {
+            const response = await app().request("/api/generate-presentation-stream", {
+                method: "POST",
+                body: JSON.stringify({ topic: "Provider metadata", slide_count: 3 }),
+            });
+            const body = await response.text();
+
+            expect(body).toContain("event: saved");
+            expect(presentationUpdates).toContainEqual(
+                expect.objectContaining({
+                    updates: expect.objectContaining({
+                        slidesData: expect.objectContaining({ status: "ready" }),
+                    }),
+                })
+            );
+        } finally {
+            console.warn = originalWarn;
+        }
     });
 
     it("reuses the same failed presentation row across retries", async () => {
@@ -426,8 +735,8 @@ describe("presentation routes", () => {
 
         expect(body).toContain("event: error");
         expect(body).not.toContain("event: saved");
-        expect(presentationRepository.update).toHaveBeenCalledTimes(2);
-        expect(presentationUpdates[1]).toEqual({
+        expect(presentationRepository.update).toHaveBeenCalledTimes(1);
+        expect(presentationUpdates[0]).toEqual({
             id: "presentation_1",
             updates: {
                 title: "Failure handling",
@@ -575,20 +884,26 @@ describe("presentation routes", () => {
 
         expect(response.status).toBe(200);
         expect(await json(response)).toEqual({ sources, estimated_tokens: 3 });
-        expect(searchService.webSearch).toHaveBeenCalledWith("AI news", {
-            enabled: true,
-            freshness: "week",
-            maxResults: 3,
-            includeDomains: ["example.com"],
-            excludeDomains: ["spam.example"],
-            startPublishedDate: "2026-01-01",
-            endPublishedDate: "2026-06-30",
-            maxAgeHours: 48,
-        });
+        expect(searchService.webSearch).toHaveBeenCalledWith(
+            "AI news",
+            {
+                enabled: true,
+                freshness: "week",
+                maxResults: 3,
+                includeDomains: ["example.com"],
+                excludeDomains: ["spam.example"],
+                startPublishedDate: "2026-01-01",
+                endPublishedDate: "2026-06-30",
+                maxAgeHours: 48,
+            },
+            expect.any(AbortSignal)
+        );
         expect(searchService.storeSourceChunks).toHaveBeenCalledWith(
             currentUserId,
             "AI news",
-            sources
+            sources,
+            undefined,
+            expect.any(AbortSignal)
         );
         expect(presentationService.calculateEstimatedTokens).toHaveBeenCalledWith(
             6,
@@ -627,7 +942,37 @@ describe("presentation routes", () => {
         });
 
         expect(response.status).toBe(400);
-        expect(await json(response)).toEqual({ error: { message: "Missing required fields" } });
+        expect(await json(response)).toEqual({
+            error: { message: "research.enabled must be true" },
+        });
+    });
+
+    it("rejects malformed research options before searching", async () => {
+        const invalidBodies = [
+            { topic: "AI", slide_count: "5", research: { enabled: true } },
+            { topic: "AI", detail_level: "verbose", research: { enabled: true } },
+            { topic: "AI", research: { enabled: true, maxAgeHours: 1.5 } },
+            { topic: "AI", research: { enabled: false, maxResults: 9 } },
+            { topic: "AI", research: { enabled: true, startPublishedDate: "2026-02-30" } },
+            {
+                topic: "AI",
+                research: {
+                    enabled: true,
+                    includeDomains: Array.from({ length: 21 }, () => "example.com"),
+                },
+            },
+        ];
+
+        for (const body of invalidBodies) {
+            const response = await app().request("/api/research-presentation", {
+                method: "POST",
+                body: JSON.stringify(body),
+            });
+            expect(response.status).toBe(400);
+        }
+
+        expect(searchService.webSearch).not.toHaveBeenCalled();
+        expect(searchService.storeSourceChunks).not.toHaveBeenCalled();
     });
 
     it("streams presentation iterations and persists updates", async () => {
@@ -684,7 +1029,18 @@ describe("presentation routes", () => {
             "professional"
         );
         expect(presentationService.calculateActualTokenCost).toHaveBeenCalledWith(100, 3);
-        expect(userRepository.deductTokens).toHaveBeenCalledWith(currentUserId, 0.1);
+        expect(pointAccountingService.reserveExistingPresentation).toHaveBeenCalledWith(
+            expect.objectContaining({
+                userId: currentUserId,
+                presentationId: "presentation_1",
+                kind: "iteration",
+                quotedPoints: 3,
+            })
+        );
+        expect(pointAccountingService.finalizePresentation).toHaveBeenCalledWith(
+            expect.objectContaining({ chargedPoints: 0.1 })
+        );
+        expect(userRepository.deductTokens).not.toHaveBeenCalled();
     });
 
     it("validates iteration requests and insufficient points", async () => {
@@ -692,19 +1048,19 @@ describe("presentation routes", () => {
             method: "POST",
             body: JSON.stringify({ presentation_id: "presentation_1" }),
         });
-        userRepository.hasSufficientTokens.mockResolvedValueOnce({
-            sufficient: false,
-            user: { slideTokens: 0 },
-            shortfall: 3,
-        });
         aiConnectionService.resolveSelection.mockResolvedValueOnce(undefined);
+        pointAccountingService.reserveExistingPresentation.mockRejectedValueOnce(
+            new InsufficientGenerationPointsError(0, 3)
+        );
         const insufficient = await app().request("/api/iterate-presentation-stream", {
             method: "POST",
             body: JSON.stringify({ presentation_id: "presentation_1", feedback: "Change it" }),
         });
 
         expect(missing.status).toBe(400);
-        expect(await json(missing)).toEqual({ error: { message: "Missing required fields" } });
+        expect(await json(missing)).toEqual({
+            error: { message: "feedback must be a string" },
+        });
         expect(insufficient.status).toBe(402);
         expect(await json(insufficient)).toEqual({
             error: { message: "Insufficient points", code: "INSUFFICIENT_TOKENS" },
@@ -712,6 +1068,36 @@ describe("presentation routes", () => {
             slide_tokens_required: 3,
             slide_tokens_shortfall: 3,
         });
+    });
+
+    it("rejects malformed iteration input before loading or reserving a presentation", async () => {
+        const invalidBodies = [
+            { presentation_id: "presentation_1", feedback: "x".repeat(401) },
+            { presentation_id: "presentation_1", feedback: "Change", slide_count: 0 },
+            { presentation_id: "presentation_1", feedback: "Change", slide_count: null },
+            {
+                presentation_id: "presentation_1",
+                feedback: "Change",
+                detail_level: "verbose",
+            },
+            {
+                presentation_id: "presentation_1",
+                feedback: "Change",
+                research: { enabled: 1 },
+            },
+        ];
+
+        for (const body of invalidBodies) {
+            const response = await app().request("/api/iterate-presentation-stream", {
+                method: "POST",
+                body: JSON.stringify(body),
+            });
+            expect(response.status).toBe(400);
+        }
+
+        expect(presentationService.getPresentation).not.toHaveBeenCalled();
+        expect(pointAccountingService.reserveExistingPresentation).not.toHaveBeenCalled();
+        expect(presentationService.iteratePresentationStream).not.toHaveBeenCalled();
     });
 
     it("lists presentations for the current user", async () => {
@@ -727,6 +1113,8 @@ describe("presentation routes", () => {
                     updatedAt: createdAt,
                 },
             ],
+            total: 1,
+            hasMore: false,
         });
 
         const response = await app().request("/api/presentations");
@@ -745,7 +1133,71 @@ describe("presentation routes", () => {
                     updated_at: createdAt.toISOString(),
                 },
             ],
+            total: 1,
+            limit: 20,
+            offset: 0,
+            has_more: false,
         });
+    });
+
+    it("paginates lists and reports research for ready and failed decks", async () => {
+        const createdAt = new Date("2026-01-01T00:00:00.000Z");
+        presentationService.getUserPresentations.mockResolvedValue({
+            presentations: [
+                {
+                    id: "ready",
+                    title: "Ready",
+                    prompt: "Topic",
+                    slidesData: {
+                        status: "ready",
+                        slides: [{ id: "slide_1" }],
+                        sources: [{ url: "https://example.com/ready" }],
+                    },
+                    createdAt,
+                    updatedAt: createdAt,
+                },
+                {
+                    id: "failed",
+                    title: "Failed",
+                    prompt: "Topic",
+                    slidesData: {
+                        status: "failed",
+                        slides: [],
+                        failure: {
+                            retry: {
+                                research_payload: {
+                                    sources: [{ url: "https://example.com/retry" }],
+                                },
+                            },
+                        },
+                    },
+                    createdAt,
+                    updatedAt: createdAt,
+                },
+            ],
+            total: 5,
+            hasMore: true,
+        });
+
+        const response = await app().request("/api/presentations?limit=2&offset=1");
+        const body = await json(response);
+
+        expect(response.status).toBe(200);
+        expect(presentationService.getUserPresentations).toHaveBeenCalledWith(currentUserId, 2, 1);
+        expect(body).toEqual(
+            expect.objectContaining({ total: 5, limit: 2, offset: 1, has_more: true })
+        );
+        expect(
+            body.presentations.map((item: { has_research: boolean }) => item.has_research)
+        ).toEqual([true, true]);
+    });
+
+    it("rejects invalid list pagination before querying", async () => {
+        for (const query of ["limit=0", "limit=101", "limit=1.5", "offset=-1"]) {
+            const response = await app().request(`/api/presentations?${query}`);
+            expect(response.status).toBe(400);
+        }
+        expect(presentationService.getUserPresentations).not.toHaveBeenCalled();
     });
 
     it("returns, forbids, and deletes presentations by id", async () => {
@@ -779,8 +1231,8 @@ describe("presentation routes", () => {
         expect((await json(found)).presentation.id).toBe("presentation_1");
         expect(missing.status).toBe(404);
         expect(forbidden.status).toBe(403);
-        expect(deleted.status).toBe(200);
-        expect(await json(deleted)).toEqual({ message: "Presentation deleted successfully" });
+        expect(deleted.status).toBe(204);
+        expect(await deleted.text()).toBe("");
     });
 
     it("applies authenticated presentation mutations", async () => {

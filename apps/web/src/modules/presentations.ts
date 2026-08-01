@@ -1,3 +1,4 @@
+export { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
 export {
     StreamingProvider,
     useStreaming,
@@ -8,5 +9,4 @@ export { default as PresentationsGridPage } from "@/modules/pages/PresentationsG
 export { default as PresentationViewer } from "@/modules/pages/PresentationViewer";
 export { default as PurchaseTokensPage } from "@/modules/pages/PurchaseTokensPage";
 export * from "@/modules/types/presentation";
-export * from "@/modules/types/template";
 export { useTemplate } from "@/modules/useTemplate";

@@ -1,19 +1,27 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import {
+    hashPassword as hashBetterAuthPassword,
+    verifyPassword as verifyBetterAuthPassword,
+} from "better-auth/crypto";
 import { emailOTP } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { accounts, db, sessions, users, verifications } from "@/database";
+import { logSafeError } from "../utils/safe-logging";
 
 export type Env = Record<string, string | undefined>;
 
-const DEVELOPMENT_AUTH_SECRET = "slide-sage-local-development-secret";
+const DEVELOPMENT_AUTH_SECRET = "slidesage-local-development-secret";
 
 function getEnvVar(env: Env, key: string): string | undefined {
     return env[key] ?? process.env[key];
 }
 
 let resendClient: Resend | null = null;
+const otpDeliveryFailures = new WeakSet<Request>();
+const otpDeliveryRequest = new AsyncLocalStorage<Request>();
 
 function getResendClient(env: Env): Resend | null {
     const apiKey = getEnvVar(env, "RESEND_API_KEY");
@@ -23,6 +31,59 @@ function getResendClient(env: Env): Resend | null {
 }
 
 type OTPEmailType = "sign-in" | "email-verification" | "forget-password";
+
+export function isLegacyPasswordHash(hash: string): boolean {
+    return /^[a-f\d]{64}$/i.test(hash);
+}
+
+async function hashLegacyPassword(password: string): Promise<string> {
+    const data = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hashBuffer))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+    if (left.length !== right.length) return false;
+
+    let difference = 0;
+    for (let index = 0; index < left.length; index += 1) {
+        difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+    }
+    return difference === 0;
+}
+
+export const hashAuthPassword = hashBetterAuthPassword;
+
+export async function verifyAuthPassword({
+    hash,
+    password,
+}: {
+    hash: string;
+    password: string;
+}): Promise<boolean> {
+    if (isLegacyPasswordHash(hash)) {
+        const legacyHash = await hashLegacyPassword(password);
+        return constantTimeEqual(legacyHash, hash.toLowerCase());
+    }
+
+    try {
+        return await verifyBetterAuthPassword({ hash, password });
+    } catch {
+        return false;
+    }
+}
+
+export function consumeOTPDeliveryFailure(request: Request): boolean {
+    const failed = otpDeliveryFailures.has(request);
+    otpDeliveryFailures.delete(request);
+    return failed;
+}
+
+export function runWithOTPDeliveryRequest<T>(request: Request, callback: () => T): T {
+    return otpDeliveryRequest.run(request, callback);
+}
 
 function escapeHtml(value: string): string {
     return value
@@ -66,7 +127,7 @@ function getOTPEmailContent(type: OTPEmailType, name: string) {
     };
 }
 
-async function sendOTPEmail(
+export async function sendOTPEmail(
     env: Env,
     email: string,
     otp: string,
@@ -81,13 +142,14 @@ async function sendOTPEmail(
             console.error(`RESEND_API_KEY not configured; unable to send ${type} OTP to a user.`);
             throw new Error("Email service is not configured");
         }
-        // Dev-only convenience: print the code so local testing works without email.
-        console.warn(`[dev] RESEND_API_KEY not configured. ${type} OTP for`, email, "is:", otp);
+        console.warn(`RESEND_API_KEY not configured; skipped ${type} OTP delivery in development.`);
         return;
     }
 
     const content = getOTPEmailContent(type, name);
-    const result = await client.emails.send({
+    const timeoutMs = Number.parseInt(getEnvVar(env, "EMAIL_DELIVERY_TIMEOUT_MS") ?? "10000", 10);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const delivery = client.emails.send({
         from: getEnvVar(env, "RESEND_FROM_EMAIL") || "onboarding@resend.dev",
         to: email,
         subject: content.subject,
@@ -109,8 +171,20 @@ async function sendOTPEmail(
         </div>
       `,
     });
+    const result = await Promise.race([
+        delivery,
+        new Promise<never>((_, reject) => {
+            timeout = setTimeout(
+                () => reject(new Error("Email delivery timed out")),
+                Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 10000
+            );
+        }),
+    ]).finally(() => {
+        if (timeout) clearTimeout(timeout);
+    });
     if (result.error) {
-        console.error("Resend API error:", result.error);
+        logSafeError("resend_delivery_failed", result.error);
+        throw new Error("Email delivery failed");
     }
 }
 
@@ -142,7 +216,7 @@ function resolveBaseUrl(env: Env): string {
 function resolveTrustedOrigins(env: Env): string[] {
     const defaultOrigins = [
         "http://localhost:5173",
-        "https://slide-sage.pages.dev",
+        "https://slidesage.pages.dev",
         "https://slidesage.app",
         "https://www.slidesage.app",
     ];
@@ -167,8 +241,14 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
     const baseUrl = resolveBaseUrl(env);
     const configuredSecret = getEnvVar(env, "AUTH_SECRET")?.trim();
     const isHttpsDeployment = baseUrl.startsWith("https://");
-    if (isHttpsDeployment && (!configuredSecret || configuredSecret.length < 32)) {
-        throw new Error("AUTH_SECRET must be set to at least 32 characters in HTTPS deployments");
+    const isProduction = getEnvVar(env, "NODE_ENV") === "production";
+    const isPlaceholderSecret =
+        configuredSecret?.startsWith("your-") || configuredSecret?.startsWith("replace-") || false;
+    if (
+        (isHttpsDeployment || isProduction) &&
+        (!configuredSecret || configuredSecret.length < 32 || isPlaceholderSecret)
+    ) {
+        throw new Error("AUTH_SECRET must be a non-placeholder value of at least 32 characters");
     }
 
     const authSecret = configuredSecret || DEVELOPMENT_AUTH_SECRET;
@@ -184,6 +264,7 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
         getEnvVar(env, "GITHUB_CLIENT_SECRET") ?? "",
         getEnvVar(env, "RESEND_API_KEY") ?? "",
         getEnvVar(env, "RESEND_FROM_EMAIL") ?? "",
+        getEnvVar(env, "NODE_ENV") ?? "",
     ].join(":");
     if (cachedAuth && cachedEnvKey === envKey) return cachedAuth;
 
@@ -193,6 +274,7 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
     cachedAuth = betterAuth({
         database: drizzleAdapter(db, {
             provider: "pg",
+            transaction: true,
             schema: {
                 user: users,
                 account: accounts,
@@ -212,6 +294,11 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
             enabled: true,
             autoSignIn: false,
             requireEmailVerification: true,
+            revokeSessionsOnPasswordReset: true,
+            password: {
+                hash: hashAuthPassword,
+                verify: verifyAuthPassword,
+            },
         },
         emailVerification: {
             autoSignInAfterVerification: true,
@@ -220,12 +307,22 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
             emailOTP({
                 otpLength: 6,
                 expiresIn: 900,
-                sendVerificationOnSignUp: true,
-                async sendVerificationOTP({ email, otp, type }) {
-                    const user = await db.query.users.findFirst({
-                        where: eq(users.email, email.toLowerCase()),
-                    });
-                    await sendOTPEmail(env, email, otp, type, user?.name ?? "");
+                storeOTP: "encrypted",
+                sendVerificationOnSignUp: false,
+                async sendVerificationOTP({ email, otp, type }, ctx) {
+                    const normalizedEmail = email.trim().toLowerCase();
+                    try {
+                        const user = await db.query.users.findFirst({
+                            where: eq(users.email, normalizedEmail),
+                        });
+                        await sendOTPEmail(env, normalizedEmail, otp, type, user?.name ?? "");
+                    } catch (error) {
+                        const request = otpDeliveryRequest.getStore() ?? ctx?.request;
+                        if (request) {
+                            otpDeliveryFailures.add(request);
+                        }
+                        throw error;
+                    }
                 },
             }),
         ],
@@ -238,7 +335,7 @@ export function createAuth(env: Env = {}): ReturnType<typeof betterAuth> {
             defaultCookieAttributes: {
                 httpOnly: true,
                 secure: usesSecureCookies,
-                sameSite: "lax",
+                sameSite: usesSecureCookies ? "none" : "lax",
             },
         },
         socialProviders: {

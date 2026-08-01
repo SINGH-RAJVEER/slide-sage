@@ -4,29 +4,29 @@ import { describe, expect, it, mock } from "bun:test";
 import { render } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-mock.module("@/components/Viewer/ScaledSlide", () => ({
+mock.module("@slidesage/ui/components/Viewer/ScaledSlide", () => ({
     ScaledSlide: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-mock.module("@/components/Viewer/ViewerSlideCarousel", () => ({
+mock.module("@slidesage/ui/components/Viewer/ViewerSlideCarousel", () => ({
     ViewerSlideCarousel: ({ slides }: { slides: unknown[] }) => (
         <div>{`${slides.length} preview slides`}</div>
     ),
 }));
 
-mock.module("@/components/Viewer/ViewerNavigationControls", () => ({
+mock.module("@slidesage/ui/components/Viewer/ViewerNavigationControls", () => ({
     ViewerNavigationControls: () => <div>Viewer navigation</div>,
 }));
 
-mock.module("@/components/Viewer/ViewerThumbnails", () => ({
+mock.module("@slidesage/ui/components/Viewer/ViewerThumbnails", () => ({
     ViewerThumbnails: () => <div>Viewer thumbnails</div>,
 }));
 
-mock.module("@/components/Viewer/ViewerFullscreenOverlayControls", () => ({
+mock.module("@slidesage/ui/components/Viewer/ViewerFullscreenOverlayControls", () => ({
     ViewerFullscreenOverlayControls: () => <div>Fullscreen controls</div>,
 }));
 
-mock.module("@/components/Viewer/SlideRenderer", () => ({
+mock.module("@slidesage/ui/components/Viewer/SlideRenderer", () => ({
     SlideRenderer: ({
         slide,
         currentTemplate,

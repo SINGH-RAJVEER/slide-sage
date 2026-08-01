@@ -1,9 +1,8 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-
 import { authClient } from "@/lib/auth-client";
+import Header from "@/modules/Header";
 
 function sanitizeRedirectPath(value: string | null) {
     if (!value) return "/";
@@ -67,9 +66,20 @@ export default function SignUpPage() {
                 throw new Error(error.message || "Sign up failed.");
             }
 
+            const normalizedEmail = email.trim().toLowerCase();
+            const { error: deliveryError } = await authClient.emailOtp.sendVerificationOtp({
+                email: normalizedEmail,
+                type: "email-verification",
+            });
+
             navigate(
-                `/sign-up/verify-email?email=${encodeURIComponent(email)}&redirect_url=${encodeURIComponent(redirectTo)}`,
-                { replace: true },
+                `/sign-up/verify-email?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(redirectTo)}`,
+                {
+                    replace: true,
+                    state: {
+                        deliveryError: deliveryError?.message || null,
+                    },
+                },
             );
         } catch (err) {
             setError(err instanceof Error ? err.message : "Sign up failed.");

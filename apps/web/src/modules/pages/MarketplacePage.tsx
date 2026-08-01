@@ -3,13 +3,13 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@slide-sage/ui/components/dropdown-menu";
+} from "@slidesage/ui/components/dropdown-menu";
+import MarketplaceCard from "@slidesage/ui/components/Marketplace/MarketplaceCard";
 import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
-import MarketplaceCard from "@/components/Marketplace/MarketplaceCard";
 import { getInstalledMarketplaceThemes, installMarketplaceTheme } from "@/lib/marketplace-themes";
+import Header from "@/modules/Header";
 import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@/modules/marketplace/catalog";
 import { ROUTES } from "@/router/paths";
 

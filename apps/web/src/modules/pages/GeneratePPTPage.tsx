@@ -1,11 +1,12 @@
-import type { PresentationRetryOptions, ThemeId } from "@slide-sage/types";
+import type { PresentationRetryOptions, ThemeId } from "@slidesage/types";
+import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { GenerateForm, GenerateOptionsBar } from "@/components/Generate";
-import Header from "@/components/Header";
+import { useInstalledMarketplaceThemes } from "@/hooks/useInstalledMarketplaceThemes";
 import { fetchAIConfiguration } from "@/lib/ai-connections";
 import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
+import Header from "@/modules/Header";
 import { useStreaming } from "@/modules/presentations";
 import { ROUTES } from "@/router/paths";
 
@@ -35,6 +36,7 @@ export default function GeneratePPTPage() {
     const [generationMode, setGenerationMode] = useState<"openrouter" | "byok">("openrouter");
     const navigate = useNavigate();
     const { streamingState, startStreaming } = useStreaming();
+    const installedThemes = useInstalledMarketplaceThemes();
 
     useEffect(() => {
         void fetchAIConfiguration()
@@ -89,6 +91,7 @@ export default function GeneratePPTPage() {
                     tonality,
                     theme,
                     retryPresentationId,
+                    ...(retry?.ai ? { ai: retry.ai } : {}),
                 },
             });
             return;
@@ -103,6 +106,7 @@ export default function GeneratePPTPage() {
             undefined,
             retryPresentationId,
             theme,
+            retry?.ai,
         );
         navigate(ROUTES.presentation, {
             state: { isStreaming: true },
@@ -177,6 +181,7 @@ export default function GeneratePPTPage() {
                     onSlideCountChange={setSlideCount}
                     onCustomSlideCountChange={setCustomSlideCount}
                     onThemeChange={setTheme}
+                    installedThemes={installedThemes}
                 />
                 {prompt.trim() && (
                     <p

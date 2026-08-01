@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildResearchSystemMessage, estimateMessageInputTokens } from "@slide-sage/types";
+import { buildResearchSystemMessage, estimateMessageInputTokens } from "@slidesage/types";
 import { TokenCalculator } from "./token-calculator";
 
 describe("TokenCalculator research estimates", () => {

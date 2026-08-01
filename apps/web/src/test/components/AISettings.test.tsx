@@ -2,14 +2,9 @@
 
 import { afterEach, expect, it, mock } from "bun:test";
 import { fireEvent, render } from "@testing-library/react";
-import { AISettings } from "@/components/Settings/AISettings";
+import { AISettings } from "@/modules/AISettings";
 
 const originalFetch = globalThis.fetch;
-
-HTMLElement.prototype.hasPointerCapture = () => false;
-HTMLElement.prototype.setPointerCapture = () => {};
-HTMLElement.prototype.releasePointerCapture = () => {};
-HTMLElement.prototype.scrollIntoView = () => {};
 
 afterEach(() => {
     globalThis.fetch = originalFetch;

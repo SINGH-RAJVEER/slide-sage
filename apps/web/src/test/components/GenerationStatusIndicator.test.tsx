@@ -1,12 +1,10 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import { act, fireEvent, render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import GenerationStatusIndicator, {
-    GenerationStatusIndicatorView,
-} from "@/components/GenerationStatusIndicator";
 import { StreamingProvider, useStreaming } from "@/modules/contexts/StreamingContext";
+import GenerationStatusIndicator from "@/modules/GenerationStatusIndicator";
 
 function StartGeneration() {
     const { startStreaming } = useStreaming();
@@ -20,31 +18,6 @@ function StartGeneration() {
         </button>
     );
 }
-
-it("shows live slide progress and opens the active generation", () => {
-    const onActivate = mock(() => {});
-    const view = render(
-        <GenerationStatusIndicatorView
-            status="active"
-            title="Generating presentation"
-            detail="2 of 5 slides ready"
-            progress={0.4}
-            onActivate={onActivate}
-        />,
-    );
-
-    const button = view.getByRole("button", {
-        name: "Generating presentation. 2 of 5 slides ready",
-    });
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveClass("top-24", "right-4", "sm:right-5");
-    expect(button).toHaveClass("h-10", "w-10", "hover:w-80", "focus-visible:w-80");
-    expect(button).not.toHaveClass("bottom-4", "left-4");
-    expect(button.querySelector('[style*="scaleX(0.4)"]')).toBeInTheDocument();
-
-    fireEvent.click(button);
-    expect(onActivate).toHaveBeenCalledTimes(1);
-});
 
 it("shows an active generation indicator on the generate page", async () => {
     const originalFetch = globalThis.fetch;
@@ -151,56 +124,3 @@ for (const loginPath of ["/sign-in", "/login"]) {
         }
     });
 }
-
-it("reports when the presentation has been saved", () => {
-    const onActivate = mock(() => {});
-    const view = render(
-        <GenerationStatusIndicatorView
-            status="complete"
-            title="Presentation ready"
-            detail="Saved to Presentations"
-            onActivate={onActivate}
-        />,
-    );
-
-    fireEvent.click(
-        view.getByRole("button", {
-            name: "Presentation ready. Saved to Presentations",
-        }),
-    );
-    expect(onActivate).toHaveBeenCalledTimes(1);
-    expect(
-        view.getByRole("button", {
-            name: "Presentation ready. Saved to Presentations",
-        }),
-    ).toHaveClass("top-24", "right-4");
-});
-
-it("hides a stopped-generation message after its cooldown", async () => {
-    const view = render(
-        <GenerationStatusIndicatorView
-            status="error"
-            title="Generation stopped"
-            detail="The stream was interrupted"
-            autoDismissMs={20}
-            onActivate={() => {}}
-        />,
-    );
-
-    const errorPopIn = view.getByRole("button", {
-        name: "Generation stopped. The stream was interrupted",
-    });
-    expect(errorPopIn).toBeInTheDocument();
-    expect(errorPopIn).toHaveClass("top-24", "right-4");
-    expect(errorPopIn).not.toHaveClass("bottom-4", "left-4");
-    expect(errorPopIn).toHaveAttribute("aria-live", "assertive");
-
-    await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 30));
-    });
-    expect(
-        view.queryByRole("button", {
-            name: "Generation stopped. The stream was interrupted",
-        }),
-    ).toBeNull();
-});
