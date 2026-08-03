@@ -1,6 +1,6 @@
 # Environment Variables
 
-Copy `.env.example` to `.env`. API development script passes it to Bun with `--env-file` when run outside the devenv process group.
+Copy `.env.example` to `.env`. Devenv loads it for the Go API and Bun workspace processes.
 
 ## Core
 
@@ -9,12 +9,13 @@ Copy `.env.example` to `.env`. API development script passes it to Bun with `--e
 | `AUTH_SECRET` | Production | Local-only development secret | Signs Better Auth state; HTTPS deployments require at least 32 characters |
 | `BASE_URL` | No | `http://localhost:8000` | Public API and auth callback origin |
 | `PORT` | No | `8000` | API listen port |
+| `HOST` | No | `0.0.0.0` | API listen host |
 | `DATABASE_URL` | No locally | Local devenv database | PostgreSQL connection string |
 | `DATABASE_CONNECT_TIMEOUT` | No | `10` | PostgreSQL connection timeout in seconds |
 | `DATABASE_IDLE_TIMEOUT` | No | `20` | PostgreSQL idle connection timeout in seconds |
-| `DATABASE_POOL_MAX` | No | `5` | Maximum connections in each Bun process pool; Workers always use one per request |
+| `DATABASE_POOL_MAX` | No | `5` | Maximum open and idle connections in the Go API pool |
 | `RATE_LIMIT_HASH_SECRET` | Production | `AUTH_SECRET` | Independent secret mixed into hashed rate-limit identities |
-| `TRUST_PROXY_HEADERS` | No | `false` | Allows Bun to use proxy-supplied client-IP headers; enable only behind a proxy that replaces them |
+| `TRUST_PROXY_HEADERS` | No | `false` | Allows Go to use proxy-supplied client-IP headers; enable only behind a proxy that replaces them |
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
@@ -24,20 +25,18 @@ Copy `.env.example` to `.env`. API development script passes it to Bun with `--e
 
 Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 `POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all
-`slidesage`, except `POSTGRES_PORT=5432`.
+`slidesage`, except `POSTGRES_PORT=5432`. The running PostgreSQL process exposes
+its active port as `PGPORT`.
 
 Devenv may select another PostgreSQL port when the default is occupied. Its migration
-task constructs `DATABASE_URL` from the active `POSTGRES_PORT`, so values loaded from
+task constructs `DATABASE_URL` from the active `PGPORT`, so values loaded from
 `.env` cannot redirect migrations to a stale local port.
 The managed API process uses the same active-port connection string and does not
 reload `.env`, preventing its development command from reverting to the default port.
 
-In Bun, the API keeps a process-wide Postgres.js pool for each connection string
-and scopes Drizzle access to the active request. `DATABASE_POOL_MAX` controls that
-pool. In the Cloudflare Worker, `HYPERDRIVE.connectionString` is preferred when a
-`HYPERDRIVE` binding exists; otherwise the Worker uses `DATABASE_URL`. Each Worker
-request uses one connection regardless of `DATABASE_POOL_MAX`, and closes it only
-after a JSON or streaming response is consumed or cancelled.
+The Go API uses one bounded `database/sql` pool configured by
+`DATABASE_POOL_MAX`, `DATABASE_CONNECT_TIMEOUT`, and `DATABASE_IDLE_TIMEOUT`.
+Hyperdrive and per-request Worker connections apply only to `apps/api-legacy`.
 
 Set `RATE_LIMIT_HASH_SECRET` to a separate random deployment secret. Falling back
 to `AUTH_SECRET` is supported, but an independent value avoids coupling rate-limit
@@ -58,9 +57,9 @@ identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md
 | `OPEN_ROUTER_RETRY_MAX_DELAY_MS` | No | `30000` | Maximum retry delay, including provider `Retry-After` values |
 | `OPEN_ROUTER_MAX_RESPONSE_BYTES` | No | `8388608` | Maximum streamed response size accepted per attempt |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | `32768` | Maximum output-token budget; generation scales the request up to this limit based on slide count |
-| `SSE_KEEPALIVE_INTERVAL_MS` | No | `10000` | Interval for downstream SSE keepalive comments during slow generation |
+| `SSE_KEEPALIVE_INTERVAL_MS` | Legacy only | `10000` | Legacy Worker keepalive override; Go sends keepalives every 10 seconds |
 | `PROVIDER_VALIDATION_TIMEOUT_MS` | No | `15000` | Total timeout for listing models from a user-connected BYOK provider |
-| `EMBEDDING_MODEL` | No | Value in `services/rag/defaults.ts` | Semantic-memory embedding model |
+| `EMBEDDING_MODEL` | Legacy only | Value in `apps/api-legacy/src/services/rag/defaults.ts` | Semantic-memory embedding model |
 | `EMBEDDING_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum embedding request duration; caller cancellation can stop it earlier |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
 | `EXA_REQUEST_TIMEOUT_MS` | No | `10000` | Maximum Exa request duration; caller cancellation can stop it earlier |
@@ -116,7 +115,7 @@ requests use same-origin `/api/*` routes. As a deployment safeguard, production
 builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back
 to same-origin routes instead.
 
-For the Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL` when Hyperdrive
+For the legacy Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL` when Hyperdrive
 is not used, `RATE_LIMIT_HASH_SECRET`, provider keys, encryption keys, and payment
 secrets with `wrangler secret put`. Keep public configuration such as `BASE_URL`,
 trusted origins, model IDs, timeouts, and pool sizes as Worker variables rather

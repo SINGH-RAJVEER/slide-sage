@@ -10,8 +10,8 @@
         "typescript": "^7.0.2",
       },
     },
-    "apps/api": {
-      "name": "slidesage-api",
+    "apps/api-legacy": {
+      "name": "slidesage-api-legacy",
       "version": "0.0.1",
       "dependencies": {
         "@slidesage/types": "workspace:*",
@@ -1243,7 +1243,7 @@
 
     "sirv": ["sirv@2.0.4", "", { "dependencies": { "@polka/url": "^1.0.0-next.24", "mrmime": "^2.0.0", "totalist": "^3.0.0" } }, "sha512-94Bdh3cC2PKrbgSOUqTiGPWVZeSiXfKOVZNJniWoqrWrRkB1CJzBU3NEbiTsPcYy1lDsANA/THzS+9WBiy5nfQ=="],
 
-    "slidesage-api": ["slidesage-api@workspace:apps/api"],
+    "slidesage-api-legacy": ["slidesage-api-legacy@workspace:apps/api-legacy"],
 
     "slidesage-web": ["slidesage-web@workspace:apps/web"],
 

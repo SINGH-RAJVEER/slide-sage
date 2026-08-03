@@ -10,27 +10,27 @@ dev:
 
 # Open a psql shell to the local dev database
 db-shell:
-    psql -h 127.0.0.1 -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER:-slidesage}" -d "${POSTGRES_DB:-slidesage}"
+    psql -h 127.0.0.1 -p "${PGPORT:-${POSTGRES_PORT:-5432}}" -U "${POSTGRES_USER:-slidesage}" -d "${POSTGRES_DB:-slidesage}"
 
-# Run drizzle-kit migrations
+# Apply Go API migrations with Goose
 migrate:
-    cd apps/api && bun run db:migrate
+    bash apps/api/scripts/migrate.sh
 
-# Generate a new drizzle migration from schema changes
-db-generate:
-    cd apps/api && bun run db:generate
+# Create a new Goose SQL migration
+db-generate name:
+    goose -dir apps/api/migrations create "{{name}}" sql
 
-# Push schema changes directly
-db-push:
-    cd apps/api && bun run db:push
-
-# Open drizzle studio
+# Open Drizzle Studio against the shared schema
 db-studio:
-    cd apps/api && bun run db:studio
+    cd apps/api-legacy && bun run db:studio
 
 # Run the API server only
 api:
-    bun --cwd apps/api dev
+    bun run dev:api
+
+# Run the legacy TypeScript API server only
+api-legacy:
+    bun run dev:api-legacy
 
 # Run the Web dev server only
 web:
@@ -41,6 +41,9 @@ test:
 
 test-api:
     bun run test:api
+
+test-api-legacy:
+    bun run test:api-legacy
 
 test-web:
     bun run test:web

@@ -2,31 +2,38 @@
 
 ## Workspace
 
-SlideSage is a Bun workspace.
+SlideSage combines a Go API module with a Bun workspace for the web app, shared libraries, and retained legacy API.
 
 ```text
-apps/api          Hono routes, Better Auth, middleware, and services
+apps/api          Go HTTP API, Goose migrations, PostgreSQL repositories, and providers
+apps/api-legacy   Legacy Hono Worker, Better Auth, Drizzle schema, and services
 apps/web          React 19 application built by Vite
 libs/types        Shared API, presentation, research, profile, and billing contracts
 libs/ui           Shared React UI primitives
 ```
 
-Biome handles formatting and linting. Bun's test runner executes both API and web tests; API tests use isolation because modules hold database and auth state.
+Go tooling formats, vets, and tests the primary API. Biome and Bun handle the TypeScript workspaces; legacy API tests use isolation because modules hold database and auth state.
+
+`apps/api` is the primary direct Go API service using the existing PostgreSQL schema.
+It exposes the health, credential/session, profile, presentation, research,
+generation SSE, billing, and BYOK connection route families under `/api`.
+Configure `DATABASE_URL` and the provider credentials described in
+`ENVIRONMENT_VARIABLES.md`; it does not depend on a TypeScript API upstream.
 
 ## Runtime
 
 The local stack is defined and coordinated by devenv's native service, task, and process management:
 
 ```text
-PostgreSQL ready -> Drizzle migrations complete -> API starts -> Vite web starts
+PostgreSQL ready -> Goose migrations complete -> API starts -> Vite web starts
 ```
 
 PostgreSQL 18 includes pgvector. Local dev state is stored in `.devenv/state/postgres/`.
 
-The production API entry point is `apps/api/src/index.ts`. Authentication is implemented in `apps/api/src/services/auth.ts` and its middleware companion, so the Worker deploy does not depend on a separate auth workspace package. The API mounts:
+The primary API entry point is `apps/api/cmd/api/main.go`. Authentication, signed session cookies, OAuth, OTP flows, rate limiting, and route handlers run in the same Go process. The API mounts:
 
 - Public health status at `/api/health`
-- Better Auth at `/api/auth`
+- Better Auth-compatible browser routes at `/api/auth`
 - Encrypted provider connection routes at `/api/ai`
 - Profile routes at `/api/profile`
 - Presentation and research routes at `/api`
@@ -38,7 +45,17 @@ before opening an SSE stream. BYOK generation is billed by the provider and uses
 a zero-point operation so lifecycle and presentation writes follow the same
 transactional path without deducting SlideSage points.
 
-Transport contracts shared by the Worker and web app belong in `libs/types` and use the `@slidesage/types` alias. This includes presentation list/detail responses, profile requests and responses, billing checkout and verification payloads, common API errors, and streaming events. Database row types remain in `apps/api`, reusable UI primitives belong in `libs/ui` and use the `@slidesage/ui` alias, and service-only implementation types stay with their owning modules.
+Transport contracts shared by the API and web app belong in `libs/types` and use the `@slidesage/types` alias. This includes presentation list/detail responses, profile requests and responses, billing checkout and verification payloads, common API errors, and streaming events. Go service types remain in `apps/api`, reusable UI primitives belong in `libs/ui`, and legacy database schema types remain in `apps/api-legacy`.
+
+## Primary Go Flow
+
+The Go service validates generation requests, resolves the selected encrypted BYOK credential or the server OpenRouter model, reserves the point quote only for OpenRouter, and creates the placeholder deck atomically. Provider output is normalized into bounded schema-v5 content slides before any slide event is emitted. Durable compare-and-swap persistence and point settlement complete before `complete` and `saved`; failures retain retry metadata and refund active reservations. Silent providers receive SSE keepalive comments.
+
+Research preview uses Exa and reviewed `research_payload` sources are added to the generation prompt and persisted document. Presentation reads and mutations normalize documents to schema 5, stable slide/block IDs, built-in themes, bounded dimensions, and data-only content blocks.
+
+## Legacy TypeScript Design
+
+The remaining architecture sections describe the richer semantic cache, RAG, scene-v6 compiler, and Worker deployment retained in `apps/api-legacy`. They are useful migration references but are not executed by the primary Go process.
 
 ## Presentation Flow
 
@@ -196,7 +213,7 @@ feedback as context.
 
 ## Data
 
-The Drizzle schema includes Better Auth tables, presentations, payments,
+The PostgreSQL schema includes Better Auth tables, presentations, payments,
 operational ledgers, and semantic-memory tables:
 
 - `generation_point_operations`
@@ -213,12 +230,14 @@ operational ledgers, and semantic-memory tables:
 - `semantic_commands`
 - `semantic_cache_entries`
 
-The public schema entry point remains `apps/api/src/db/schema.ts`. It
-re-exports domain modules from `apps/api/src/db/schema/`: authentication,
+Canonical migrations live in `apps/api/migrations` and are applied by Goose. The
+Drizzle schema entry point retained for Worker types and Drizzle Studio is
+`apps/api-legacy/src/db/schema.ts`. It
+re-exports domain modules from `apps/api-legacy/src/db/schema/`: authentication,
 presentations, billing, RAG context, slide memory, source memory, generation
 memory, style memory, and cross-domain relations. Add tables and inferred types
 to the matching domain module, and define relationships that cross modules in
-`relations.ts`.
+`relations.ts`; keep those definitions synchronized with each Goose migration.
 
 Repository classes own persistence. Route handlers should validate HTTP input and
 translate service results, while AI, research, RAG, profile, and billing logic
@@ -261,7 +280,7 @@ provider payloads, OTPs, API keys, and database details. Routes return generic
 errors where an upstream or internal message could disclose credentials or
 provider data.
 
-`apps/api/src/services/ai.service.ts` is the stable presentation-AI facade. Its
+`apps/api-legacy/src/services/ai.service.ts` is the legacy presentation-AI facade. Its
 supporting `services/ai/` modules separately own message construction, research
 source resolution, presentation-content normalization, and resilient OpenRouter
 stream orchestration. Keep provider transport and retry behavior out of the

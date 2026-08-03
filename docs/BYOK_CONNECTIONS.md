@@ -21,8 +21,9 @@ being stored. The encryption uses a random IV and authenticated user/provider
 metadata. Plaintext keys are never returned to the browser.
 
 Model choices are not maintained as a static SlideSage catalog. The API lists
-models with the connected key whenever settings, selection, or generation needs
-to resolve availability. OpenAI uses `GET /v1/models`; Google uses the paginated
+models with the connected key when settings or selection validates availability.
+Generation uses the previously validated encrypted selection without a second
+catalog round trip. OpenAI uses `GET /v1/models`; Google uses the paginated
 Gemini `GET /v1beta/models` API and keeps models that advertise
 `generateContent`; Anthropic uses the paginated `GET /v1/models` API and keeps
 models that advertise structured-output support. OpenAI's list response has no
@@ -80,9 +81,9 @@ or more connections exist, SlideSage uses the saved provider and never silently
 falls back to another direct provider.
 
 The settings page loads its configuration from `GET /api/ai/config`. Production
-releases that add or change these endpoints must deploy the API Worker as well as
+releases that add or change these endpoints must deploy the Go API as well as
 the web application; an unauthenticated request to this route should return `401`,
-not the Worker-wide `404` response.
+not a service-wide `404` response.
 
 Creating a connection returns `201`. Replacing one returns `200`, and deleting
 one returns `204 No Content` with an empty body. Connection creation/replacement
@@ -90,8 +91,8 @@ and selection/deletion use separate per-user rate-limit scopes. See
 [RATE_LIMITING.md](RATE_LIMITING.md) for exact windows and the PostgreSQL
 deployment requirement.
 
-Apply committed database migrations before deploying the Worker. BYOK requires
-`0009_add_ai_provider_connections.sql` and the production
+Apply committed database migrations before deploying the Go API. BYOK requires
+`00010_add_ai_provider_connections.sql` and the production
 `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` and versioned encryption-key secrets.
 
 Research uses Exa. Source, presentation, and retrieval embeddings always use

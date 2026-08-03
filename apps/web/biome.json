@@ -1,6 +1,9 @@
 {
     "root": false,
     "extends": ["../../biome.json"],
+    "files": {
+        "includes": ["**", "!dist"]
+    },
     "css": {
         "parser": {
             "tailwindDirectives": true

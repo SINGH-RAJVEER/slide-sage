@@ -1,12 +1,12 @@
 # Authentication
 
-SlideSage mounts Better Auth at `/api/auth`. It supports email and password,
+SlideSage exposes a Better Auth-compatible browser contract at `/api/auth`. It supports email and password,
 six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
-The Better Auth configuration and authorization middleware are owned by the API
-application in `apps/api/src/services`. They deploy as part of the same
-Cloudflare Worker bundle as the auth routes.
+The primary implementation is owned by the Go API in `apps/api/internal/auth`.
+`apps/api-legacy/src/services/auth.ts` retains the previous Better Auth and
+Cloudflare Worker implementation for maintenance and migration reference.
 
 ## Configuration
 
@@ -35,7 +35,7 @@ Register these callback URLs with the providers:
 - `${BASE_URL}/api/auth/callback/github`
 
 The production frontend and browser-facing API both use `https://slidesage.app`.
-Cloudflare routes `/api/*` to the Worker and serves all other paths from Pages,
+Production routing must send `/api/*` to the Go service and all other paths to the web application,
 so authentication remains same-origin. `https://api.slidesage.app` remains
 available for direct API access.
 
@@ -60,7 +60,7 @@ trusted origin defaults to `http://localhost:5173`.
 
 Authentication cookies are HTTP-only. Local HTTP development uses `SameSite=Lax`;
 HTTPS deployments use `Secure` and `SameSite=None` so configured cross-origin web
-deployments can send the session cookie. The Worker rejects HTTPS auth
+deployments can send the session cookie. The Go service rejects HTTPS auth
 initialization when `AUTH_SECRET` is missing or shorter than 32 characters,
 preventing deployment from silently using a development secret.
 
@@ -96,9 +96,10 @@ user in the frontend.
 | `GET` | `/api/auth/callback/github` | GitHub callback |
 | `POST` | `/api/profile/email/verify` | Complete a pending authenticated email change |
 
-Other Better Auth endpoints remain available under the same base path. Use the
-Better Auth client in `apps/web/src/lib/auth-client.ts` instead of hand-building
-browser requests.
+The web application uses the endpoints listed above plus `POST /api/auth/sign-in/social`.
+The broader Better Auth administration surface remains available only in
+`apps/api-legacy`; it is not part of the primary Go API contract. Use the Better
+Auth client in `apps/web/src/lib/auth-client.ts` for supported browser flows.
 
 ## Password and Email Changes
 
@@ -106,12 +107,12 @@ browser requests.
 session and Better Auth verification:
 
 - A password-only request must include non-empty `currentPassword` and
-  `newPassword`. The route delegates to Better Auth's `changePassword` API,
-  verifies the current password, hashes the replacement with Better Auth, and
+  `newPassword`. The route verifies the current password, writes a Better
+  Auth-compatible scrypt hash, and
   revokes other sessions. Password changes cannot be combined with name or email
   changes in the same request.
-- Starting an email change must include `currentPassword`. The route calls Better
-  Auth's password verifier, leaves the existing verified email unchanged, and
+- Starting an email change must include `currentPassword`. The route calls the
+  compatible password verifier, leaves the existing verified email unchanged, and
   sends a user-bound six-digit code to the normalized new address. The response
   returns `pending_email` and `verification_required`. A successfully delivered
   replacement invalidates every older pending email-change code for that user.
@@ -132,8 +133,8 @@ trigger an upgrade.
 
 ## OTP Delivery
 
-OTP email addresses are trimmed and lowercased. Verification, sign-in, and
-password-reset codes contain six digits and expire after 15 minutes.
+OTP email addresses are trimmed and lowercased. Verification and password-reset
+codes contain six digits and expire after 15 minutes.
 
 When replacing an OTP, including an authenticated email-change code, the API
 serializes replacement by identifier and keeps the previous record until Resend

@@ -5,7 +5,7 @@
 - Nix with flakes enabled
 - [devenv](https://devenv.sh/getting-started/)
 
-Bun, PostgreSQL 18 with pgvector, and `just` are supplied by `devenv.nix`.
+Go, Bun, PostgreSQL 18 with pgvector, and `just` are supplied by `devenv.nix`.
 
 ## First Run
 
@@ -18,19 +18,21 @@ just dev
 
 At minimum, replace `AUTH_SECRET` and set `OPEN_ROUTER_API_KEY` in `.env`.
 See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for optional services.
-The auth implementation is part of `apps/api`; there is no separate auth
+The Go auth implementation is part of `apps/api`; there is no separate auth
 package to build or deploy.
 
 `just dev` performs the complete startup sequence:
 
 1. Starts devenv's PostgreSQL service under `.devenv/state/postgres/`.
 2. Ensures the `slidesage` role, database, and `vector` extension exist.
-3. Applies Drizzle migrations after PostgreSQL is ready.
-4. Starts the API on port `8000` and Vite on port `5173`.
+3. Applies Goose migrations after PostgreSQL is ready.
+4. Starts the Go API on port `8000` and waits for `/api/health`.
+5. Starts Vite on port `5173` after the Go API is ready.
 
-The hardened API requires migrations `0010_generation_point_operations.sql` and
-`0011_api_rate_limits.sql`. Do not deploy the API before its target database has
-both migrations; rate limiting fails open when its table is unavailable.
+The hardened API requires migrations `00011_generation_point_operations.sql` and
+`00012_api_rate_limits.sql`. Do not deploy the API before its target database has
+both migrations; protected requests fail closed when rate-limit storage is
+unavailable.
 
 Stop the foreground process with `Ctrl+C`. Devenv stops the managed PostgreSQL
 instance with the API and web processes.
@@ -42,27 +44,50 @@ Run these from the repository root inside `devenv shell`.
 | Command | Action |
 | --- | --- |
 | `just dev` | Start the complete development stack |
-| `just api` | Start the API with watch mode |
+| `just api` | Start the Go API |
+| `just api-legacy` | Start the legacy TypeScript API with watch mode |
 | `just web` | Start Vite |
 | `just db-shell` | Connect to the local database with `psql` |
 | `just migrate` | Apply committed migrations |
-| `just db-generate` | Generate a migration from schema changes |
-| `just db-push` | Push schema changes without a migration file |
+| `just db-generate <name>` | Create a Goose SQL migration |
 | `just db-studio` | Start Drizzle Studio |
 | `just test` | Run all tests |
-| `just test-api` | Run isolated API tests |
+| `just test-api` | Run the Go API tests |
+| `just test-api-legacy` | Run isolated legacy API tests |
 | `just test-web` | Run web tests |
 | `just test-ui` | Run shared UI tests |
 | `just lint` | Run Biome checks |
 | `just lint-fix` | Apply safe Biome fixes |
 | `just format` | Format the repository |
 
-The repository is a native Bun workspace. Root scripts run package commands
-directly through Bun without a separate monorepo task runner.
+The repository uses a Go module for `apps/api` and a Bun workspace for TypeScript packages. Root Bun scripts orchestrate both toolchains without a separate monorepo task runner.
+
+## Database Migrations
+
+`apps/api/migrations` is the canonical migration history. Goose applies it through
+`just migrate`, `bun run migrate:api`, or the managed `db:migrate` task used by
+`just dev`. Create a migration with a descriptive name, then write its SQL:
+
+```bash
+just db-generate add_example_table
+```
+
+Keep `apps/api-legacy/src/db/schema.ts` and its domain modules synchronized when a
+schema change affects Drizzle Studio or the retained Worker, but do not generate or
+apply migrations from `apps/api-legacy`.
+
+The migration runner adopts a database with the complete historical Drizzle
+migration sequence by recording Goose versions 1 through 13 as applied. It refuses
+partial or unrecognized Drizzle histories rather than replaying schema changes.
+Fresh deployment databases must have the pgvector extension available and allow
+`CREATE EXTENSION vector` before the remaining migrations run; local `db:setup`
+handles this automatically.
 
 ## API Test Boundaries
 
-`just test-api` runs `bun test --isolate` for the API. Isolation is required
+`just test-api` runs `go test ./...` for the primary API. The suite covers password and signed-cookie compatibility, OAuth state, request normalization, point estimates, presentation schema normalization, provider responses, billing signatures, CORS, and rate-limit policies.
+
+`just test-api-legacy` runs `bun test --isolate` for the retained Worker. Isolation is required
 because auth and database modules hold process state. The suite covers route
 validation and statuses, password compatibility, OTP replacement behavior,
 request logging, rate-limit response behavior, point-accounting branches,
@@ -71,9 +96,8 @@ logic primarily through module mocks, fake stores, and mocked `fetch` or SDK
 clients. Database-context tests verify async request isolation and delayed Worker
 client closure without opening a PostgreSQL connection.
 
-Run `bun run build:api` to bundle the actual Worker configuration without
-deploying it. Run the opt-in PostgreSQL suite with
-`TEST_DATABASE_URL=postgresql://..._test bun run test:integration:db`. The
+Run `bun run build:api` to compile all Go API packages. Use `bun run build:api-legacy` to dry-build the Worker without deploying it. Run the legacy opt-in PostgreSQL suite with
+`TEST_DATABASE_URL=postgresql://..._test bun run test:integration:db:api-legacy`. The
 database name must contain `test`; the suite applies migrations, creates
 temporary records, and verifies concurrent credits/deductions, atomic
 rate-limit increments, and one-time expired-reservation recovery.
@@ -116,10 +140,11 @@ assert native element behavior, child rendering, or exact utility-class lists.
 | --- | --- |
 | `bun run dev` | Run the complete `just dev` development stack |
 | `bun run build` | Build the web application |
-| `bun run build:api` | Dry-build the Cloudflare Worker without deploying |
-| `bun run deploy:api` | Deploy the API with Wrangler; the devenv supplies Node for Wrangler while Bun remains the package manager |
+| `bun run build:api` | Compile the Go API packages |
+| `bun run build:api-legacy` | Dry-build the legacy Cloudflare Worker |
+| `bun run deploy:api-legacy` | Deploy the legacy API with Wrangler |
 | `bun run test` | Run API, shared types, UI, and web tests |
-| `bun run test:integration:db` | Run the opt-in suite against `TEST_DATABASE_URL` |
+| `bun run test:integration:db:api-legacy` | Run the legacy opt-in suite against `TEST_DATABASE_URL` |
 | `bun run test:ui` | Run shared UI component and rendering tests |
 | `bun run type-check` | Type-check all workspace projects |
 | `bun run lint` | Lint every workspace package |
@@ -132,7 +157,7 @@ assert native element behavior, child rendering, or exact utility-class lists.
 | Web application | `http://localhost:5173` |
 | API | `http://localhost:8000` |
 | Health check | `http://localhost:8000/api/health` |
-| PostgreSQL | `postgresql://slidesage:slidesage@127.0.0.1:5432/slidesage` |
+| PostgreSQL | `postgresql://slidesage:slidesage@127.0.0.1:$PGPORT/slidesage` |
 
 Vite proxies API requests to port `8000`. `VITE_API_URL` therefore defaults to
 the web origin during the all-in-one devenv workflow.
@@ -191,7 +216,7 @@ development environment:
 
 ```bash
 devenv up -d postgres
-pg_dump -h 127.0.0.1 -p 5432 -U slidesage -d slidesage --format=custom --file=slidesage-pg17.dump
+pg_dump -h 127.0.0.1 -p "${PGPORT:-5432}" -U slidesage -d slidesage --format=custom --file=slidesage-pg17.dump
 devenv processes down
 ```
 
@@ -202,7 +227,7 @@ devenv processes down
 rm -rf .devenv/state/postgres
 devenv up -d postgres
 devenv tasks run db:setup
-pg_restore -h 127.0.0.1 -p 5432 -U slidesage -d slidesage --clean --if-exists --no-owner slidesage-pg17.dump
+pg_restore -h 127.0.0.1 -p "${PGPORT:-5432}" -U slidesage -d slidesage --clean --if-exists --no-owner slidesage-pg17.dump
 devenv tasks run db:migrate
 devenv processes down
 just dev
@@ -215,17 +240,19 @@ instead.
 ## Troubleshooting
 
 - Missing `bun`, `just`, or PostgreSQL commands: enter `devenv shell` first.
-- Port collision: stop the existing process on `5173`, `8000`, or `5432`, or
-  override the relevant environment variable.
-- API exits immediately under `just dev`: ensure the devenv API and web process
-  definitions retain a repository-root `cwd`; their commands use workspace-relative paths.
+- Port collision: stop the existing process on `5173` or `8000`, or override the
+  relevant environment variable. Devenv may move PostgreSQL from `5432`; use its
+  active `PGPORT` for direct database commands.
+- API exits immediately under `just dev`: ensure `apps/api/go.mod` does not require
+  a newer Go patch release than the toolchain reported by `devenv info`, and inspect
+  `devenv processes logs api`.
 - Failed AI requests: confirm `OPEN_ROUTER_API_KEY` and the configured model.
 - Failed research: set `EXA_API_KEY`; research is skipped when it is absent.
 - Failed email delivery: set `RESEND_API_KEY`; development without it skips
   delivery and logs only a warning, never the OTP value.
-- Unexpected missing `429` responses: confirm migration `0011` is applied and
-  inspect `rate_limit_store_failed`; the limiter deliberately fails open on
-  PostgreSQL errors.
+- Unexpected rate-limit `503` responses: confirm migration `00012` is applied and
+  inspect `rate_limit_store_failed`; protected requests fail closed on PostgreSQL
+  errors.
 
 The generation page sends one prompt string to the presentation pipeline. Its centered
 compact editor grows to a bounded height and generates on Enter. The expand control

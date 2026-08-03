@@ -72,13 +72,13 @@ it("shows a provider-local model catalog error without hiding key controls", asy
                 },
                 selection: { provider: "openai", model: "gpt-5.1" },
             }),
-        )
+        ),
     ) as unknown as typeof fetch;
 
     const view = render(<AISettings />);
 
     expect(
-        await view.findByText("The provider model list is temporarily unavailable.")
+        await view.findByText("The provider model list is temporarily unavailable."),
     ).toBeInTheDocument();
     expect(view.getByLabelText("OpenAI API key")).toBeInTheDocument();
 });

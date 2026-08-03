@@ -3,9 +3,11 @@
 SlideSage stores embedding-backed context in PostgreSQL with pgvector and uses it
 during generation and revision.
 
+This document describes the retained TypeScript implementation in `apps/api-legacy`. The primary Go API persists reviewed research sources but does not currently retrieve semantic memory.
+
 ## Responsibilities
 
-`apps/api/src/services/rag.service.ts` is the public service facade. Modules
+`apps/api-legacy/src/services/rag.service.ts` is the legacy service facade. Modules
 under `services/rag/` separate retrieval, storage, seeding, defaults, types, and
 utilities. Presentation and search services call this facade rather than writing
 memory tables directly.
@@ -46,21 +48,23 @@ the runtime and tests share them.
 
 ## Schema Changes
 
-After editing the Drizzle schema:
+After editing the retained Drizzle schema, create and implement the matching
+canonical Goose migration:
 
 ```bash
-just db-generate
+just db-generate describe_schema_change
 just migrate
 ```
 
-Do not use `db-push` for changes that need a committed migration.
+Do not apply schema changes through Drizzle; `apps/api/migrations` is the committed
+migration history.
 
 ## Verification
 
 Run the isolated API suite:
 
 ```bash
-just test-apis
+just test-api-legacy
 ```
 
 The RAG service tests cover retrieval, persistence, source storage, and degraded

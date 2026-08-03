@@ -109,7 +109,7 @@ export default function GenerateResearchPage() {
             slideCount,
             detailLevel,
             tonality,
-            false,
+            true,
             payload,
             retryPresentationId,
             theme,

@@ -11,9 +11,15 @@ in
 
     packages = [
         pkgs.bun
+        pkgs.clang
+        pkgs.go
+        pkgs.goose
         pkgs.just
         pkgs.nodejs_24
     ];
+
+    env.CGO_ENABLED = "0";
+    env.CC = "clang";
 
     services.postgres = {
         enable = true;
@@ -54,23 +60,46 @@ in
         "db:migrate" = {
             after = [ "db:setup" ];
             exec = ''
-                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun run db:migrate
+                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" bash "$DEVENV_ROOT/apps/api/scripts/migrate.sh"
             '';
-            cwd = "apps/api";
         };
     };
 
     processes = {
         api = {
             exec = ''
-                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$POSTGRES_PORT/${dbName}" bun --cwd apps/api --watch src/index.ts
+                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" go run ./cmd/api
             '';
-            cwd = ".";
+            cwd = "apps/api";
             after = [ "db:migrate" ];
+            ready = {
+                http.get = {
+                    port = 8000;
+                    path = "/api/health";
+                };
+                initial_delay = 1;
+                period = 1;
+                probe_timeout = 3;
+                success_threshold = 1;
+                failure_threshold = 30;
+            };
         };
         web = {
             exec = "bun run dev:web";
             cwd = ".";
+            after = [ "devenv:processes:api" ];
+            ready = {
+                http.get = {
+                    host = "localhost";
+                    port = 5173;
+                    path = "/";
+                };
+                initial_delay = 1;
+                period = 1;
+                probe_timeout = 3;
+                success_threshold = 1;
+                failure_threshold = 30;
+            };
         };
     };
 

@@ -163,6 +163,7 @@ describe("GenerateResearchPage", () => {
                 provider: "google",
                 model: "gemini-2.5-pro",
             });
+            expect(generationBody?.["research"]).toEqual({ enabled: true });
         } finally {
             globalThis.fetch = originalFetch;
         }

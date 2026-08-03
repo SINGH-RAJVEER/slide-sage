@@ -4,9 +4,11 @@ SlideSage shares fresh web-search results and presentation outlines through a
 PostgreSQL semantic cache backed by pgvector. Full decks, iterations, and
 user-scoped RAG memories are never served from this cache.
 
+This document describes the retained TypeScript implementation in `apps/api-legacy`. The primary Go API does not currently read or write the semantic cache.
+
 ## Lookup
 
-`apps/api/src/services/semantic-cache.service.ts` performs cache resolution in
+`apps/api-legacy/src/services/semantic-cache.service.ts` performs cache resolution in
 this order:
 
 1. Hash the normalized query and hard request variant, then check an exact key.
