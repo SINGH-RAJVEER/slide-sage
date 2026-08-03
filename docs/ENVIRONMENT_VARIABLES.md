@@ -19,7 +19,7 @@ Copy `.env.example` to `.env`. Devenv loads it for the Go API and Bun workspace 
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
-| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses same-origin `/api/*` by default and local development uses Vite's proxy |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API origin; set production to `https://api.slidesage.app` and omit the `/api` suffix |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
 | `NODE_ENV` | No | `development` in devenv | Controls production auth and email-delivery safeguards; OTP values are never logged |
 
@@ -107,10 +107,11 @@ platform-provided `CF_PAGES_URL` or `VERCEL_URL`.
 Do not commit `.env`. Keep secrets in the deployment platform's secret store in
 production.
 
-Leave `VITE_API_URL` unset for the `slidesage.app` production build so browser
-requests use same-origin `/api/*` routes. As a deployment safeguard, production
-builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back
-to same-origin routes instead.
+Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production
+build. Client routes append `/api` themselves; a trailing `/api` in the configured
+value is tolerated and removed. As a deployment safeguard, production builds
+ignore loopback values such as `localhost` and `127.0.0.1` and fall back to
+same-origin routes instead.
 
 The API refuses to initialize authentication on an HTTPS base URL without a
 sufficiently strong `AUTH_SECRET`.

@@ -47,9 +47,41 @@ Run these from the repository root inside `devenv shell`.
 | `just test-ui` | Run shared UI tests |
 | `just lint` | Run Go vet and Biome checks |
 | `just format` | Format the repository |
+| `bun run load-test --help` | Show API load-test options |
 
 The repository uses a Go module for `apps/api` and a Bun workspace for the web,
 shared types, and UI packages. It does not use a separate monorepo task runner.
+
+## API Load Testing
+
+The dependency-free load test sends bounded concurrent `GET` requests and reports
+throughput, status counts, response errors, and p50/p95/p99 latency. It targets the
+production `/api/health` route by default, so it does not create application data.
+Every non-loopback target requires explicit production confirmation:
+
+```bash
+bun run load-test --confirm-production
+```
+
+The default run uses 100 concurrent workers, targets 500 requests per second for
+30 seconds, and fails when more than 1% of requests fail. Increase the rate and
+duration deliberately after confirming that Cloud Run scaling and cost limits are
+appropriate:
+
+```bash
+bun run load-test --confirm-production --concurrency 250 --rps 2000 --duration 120
+```
+
+Use `--rps 0` for the maximum throughput allowed by the selected concurrency. Add
+`--p95-ms 1000` to enforce a latency threshold. Test configuration without sending
+requests by using a loopback URL with `--dry-run`:
+
+```bash
+bun run load-test --url http://localhost:8000/api/health --dry-run
+```
+
+Only load-test infrastructure you own or are authorized to test. Production tests
+can increase Cloud Run and downstream service costs.
 
 ## Database Migrations
 

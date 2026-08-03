@@ -12,8 +12,9 @@ Required production values:
 
 ```dotenv
 AUTH_SECRET=replace-with-at-least-32-random-characters
-BASE_URL=https://slidesage.app
-BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://slidesage.pages.dev
+BASE_URL=https://api.slidesage.app
+BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev
+CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL=SlideSage <auth@example.com>
 ```
@@ -32,14 +33,13 @@ Register these callback URLs with the providers:
 - `${BASE_URL}/api/auth/callback/google`
 - `${BASE_URL}/api/auth/callback/github`
 
-The production frontend and browser-facing API both use `https://slidesage.app`.
-Production routing must send `/api/*` to the Go service and all other paths to the web application,
-so authentication remains same-origin. `https://api.slidesage.app` remains
-available for direct API access.
-
-When the frontend runs on `slidesage.app` or `www.slidesage.app`, it uses the
-current site origin for API requests. A configured `VITE_API_URL` is used only for
-environments that explicitly require a separate API origin.
+The production frontend uses `https://slidesage.app`, while the browser-facing API
+uses `https://api.slidesage.app`. Set `VITE_API_URL=https://api.slidesage.app` in
+the web build without a trailing `/api`; the client appends `/api` to route paths.
+The API must allow the frontend in both `CORS_ORIGINS` and
+`BETTER_AUTH_TRUSTED_ORIGINS`. Authentication fetches include credentials, and
+production session cookies use `Secure` and `SameSite=None` for the cross-origin
+requests.
 The web build script also pins `NODE_ENV=production` so production bundles use
 React's production runtime and Vite's production environment flags even when the
 calling shell defaults to development.

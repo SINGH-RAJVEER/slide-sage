@@ -13,6 +13,11 @@ describe("normalizeApiUrl", () => {
         expect(normalizeApiUrl("http://api.example.com/")).toBe("http://api.example.com");
     });
 
+    it("normalizes a redundant API path suffix", () => {
+        expect(normalizeApiUrl("https://api.slidesage.app/api")).toBe("https://api.slidesage.app");
+        expect(normalizeApiUrl("api.slidesage.app/api")).toBe("https://api.slidesage.app");
+    });
+
     it("uses HTTP for a bare local development address", () => {
         expect(normalizeApiUrl("localhost:8000/")).toBe("http://localhost:8000");
         expect(normalizeApiUrl("127.0.0.1:8000")).toBe("http://127.0.0.1:8000");
@@ -41,17 +46,20 @@ describe("resolveApiUrl", () => {
         expect(resolveApiUrl("/backend", true)).toBe("/backend");
     });
 
-    it("uses same-origin API routes on the production custom domain", () => {
+    it("honors the configured API origin on the production custom domain", () => {
         expect(
             resolveApiUrl("https://api.slidesage.app", true, "https://slidesage.app/profile"),
-        ).toBe("");
+        ).toBe("https://api.slidesage.app");
         expect(
             resolveApiUrl("https://api.slidesage.app", true, "https://www.slidesage.app/profile"),
-        ).toBe("");
+        ).toBe("https://api.slidesage.app");
     });
 
-    it("uses same-origin API routes on the custom domain despite an incorrect build mode", () => {
+    it("rejects a loopback API URL in a production build", () => {
         expect(resolveApiUrl("http://localhost:8000", false, "https://slidesage.app/sign-in")).toBe(
+            "http://localhost:8000",
+        );
+        expect(resolveApiUrl("http://localhost:8000", true, "https://slidesage.app/sign-in")).toBe(
             "",
         );
     });
