@@ -48,3 +48,6 @@ lint-fix:
 
 format:
     bun run biome format --write .
+
+docker-build:
+    docker build --file docker/Dockerfile.api --tag slidesage-api .

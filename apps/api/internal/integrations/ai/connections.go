@@ -11,9 +11,9 @@ import (
 
 type Connection struct {
 	UserID, Provider, EncryptedAPIKey, EncryptionIV, KeyLastFour, Status string
-	EncryptionKeyVersion                                                 int
-	ValidatedAt                                                          time.Time
-	LastUsedAt                                                           *time.Time
+	EncryptionKeyVersion int
+	ValidatedAt time.Time
+	LastUsedAt *time.Time
 }
 
 type Selection struct {
@@ -235,6 +235,7 @@ func (s ConnectionService) requireEligibility(ctx context.Context, userID string
 	}
 	return nil
 }
+
 func (s ConnectionService) upsert(ctx context.Context, userID string, provider Provider, key EncryptedCredential) (Connection, error) {
 	row := s.DB.QueryRowContext(ctx, `INSERT INTO ai_provider_connections (id, user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, validated_at) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, $3, $4, $5, $6, 'valid', NOW()) ON CONFLICT (user_id, provider) DO UPDATE SET encrypted_api_key = EXCLUDED.encrypted_api_key, encryption_iv = EXCLUDED.encryption_iv, encryption_key_version = EXCLUDED.encryption_key_version, key_last_four = EXCLUDED.key_last_four, status = 'valid', validated_at = NOW(), updated_at = NOW() RETURNING user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, validated_at, last_used_at`, userID, provider, key.EncryptedAPIKey, key.EncryptionIV, key.EncryptionKeyVersion, key.KeyLastFour)
 	return scanConnection(row)

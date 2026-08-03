@@ -1,0 +1,45 @@
+arg GO_VERSION=1.26
+
+from --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine as build
+
+arg TARGETOS
+arg TARGETARCH
+
+workdir /src/apps/api
+
+run apk add --no-cache ca-certificates
+
+copy apps/api/go.mod apps/api/go.sum ./
+
+run --mount=type=cache,target=/go/pkg/mod go mod download
+
+copy apps/api ./
+
+run --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 \
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH} \
+    go build \
+        -mod=readonly \
+        -trimpath \
+        -buildvcs=false \
+        -ldflags="-s -w" \
+        -o /out/api \
+        ./cmd/api
+
+from scratch as runtime
+
+workdir /app
+
+copy --from=build \
+    /etc/ssl/certs/ca-certificates.crt \
+    /etc/ssl/certs/ca-certificates.crt
+
+copy --from=build /out/api /app/api
+
+user 65532:65532
+
+expose 8000
+
+entrypoint ["/app/api"]
