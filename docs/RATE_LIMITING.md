@@ -80,13 +80,10 @@ requests rather than silently disabling enforcement.
 Expired rows are deleted opportunistically during successful counter updates.
 There is no separate cleanup scheduler.
 
-## Verification Boundary
+## Verification
 
-Go tests cover identity hashing and policy selection. The retained legacy Bun tests cover combined policies, structured `429` responses,
-`Retry-After`, and preflight bypass with test stores. Legacy route tests also traverse
-the fail-closed path when no rate-limit database is available, but they do not
-exercise the real SQL store or prove counter atomicity and expiry behavior
-against a live PostgreSQL instance. Before production rollout, run targeted
-failure-injection and concurrent multi-process tests against the target
-PostgreSQL path, then verify `429` behavior through the staging
-proxy so client-IP headers match production.
+Go tests cover identity hashing, policy selection, middleware ordering, structured
+responses, `Retry-After`, and fail-closed behavior. Before production rollout, run
+targeted failure-injection and concurrent multi-process tests against the target
+PostgreSQL path, then verify `429` behavior through the staging proxy so client-IP
+headers match production.

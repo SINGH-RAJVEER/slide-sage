@@ -5,8 +5,6 @@ six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
 The primary implementation is owned by the Go API in `apps/api/internal/auth`.
-`apps/api-legacy/src/services/auth.ts` retains the previous Better Auth and
-Cloudflare Worker implementation for maintenance and migration reference.
 
 ## Configuration
 
@@ -39,11 +37,9 @@ Production routing must send `/api/*` to the Go service and all other paths to t
 so authentication remains same-origin. `https://api.slidesage.app` remains
 available for direct API access.
 
-When the frontend runs on `slidesage.app` or `www.slidesage.app`, it always uses
-the current site origin for API requests, even if the Pages build contains an
-external `VITE_API_URL`. Cloudflare Pages preview domains retain the configured
-API origin. This keeps production session cookies on the same host while
-preserving preview deployments.
+When the frontend runs on `slidesage.app` or `www.slidesage.app`, it uses the
+current site origin for API requests. A configured `VITE_API_URL` is used only for
+environments that explicitly require a separate API origin.
 The web build script also pins `NODE_ENV=production` so production bundles use
 React's production runtime and Vite's production environment flags even when the
 calling shell defaults to development.
@@ -65,8 +61,8 @@ initialization when `AUTH_SECRET` is missing or shorter than 32 characters,
 preventing deployment from silently using a development secret.
 
 The frontend retries transient session lookup failures before treating a user
-as signed out, preventing route-guard loops during brief Worker or database
-startup failures.
+as signed out, preventing route-guard loops during brief API or database startup
+failures.
 
 The frontend checks the session once at startup. Returning focus to the app only
 revalidates a session when its last check is at least five minutes old, and
@@ -96,10 +92,9 @@ user in the frontend.
 | `GET` | `/api/auth/callback/github` | GitHub callback |
 | `POST` | `/api/profile/email/verify` | Complete a pending authenticated email change |
 
-The web application uses the endpoints listed above plus `POST /api/auth/sign-in/social`.
-The broader Better Auth administration surface remains available only in
-`apps/api-legacy`; it is not part of the primary Go API contract. Use the Better
-Auth client in `apps/web/src/lib/auth-client.ts` for supported browser flows.
+The web application uses the endpoints listed above plus
+`POST /api/auth/sign-in/social`. Use the Better Auth client in
+`apps/web/src/lib/auth-client.ts` for supported browser flows.
 
 ## Password and Email Changes
 
@@ -125,7 +120,7 @@ session and Better Auth verification:
   password and revokes existing sessions; the new password can then be used as
   the current-password proof for an email change.
 
-For older accounts, the password verifier can read a legacy 64-character
+For older accounts, the password verifier can read a 64-character
 SHA-256 hash. A successful email/password sign-in lazily replaces that hash with
 a Better Auth hash. It also converts the old `email` provider account record to
 the `credential` provider format when necessary. Failed password checks never
@@ -167,7 +162,7 @@ and deployment caveat.
 - The session user includes the server-owned `slideTokens` field.
 - API authorization uses the session cookie, not bearer tokens.
 - Password-reset completion revokes existing sessions.
-- The sign-in wrapper upgrades legacy email credential records only when the
+- The sign-in wrapper upgrades older email credential records only when the
   supplied password matches their old hash.
 
 Browser requests must send credentials. API and Better Auth trusted origins must

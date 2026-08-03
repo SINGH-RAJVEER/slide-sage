@@ -78,9 +78,9 @@ not create presentation records.
 
 Provider output must use the schema-v5 content block contract with explicit
 `text` fields for paragraphs, quotes, and callouts and `items` for bullets. The
-API accepts narrow legacy aliases during normalization, but rejects generated
-slides without substantive text instead of persisting synthetic placeholder
-content as a successful presentation.
+API accepts a small set of compatibility field aliases during normalization, but
+rejects generated slides without substantive text instead of persisting synthetic
+placeholder content as a successful presentation.
 
 ### Input Limits
 
@@ -111,10 +111,10 @@ limited to 64 characters, and optional `estimated_tokens` must be finite from 0
 through 1,000,000. Server-generated and rendered presentation image URLs remain
 HTTPS-only even though cited research links may use HTTP.
 
-New generated presentation documents use bounded block schema version 5. The API
-continues to load older documents, mapping `title`
+Generated presentation documents use bounded block schema version 5. The API
+also loads earlier stored document shapes, mapping `title`
 to `cover`, `content` to `body`, `two-column` to `split`, and `image-right` to
-`media-right`. Legacy `left` and `right` regions become semantic `primary`,
+`media-right`. Older `left` and `right` regions become semantic `primary`,
 `secondary`, or `media` regions. Schema-v5 content layouts also include
 `section`, `comparison`, `sidebar`, `media-left`, `quote`, `spotlight`, and
 `canvas`.

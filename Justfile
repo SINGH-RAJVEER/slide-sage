@@ -20,19 +20,11 @@ migrate:
 db-generate name:
     goose -dir apps/api/migrations create "{{name}}" sql
 
-# Open Drizzle Studio against the shared schema
-db-studio:
-    cd apps/api-legacy && bun run db:studio
-
 # Run the API server only
 api:
     bun run dev:api
 
-# Run the legacy TypeScript API server only
-api-legacy:
-    bun run dev:api-legacy
-
-# Run the Web dev server only
+# Run the Web server only
 web:
     bun --cwd apps/web dev
 
@@ -41,9 +33,6 @@ test:
 
 test-api:
     bun run test:api
-
-test-api-legacy:
-    bun run test:api-legacy
 
 test-web:
     bun run test:web

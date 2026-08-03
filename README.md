@@ -24,7 +24,7 @@ just dev
 
 Set `AUTH_SECRET` and `OPEN_ROUTER_API_KEY` in `.env` before starting. Add `EXA_API_KEY` for web research, `RESEND_API_KEY` for email delivery, OAuth credentials for social sign-in, and Razorpay credentials for purchases.
 
-`just dev` starts PostgreSQL with pgvector, applies the shared Drizzle migrations, waits for the Go API health check, and then starts:
+`just dev` starts PostgreSQL with pgvector, applies the Goose migrations, waits for the Go API health check, and then starts:
 
 - Web: http://localhost:5173
 - API: http://localhost:8000
@@ -38,12 +38,10 @@ The local database lives in `.devenv/state/postgres/`.
 | --- | --- |
 | `just dev` | Start PostgreSQL, migrations, API, and web app |
 | `just api` | Start only the API |
-| `just api-legacy` | Start the legacy TypeScript Worker API |
 | `just web` | Start only the web app |
 | `just migrate` | Apply database migrations |
-| `just db-generate` | Generate a Drizzle migration |
-| `just db-studio` | Open Drizzle Studio |
-| `just test` | Run Go API, legacy API, web, and shared library tests |
+| `just db-generate <name>` | Create a Goose migration |
+| `just test` | Run Go API, web, and shared library tests |
 | `just lint` | Run Go vet and Biome checks |
 | `just format` | Format the repository |
 | `bun run build` | Build the web application with Bun and Vite |
@@ -52,8 +50,7 @@ The local database lives in `.devenv/state/postgres/`.
 
 ```text
 apps/
-    api/        Primary Go API and provider integrations
-    api-legacy/ TypeScript Worker, shared Drizzle schema/migrations, and legacy services
+    api/        Go API, Goose migrations, repositories, and provider integrations
     web/        React and Vite web application
 libs/
     types/      Shared TypeScript contracts
@@ -63,7 +60,7 @@ devenv.nix      Local toolchain and service orchestration
 Justfile        Common development commands
 ```
 
-The application uses Go for the primary API and Bun for the TypeScript workspace. It also uses PostgreSQL with pgvector, OpenRouter, Exa, Resend, and Razorpay.
+The application uses Go for the API and Bun for the web workspace. It also uses PostgreSQL with pgvector, OpenRouter, Exa, Resend, and Razorpay.
 
 ## Documentation
 

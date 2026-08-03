@@ -19,7 +19,7 @@ Copy `.env.example` to `.env`. Devenv loads it for the Go API and Bun workspace 
 | `CORS_ORIGINS` | No | Local Vite origins, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
-| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; custom production domains use same-origin `/api/*`, Cloudflare Pages falls back to `https://api.slidesage.app`, and local development uses Vite's proxy |
+| `VITE_API_URL` | No | `http://localhost:5173` in devenv | Browser API base; production uses same-origin `/api/*` by default and local development uses Vite's proxy |
 | `VITE_PROXY_TARGET` | No | `http://localhost:8000` | Vite API proxy target |
 | `NODE_ENV` | No | `development` in devenv | Controls production auth and email-delivery safeguards; OTP values are never logged |
 
@@ -36,7 +36,6 @@ reload `.env`, preventing its development command from reverting to the default 
 
 The Go API uses one bounded `database/sql` pool configured by
 `DATABASE_POOL_MAX`, `DATABASE_CONNECT_TIMEOUT`, and `DATABASE_IDLE_TIMEOUT`.
-Hyperdrive and per-request Worker connections apply only to `apps/api-legacy`.
 
 Set `RATE_LIMIT_HASH_SECRET` to a separate random deployment secret. Falling back
 to `AUTH_SECRET` is supported, but an independent value avoids coupling rate-limit
@@ -57,9 +56,7 @@ identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md
 | `OPEN_ROUTER_RETRY_MAX_DELAY_MS` | No | `30000` | Maximum retry delay, including provider `Retry-After` values |
 | `OPEN_ROUTER_MAX_RESPONSE_BYTES` | No | `8388608` | Maximum streamed response size accepted per attempt |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | `32768` | Maximum output-token budget; generation scales the request up to this limit based on slide count |
-| `SSE_KEEPALIVE_INTERVAL_MS` | Legacy only | `10000` | Legacy Worker keepalive override; Go sends keepalives every 10 seconds |
 | `PROVIDER_VALIDATION_TIMEOUT_MS` | No | `15000` | Total timeout for listing models from a user-connected BYOK provider |
-| `EMBEDDING_MODEL` | Legacy only | Value in `apps/api-legacy/src/services/rag/defaults.ts` | Semantic-memory embedding model |
 | `EMBEDDING_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum embedding request duration; caller cancellation can stop it earlier |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
 | `EXA_REQUEST_TIMEOUT_MS` | No | `10000` | Maximum Exa request duration; caller cancellation can stop it earlier |
@@ -115,12 +112,8 @@ requests use same-origin `/api/*` routes. As a deployment safeguard, production
 builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back
 to same-origin routes instead.
 
-For the legacy Cloudflare Worker, configure `AUTH_SECRET`, `DATABASE_URL` when Hyperdrive
-is not used, `RATE_LIMIT_HASH_SECRET`, provider keys, encryption keys, and payment
-secrets with `wrangler secret put`. Keep public configuration such as `BASE_URL`,
-trusted origins, model IDs, timeouts, and pool sizes as Worker variables rather
-than labeling them secrets. The API refuses to initialize authentication on an
-HTTPS base URL without a sufficiently strong `AUTH_SECRET`.
+The API refuses to initialize authentication on an HTTPS base URL without a
+sufficiently strong `AUTH_SECRET`.
 
 ## BYOK Credential Encryption
 
