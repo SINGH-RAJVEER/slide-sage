@@ -202,6 +202,55 @@ describe("editable PPTX export", () => {
         expect(slide).toContain("Background image overlay");
     });
 
+    test("matches editorial block semantics without export-only decoration", async () => {
+        const archive = await archiveFor([
+            contentSlide("body", [
+                {
+                    type: "quote",
+                    region: "main",
+                    text: "A focused quotation",
+                    attribution: "Named source",
+                },
+                {
+                    type: "callout",
+                    region: "main",
+                    heading: "Key point",
+                    text: "Supporting detail",
+                },
+                {
+                    type: "image-placeholder",
+                    region: "main",
+                    alt: "Product workflow",
+                    caption: "Editable visual guidance",
+                },
+            ]),
+        ]);
+        const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
+
+        expect(slide).toContain("Quote mark");
+        expect(slide).toContain("Quote attribution");
+        expect(slide).toContain("Callout heading");
+        expect(slide).toContain("Image placeholder caption");
+        expect(slide).not.toContain("Quote background");
+        expect(slide).not.toContain("Callout background");
+        expect(slide).not.toContain("Theme accent");
+        expect(slide).not.toContain("Slide number");
+    });
+
+    test("uses the declared presentation font and title treatment", async () => {
+        const pptx = await buildEditablePptx({
+            ...presentation([contentSlide("body", [paragraph("main", "Studio content")])]),
+            theme: "creative-studio",
+        });
+        const output = await pptx.write({ outputType: "arraybuffer", compression: true });
+        const archive = await JSZip.loadAsync(output as ArrayBuffer);
+        const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
+        const theme = await archive.file("ppt/theme/theme1.xml")?.async("string");
+
+        expect(slide).toContain("EDITABLE QUARTERLY REVIEW");
+        expect(theme).toContain('typeface="Poppins"');
+    });
+
     test("normalizes legacy HTML before composing native content", async () => {
         const archive = await archiveFor([
             {

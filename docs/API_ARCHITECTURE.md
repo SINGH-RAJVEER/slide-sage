@@ -180,19 +180,24 @@ the web renderer, so web and PowerPoint no longer interpret legacy HTML through
 separate code paths.
 
 The export uses a widescreen 16:9 layout and maps each Slide Sage theme to a
-PowerPoint-safe color and font palette. Images are embedded when the browser can
-fetch them; a failed or cross-origin image becomes an editable labeled
-placeholder so it does not abort the deck. PowerPoint has no polar-area chart
-type, so those charts are exported as editable radar charts. The downloaded file
-uses the presentation title and the `.pptx` extension. The download control is
-disabled for empty decks, prevents overlapping exports, and reports write
-failures without discarding the presentation currently shown in the viewer.
+PowerPoint-safe color and font palette. Structured slides use the same theme
+insets, layout ratios, typography hierarchy, block semantics, and pattern scale
+as the editorial renderer without adding export-only stripes or slide numbers.
+Images are embedded when the browser can fetch them; a failed or cross-origin
+image becomes an editable labeled placeholder so it does not abort the deck.
+PowerPoint has no polar-area chart type, so those charts are exported as editable
+radar charts. The downloaded file uses the presentation title and the `.pptx`
+extension. The download control is disabled for empty decks, prevents overlapping
+exports, and reports write failures without discarding the presentation currently
+shown in the viewer.
 
 PDF export captures each mounted React slide after fonts and theme styles are
-applied, then writes the captures in presentation order to 16:9 PDF pages. This
-keeps the PDF visually aligned with the current viewer, including charts, theme
-changes, and per-slide layout edits. PDF output uses the presentation title and
-the `.pdf` extension.
+applied, using the browser's native SVG foreign-object renderer so modern CSS
+colors and schema-v5 treatments remain supported. Captures use a deterministic
+1280 by 720 surface and are written in presentation order to 16:9 PDF pages.
+Remote images that cannot be embedded fall back transparently instead of aborting
+the complete export. PDF output uses the presentation title and the `.pdf`
+extension.
 
 Database lifetime differs by runtime. Bun reuses a process-wide Postgres.js pool
 per connection string and puts the selected Drizzle instance in

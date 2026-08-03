@@ -5,9 +5,10 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 const addPage = mock(() => {});
 const addImage = mock(() => {});
 const save = mock(() => {});
-const html2canvas = mock(async (_element: HTMLElement) => ({
-    toDataURL: () => "data:image/jpeg;base64,presentation-slide",
-}));
+const toJpeg = mock(
+    async (_element: HTMLElement, _options?: Record<string, unknown>) =>
+        "data:image/jpeg;base64,presentation-slide",
+);
 
 class MockJsPdf {
     addPage = addPage;
@@ -15,7 +16,7 @@ class MockJsPdf {
     save = save;
 }
 
-mock.module("html2canvas", () => ({ default: html2canvas }));
+mock.module("html-to-image", () => ({ toJpeg }));
 mock.module("jspdf", () => ({ jsPDF: MockJsPdf }));
 
 const { exportPresentationPdf } = await import("@/lib/pdf-export");
@@ -25,7 +26,7 @@ describe("PDF export", () => {
         addPage.mockClear();
         addImage.mockClear();
         save.mockClear();
-        html2canvas.mockClear();
+        toJpeg.mockClear();
         document.body.innerHTML = "";
     });
 
@@ -40,7 +41,13 @@ describe("PDF export", () => {
 
         await exportPresentationPdf("Quarterly: Review?");
 
-        expect(html2canvas).toHaveBeenCalledTimes(2);
+        expect(toJpeg).toHaveBeenCalledTimes(2);
+        expect(toJpeg.mock.calls[0]?.[1]).toMatchObject({
+            canvasWidth: 2560,
+            canvasHeight: 1440,
+            width: 1280,
+            height: 720,
+        });
         expect(addImage).toHaveBeenCalledTimes(2);
         expect(addPage).toHaveBeenCalledTimes(1);
         expect(save).toHaveBeenCalledWith("Quarterly_ Review_.pdf");
