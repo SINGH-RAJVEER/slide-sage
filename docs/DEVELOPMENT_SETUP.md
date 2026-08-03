@@ -76,9 +76,11 @@ Keep `apps/api-legacy/src/db/schema.ts` and its domain modules synchronized when
 schema change affects Drizzle Studio or the retained Worker, but do not generate or
 apply migrations from `apps/api-legacy`.
 
-The migration runner adopts a database with the complete historical Drizzle
-migration sequence by recording Goose versions 1 through 13 as applied. It refuses
-partial or unrecognized Drizzle histories rather than replaying schema changes.
+When Goose history is absent, the migration runner checks only the current Go API
+schema. A database containing the baseline API tables and the presentation revision
+column is recorded at Goose version 13 without replaying migrations. An empty
+database receives the complete migration sequence normally; legacy migration
+metadata is not read or required.
 Fresh deployment databases must have the pgvector extension available and allow
 `CREATE EXTENSION vector` before the remaining migrations run; local `db:setup`
 handles this automatically.

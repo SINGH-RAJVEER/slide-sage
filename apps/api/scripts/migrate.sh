@@ -6,17 +6,23 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 migrations_dir="$(cd -- "${script_dir}/../migrations" && pwd)"
-legacy_final_timestamp="1785542400002"
-legacy_table="$(psql "${DATABASE_URL}" -Atqc "SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL")"
 goose_table="$(psql "${DATABASE_URL}" -Atqc "SELECT to_regclass('public.goose_db_version') IS NOT NULL")"
+baseline_schema="$(psql "${DATABASE_URL}" -Atqc "
+    SELECT to_regclass('public.users') IS NOT NULL
+        AND to_regclass('public.presentations') IS NOT NULL
+        AND to_regclass('public.ai_provider_connections') IS NOT NULL
+        AND to_regclass('public.generation_point_operations') IS NOT NULL
+        AND to_regclass('public.api_rate_limits') IS NOT NULL
+        AND EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+                AND table_name = 'presentations'
+                AND column_name = 'revision'
+        )
+")"
 
-if [[ "${legacy_table}" == "t" && "${goose_table}" != "t" ]]; then
-    legacy_latest="$(psql "${DATABASE_URL}" -Atqc 'SELECT COALESCE(MAX(created_at), 0) FROM drizzle.__drizzle_migrations')"
-    if [[ "${legacy_latest}" != "${legacy_final_timestamp}" ]]; then
-        printf 'Cannot automatically adopt partial Drizzle migration history (latest timestamp: %s).\n' "${legacy_latest}" >&2
-        exit 1
-    fi
-
+if [[ "${baseline_schema}" == "t" && "${goose_table}" != "t" ]]; then
     psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 <<'SQL'
 CREATE TABLE goose_db_version (
     id serial PRIMARY KEY,
@@ -28,7 +34,7 @@ INSERT INTO goose_db_version (version_id, is_applied) VALUES (0, true);
 INSERT INTO goose_db_version (version_id, is_applied)
 SELECT version, true FROM generate_series(1, 13) AS version;
 SQL
-    printf 'Adopted existing Drizzle migration history at Goose version 13.\n'
+    printf 'Baselined existing Go API schema at Goose version 13.\n'
 fi
 
 if [[ "$#" -eq 0 ]]; then
