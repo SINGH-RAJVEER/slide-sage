@@ -1,10 +1,10 @@
 # Rate Limiting
 
 SlideSage uses PostgreSQL-backed fixed-window rate limits. The shared
-`api_rate_limits` table makes counters consistent across Bun processes and
-Cloudflare Worker isolates instead of relying on per-process memory. Migration
-`0011_api_rate_limits.sql` creates the table and expiry index; forward repair
-migration `0012_repair_schema_and_revisions.sql` also ensures they exist.
+`api_rate_limits` table makes counters consistent across Go service instances
+instead of relying on per-process memory. Migration
+`00012_api_rate_limits.sql` creates the table and expiry index; forward repair
+migration `00013_repair_schema_and_revisions.sql` also ensures they exist.
 
 ## Policies
 
@@ -33,9 +33,9 @@ rejected if either applicable counter is exhausted. Invalid requests count
 because limiting runs before route validation. `OPTIONS` preflight requests
 bypass the limiter.
 
-Cloudflare deployments select the client IP from `CF-Connecting-IP`, then the
-first `X-Forwarded-For` value, then `X-Real-IP`. Bun first uses the runtime's
-direct socket address. Forwarded headers are ignored by default in Bun; set
+The Go service uses the direct socket address by default. When trusted proxy
+headers are enabled it selects `CF-Connecting-IP`, then the first
+`X-Forwarded-For` value, then `X-Real-IP`. Set
 `TRUST_PROXY_HEADERS=true` only behind a proxy that replaces these headers rather
 than accepting client-supplied values.
 
@@ -73,20 +73,17 @@ requests use different hashes.
 Rate-limit storage fails closed: if PostgreSQL rejects the counter operation or
 the production hash secret is missing, the error is logged through the safe error
 projection and the request receives `503` with code `RATE_LIMIT_UNAVAILABLE`.
-Apply migrations `0011` and `0012` before deploying the hardened API and monitor
+Apply migrations `00012` and `00013` before deploying the hardened API and monitor
 `rate_limit_store_failed`; an unavailable store intentionally blocks protected
 requests rather than silently disabling enforcement.
 
 Expired rows are deleted opportunistically during successful counter updates.
 There is no separate cleanup scheduler.
 
-## Verification Boundary
+## Verification
 
-Bun tests cover identity hashing, combined policies, structured `429` responses,
-`Retry-After`, and preflight bypass with test stores. Route tests also traverse
-the fail-closed path when no rate-limit database is available, but they do not
-exercise the real SQL store or prove counter atomicity and expiry behavior
-against a live PostgreSQL instance. Before production rollout, run targeted
-failure-injection and concurrent multi-process tests against the target
-PostgreSQL or Hyperdrive path, then verify `429` behavior through the staging
-proxy so client-IP headers match production.
+Go tests cover identity hashing, policy selection, middleware ordering, structured
+responses, `Retry-After`, and fail-closed behavior. Before production rollout, run
+targeted failure-injection and concurrent multi-process tests against the target
+PostgreSQL path, then verify `429` behavior through the staging proxy so client-IP
+headers match production.

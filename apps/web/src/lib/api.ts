@@ -1,16 +1,15 @@
 export function normalizeApiUrl(value: string | undefined): string {
     const trimmedValue = value?.trim().replace(/\/+$/, "") ?? "";
     if (!trimmedValue || trimmedValue.startsWith("/")) return trimmedValue;
-    if (/^https?:\/\//i.test(trimmedValue)) return trimmedValue;
+    if (/^https?:\/\//i.test(trimmedValue)) return trimmedValue.replace(/\/api$/i, "");
 
     const hostname = trimmedValue.split("/")[0]?.split(":")[0]?.toLowerCase();
     const protocol = hostname === "localhost" || hostname === "127.0.0.1" ? "http" : "https";
 
-    return `${protocol}://${trimmedValue}`;
+    return `${protocol}://${trimmedValue.replace(/\/api$/i, "")}`;
 }
 
 const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
-const SAME_ORIGIN_API_HOSTNAMES = new Set(["slidesage.app", "www.slidesage.app"]);
 const CLOUDFLARE_PAGES_HOST_SUFFIX = ".pages.dev";
 const DEPLOYED_API_URL = "https://api.slidesage.app";
 
@@ -35,11 +34,6 @@ export function resolveApiUrl(
     }
 
     try {
-        if (frontendOrigin) {
-            const frontendHostname = new URL(frontendOrigin).hostname.toLowerCase();
-            if (SAME_ORIGIN_API_HOSTNAMES.has(frontendHostname)) return "";
-        }
-
         if (!isProduction) return normalizedUrl;
 
         const hostname = new URL(normalizedUrl).hostname.toLowerCase();

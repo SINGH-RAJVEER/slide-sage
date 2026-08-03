@@ -1,74 +1,35 @@
-# RAG and Semantic Memory
+# Research Context
 
-SlideSage stores embedding-backed context in PostgreSQL with pgvector and uses it
-during generation and revision.
+The Go API supports web research as an explicit generation input. It does not
+perform semantic-memory retrieval or maintain a separate RAG pipeline.
 
-## Responsibilities
+## Research Flow
 
-`apps/api/src/services/rag.service.ts` is the public service facade. Modules
-under `services/rag/` separate retrieval, storage, seeding, defaults, types, and
-utilities. Presentation and search services call this facade rather than writing
-memory tables directly.
+1. The API validates the research request and calls Exa.
+2. The web application displays returned sources for review.
+3. The user proceeds with the reviewed source payload.
+4. The Go generation route includes those sources in the provider prompt.
+5. The resulting presentation stores the reviewed sources for attribution.
 
-The system stores:
-
-- Per-slide embeddings and summaries
-- Deck-level intent and summary memory
-- Retrieved source chunks
-- Style and feedback memories
-- Prompt events and successful example generations
-- Reusable slide templates and semantic commands
-
-All presentation-owned memories are deleted with their presentation.
-
-## Generation
-
-1. Embed the request with OpenRouter's embeddings endpoint.
-2. Retrieve relevant memories and sources scoped to the user.
-3. Add retrieved context to the generation prompt.
-4. Stream the generated deck to the client.
-5. Persist the deck, slides, prompt event, and derived memories.
-
-Revision additionally stores feedback and retrieves the parent deck's context.
-Web research stores source chunks so later generation can retrieve supporting
-material.
-
-## Configuration
-
-```dotenv
-OPEN_ROUTER_API_KEY=sk-...
-OPEN_ROUTER_EMBEDDINGS_URL=https://openrouter.ai/api/v1/embeddings
-EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
-```
-
-Only the API key is mandatory. Endpoint and model defaults live in code so that
-the runtime and tests share them.
+Research requests use `EXA_API_KEY` and `EXA_REQUEST_TIMEOUT_MS`. Generation uses
+the server OpenRouter embedding configuration only where the active generation
+path requires it; user BYOK credentials are used for generation calls, not server
+research configuration.
 
 ## Schema Changes
 
-After editing the Drizzle schema:
+Go API schema changes belong in `apps/api/migrations` and are managed by Goose:
 
 ```bash
-just db-generate
+just db-generate describe_schema_change
 just migrate
 ```
 
-Do not use `db-push` for changes that need a committed migration.
+Do not apply schema changes through an ORM or an ad hoc database push.
 
 ## Verification
 
-Run the isolated API suite:
-
 ```bash
-just test-apis
+just test-api
+just test-web
 ```
-
-The RAG service tests cover retrieval, persistence, source storage, and degraded
-behavior. A live generation check additionally requires PostgreSQL and valid
-OpenRouter credentials.
-# BYOK Isolation
-
-User-owned OpenAI, Gemini, and Anthropic credentials are used only for direct
-presentation generation. All source, slide, deck, and retrieval embeddings
-continue to use `OPEN_ROUTER_API_KEY`, `OPEN_ROUTER_EMBEDDINGS_URL`, and
-`EMBEDDING_MODEL`.

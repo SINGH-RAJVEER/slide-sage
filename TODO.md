@@ -14,6 +14,7 @@
 - Have the images embedded in the ppts have different levels of possible belnding with the background of the theme
 - Make the deletion of a presentation a one click process with an undo colldown
 - Introduce a vim mode to navigate the entire application
+- Give each slide a proper gird for user assisted placement of things
 
 ## Issues
 

@@ -1,0 +1,14 @@
+.env
+.git/*
+.jj/*
+.devenv/*
+.agents/*
+apps/api-legacy/*
+apps/web/*
+docs/*
+libs/*
+node_modules
+README.md
+AGENTS.md
+Justfile
+devenv.nix

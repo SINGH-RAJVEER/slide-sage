@@ -4,12 +4,11 @@ Rules for AI agents in this repository.
 
 ## Package Manager
 
-- Always use `bun` as the runtime, testing suite and pacakge manager.
+- Always use `bun` as package manager for TypeScript workspaces.
 
 ## Indentation
 
-- Always use 4 spaces for indentation everywhere in this repository.
-- Do not use 2 spaces or tabs for indentation.
+- Always use 4 spaces for indentation in TypeScript, JSON, Nix, Markdown, and other repository files.
 
 ## Version Control System
 
@@ -32,4 +31,3 @@ Rules for AI agents in this repository.
 ## Don’ts
 
 - Never use emojis in documentation or messages.
-

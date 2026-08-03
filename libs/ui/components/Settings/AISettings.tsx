@@ -248,6 +248,11 @@ export function AISettings({
                                                 </span>
                                             ) : null}
                                         </div>
+                                        {config.modelCatalogErrors?.[provider.id] ? (
+                                            <p className="mt-2 text-xs text-amber-200/80">
+                                                {config.modelCatalogErrors[provider.id]}
+                                            </p>
+                                        ) : null}
                                     </div>
                                     {connection ? (
                                         <Button

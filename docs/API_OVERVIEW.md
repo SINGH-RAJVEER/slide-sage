@@ -20,10 +20,11 @@ Rate-limited requests return `429`, include `Retry-After`, and use the
 
 ## Authentication
 
-Better Auth owns `/api/auth/*`, including email/password registration, email OTP,
-password reset, session, sign-out, and OAuth callbacks. Project-specific wrappers
-clear superseded OTP records and migrate legacy credential accounts during
-sign-in. See [AUTH_API.md](AUTH_API.md).
+The Go API exposes the Better Auth-compatible routes used by the web application,
+including email/password registration, email OTP, password reset, session,
+sign-out, social sign-in, and OAuth callbacks. It reads Better Auth scrypt hashes
+and signed session cookies so existing accounts and sessions remain valid. See
+[AUTH_API.md](AUTH_API.md).
 
 ## Profile
 
@@ -68,6 +69,19 @@ and supports Enter as a shortcut to begin generation.
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
 
+Generation creates a `generating` presentation before contacting the provider.
+Provider, content-validation, streaming, and final-save failures atomically mark
+that record as `failed`, retain its prompt and generation settings, and refund
+reserved points. Retrying reuses the failed presentation ID and moves the record
+back to `generating`; malformed requests and other failures before reservation do
+not create presentation records.
+
+Provider output must use the schema-v5 content block contract with explicit
+`text` fields for paragraphs, quotes, and callouts and `items` for bullets. The
+API accepts a small set of compatibility field aliases during normalization, but
+rejects generated slides without substantive text instead of persisting synthetic
+placeholder content as a successful presentation.
+
 ### Input Limits
 
 Presentation routes read and measure the body before parsing JSON. Generation
@@ -97,10 +111,10 @@ limited to 64 characters, and optional `estimated_tokens` must be finite from 0
 through 1,000,000. Server-generated and rendered presentation image URLs remain
 HTTPS-only even though cited research links may use HTTP.
 
-New generated presentation documents use scene schema version 6. The API
-continues to load schema-v5 block documents and older documents, mapping `title`
+Generated presentation documents use bounded block schema version 5. The API
+also loads earlier stored document shapes, mapping `title`
 to `cover`, `content` to `body`, `two-column` to `split`, and `image-right` to
-`media-right`. Legacy `left` and `right` regions become semantic `primary`,
+`media-right`. Older `left` and `right` regions become semantic `primary`,
 `secondary`, or `media` regions. Schema-v5 content layouts also include
 `section`, `comparison`, `sidebar`, `media-left`, `quote`, `spotlight`, and
 `canvas`.
@@ -146,9 +160,7 @@ atomically reserves the full quote; a new generation also creates its initial
 presentation row in that transaction. Insufficient funds return `402` with the
 remaining, required, and shortfall amounts.
 
-Reservation leases expire after one hour and active streams renew them every five
-minutes. Later reservations and internal
-point-accounting balance lookups lazily recover expired reservations for that
+Reservation leases expire after one hour. Later reservations lazily recover expired reservations for that
 user; the ordinary billing balance endpoint is not a recovery trigger, and there
 is no periodic recovery job.
 Ordinary failures, cancellation, incomplete streams, and final revision
@@ -158,12 +170,12 @@ difference between quote and measured charge, and records the resulting balance.
 Each failure refund likewise uses one transaction to transition a still-reserved
 operation and restore the full quote.
 The measured charge is one point per 1,000 aggregate AI tokens and never exceeds
-the quote. A shared outline-cache hit contributes no new outline tokens.
+the quote.
 
 Once a user connects a provider key, model generation is billed by that provider
 and the presentation request reports zero SlideSage generation points. Generation
-estimates include the exact serialized research context for OpenRouter mode, and
-the research endpoint returns a mode-aware `estimated_tokens` value when slide
+estimates include the research estimate supplied with reviewed sources, and
+the research endpoint returns an `estimated_tokens` value when slide
 count and options are supplied. The final `saved` event includes
 `slide_tokens_charged` and `slide_tokens_remaining`.
 
@@ -195,25 +207,15 @@ stream begins with `created` for new decks, forwards generation events such as
 `stage`, `outline`, theme, and slide updates, and ends with `saved`. Generation
 stages are `researching`, `planning`, `drafting`, `designing`, and `finalizing`;
 each stage includes a display message and bounded progress counts. The outline
-contains the presentation title, audience, thesis, and one semantic card per
-requested slide. Generated slides are compiled into safe scene slides containing
-nested data-only nodes, responsive variants, versioned widget properties,
-composition strategy metadata, and bounded per-slide art direction. Clients must
-treat slide events as index-based upserts because a compiled revision can replace
-an earlier event for the same index. The completed document persists the outline
-and scene metadata. Scene documents use schema version `6`, include an
-`engineVersion`, and retain explicit dimensions. Iteration uses the current deck
-as authoritative context, preserves existing sources when research is disabled,
-and returns the same scene format rather than downgrading the presentation. The
+contains the presentation title and one entry per generated slide. Generated
+slides are normalized into safe schema-v5 content slides with allowlisted layouts,
+blocks, themes, dimensions, and stable IDs before they are streamed or saved.
+Clients treat slide events as index-based upserts. Iteration uses the current deck
+as authoritative context and returns the same schema-v5 format. The
 API sends SSE keepalive
-comments while the selected provider is silent. A `retry` event means the current partial
-attempt must be discarded; its payload includes the next attempt, attempt limit,
-delay, and reason. If every requested slide was parsed before the provider stream
-failed or returned a malformed trailing envelope, the API preserves those slides
-and completes the deck instead of emitting a destructive retry. A `complete`
-event means provider generation has produced a full in-memory
-document; it is not a persistence acknowledgement. Only after the atomic
-presentation and point settlement succeeds does the API emit `saved`. Failures
+comments while the selected provider is silent. A `complete` event contains the
+normalized document after durable persistence and point settlement; `saved`
+immediately follows as the durable success acknowledgement. Failures
 use an `error` event and persist retry metadata without partial slides. Clients
 must use `saved` as the durable success signal and should refetch after a
 disconnect because the commit can succeed even if delivery of `saved` does not.

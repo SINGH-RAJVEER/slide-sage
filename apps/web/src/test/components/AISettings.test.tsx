@@ -48,6 +48,41 @@ it("shows point-funded OpenRouter until a provider is connected", async () => {
     }
 });
 
+it("shows a provider-local model catalog error without hiding key controls", async () => {
+    globalThis.fetch = mock(() =>
+        Promise.resolve(
+            jsonResponse({
+                generation: { mode: "byok", model: "gpt-5.1", billing: "provider" },
+                eligibility: {
+                    eligible: true,
+                    slideTokens: 100,
+                    minimumPointsExclusive: 50,
+                },
+                connections: [
+                    {
+                        provider: "openai",
+                        status: "valid",
+                        keyHint: "••••1234",
+                        validatedAt: "2026-01-01T00:00:00.000Z",
+                    },
+                ],
+                models: [],
+                modelCatalogErrors: {
+                    openai: "The provider model list is temporarily unavailable.",
+                },
+                selection: { provider: "openai", model: "gpt-5.1" },
+            }),
+        ),
+    ) as unknown as typeof fetch;
+
+    const view = render(<AISettings />);
+
+    expect(
+        await view.findByText("The provider model list is temporarily unavailable."),
+    ).toBeInTheDocument();
+    expect(view.getByLabelText("OpenAI API key")).toBeInTheDocument();
+});
+
 it("updates the saved default model from settings", async () => {
     const config = {
         generation: { mode: "byok", model: "gpt-4.1", billing: "provider" },

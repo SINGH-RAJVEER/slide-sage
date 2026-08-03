@@ -1,12 +1,10 @@
 # Authentication
 
-SlideSage mounts Better Auth at `/api/auth`. It supports email and password,
+SlideSage exposes a Better Auth-compatible browser contract at `/api/auth`. It supports email and password,
 six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
-The Better Auth configuration and authorization middleware are owned by the API
-application in `apps/api/src/services`. They deploy as part of the same
-Cloudflare Worker bundle as the auth routes.
+The primary implementation is owned by the Go API in `apps/api/internal/auth`.
 
 ## Configuration
 
@@ -14,8 +12,9 @@ Required production values:
 
 ```dotenv
 AUTH_SECRET=replace-with-at-least-32-random-characters
-BASE_URL=https://slidesage.app
-BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://slidesage.pages.dev
+BASE_URL=https://api.slidesage.app
+BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev
+CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL=SlideSage <auth@example.com>
 ```
@@ -34,16 +33,13 @@ Register these callback URLs with the providers:
 - `${BASE_URL}/api/auth/callback/google`
 - `${BASE_URL}/api/auth/callback/github`
 
-The production frontend and browser-facing API both use `https://slidesage.app`.
-Cloudflare routes `/api/*` to the Worker and serves all other paths from Pages,
-so authentication remains same-origin. `https://api.slidesage.app` remains
-available for direct API access.
-
-When the frontend runs on `slidesage.app` or `www.slidesage.app`, it always uses
-the current site origin for API requests, even if the Pages build contains an
-external `VITE_API_URL`. Cloudflare Pages preview domains retain the configured
-API origin. This keeps production session cookies on the same host while
-preserving preview deployments.
+The production frontend uses `https://slidesage.app`, while the browser-facing API
+uses `https://api.slidesage.app`. Set `VITE_API_URL=https://api.slidesage.app` in
+the web build without a trailing `/api`; the client appends `/api` to route paths.
+The API must allow the frontend in both `CORS_ORIGINS` and
+`BETTER_AUTH_TRUSTED_ORIGINS`. Authentication fetches include credentials, and
+production session cookies use `Secure` and `SameSite=None` for the cross-origin
+requests.
 The web build script also pins `NODE_ENV=production` so production bundles use
 React's production runtime and Vite's production environment flags even when the
 calling shell defaults to development.
@@ -60,13 +56,13 @@ trusted origin defaults to `http://localhost:5173`.
 
 Authentication cookies are HTTP-only. Local HTTP development uses `SameSite=Lax`;
 HTTPS deployments use `Secure` and `SameSite=None` so configured cross-origin web
-deployments can send the session cookie. The Worker rejects HTTPS auth
+deployments can send the session cookie. The Go service rejects HTTPS auth
 initialization when `AUTH_SECRET` is missing or shorter than 32 characters,
 preventing deployment from silently using a development secret.
 
 The frontend retries transient session lookup failures before treating a user
-as signed out, preventing route-guard loops during brief Worker or database
-startup failures.
+as signed out, preventing route-guard loops during brief API or database startup
+failures.
 
 The frontend checks the session once at startup. Returning focus to the app only
 revalidates a session when its last check is at least five minutes old, and
@@ -96,9 +92,9 @@ user in the frontend.
 | `GET` | `/api/auth/callback/github` | GitHub callback |
 | `POST` | `/api/profile/email/verify` | Complete a pending authenticated email change |
 
-Other Better Auth endpoints remain available under the same base path. Use the
-Better Auth client in `apps/web/src/lib/auth-client.ts` instead of hand-building
-browser requests.
+The web application uses the endpoints listed above plus
+`POST /api/auth/sign-in/social`. Use the Better Auth client in
+`apps/web/src/lib/auth-client.ts` for supported browser flows.
 
 ## Password and Email Changes
 
@@ -106,12 +102,12 @@ browser requests.
 session and Better Auth verification:
 
 - A password-only request must include non-empty `currentPassword` and
-  `newPassword`. The route delegates to Better Auth's `changePassword` API,
-  verifies the current password, hashes the replacement with Better Auth, and
+  `newPassword`. The route verifies the current password, writes a Better
+  Auth-compatible scrypt hash, and
   revokes other sessions. Password changes cannot be combined with name or email
   changes in the same request.
-- Starting an email change must include `currentPassword`. The route calls Better
-  Auth's password verifier, leaves the existing verified email unchanged, and
+- Starting an email change must include `currentPassword`. The route calls the
+  compatible password verifier, leaves the existing verified email unchanged, and
   sends a user-bound six-digit code to the normalized new address. The response
   returns `pending_email` and `verification_required`. A successfully delivered
   replacement invalidates every older pending email-change code for that user.
@@ -124,7 +120,7 @@ session and Better Auth verification:
   password and revokes existing sessions; the new password can then be used as
   the current-password proof for an email change.
 
-For older accounts, the password verifier can read a legacy 64-character
+For older accounts, the password verifier can read a 64-character
 SHA-256 hash. A successful email/password sign-in lazily replaces that hash with
 a Better Auth hash. It also converts the old `email` provider account record to
 the `credential` provider format when necessary. Failed password checks never
@@ -132,8 +128,8 @@ trigger an upgrade.
 
 ## OTP Delivery
 
-OTP email addresses are trimmed and lowercased. Verification, sign-in, and
-password-reset codes contain six digits and expire after 15 minutes.
+OTP email addresses are trimmed and lowercased. Verification and password-reset
+codes contain six digits and expire after 15 minutes.
 
 When replacing an OTP, including an authenticated email-change code, the API
 serializes replacement by identifier and keeps the previous record until Resend
@@ -166,7 +162,7 @@ and deployment caveat.
 - The session user includes the server-owned `slideTokens` field.
 - API authorization uses the session cookie, not bearer tokens.
 - Password-reset completion revokes existing sessions.
-- The sign-in wrapper upgrades legacy email credential records only when the
+- The sign-in wrapper upgrades older email credential records only when the
   supplied password matches their old hash.
 
 Browser requests must send credentials. API and Better Auth trusted origins must

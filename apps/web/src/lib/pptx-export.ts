@@ -31,6 +31,10 @@ interface PptxTheme {
     surface: string;
     headingFont: string;
     bodyFont: string;
+    contentInset: number;
+    titleBold?: boolean;
+    titleItalic?: boolean;
+    titleUppercase?: boolean;
 }
 
 interface ContentRegion {
@@ -59,13 +63,14 @@ const THEMES: Record<string, PptxTheme> = {
     "modern-dark": {
         background: "0F172A",
         text: "F8FAFC",
-        title: "38BDF8",
+        title: "F8FAFC",
         muted: "94A3B8",
         accent: "38BDF8",
         accentAlt: "818CF8",
         surface: "1E293B",
-        headingFont: "Aptos Display",
-        bodyFont: "Aptos",
+        headingFont: "Inter",
+        bodyFont: "Inter",
+        contentInset: 1.1,
     },
     "corporate-blue": {
         background: "FFFFFF",
@@ -75,8 +80,9 @@ const THEMES: Record<string, PptxTheme> = {
         accent: "2563EB",
         accentAlt: "0EA5E9",
         surface: "EFF6FF",
-        headingFont: "Aptos Display",
-        bodyFont: "Aptos",
+        headingFont: "Inter",
+        bodyFont: "Inter",
+        contentInset: 1.27,
     },
     minimalist: {
         background: "FAFAF9",
@@ -86,19 +92,23 @@ const THEMES: Record<string, PptxTheme> = {
         accent: "57534E",
         accentAlt: "A8A29E",
         surface: "E7E5E4",
-        headingFont: "Aptos Display",
-        bodyFont: "Aptos",
+        headingFont: "Inter",
+        bodyFont: "Inter",
+        contentInset: 1.27,
+        titleBold: false,
     },
     "creative-studio": {
-        background: "FFF1F2",
+        background: "FECFEF",
         text: "2D3748",
-        title: "C026D3",
+        title: "2D3748",
         muted: "4A5568",
         accent: "DB2777",
         accentAlt: "C084FC",
         surface: "FEF3C7",
-        headingFont: "Aptos Display",
-        bodyFont: "Aptos",
+        headingFont: "Poppins",
+        bodyFont: "Poppins",
+        contentInset: 1.1,
+        titleUppercase: true,
     },
     "elegant-serif": {
         background: "F5F5F4",
@@ -109,18 +119,22 @@ const THEMES: Record<string, PptxTheme> = {
         accentAlt: "A8A29E",
         surface: "E7E5E4",
         headingFont: "Georgia",
-        bodyFont: "Aptos",
+        bodyFont: "Inter",
+        contentInset: 1.27,
+        titleBold: false,
+        titleItalic: true,
     },
     "nature-green": {
-        background: "F0FDF4",
+        background: "DCFCE7",
         text: "14532D",
         title: "15803D",
         muted: "166534",
         accent: "22C55E",
         accentAlt: "84CC16",
         surface: "DCFCE7",
-        headingFont: "Aptos Display",
-        bodyFont: "Aptos",
+        headingFont: "Inter",
+        bodyFont: "Inter",
+        contentInset: 1.1,
     },
 };
 
@@ -171,15 +185,15 @@ const addPattern = (
 ) => {
     const line = { color: theme.muted, transparency: 82, pt: 0.5 };
     if (pattern === "grid") {
-        for (let x = 0.75; x < SLIDE_WIDTH; x += 0.75) {
+        for (let x = 0.4375; x < SLIDE_WIDTH; x += 0.4375) {
             slide.addShape(pptx.ShapeType.line, { x, y: 0, w: 0, h: SLIDE_HEIGHT, line });
         }
-        for (let y = 0.75; y < SLIDE_HEIGHT; y += 0.75) {
+        for (let y = 0.4375; y < SLIDE_HEIGHT; y += 0.4375) {
             slide.addShape(pptx.ShapeType.line, { x: 0, y, w: SLIDE_WIDTH, h: 0, line });
         }
     } else if (pattern === "dots") {
-        for (let x = 0.65; x < SLIDE_WIDTH; x += 0.65) {
-            for (let y = 0.65; y < SLIDE_HEIGHT; y += 0.65) {
+        for (let x = 0.229; x < SLIDE_WIDTH; x += 0.229) {
+            for (let y = 0.229; y < SLIDE_HEIGHT; y += 0.229) {
                 slide.addShape(pptx.ShapeType.ellipse, {
                     x,
                     y,
@@ -191,7 +205,7 @@ const addPattern = (
             }
         }
     } else if (pattern === "diagonal") {
-        for (let x = -SLIDE_HEIGHT; x < SLIDE_WIDTH; x += 0.7) {
+        for (let x = -SLIDE_HEIGHT; x < SLIDE_WIDTH; x += 0.1875) {
             slide.addShape(pptx.ShapeType.line, {
                 x,
                 y: SLIDE_HEIGHT,
@@ -247,35 +261,9 @@ const addBackgroundImage = async (
     }
 };
 
-const addSlideFrame = (
-    slide: PptxGenJS.Slide,
-    pptx: PptxGenJS,
-    theme: PptxTheme,
-    slideNumber: number,
-) => {
+const prepareSlide = (slide: PptxGenJS.Slide, theme: PptxTheme) => {
     slide.background = { color: theme.background };
     slide.color = theme.text;
-    slide.addShape(pptx.ShapeType.rect, {
-        x: 0,
-        y: 0,
-        w: 0.12,
-        h: SLIDE_HEIGHT,
-        line: { transparency: 100 },
-        fill: { color: theme.accent },
-        objectName: "Theme accent",
-    });
-    slide.addText(String(slideNumber), {
-        x: 12.25,
-        y: 7.08,
-        w: 0.45,
-        h: 0.18,
-        fontFace: theme.bodyFont,
-        fontSize: 9,
-        color: theme.muted,
-        align: "right",
-        margin: 0,
-        objectName: "Slide number",
-    });
 };
 
 const sceneColor = (value: string | undefined, fallback: string) => {
@@ -501,7 +489,6 @@ const renderSceneSlide = async (
     pptx: PptxGenJS,
     scene: SceneSlide,
     theme: PptxTheme,
-    slideNumber: number,
     dimensions: PresentationDimensions = { width: 1280, height: 720 },
 ) => {
     const output = pptx.addSlide();
@@ -509,18 +496,6 @@ const renderSceneSlide = async (
     output.background = { color: artBackground };
     const resolved = resolveScene(scene, dimensions, "wide");
     renderSceneNode(output, pptx, resolved.root, dimensions, theme);
-    output.addText(String(slideNumber), {
-        x: 12.25,
-        y: 7.08,
-        w: 0.45,
-        h: 0.18,
-        fontFace: theme.bodyFont,
-        fontSize: 9,
-        color: theme.muted,
-        align: "right",
-        margin: 0,
-        objectName: "Slide number",
-    });
 };
 
 const addTitle = (
@@ -530,16 +505,17 @@ const addTitle = (
     centered: boolean,
     y = 0.55,
 ) => {
-    const fontSize = centered ? 32 : 27;
+    const fontSize = centered ? 42 : 40;
     const h = Math.min(1.25, estimateTextHeight(title, 12, fontSize));
-    slide.addText(title, {
+    slide.addText(theme.titleUppercase ? title.toUpperCase() : title, {
         x: PAGE_MARGIN,
         y,
         w: SLIDE_WIDTH - PAGE_MARGIN * 2,
         h,
         fontFace: theme.headingFont,
         fontSize,
-        bold: true,
+        bold: theme.titleBold ?? true,
+        italic: theme.titleItalic,
         color: theme.title,
         align: centered ? "center" : "left",
         valign: "middle",
@@ -577,16 +553,18 @@ const addHeader = (
         });
         y += 0.31;
     }
-    const titleSize = options.titleSize || 27;
+    const titleSize = options.titleSize || 40;
     const titleHeight = Math.min(1.55, estimateTextHeight(slideData.title, region.w, titleSize));
-    slide.addText(cleanText(slideData.title), {
+    const title = cleanText(slideData.title);
+    slide.addText(theme.titleUppercase ? title.toUpperCase() : title, {
         x: region.x,
         y,
         w: region.w,
         h: titleHeight,
         fontFace: theme.headingFont,
         fontSize: titleSize,
-        bold: true,
+        bold: theme.titleBold ?? true,
+        italic: theme.titleItalic,
         color: theme.title,
         align: options.centered ? "center" : "left",
         valign: "middle",
@@ -622,7 +600,7 @@ const addParagraph = (
 ) => {
     if (!text || context.cursorY >= context.region.y + context.region.h) return;
 
-    const fontSize = (options.fontSize || 17) * (context.fontScale || 1);
+    const fontSize = (options.fontSize || 13.5) * (context.fontScale || 1);
     const availableHeight = context.region.y + context.region.h - context.cursorY;
     const h = Math.min(
         availableHeight,
@@ -661,7 +639,7 @@ const addStructuredList = (
     context: RenderContext,
     block: Extract<SlideBlock, { type: "bullets" }>,
 ) => {
-    const fontSize = (block.items.length > 7 ? 14 : 17) * (context.fontScale || 1);
+    const fontSize = (block.items.length > 7 ? 11 : 12.75) * (context.fontScale || 1);
     const availableHeight = context.region.y + context.region.h - context.cursorY;
     const estimatedHeight = block.items.reduce(
         (height, item) =>
@@ -811,24 +789,41 @@ const addStructuredImagePlaceholder = (
         y: context.cursorY,
         w: context.region.w,
         h: height,
-        fill: { color: context.theme.surface },
-        line: { color: context.theme.accent, transparency: 25, pt: 1.25 },
+        fill: { color: context.theme.surface, transparency: 35 },
+        line: { color: context.theme.muted, transparency: 30, pt: 1.1, dashType: "dash" },
         objectName: "Image placeholder",
     });
-    context.slide.addText([block.alt, block.caption].filter(Boolean).join("\n"), {
+    context.slide.addText(block.alt, {
         x: context.region.x + 0.3,
-        y: context.cursorY + 0.3,
+        y: context.cursorY + height * 0.31,
         w: context.region.w - 0.6,
-        h: height - 0.6,
+        h: Math.min(0.65, height * 0.3),
         fontFace: context.theme.bodyFont,
-        fontSize: 16,
-        color: context.theme.muted,
+        fontSize: 13,
+        bold: true,
+        color: context.theme.text,
         align: "center",
         valign: "middle",
         fit: "shrink",
         margin: 0,
         objectName: "Image placeholder description",
     });
+    if (block.caption) {
+        context.slide.addText(block.caption, {
+            x: context.region.x + 0.3,
+            y: context.cursorY + height * 0.62,
+            w: context.region.w - 0.6,
+            h: Math.min(0.42, height * 0.2),
+            fontFace: context.theme.bodyFont,
+            fontSize: 9.75,
+            color: context.theme.muted,
+            align: "center",
+            valign: "top",
+            fit: "shrink",
+            margin: 0,
+            objectName: "Image placeholder caption",
+        });
+    }
     context.cursorY += height + 0.12;
 };
 
@@ -837,45 +832,89 @@ const addStructuredEmphasis = (
     text: string,
     options: { quote?: boolean; heading?: string; attribution?: string } = {},
 ) => {
-    const body = [options.heading, text, options.attribution].filter(Boolean).join("\n");
+    const body = [options.heading, text, options.attribution].filter(Boolean).join(" ");
     const availableHeight = context.region.y + context.region.h - context.cursorY;
     const height = Math.min(
         availableHeight,
         Math.max(
-            0.9,
+            0.65,
             estimateTextHeight(
                 body,
-                context.region.w - 0.5,
-                (options.quote ? 22 : 18) * (context.fontScale || 1),
-            ) + 0.35,
+                context.region.w,
+                (options.quote ? 19.5 : 11.25) * (context.fontScale || 1),
+            ) + (options.quote ? 0.38 : 0.28),
         ),
     );
-    context.slide.addShape(context.pptx.ShapeType.roundRect, {
-        x: context.region.x,
-        y: context.cursorY,
-        w: context.region.w,
-        h: height,
-        rectRadius: 0.06,
-        fill: { color: context.theme.surface },
-        line: { color: context.theme.accent, pt: options.quote ? 2 : 1 },
-        objectName: options.quote ? "Quote background" : "Callout background",
-    });
-    context.slide.addText(body, {
-        x: context.region.x + 0.28,
-        y: context.cursorY + 0.12,
-        w: context.region.w - 0.56,
-        h: height - 0.24,
-        fontFace: options.quote ? context.theme.headingFont : context.theme.bodyFont,
-        fontSize: (options.quote ? 22 : 18) * (context.fontScale || 1),
-        bold: !options.quote,
-        italic: options.quote,
-        color: options.quote ? context.theme.title : context.theme.text,
-        align: "center",
-        valign: "middle",
-        margin: 0,
-        fit: "shrink",
-        objectName: options.quote ? "Quote" : "Callout",
-    });
+    if (options.quote) {
+        context.slide.addText("“", {
+            x: context.region.x,
+            y: context.cursorY - 0.08,
+            w: 0.42,
+            h: 0.5,
+            fontFace: context.theme.headingFont,
+            fontSize: 34,
+            color: context.theme.accent,
+            margin: 0,
+            objectName: "Quote mark",
+        });
+        context.slide.addText(text, {
+            x: context.region.x + 0.38,
+            y: context.cursorY,
+            w: context.region.w - 0.38,
+            h: Math.max(0.45, height - (options.attribution ? 0.3 : 0)),
+            fontFace: context.theme.headingFont,
+            fontSize: 19.5 * (context.fontScale || 1),
+            italic: true,
+            color: context.theme.text,
+            valign: "top",
+            margin: 0,
+            fit: "shrink",
+            objectName: "Quote",
+        });
+        if (options.attribution) {
+            context.slide.addText(options.attribution, {
+                x: context.region.x + 0.38,
+                y: context.cursorY + height - 0.24,
+                w: context.region.w - 0.38,
+                h: 0.2,
+                fontFace: context.theme.bodyFont,
+                fontSize: 9.75,
+                color: context.theme.muted,
+                margin: 0,
+                objectName: "Quote attribution",
+            });
+        }
+    } else {
+        let bodyY = context.cursorY;
+        if (options.heading) {
+            context.slide.addText(options.heading, {
+                x: context.region.x,
+                y: bodyY,
+                w: context.region.w,
+                h: 0.24,
+                fontFace: context.theme.bodyFont,
+                fontSize: 10.5,
+                bold: true,
+                color: context.theme.title,
+                margin: 0,
+                objectName: "Callout heading",
+            });
+            bodyY += 0.28;
+        }
+        context.slide.addText(text, {
+            x: context.region.x,
+            y: bodyY,
+            w: context.region.w,
+            h: Math.max(0.34, height - (bodyY - context.cursorY)),
+            fontFace: context.theme.bodyFont,
+            fontSize: 11.25 * (context.fontScale || 1),
+            color: context.theme.text,
+            valign: "top",
+            margin: 0,
+            fit: "shrink",
+            objectName: "Callout",
+        });
+    }
     context.cursorY += height + 0.15;
 };
 
@@ -1050,7 +1089,7 @@ const addStructuredWidget = (context: RenderContext, block: WidgetBlockLike) => 
 const estimateBlockHeight = (block: SlideBlock, width: number) => {
     switch (block.type) {
         case "paragraph":
-            return estimateTextHeight(block.text, width, 17) + 0.12;
+            return estimateTextHeight(block.text, width, 13.5) + 0.12;
         case "bullets":
             return Math.max(0.65, block.items.length * 0.42) + 0.12;
         case "table":
@@ -1059,9 +1098,9 @@ const estimateBlockHeight = (block: SlideBlock, width: number) => {
         case "image-placeholder":
             return 2.82;
         case "quote":
-            return estimateTextHeight(block.text, width, 22) + 0.55;
+            return estimateTextHeight(block.text, width, 19.5) + 0.38;
         case "callout":
-            return estimateTextHeight(`${block.heading} ${block.text}`, width, 18) + 0.55;
+            return estimateTextHeight(`${block.heading} ${block.text}`, width, 11.25) + 0.28;
         case "stats":
             return 1.6;
         case "widget":
@@ -1249,7 +1288,6 @@ const renderStructuredSlide = async (
     pptx: PptxGenJS,
     slideData: ContentSlide,
     theme: PptxTheme,
-    slideNumber: number,
 ) => {
     const slide = pptx.addSlide();
     const slideTheme = themeForTone(theme, slideData.tone || "default");
@@ -1258,7 +1296,7 @@ const renderStructuredSlide = async (
         await addBackgroundImage(slide, pptx, slideData.backgroundImage, slideTheme);
     }
     addPattern(slide, pptx, slideTheme, slideData.pattern || "none");
-    addSlideFrame(slide, pptx, slideTheme, slideNumber);
+    prepareSlide(slide, slideTheme);
 
     const blocksFor = (region: SlideRegion) =>
         slideData.blocks.filter((block) => block.region === region);
@@ -1280,9 +1318,11 @@ const renderStructuredSlide = async (
         ? secondary
         : all.filter((block) => !content.includes(block) && !visual.includes(block));
     const gap = slideData.density === "airy" ? 0.48 : slideData.density === "compact" ? 0.25 : 0.35;
-    const margin =
-        slideData.density === "airy" ? 0.78 : slideData.density === "compact" ? 0.48 : PAGE_MARGIN;
-    const bottom = 6.88;
+    const densityInset =
+        slideData.density === "airy" ? 0.15 : slideData.density === "compact" ? -0.13 : 0;
+    const margin = slideTheme.contentInset + densityInset;
+    const topMargin = Math.max(0.65, margin - 0.12);
+    const bottom = SLIDE_HEIGHT - Math.max(0.55, margin - 0.08);
     const width = SLIDE_WIDTH - margin * 2;
     const regionOptions = (region: SlideRegion, fillMedia = false) => ({
         label: slideData.regionLabels?.[region],
@@ -1302,13 +1342,13 @@ const renderStructuredSlide = async (
 
     switch (slideData.layout) {
         case "cover": {
-            const header: ContentRegion = { x: margin, y: 1.25, w: width - 1.2, h: 3.5 };
-            addHeader(slide, slideTheme, slideData, header, { titleSize: 48 });
+            const header: ContentRegion = { x: margin, y: topMargin, w: width * 0.78, h: 3.9 };
+            addHeader(slide, slideTheme, slideData, header, { titleSize: 61 });
             const contentRegion: ContentRegion = {
-                x: 8.75,
-                y: 5.35,
-                w: 3.85,
-                h: 1.2,
+                x: margin + width * 0.68,
+                y: bottom - 1.18,
+                w: width * 0.32,
+                h: 1.18,
             };
             slide.addShape(pptx.ShapeType.line, {
                 x: contentRegion.x,
@@ -1330,10 +1370,10 @@ const renderStructuredSlide = async (
         }
         case "section": {
             slide.addShape(pptx.ShapeType.rect, {
-                x: 1.05,
-                y: 1.45,
-                w: 0.07,
-                h: 4.4,
+                x: margin,
+                y: topMargin + 0.35,
+                w: 0.05,
+                h: bottom - topMargin - 0.7,
                 line: { transparency: 100 },
                 fill: { color: slideTheme.accent },
                 objectName: "Section mark",
@@ -1342,33 +1382,38 @@ const renderStructuredSlide = async (
                 slide,
                 slideTheme,
                 slideData,
-                { x: 1.45, y: 2.15, w: 8.8, h: 2.1 },
-                { titleSize: 39 },
+                { x: margin + 0.25, y: topMargin + 0.85, w: width * 0.78, h: 2.1 },
+                { titleSize: 40 },
             );
             await renderStructuredRegion(
                 slide,
                 pptx,
                 slideTheme,
                 main.length ? main : all,
-                { x: 1.45, y: headerBottom + 0.3, w: 7.2, h: bottom - headerBottom - 0.3 },
+                {
+                    x: margin + 0.25,
+                    y: headerBottom + 0.3,
+                    w: width * 0.62,
+                    h: bottom - headerBottom - 0.3,
+                },
                 regionOptions("main"),
             );
             return;
         }
         case "quote": {
-            const leftWidth = 3.25;
+            const leftWidth = (width - gap) * 0.38;
             addHeader(
                 slide,
                 slideTheme,
                 slideData,
-                { x: margin, y: 2.15, w: leftWidth, h: 3 },
-                { titleSize: 24 },
+                { x: margin, y: topMargin + 0.8, w: leftWidth, h: bottom - topMargin - 1.6 },
+                { titleSize: 28.5 },
             );
             slide.addShape(pptx.ShapeType.line, {
-                x: margin + leftWidth + 0.25,
-                y: 1.15,
+                x: margin + leftWidth + gap / 2,
+                y: topMargin,
                 w: 0,
-                h: 5.2,
+                h: bottom - topMargin,
                 line: { color: slideTheme.muted, transparency: 48, pt: 0.9 },
                 objectName: "Quote divider",
             });
@@ -1377,33 +1422,48 @@ const renderStructuredSlide = async (
                 pptx,
                 slideTheme,
                 main.length ? main : all,
-                { x: margin + leftWidth + 0.75, y: 1.3, w: width - leftWidth - 0.75, h: 5.35 },
+                {
+                    x: margin + leftWidth + gap,
+                    y: topMargin + 0.45,
+                    w: width - leftWidth - gap,
+                    h: bottom - topMargin - 0.9,
+                },
                 regionOptions("main"),
             );
             return;
         }
         case "media-left":
         case "media-right": {
-            const mediaWidth = width * 0.41;
+            const mediaWidth = (width - gap) * 0.44;
             const textWidth = width - mediaWidth - gap;
             const mediaX = slideData.layout === "media-left" ? margin : margin + textWidth + gap;
             const textX = slideData.layout === "media-left" ? margin + mediaWidth + gap : margin;
-            const mediaRegion: ContentRegion = { x: mediaX, y: 0.65, w: mediaWidth, h: 6.15 };
+            const mediaRegion: ContentRegion = {
+                x: mediaX,
+                y: topMargin,
+                w: mediaWidth,
+                h: bottom - topMargin,
+            };
             surface(mediaRegion, "Media surface", true);
             await renderStructuredRegion(
                 slide,
                 pptx,
                 slideTheme,
                 visual,
-                { x: mediaX + 0.08, y: 0.73, w: mediaWidth - 0.16, h: 5.99 },
+                {
+                    x: mediaX + 0.08,
+                    y: topMargin + 0.08,
+                    w: mediaWidth - 0.16,
+                    h: bottom - topMargin - 0.16,
+                },
                 regionOptions("media", true),
             );
             const headerBottom = addHeader(
                 slide,
                 slideTheme,
                 slideData,
-                { x: textX, y: 0.7, w: textWidth, h: 2 },
-                { titleSize: 27 },
+                { x: textX, y: topMargin, w: textWidth, h: 2 },
+                { titleSize: 40 },
             );
             const supportHeight = support.length ? 1.25 : 0;
             await renderStructuredRegion(
@@ -1439,16 +1499,79 @@ const renderStructuredSlide = async (
             }
             return;
         }
+        case "spotlight": {
+            const hero = all.find((block) => block.emphasis === "hero") || primary[0] || all[0];
+            const heroBlocks = hero ? [hero] : [];
+            const supportBlocks = all.filter((block) => block !== hero);
+            const supportHeight = supportBlocks.length ? 1.05 : 0;
+            const rowBottom = bottom - supportHeight - (supportBlocks.length ? 0.35 : 0);
+            const headerWidth = (width - gap) * 0.29;
+            const heroRegion: ContentRegion = {
+                x: margin + headerWidth + gap,
+                y: topMargin,
+                w: width - headerWidth - gap,
+                h: rowBottom - topMargin,
+            };
+            addHeader(
+                slide,
+                slideTheme,
+                slideData,
+                { x: margin, y: topMargin, w: headerWidth, h: rowBottom - topMargin },
+                { titleSize: 32 },
+            );
+            surface(heroRegion, "Spotlight hero surface", true);
+            await renderStructuredRegion(
+                slide,
+                pptx,
+                slideTheme,
+                heroBlocks,
+                {
+                    x: heroRegion.x + 0.3,
+                    y: heroRegion.y + 0.28,
+                    w: heroRegion.w - 0.6,
+                    h: heroRegion.h - 0.56,
+                },
+                regionOptions(hero?.region || "primary"),
+            );
+            if (supportBlocks.length) {
+                const supportTop = bottom - supportHeight;
+                slide.addShape(pptx.ShapeType.line, {
+                    x: margin,
+                    y: supportTop - 0.18,
+                    w: width,
+                    h: 0,
+                    line: { color: slideTheme.muted, transparency: 50, pt: 0.8 },
+                    objectName: "Spotlight support divider",
+                });
+                const cellWidth = (width - gap * (supportBlocks.length - 1)) / supportBlocks.length;
+                for (const [index, block] of supportBlocks.entries()) {
+                    await renderStructuredRegion(
+                        slide,
+                        pptx,
+                        slideTheme,
+                        [block],
+                        {
+                            x: margin + index * (cellWidth + gap),
+                            y: supportTop,
+                            w: cellWidth,
+                            h: supportHeight,
+                        },
+                        index === 0 ? regionOptions("secondary") : {},
+                    );
+                }
+            }
+            return;
+        }
     }
 
     const headerBottom = addHeader(
         slide,
         slideTheme,
         slideData,
-        { x: margin, y: 0.55, w: width, h: 1.6 },
-        { titleSize: 27 },
+        { x: margin, y: topMargin, w: width, h: 1.8 },
+        { titleSize: 40 },
     );
-    const top = Math.max(1.65, headerBottom + 0.28);
+    const top = Math.max(topMargin + 1.1, headerBottom + 0.28);
     const height = bottom - top;
 
     switch (slideData.layout) {
@@ -1531,54 +1654,6 @@ const renderStructuredSlide = async (
             );
             return;
         }
-        case "spotlight": {
-            const hero = all.find((block) => block.emphasis === "hero") || primary[0] || all[0];
-            const heroBlocks = hero ? [hero] : [];
-            const supportBlocks = all.filter((block) => block !== hero);
-            const heroRegion = {
-                x: margin + width * 0.31,
-                y: top,
-                w: width * 0.69,
-                h: height - 1.35,
-            };
-            surface(heroRegion, "Spotlight hero surface", true);
-            await renderStructuredRegion(
-                slide,
-                pptx,
-                slideTheme,
-                heroBlocks,
-                {
-                    x: heroRegion.x + 0.3,
-                    y: heroRegion.y + 0.28,
-                    w: heroRegion.w - 0.6,
-                    h: heroRegion.h - 0.56,
-                },
-                regionOptions(hero?.region || "primary"),
-            );
-            const supportTop = bottom - 1.05;
-            slide.addShape(pptx.ShapeType.line, {
-                x: margin,
-                y: supportTop - 0.18,
-                w: width,
-                h: 0,
-                line: { color: slideTheme.muted, transparency: 50, pt: 0.8 },
-                objectName: "Spotlight support divider",
-            });
-            const cellWidth = supportBlocks.length
-                ? (width - gap * (supportBlocks.length - 1)) / supportBlocks.length
-                : width;
-            for (const [index, block] of supportBlocks.entries()) {
-                await renderStructuredRegion(
-                    slide,
-                    pptx,
-                    slideTheme,
-                    [block],
-                    { x: margin + index * (cellWidth + gap), y: supportTop, w: cellWidth, h: 1.05 },
-                    index === 0 ? regionOptions("secondary") : {},
-                );
-            }
-            return;
-        }
         case "canvas": {
             const columns = 6;
             const cellGap = 0.16;
@@ -1613,16 +1688,52 @@ const renderStructuredSlide = async (
             }
             return;
         }
-        case "body":
+        case "body": {
+            const bodyBlocks = main.length ? main : all;
+            const feature = bodyBlocks[0];
+            const supporting = bodyBlocks.slice(1);
+            if (!feature) return;
+            if (supporting.length === 0) {
+                await renderStructuredRegion(
+                    slide,
+                    pptx,
+                    slideTheme,
+                    [feature],
+                    { x: margin, y: top, w: width, h: height },
+                    regionOptions("main"),
+                );
+                return;
+            }
+            const featureWidth = (width - gap) * 0.675;
             await renderStructuredRegion(
                 slide,
                 pptx,
                 slideTheme,
-                main.length ? main : all,
-                { x: margin, y: top, w: width, h: height },
+                [feature],
+                { x: margin, y: top, w: featureWidth, h: height },
                 regionOptions("main"),
             );
+            const supportX = margin + featureWidth + gap;
+            const supportGap = Math.min(0.19, gap);
+            const supportHeight =
+                (height - supportGap * (supporting.length - 1)) / supporting.length;
+            for (const [index, block] of supporting.entries()) {
+                await renderStructuredRegion(
+                    slide,
+                    pptx,
+                    slideTheme,
+                    [block],
+                    {
+                        x: supportX,
+                        y: top + index * (supportHeight + supportGap),
+                        w: width - featureWidth - gap,
+                        h: supportHeight,
+                    },
+                    {},
+                );
+            }
             return;
+        }
     }
 };
 
@@ -1632,14 +1743,9 @@ const normalizeColor = (color: string | string[] | undefined, fallback: string) 
     return match?.[1]?.toUpperCase() || fallback;
 };
 
-const renderChartSlide = (
-    pptx: PptxGenJS,
-    chartConfig: ChartConfig,
-    theme: PptxTheme,
-    slideNumber: number,
-) => {
+const renderChartSlide = (pptx: PptxGenJS, chartConfig: ChartConfig, theme: PptxTheme) => {
     const slide = pptx.addSlide();
-    addSlideFrame(slide, pptx, theme, slideNumber);
+    prepareSlide(slide, theme);
     const title = cleanText(chartConfig.title) || "Data visualization";
     const contentY = addTitle(slide, theme, title, false);
     const description = cleanText(chartConfig.description);
@@ -1721,18 +1827,18 @@ export const buildEditablePptx = async (presentation: PresentationData) => {
         bodyFontFace: theme.bodyFont,
     };
 
-    for (const [index, slide] of presentation.slides.entries()) {
+    for (const slide of presentation.slides) {
         if (isSceneSlide(slide)) {
-            await renderSceneSlide(pptx, slide, theme, index + 1, presentation.dimensions);
+            await renderSceneSlide(pptx, slide, theme, presentation.dimensions);
             continue;
         }
         if (isChartSlide(slide)) {
-            renderChartSlide(pptx, slide.chartConfig, theme, index + 1);
+            renderChartSlide(pptx, slide.chartConfig, theme);
             continue;
         }
 
         const contentSlide = isLegacyHtmlSlide(slide) ? adaptLegacyHtmlSlide(slide) : slide;
-        await renderStructuredSlide(pptx, contentSlide, theme, index + 1);
+        await renderStructuredSlide(pptx, contentSlide, theme);
     }
 
     return pptx;

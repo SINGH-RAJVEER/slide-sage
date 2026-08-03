@@ -403,6 +403,7 @@ export interface AIConfigurationResponse {
     };
     connections: AIConnectionSummary[];
     models: AIModelDescriptor[];
+    modelCatalogErrors?: Partial<Record<AIProvider, string>>;
     selection: AIModelSelection | null;
 }
 
