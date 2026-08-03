@@ -142,7 +142,7 @@ export default function PresentationsGridPage() {
                 else if (!background) setLoading(true);
                 setError("");
                 const response = await fetch(
-                    `${API_URL}/api/presentations?limit=${PRESENTATIONS_PAGE_SIZE}&offset=${offset}`,
+                    `${API_URL}/presentations?limit=${PRESENTATIONS_PAGE_SIZE}&offset=${offset}`,
                     {
                         credentials: "include",
                     },
@@ -212,7 +212,7 @@ export default function PresentationsGridPage() {
     const handlePresentationClick = async (presentationId: string) => {
         try {
             setOpeningId(presentationId);
-            const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+            const response = await fetch(`${API_URL}/presentations/${presentationId}`, {
                 credentials: "include",
             });
 
@@ -262,7 +262,7 @@ export default function PresentationsGridPage() {
 
         try {
             setDeletingId(presentationId);
-            const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+            const response = await fetch(`${API_URL}/presentations/${presentationId}`, {
                 method: "DELETE",
                 credentials: "include",
             });

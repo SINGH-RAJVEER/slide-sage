@@ -53,7 +53,7 @@ it("prefills a failed presentation prompt and generation options", () => {
 it("opens the viewer immediately while generation waits for the stream", async () => {
     const originalFetch = globalThis.fetch;
     const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) =>
-        String(input).includes("/api/ai/config")
+        String(input).includes("/ai/config")
             ? Promise.resolve(
                   new Response(
                       JSON.stringify({

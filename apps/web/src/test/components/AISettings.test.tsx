@@ -129,7 +129,7 @@ it("updates the saved default model from settings", async () => {
     expect(await view.findByText("Default generation model updated.")).toBeInTheDocument();
 
     const selectionRequest = fetchMock.mock.calls.find(([, init]) => init?.method === "PUT");
-    expect(selectionRequest?.[0]).toContain("/api/ai/selection");
+    expect(selectionRequest?.[0]).toContain("/ai/selection");
     expect(JSON.parse(String(selectionRequest?.[1]?.body))).toEqual({
         provider: "openai",
         model: "gpt-4.1-mini",

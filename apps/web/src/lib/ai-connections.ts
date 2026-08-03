@@ -2,7 +2,7 @@ import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@sli
 import { API_URL, readJsonResponse } from "./api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_URL}/api/ai${path}`, {
+    const response = await fetch(`${API_URL}/ai${path}`, {
         credentials: "include",
         ...init,
         headers: { "Content-Type": "application/json", ...init?.headers },

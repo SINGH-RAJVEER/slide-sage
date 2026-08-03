@@ -9,7 +9,7 @@ import (
 func TestSecurityRejectsUnsafeUntrustedOrigin(t *testing.T) {
 	t.Setenv("CORS_ORIGINS", "https://slidesage.app")
 	handler := withSecurity(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) { writer.WriteHeader(http.StatusNoContent) }))
-	request := httptest.NewRequest(http.MethodPost, "/api/profile", nil)
+	request := httptest.NewRequest(http.MethodPost, "/profile", nil)
 	request.Header.Set("Origin", "https://attacker.example")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -21,7 +21,7 @@ func TestSecurityRejectsUnsafeUntrustedOrigin(t *testing.T) {
 func TestSecuritySetsCredentialedCORSHeaders(t *testing.T) {
 	t.Setenv("CORS_ORIGINS", "https://slidesage.app")
 	handler := withSecurity(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) { writer.WriteHeader(http.StatusNoContent) }))
-	request := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 	request.Header.Set("Origin", "https://slidesage.app")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)

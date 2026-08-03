@@ -13,17 +13,17 @@ const aiBodyLimit int64 = 16 * 1024
 // Identity resolves the current authenticated user for AI connection routes.
 type Identity func(*http.Request) (string, error)
 
-// RegisterRoutes adds the authenticated /api/ai configuration and BYOK routes.
+// RegisterRoutes adds the authenticated /ai configuration and BYOK routes.
 func RegisterRoutes(mux *http.ServeMux, connections ConnectionService, identity Identity) {
 	if mux == nil {
 		panic("AI mux is required")
 	}
 	router := aiRouter{connections: connections, identity: identity}
-	mux.HandleFunc("GET /api/ai/config", router.config)
-	mux.HandleFunc("POST /api/ai/connections", router.createConnection)
-	mux.HandleFunc("PUT /api/ai/connections/{provider}", router.updateConnection)
-	mux.HandleFunc("DELETE /api/ai/connections/{provider}", router.deleteConnection)
-	mux.HandleFunc("PUT /api/ai/selection", router.selection)
+	mux.HandleFunc("GET /ai/config", router.config)
+	mux.HandleFunc("POST /ai/connections", router.createConnection)
+	mux.HandleFunc("PUT /ai/connections/{provider}", router.updateConnection)
+	mux.HandleFunc("DELETE /ai/connections/{provider}", router.deleteConnection)
+	mux.HandleFunc("PUT /ai/selection", router.selection)
 }
 
 type aiRouter struct {

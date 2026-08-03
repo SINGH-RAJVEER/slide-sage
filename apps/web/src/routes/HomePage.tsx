@@ -12,7 +12,7 @@ export default function HomePage() {
 
     const checkPresentations = useCallback(async () => {
         try {
-            const response = await fetch(`${API_URL}/api/presentations?limit=1`, {
+            const response = await fetch(`${API_URL}/presentations?limit=1`, {
                 credentials: "include",
             });
             const result = await readJsonResponse<PresentationsResponse | ApiErrorResponse>(

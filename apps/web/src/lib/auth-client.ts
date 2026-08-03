@@ -6,7 +6,7 @@ function getAuthBaseURL() {
     const apiOrigin =
         API_URL ||
         (typeof window !== "undefined" ? window.location.origin : "http://localhost:5173");
-    return `${apiOrigin}/api/auth`;
+    return `${apiOrigin}/auth`;
 }
 
 export const authClient = createAuthClient({

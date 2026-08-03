@@ -78,11 +78,11 @@ func emailPolicyFor(method, path string) (ratePolicy, bool) {
 		return ratePolicy{}, false
 	}
 	switch {
-	case strings.HasPrefix(path, "/api/auth/email-otp/"):
+	case strings.HasPrefix(path, "/auth/email-otp/"):
 		return ratePolicy{"auth-email-otp-email", 5, time.Hour, false}, true
-	case strings.HasPrefix(path, "/api/auth/sign-in/"):
+	case strings.HasPrefix(path, "/auth/sign-in/"):
 		return ratePolicy{"auth-sign-in-email", 10, 15 * time.Minute, false}, true
-	case strings.HasPrefix(path, "/api/auth/sign-up/"):
+	case strings.HasPrefix(path, "/auth/sign-up/"):
 		return ratePolicy{"auth-sign-up-email", 5, time.Hour, false}, true
 	default:
 		return ratePolicy{}, false
@@ -116,29 +116,29 @@ func consume(ctx context.Context, database *sql.DB, scope, keyHash string, windo
 func policyFor(method, path string) (ratePolicy, bool) {
 	minute, tenMinutes, fifteenMinutes, hour := time.Minute, 10*time.Minute, 15*time.Minute, time.Hour
 	switch {
-	case method == http.MethodPost && strings.HasPrefix(path, "/api/auth/email-otp/"):
+	case method == http.MethodPost && strings.HasPrefix(path, "/auth/email-otp/"):
 		return ratePolicy{"auth-email-otp-ip", 20, hour, false}, true
-	case method == http.MethodPost && strings.HasPrefix(path, "/api/auth/sign-in/"):
+	case method == http.MethodPost && strings.HasPrefix(path, "/auth/sign-in/"):
 		return ratePolicy{"auth-sign-in-ip", 30, fifteenMinutes, false}, true
-	case method == http.MethodPost && strings.HasPrefix(path, "/api/auth/sign-up/"):
+	case method == http.MethodPost && strings.HasPrefix(path, "/auth/sign-up/"):
 		return ratePolicy{"auth-sign-up-ip", 20, hour, false}, true
-	case method == http.MethodPut && path == "/api/profile" || method == http.MethodPost && path == "/api/profile/email/verify":
+	case method == http.MethodPut && path == "/profile" || method == http.MethodPost && path == "/profile/email/verify":
 		return ratePolicy{"profile-mutation", 10, fifteenMinutes, true}, true
-	case method == http.MethodPost && path == "/api/ai/connections" || method == http.MethodPut && strings.HasPrefix(path, "/api/ai/connections/"):
+	case method == http.MethodPost && path == "/ai/connections" || method == http.MethodPut && strings.HasPrefix(path, "/ai/connections/"):
 		return ratePolicy{"ai-connection-write", 6, tenMinutes, true}, true
-	case (method == http.MethodDelete && strings.HasPrefix(path, "/api/ai/connections/")) || method == http.MethodPut && path == "/api/ai/selection":
+	case (method == http.MethodDelete && strings.HasPrefix(path, "/ai/connections/")) || method == http.MethodPut && path == "/ai/selection":
 		return ratePolicy{"ai-selection-write", 20, tenMinutes, true}, true
-	case method == http.MethodPost && path == "/api/generate-presentation-stream":
+	case method == http.MethodPost && path == "/generate-presentation-stream":
 		return ratePolicy{"presentation-generation", 6, minute, true}, true
-	case method == http.MethodPost && path == "/api/iterate-presentation-stream":
+	case method == http.MethodPost && path == "/iterate-presentation-stream":
 		return ratePolicy{"presentation-iteration", 12, minute, true}, true
-	case method == http.MethodPost && path == "/api/research-presentation":
+	case method == http.MethodPost && path == "/research-presentation":
 		return ratePolicy{"presentation-research", 20, minute, true}, true
-	case method == http.MethodPost && path == "/api/billing/checkout":
+	case method == http.MethodPost && path == "/billing/checkout":
 		return ratePolicy{"billing-checkout", 10, tenMinutes, true}, true
-	case method == http.MethodPost && path == "/api/billing/verify":
+	case method == http.MethodPost && path == "/billing/verify":
 		return ratePolicy{"billing-verify", 20, fifteenMinutes, true}, true
-	case method == http.MethodPost && path == "/api/billing/webhook":
+	case method == http.MethodPost && path == "/billing/webhook":
 		return ratePolicy{"billing-webhook", 120, minute, false}, true
 	default:
 		return ratePolicy{}, false

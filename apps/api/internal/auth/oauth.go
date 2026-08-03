@@ -48,7 +48,7 @@ func (service *Service) socialSignInHandler(writer http.ResponseWriter, request 
 		writeError(writer, http.StatusInternalServerError, "Unable to start social sign-in")
 		return
 	}
-	redirectURI := service.config.BaseURL + "/api/auth/callback/" + body.Provider
+	redirectURI := service.config.BaseURL + "/auth/callback/" + body.Provider
 	query := url.Values{"client_id": {clientID}, "redirect_uri": {redirectURI}, "state": {state}}
 	endpoint := "https://github.com/login/oauth/authorize"
 	query.Set("scope", "read:user user:email")
@@ -96,7 +96,7 @@ type oauthProfile struct{ AccountID, Name, Email, Image, AccessToken, RefreshTok
 
 func (service *Service) fetchOAuthProfile(request *http.Request, provider, code string) (oauthProfile, error) {
 	clientID, clientSecret := oauthCredentials(provider)
-	redirectURI := service.config.BaseURL + "/api/auth/callback/" + provider
+	redirectURI := service.config.BaseURL + "/auth/callback/" + provider
 	form := url.Values{"client_id": {clientID}, "client_secret": {clientSecret}, "code": {code}, "redirect_uri": {redirectURI}}
 	if provider == "google" {
 		form.Set("grant_type", "authorization_code")

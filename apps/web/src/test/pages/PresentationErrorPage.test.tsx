@@ -49,7 +49,7 @@ describe("PresentationErrorPage", () => {
         );
         const originalFetch = globalThis.fetch;
         const retryRequest = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
-            expect(String(input)).toContain("/api/presentations/presentation_42");
+            expect(String(input)).toContain("/presentations/presentation_42");
             expect(init).toMatchObject({ credentials: "include" });
 
             return Response.json({

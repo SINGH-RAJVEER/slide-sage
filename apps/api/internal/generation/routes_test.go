@@ -12,7 +12,7 @@ func TestGenerationRequestReadsTopicAndDisabledResearch(t *testing.T) {
 	handler := handler{identity: func(context.Context, *http.Request) (string, error) {
 		return "user-1", nil
 	}}
-	request := httptest.NewRequest(http.MethodPost, "/api/generate-presentation-stream", strings.NewReader(`{
+	request := httptest.NewRequest(http.MethodPost, "/generate-presentation-stream", strings.NewReader(`{
 		"topic":" Grid storage ",
 		"slide_count":5,
 		"detail_level":"balanced",
@@ -40,7 +40,7 @@ func TestGenerationRequestKeepsEnabledResearch(t *testing.T) {
 	handler := handler{identity: func(context.Context, *http.Request) (string, error) {
 		return "user-1", nil
 	}}
-	request := httptest.NewRequest(http.MethodPost, "/api/generate-presentation-stream", strings.NewReader(`{
+	request := httptest.NewRequest(http.MethodPost, "/generate-presentation-stream", strings.NewReader(`{
 		"topic":"Grid storage",
 		"slide_count":5,
 		"research":{"enabled":true}

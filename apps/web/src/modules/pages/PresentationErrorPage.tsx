@@ -39,7 +39,7 @@ export default function PresentationErrorPage({
         setRetryError("");
 
         try {
-            const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+            const response = await fetch(`${API_URL}/presentations/${presentationId}`, {
                 credentials: "include",
             });
             const result = await readJsonResponse<PresentationResponse | ApiErrorResponse>(
@@ -88,7 +88,7 @@ export default function PresentationErrorPage({
             onDelete();
         } else if (presentationId) {
             try {
-                const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+                const response = await fetch(`${API_URL}/presentations/${presentationId}`, {
                     method: "DELETE",
                     credentials: "include",
                 });

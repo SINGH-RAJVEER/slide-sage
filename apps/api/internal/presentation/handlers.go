@@ -20,11 +20,11 @@ func RegisterRoutes(mux *http.ServeMux, service *Service, identity UserIdentity,
 		panic("presentation routes require mux, service, identity callback, and Exa service")
 	}
 	handler := &presentationHandler{service: service, identity: identity, research: research}
-	mux.HandleFunc("GET /api/presentations", handler.list)
-	mux.HandleFunc("GET /api/presentations/{id}", handler.detail)
-	mux.HandleFunc("DELETE /api/presentations/{id}", handler.delete)
-	mux.HandleFunc("PATCH /api/presentations/{id}", handler.patch)
-	mux.HandleFunc("POST /api/research-presentation", handler.researchPresentation)
+	mux.HandleFunc("GET /presentations", handler.list)
+	mux.HandleFunc("GET /presentations/{id}", handler.detail)
+	mux.HandleFunc("DELETE /presentations/{id}", handler.delete)
+	mux.HandleFunc("PATCH /presentations/{id}", handler.patch)
+	mux.HandleFunc("POST /research-presentation", handler.researchPresentation)
 }
 
 type presentationHandler struct {

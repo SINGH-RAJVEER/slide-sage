@@ -84,7 +84,7 @@ describe("AuthProvider", () => {
         expect(typeof user?.updatedAt).toBe("string");
         expect(fetchMock).toHaveBeenCalledTimes(2);
         expect(fetchMock).toHaveBeenLastCalledWith(
-            expect.stringContaining("/api/auth/get-session"),
+            expect.stringContaining("/auth/get-session"),
             { credentials: "include" },
         );
     });

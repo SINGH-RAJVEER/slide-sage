@@ -75,7 +75,7 @@ in
             ready = {
                 http.get = {
                     port = 8000;
-                    path = "/api/health";
+                    path = "/health";
                 };
                 initial_delay = 1;
                 period = 1;

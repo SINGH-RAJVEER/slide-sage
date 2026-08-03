@@ -73,7 +73,7 @@ export default function PurchaseTokensPage() {
 
     const fetchBalance = useCallback(async () => {
         try {
-            const res = await fetch(`${API_URL}/api/billing/balance`, {
+            const res = await fetch(`${API_URL}/billing/balance`, {
                 method: "GET",
                 credentials: "include",
             });
@@ -106,7 +106,7 @@ export default function PurchaseTokensPage() {
         try {
             await loadRazorpayScript();
 
-            const res = await fetch(`${API_URL}/api/billing/checkout`, {
+            const res = await fetch(`${API_URL}/billing/checkout`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -136,7 +136,7 @@ export default function PurchaseTokensPage() {
                     theme: { color: "#3B82F6" },
                     handler: async (response) => {
                         try {
-                            const verifyRes = await fetch(`${API_URL}/api/billing/verify`, {
+                            const verifyRes = await fetch(`${API_URL}/billing/verify`, {
                                 method: "POST",
                                 credentials: "include",
                                 headers: { "Content-Type": "application/json" },

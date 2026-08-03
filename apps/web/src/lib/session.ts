@@ -36,7 +36,7 @@ export async function fetchSessionWithRetry(
         if (delayMs > 0) await wait(delayMs);
 
         try {
-            const response = await fetchSession(`${API_URL}/api/auth/get-session`, {
+            const response = await fetchSession(`${API_URL}/auth/get-session`, {
                 credentials: "include",
             });
 

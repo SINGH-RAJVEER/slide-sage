@@ -15,7 +15,7 @@ export async function persistPresentationMutations(
     const operation = previous
         .catch(() => undefined)
         .then(async () => {
-            const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+            const response = await fetch(`${API_URL}/presentations/${presentationId}`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },

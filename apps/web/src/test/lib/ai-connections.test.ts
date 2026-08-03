@@ -9,7 +9,7 @@ it("accepts an empty 204 response when deleting an AI connection", async () => {
     try {
         await expect(deleteAIProvider("openai")).resolves.toBeUndefined();
         expect(fetchMock).toHaveBeenCalledWith(
-            expect.stringContaining("/api/ai/connections/openai"),
+            expect.stringContaining("/ai/connections/openai"),
             expect.objectContaining({ method: "DELETE", credentials: "include" }),
         );
     } finally {
