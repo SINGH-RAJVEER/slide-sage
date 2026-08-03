@@ -18,17 +18,17 @@ const (
 // It should return an error for missing, expired, or invalid credentials.
 type Identity func(*http.Request) (string, error)
 
-// RegisterRoutes adds all current /api/billing routes to mux. The caller owns
+// RegisterRoutes adds all current /billing routes to mux. The caller owns
 // authentication implementation and constructs dependencies during application startup.
 func RegisterRoutes(mux *http.ServeMux, payments PaymentService, razorpay *RazorpayClient, identity Identity) {
 	if mux == nil {
 		panic("billing mux is required")
 	}
 	router := billingRouter{payments: payments, razorpay: razorpay, identity: identity}
-	mux.HandleFunc("GET /api/billing/balance", router.balance)
-	mux.HandleFunc("POST /api/billing/checkout", router.checkout)
-	mux.HandleFunc("POST /api/billing/verify", router.verify)
-	mux.HandleFunc("POST /api/billing/webhook", router.webhook)
+	mux.HandleFunc("GET /billing/balance", router.balance)
+	mux.HandleFunc("POST /billing/checkout", router.checkout)
+	mux.HandleFunc("POST /billing/verify", router.verify)
+	mux.HandleFunc("POST /billing/webhook", router.webhook)
 }
 
 type billingRouter struct {

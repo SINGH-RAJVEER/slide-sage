@@ -85,7 +85,7 @@ func main() {
 	generation.RegisterRoutes(mux, database, func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
 	}, ai.ConnectionService{DB: database})
-	mux.HandleFunc("GET /api/health", healthHandler)
+	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", notFoundHandler)
 
 	address := net.JoinHostPort(env("HOST", "0.0.0.0"), env("PORT", "8000"))
@@ -147,7 +147,7 @@ func withSecurity(next http.Handler) http.Handler {
 			return
 		}
 		unsafe := request.Method == http.MethodPost || request.Method == http.MethodPut || request.Method == http.MethodPatch || request.Method == http.MethodDelete
-		webhook := request.URL.Path == "/api/billing/webhook"
+		webhook := request.URL.Path == "/billing/webhook"
 		if unsafe && !webhook && (origin != "" && !allowed[origin] || origin == "" && request.Header.Get("Sec-Fetch-Site") == "cross-site") {
 			writeJSONError(writer, http.StatusForbidden, "Origin is not allowed")
 			return

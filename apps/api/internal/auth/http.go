@@ -14,16 +14,16 @@ import (
 )
 
 func RegisterAuthRoutes(mux *http.ServeMux, service *Service) {
-	mux.HandleFunc("POST /api/auth/sign-up/email", service.signUpHandler)
-	mux.HandleFunc("POST /api/auth/sign-in/email", service.signInHandler)
-	mux.HandleFunc("POST /api/auth/sign-out", service.signOutHandler)
-	mux.HandleFunc("GET /api/auth/get-session", service.getSessionHandler)
-	mux.HandleFunc("POST /api/auth/email-otp/send-verification-otp", service.sendVerificationOTPHandler)
-	mux.HandleFunc("POST /api/auth/email-otp/verify-email", service.verifyAccountEmailHandler)
-	mux.HandleFunc("POST /api/auth/email-otp/request-password-reset", service.requestPasswordResetHandler)
-	mux.HandleFunc("POST /api/auth/email-otp/reset-password", service.resetPasswordHandler)
-	mux.HandleFunc("POST /api/auth/sign-in/social", service.socialSignInHandler)
-	mux.HandleFunc("GET /api/auth/callback/{provider}", service.socialCallbackHandler)
+	mux.HandleFunc("POST /auth/sign-up/email", service.signUpHandler)
+	mux.HandleFunc("POST /auth/sign-in/email", service.signInHandler)
+	mux.HandleFunc("POST /auth/sign-out", service.signOutHandler)
+	mux.HandleFunc("GET /auth/get-session", service.getSessionHandler)
+	mux.HandleFunc("POST /auth/email-otp/send-verification-otp", service.sendVerificationOTPHandler)
+	mux.HandleFunc("POST /auth/email-otp/verify-email", service.verifyAccountEmailHandler)
+	mux.HandleFunc("POST /auth/email-otp/request-password-reset", service.requestPasswordResetHandler)
+	mux.HandleFunc("POST /auth/email-otp/reset-password", service.resetPasswordHandler)
+	mux.HandleFunc("POST /auth/sign-in/social", service.socialSignInHandler)
+	mux.HandleFunc("GET /auth/callback/{provider}", service.socialCallbackHandler)
 }
 
 func (service *Service) sendVerificationOTPHandler(writer http.ResponseWriter, request *http.Request) {
@@ -98,10 +98,10 @@ func (service *Service) resetPasswordHandler(writer http.ResponseWriter, request
 }
 
 func RegisterProfileRoutes(mux *http.ServeMux, service *Service) {
-	mux.HandleFunc("GET /api/profile", service.profileHandler)
-	mux.HandleFunc("PUT /api/profile", service.updateProfileHandler)
-	mux.HandleFunc("POST /api/profile/avatar", service.avatarHandler)
-	mux.HandleFunc("POST /api/profile/email/verify", service.verifyEmailHandler)
+	mux.HandleFunc("GET /profile", service.profileHandler)
+	mux.HandleFunc("PUT /profile", service.updateProfileHandler)
+	mux.HandleFunc("POST /profile/avatar", service.avatarHandler)
+	mux.HandleFunc("POST /profile/email/verify", service.verifyEmailHandler)
 }
 
 func (service *Service) signUpHandler(writer http.ResponseWriter, request *http.Request) {

@@ -43,8 +43,8 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 		panic("generation routes require mux, database, and identity callback")
 	}
 	handler := &handler{database: database, identity: identity, connections: connections, client: &http.Client{Timeout: 3 * time.Minute}}
-	mux.HandleFunc("POST /api/generate-presentation-stream", handler.generate)
-	mux.HandleFunc("POST /api/iterate-presentation-stream", handler.iterate)
+	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
+	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
 }
 
 type handler struct {

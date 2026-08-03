@@ -233,7 +233,7 @@ export function usePresentationData({
             setIsLoading(true);
 
             try {
-                const response = await fetch(`${apiUrl}/api/presentations/${idToFetch}`, {
+                const response = await fetch(`${apiUrl}/presentations/${idToFetch}`, {
                     credentials: "include",
                 });
 

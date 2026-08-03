@@ -44,7 +44,7 @@ export default function ProfilePage() {
     const fetchProfile = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_URL}/api/profile`, {
+            const res = await fetch(`${API_URL}/profile`, {
                 credentials: "include",
             });
 
@@ -97,7 +97,7 @@ export default function ProfilePage() {
         setSuccess(null);
 
         try {
-            const res = await fetch(`${API_URL}/api/profile`, {
+            const res = await fetch(`${API_URL}/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -128,7 +128,7 @@ export default function ProfilePage() {
         setSuccess(null);
 
         try {
-            const res = await fetch(`${API_URL}/api/profile`, {
+            const res = await fetch(`${API_URL}/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -185,7 +185,7 @@ export default function ProfilePage() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/profile`, {
+            const res = await fetch(`${API_URL}/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -226,7 +226,7 @@ export default function ProfilePage() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/profile/avatar`, {
+            const res = await fetch(`${API_URL}/profile/avatar`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

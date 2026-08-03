@@ -125,7 +125,7 @@ function publishPointsBalance(slideTokens: unknown) {
 async function fetchPersistedPresentation(
     presentationId: string,
 ): Promise<PresentationData | null> {
-    const response = await fetch(`${API_URL}/api/presentations/${presentationId}`, {
+    const response = await fetch(`${API_URL}/presentations/${presentationId}`, {
         credentials: "include",
     });
     if (!response.ok) return null;
@@ -232,7 +232,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             });
 
             try {
-                const response = await fetch(`${API_URL}/api/research-presentation`, {
+                const response = await fetch(`${API_URL}/research-presentation`, {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -364,7 +364,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             abortControllerRef.current = new AbortController();
 
             try {
-                const response = await fetch(`${API_URL}/api/generate-presentation-stream`, {
+                const response = await fetch(`${API_URL}/generate-presentation-stream`, {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -767,7 +767,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
             abortControllerRef.current = new AbortController();
 
             try {
-                const response = await fetch(`${API_URL}/api/iterate-presentation-stream`, {
+                const response = await fetch(`${API_URL}/iterate-presentation-stream`, {
                     method: "POST",
                     credentials: "include",
                     headers: {

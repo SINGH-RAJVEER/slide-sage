@@ -68,7 +68,7 @@ export default function VerifyEmailPage() {
 
         try {
             if (isEmailChange) {
-                const response = await fetch(`${API_URL}/api/profile/email/verify`, {
+                const response = await fetch(`${API_URL}/profile/email/verify`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },

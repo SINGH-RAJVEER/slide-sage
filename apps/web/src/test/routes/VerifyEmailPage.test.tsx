@@ -58,7 +58,7 @@ describe("VerifyEmailPage", () => {
 
             await waitFor(() => {
                 expect(fetchMock).toHaveBeenCalledWith(
-                    expect.stringContaining("/api/profile/email/verify"),
+                    expect.stringContaining("/profile/email/verify"),
                     expect.objectContaining({
                         method: "POST",
                         body: JSON.stringify({
