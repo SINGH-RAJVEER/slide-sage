@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 let
     dbName = "slidesage";
@@ -11,15 +11,10 @@ in
 
     packages = [
         pkgs.bun
-        pkgs.clang
         pkgs.go
         pkgs.goose
         pkgs.just
-        pkgs.nodejs_24
     ];
-
-    env.CGO_ENABLED = "0";
-    env.CC = "clang";
 
     services.postgres = {
         enable = true;
@@ -116,5 +111,6 @@ in
         VITE_PROXY_TARGET = "http://localhost:8000";
         NODE_ENV = "development";
         LOG_LEVEL = "debug";
+        CGO_ENABLED = "0";
     };
 }

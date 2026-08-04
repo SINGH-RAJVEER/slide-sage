@@ -78,7 +78,6 @@ export {
     slideToScene,
 } from "@slidesage/types";
 
-// Streaming presentation state
 export interface StreamingPresentationState {
     isStreaming: boolean;
     theme?: string;

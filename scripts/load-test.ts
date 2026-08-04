@@ -23,7 +23,7 @@ Usage:
     bun run load-test --confirm-production [options]
 
 Options:
-    --url <url>                 Target URL (default: production /api/health)
+    --url <url>                 Target URL (default: production /health)
     --concurrency <number>      Maximum in-flight requests (default: 100)
     --duration <seconds>        Test duration, 1-3600 (default: 30)
     --rps <number>              Target requests/second; 0 means unlimited (default: 500)
@@ -38,7 +38,7 @@ Options:
 Examples:
     bun run load-test --confirm-production
     bun run load-test --confirm-production --concurrency 250 --rps 2000 --duration 120
-    bun run load-test --url http://localhost:8000/api/health --rps 100 --duration 10
+    bun run load-test --url http://localhost:8000/health --rps 100 --duration 10
 `;
 
 function readNumber(

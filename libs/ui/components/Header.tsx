@@ -101,7 +101,7 @@ export function Header({
                 <div className="flex items-center md:w-full">
                     <LinkComponent to={routes.home} aria-label="Go to home">
                         <img
-                            src="/icon.png"
+                            src="/icon.webp"
                             alt="SlideSage"
                             className="h-10 w-auto object-contain md:h-12"
                         />

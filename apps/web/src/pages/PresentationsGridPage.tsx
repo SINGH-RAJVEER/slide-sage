@@ -223,7 +223,6 @@ export default function PresentationsGridPage() {
 
             const result = (await response.json()) as PresentationResponse | ApiErrorResponse;
 
-            // New API format: {presentation: {...}} or {error: {message: "..."}}
             if ("error" in result) {
                 setError(result.error.message);
             } else {
