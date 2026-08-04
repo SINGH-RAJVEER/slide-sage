@@ -18,8 +18,8 @@ import {
 import { Input } from "@slidesage/ui/components/input";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { API_URL } from "@/lib/api";
-import Header from "@/modules/Header";
+import { API_URL } from "@slidesage/ui/lib/api";
+import Header from "@/Header";
 
 declare global {
     interface Window {

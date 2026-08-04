@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import App from "./App";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@slidesage/ui";
 
 const container = document.getElementById("root");
 if (!container) {

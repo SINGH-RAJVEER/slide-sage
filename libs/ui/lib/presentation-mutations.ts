@@ -3,7 +3,7 @@ import type {
     PresentationMutation,
     PresentationResponse,
 } from "@slidesage/types";
-import { API_URL } from "@/lib/api";
+import { API_URL } from "./api";
 
 const mutationQueues = new Map<string, Promise<void>>();
 

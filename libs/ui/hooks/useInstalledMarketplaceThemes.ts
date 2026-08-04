@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
     getInstalledMarketplaceThemes,
     MARKETPLACE_THEMES_UPDATED_EVENT,
-} from "@/lib/marketplace-themes";
+} from "../lib/marketplace-themes";
 
 export function useInstalledMarketplaceThemes() {
     const [themes, setThemes] = useState(getInstalledMarketplaceThemes);

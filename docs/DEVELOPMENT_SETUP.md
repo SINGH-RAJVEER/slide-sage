@@ -23,7 +23,7 @@ and Razorpay credentials for purchases.
 1. Starts devenv PostgreSQL with pgvector.
 2. Ensures the local role, database, and vector extension exist.
 3. Applies `apps/api/migrations` with Goose.
-4. Starts the Go API on port `8000` and waits for `/api/health`.
+4. Starts the Go API on port `8000` and waits for `/health`.
 5. Starts Vite on port `5173`.
 
 Stop the foreground process with `Ctrl+C`. Devenv stops managed services with the
@@ -56,7 +56,7 @@ shared types, and UI packages. It does not use a separate monorepo task runner.
 
 The dependency-free load test sends bounded concurrent `GET` requests and reports
 throughput, status counts, response errors, and p50/p95/p99 latency. It targets the
-production `/api/health` route by default, so it does not create application data.
+production `/health` route by default, so it does not create application data.
 Every non-loopback target requires explicit production confirmation:
 
 ```bash
@@ -77,7 +77,7 @@ Use `--rps 0` for the maximum throughput allowed by the selected concurrency. Ad
 requests by using a loopback URL with `--dry-run`:
 
 ```bash
-bun run load-test --url http://localhost:8000/api/health --dry-run
+bun run load-test --url http://localhost:8000/health --dry-run
 ```
 
 Only load-test infrastructure you own or are authorized to test. Production tests
@@ -102,7 +102,7 @@ historical schema changes.
 | --- | --- |
 | Web | `http://localhost:5173` |
 | API | `http://localhost:8000` |
-| Health | `http://localhost:8000/api/health` |
+| Health | `http://localhost:8000/health` |
 | PostgreSQL | `postgresql://slidesage:slidesage@127.0.0.1:$PGPORT/slidesage` |
 
 Devenv may move PostgreSQL from `5432` when the port is occupied. Use the active

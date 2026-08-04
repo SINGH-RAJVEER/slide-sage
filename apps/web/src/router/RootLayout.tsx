@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import GenerationStatusIndicator from "@/modules/GenerationStatusIndicator";
+import { GenerationStatusIndicator } from "@slidesage/ui";
 
 export default function RootLayout() {
     return (

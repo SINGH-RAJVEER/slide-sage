@@ -1,8 +1,8 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { authClient } from "@/lib/auth-client";
-import Header from "@/modules/Header";
+import { useAuth } from "@slidesage/ui";
+import { authClient } from "@slidesage/ui/lib/auth-client";
+import Header from "@/Header";
 
 export default function ResetPasswordPage() {
     const [searchParams] = useSearchParams();

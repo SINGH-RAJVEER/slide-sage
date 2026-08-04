@@ -26,15 +26,15 @@ PostgreSQL ready -> Goose migrations complete -> Go API ready -> Vite ready
 
 The API entry point is `apps/api/cmd/api/main.go`. It exposes:
 
-- `/api/health`
-- `/api/auth`
-- `/api/profile`
-- `/api/ai`
-- `/api/presentations`
-- `/api/research-presentation`
-- `/api/generate-presentation-stream`
-- `/api/iterate-presentation-stream`
-- `/api/billing`
+- `/health`
+- `/auth`
+- `/profile`
+- `/ai`
+- `/presentations`
+- `/research-presentation`
+- `/generate-presentation-stream`
+- `/iterate-presentation-stream`
+- `/billing`
 
 The API uses `database/sql` with PostgreSQL and pgvector. Goose migrations live
 in `apps/api/migrations` and are applied by `apps/api/scripts/migrate.sh`.

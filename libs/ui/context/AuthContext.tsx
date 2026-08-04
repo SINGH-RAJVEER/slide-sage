@@ -1,6 +1,6 @@
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { fetchSessionWithRetry, isSessionCheckStale, type SessionUser } from "@/lib/session";
+import { fetchSessionWithRetry, isSessionCheckStale, type SessionUser } from "../lib/session";
 
 export type User = SessionUser;
 
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionRequestId.current += 1;
 
         try {
-            const { authClient } = await import("@/lib/auth-client");
+            const { authClient } = await import("../lib/auth-client");
             const { error } = await authClient.signOut();
             if (error) throw new Error(error.message || "Sign out failed");
 

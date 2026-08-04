@@ -10,22 +10,22 @@ migration `00013_repair_schema_and_revisions.sql` also ensures they exist.
 
 | Route group | Identity | Limit | Window |
 | --- | --- | --- | --- |
-| `/api/auth/email-otp/*` | Normalized email | 5 | 1 hour |
-| `/api/auth/email-otp/*` | Client IP | 20 | 1 hour |
-| `/api/auth/sign-in/*` | Normalized email | 10 | 15 minutes |
-| `/api/auth/sign-in/*` | Client IP | 30 | 15 minutes |
-| `/api/auth/sign-up/*` | Normalized email | 5 | 1 hour |
-| `/api/auth/sign-up/*` | Client IP | 20 | 1 hour |
-| `PUT /api/profile` | Authenticated user | 10 | 15 minutes |
-| `POST /api/profile/email/verify` | Authenticated user | 10 | 15 minutes |
-| `POST /api/ai/connections`, `PUT /api/ai/connections/:provider` | Authenticated user | 6 shared | 10 minutes |
-| `DELETE /api/ai/connections/:provider`, `PUT /api/ai/selection` | Authenticated user | 20 shared | 10 minutes |
-| `POST /api/generate-presentation-stream` | Authenticated user | 6 | 1 minute |
-| `POST /api/iterate-presentation-stream` | Authenticated user | 12 | 1 minute |
-| `POST /api/research-presentation` | Authenticated user | 20 | 1 minute |
-| `POST /api/billing/checkout` | Authenticated user | 10 | 10 minutes |
-| `POST /api/billing/verify` | Authenticated user | 20 | 15 minutes |
-| `POST /api/billing/webhook` | Client IP | 120 | 1 minute |
+| `/auth/email-otp/*` | Normalized email | 5 | 1 hour |
+| `/auth/email-otp/*` | Client IP | 20 | 1 hour |
+| `/auth/sign-in/*` | Normalized email | 10 | 15 minutes |
+| `/auth/sign-in/*` | Client IP | 30 | 15 minutes |
+| `/auth/sign-up/*` | Normalized email | 5 | 1 hour |
+| `/auth/sign-up/*` | Client IP | 20 | 1 hour |
+| `PUT /profile` | Authenticated user | 10 | 15 minutes |
+| `POST /profile/email/verify` | Authenticated user | 10 | 15 minutes |
+| `POST /ai/connections`, `PUT /ai/connections/:provider` | Authenticated user | 6 shared | 10 minutes |
+| `DELETE /ai/connections/:provider`, `PUT /ai/selection` | Authenticated user | 20 shared | 10 minutes |
+| `POST /generate-presentation-stream` | Authenticated user | 6 | 1 minute |
+| `POST /iterate-presentation-stream` | Authenticated user | 12 | 1 minute |
+| `POST /research-presentation` | Authenticated user | 20 | 1 minute |
+| `POST /billing/checkout` | Authenticated user | 10 | 10 minutes |
+| `POST /billing/verify` | Authenticated user | 20 | 15 minutes |
+| `POST /billing/webhook` | Client IP | 120 | 1 minute |
 
 Email and IP policies are both evaluated where listed when the body contains a
 parseable email; the IP policy still applies when it does not. A request is

@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
-import { API_URL } from "@/lib/api";
+import { API_URL } from "./api";
 
 function getAuthBaseURL() {
     const apiOrigin =

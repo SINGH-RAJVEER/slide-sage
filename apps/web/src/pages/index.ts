@@ -1,12 +1,9 @@
 export { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
-export {
-    StreamingProvider,
-    useStreaming,
-} from "@/modules/contexts/StreamingContext";
-export { default as GeneratePPTPage } from "@/modules/pages/GeneratePPTPage";
-export { default as PresentationErrorPage } from "@/modules/pages/PresentationErrorPage";
-export { default as PresentationsGridPage } from "@/modules/pages/PresentationsGridPage";
-export { default as PresentationViewer } from "@/modules/pages/PresentationViewer";
-export { default as PurchaseTokensPage } from "@/modules/pages/PurchaseTokensPage";
-export * from "@/modules/types/presentation";
-export { useTemplate } from "@/modules/useTemplate";
+export { StreamingProvider, useStreaming } from "@slidesage/ui";
+export { default as GeneratePPTPage } from "./GeneratePPTPage";
+export { default as PresentationErrorPage } from "./PresentationErrorPage";
+export { default as PresentationsGridPage } from "./PresentationsGridPage";
+export { default as PresentationViewer } from "./PresentationViewer";
+export { default as PurchaseTokensPage } from "./PurchaseTokensPage";
+export * from "@slidesage/types";
+export { useTemplate } from "@slidesage/ui";

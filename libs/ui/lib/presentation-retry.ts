@@ -1,5 +1,4 @@
 import type { PresentationJSON } from "@slidesage/types";
-import { ROUTES } from "@/router/paths";
 
 export function getPresentationRetryDestination(
     presentation: PresentationJSON,
@@ -10,7 +9,7 @@ export function getPresentationRetryDestination(
 
     if (retry.research_payload?.sources.length) {
         return {
-            to: ROUTES.research,
+            to: "/generate/research",
             state: {
                 prompt: retry.prompt,
                 slideCount: retry.slide_count,
@@ -25,7 +24,7 @@ export function getPresentationRetryDestination(
     }
 
     return {
-        to: ROUTES.generate,
+        to: "/generate",
         state: { retry, retryPresentationId: presentationId },
     };
 }

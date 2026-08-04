@@ -3,7 +3,7 @@ import type {
     SlideBlock,
     SlideLayout,
     SlideRegion,
-} from "@/modules/types/presentation";
+} from "@slidesage/types";
 
 const isVisualBlock = (block: SlideBlock) =>
     block.type === "image" || block.type === "image-placeholder";

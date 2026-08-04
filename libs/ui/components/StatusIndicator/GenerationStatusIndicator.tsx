@@ -1,10 +1,16 @@
 import { GenerationStatusIndicatorView } from "@slidesage/ui/components/GenerationStatusIndicator";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { showGenerationCompleteNotification } from "@/lib/generation-notifications";
-import { getGenerationDisplayStatus } from "@/lib/generation-status";
-import { useStreaming } from "@/modules/contexts/StreamingContext";
-import { ROUTES } from "@/router/paths";
+import { showGenerationCompleteNotification } from "../../lib/generation-notifications";
+import { getGenerationDisplayStatus } from "../../lib/generation-status";
+import { useStreaming } from "../../context/StreamingContext";
+
+const ROUTES = {
+    signIn: "/sign-in",
+    presentation: "/presentation",
+    presentations: "/presentations",
+    presentationError: "/presentation-error",
+};
 
 export const GENERATION_ERROR_COOLDOWN_MS = 8000;
 const AUTH_STATUS_SUPPRESSED_PATHS = new Set<string>([ROUTES.signIn, "/login"]);

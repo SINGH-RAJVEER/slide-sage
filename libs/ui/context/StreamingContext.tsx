@@ -1,8 +1,8 @@
 import type { AIModelSelection } from "@slidesage/types";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { API_URL, readJsonResponse } from "@/lib/api";
-import { publishPresentationUpdated } from "@/lib/presentation-events";
+import { API_URL, readJsonResponse } from "../lib/api";
+import { publishPresentationUpdated } from "../lib/presentation-events";
 import type {
     PresentationData,
     PresentationGenerationStage,

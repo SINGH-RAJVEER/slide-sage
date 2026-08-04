@@ -1,6 +1,6 @@
 # Authentication
 
-SlideSage exposes a Better Auth-compatible browser contract at `/api/auth`. It supports email and password,
+SlideSage exposes a Better Auth-compatible browser contract at `/auth`. It supports email and password,
 six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
@@ -30,12 +30,12 @@ GITHUB_CLIENT_SECRET=
 
 Register these callback URLs with the providers:
 
-- `${BASE_URL}/api/auth/callback/google`
-- `${BASE_URL}/api/auth/callback/github`
+- `${BASE_URL}/auth/callback/google`
+- `${BASE_URL}/auth/callback/github`
 
 The production frontend uses `https://slidesage.app`, while the browser-facing API
 uses `https://api.slidesage.app`. Set `VITE_API_URL=https://api.slidesage.app` in
-the web build without a trailing `/api`; the client appends `/api` to route paths.
+the web build without a trailing `/api`; the client sends requests directly to endpoint paths.
 The API must allow the frontend in both `CORS_ORIGINS` and
 `BETTER_AUTH_TRUSTED_ORIGINS`. Authentication fetches include credentials, and
 production session cookies use `Secure` and `SameSite=None` for the cross-origin
@@ -80,25 +80,25 @@ user in the frontend.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/api/auth/sign-up/email` | Create an email/password account |
-| `POST` | `/api/auth/email-otp/send-verification-otp` | Send or replace an email OTP |
-| `POST` | `/api/auth/email-otp/verify-email` | Verify an email OTP |
-| `POST` | `/api/auth/sign-in/email` | Sign in with email and password |
-| `POST` | `/api/auth/email-otp/request-password-reset` | Send or replace a reset OTP |
-| `POST` | `/api/auth/email-otp/reset-password` | Set a password using the OTP |
-| `GET` | `/api/auth/get-session` | Return the current session |
-| `POST` | `/api/auth/sign-out` | End the current session |
-| `GET` | `/api/auth/callback/google` | Google callback |
-| `GET` | `/api/auth/callback/github` | GitHub callback |
-| `POST` | `/api/profile/email/verify` | Complete a pending authenticated email change |
+| `POST` | `/auth/sign-up/email` | Create an email/password account |
+| `POST` | `/auth/email-otp/send-verification-otp` | Send or replace an email OTP |
+| `POST` | `/auth/email-otp/verify-email` | Verify an email OTP |
+| `POST` | `/auth/sign-in/email` | Sign in with email and password |
+| `POST` | `/auth/email-otp/request-password-reset` | Send or replace a reset OTP |
+| `POST` | `/auth/email-otp/reset-password` | Set a password using the OTP |
+| `GET` | `/auth/get-session` | Return the current session |
+| `POST` | `/auth/sign-out` | End the current session |
+| `GET` | `/auth/callback/google` | Google callback |
+| `GET` | `/auth/callback/github` | GitHub callback |
+| `POST` | `/profile/email/verify` | Complete a pending authenticated email change |
 
 The web application uses the endpoints listed above plus
-`POST /api/auth/sign-in/social`. Use the Better Auth client in
+`POST /auth/sign-in/social`. Use the Better Auth client in
 `apps/web/src/lib/auth-client.ts` for supported browser flows.
 
 ## Password and Email Changes
 
-`PUT /api/profile` keeps account-security mutations behind an authenticated
+`PUT /profile` keeps account-security mutations behind an authenticated
 session and Better Auth verification:
 
 - A password-only request must include non-empty `currentPassword` and
@@ -111,7 +111,7 @@ session and Better Auth verification:
   sends a user-bound six-digit code to the normalized new address. The response
   returns `pending_email` and `verification_required`. A successfully delivered
   replacement invalidates every older pending email-change code for that user.
-- `POST /api/profile/email/verify` accepts that pending `email` and `otp` from the
+- `POST /profile/email/verify` accepts that pending `email` and `otp` from the
   authenticated session. It atomically consumes the code, changes the email,
   keeps the account verified because the new address has just been proven, and
   invalidates sign-in, reset, and verification OTPs for the old and new address.

@@ -4,7 +4,7 @@ import {
     deleteAIProvider,
     fetchAIConfiguration,
     selectAIModel,
-} from "@/lib/ai-connections";
+} from "@slidesage/ui/lib/ai-connections";
 
 export function AISettings() {
     return (

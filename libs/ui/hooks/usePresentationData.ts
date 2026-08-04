@@ -1,8 +1,6 @@
-import { SCENE_PRESENTATION_SCHEMA_VERSION } from "@slidesage/types";
+import { SCENE_PRESENTATION_SCHEMA_VERSION, type PresentationData, type Slide } from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
-import type { PresentationData, Slide } from "@/modules/types/presentation";
-import { ROUTES } from "@/router/paths";
 
 export interface ViewerLocationState {
     isStreaming?: boolean;
@@ -238,7 +236,7 @@ export function usePresentationData({
                 });
 
                 if (!response.ok) {
-                    navigate(ROUTES.presentationError, {
+                    navigate("/presentation-error", {
                         replace: true,
                         state: {
                             presentationId: idToFetch,
@@ -261,7 +259,7 @@ export function usePresentationData({
 
                 const pres = data?.presentation;
                 if (!pres) {
-                    navigate(ROUTES.presentationError, {
+                    navigate("/presentation-error", {
                         replace: true,
                         state: {
                             presentationId: idToFetch,
@@ -287,7 +285,7 @@ export function usePresentationData({
                 }
 
                 if (pres.title === "Generating..." || fetchedSlides.length === 0) {
-                    navigate(ROUTES.presentationError, {
+                    navigate("/presentation-error", {
                         state: {
                             presentationId: pres.id,
                             error: "This presentation failed to generate content.",
@@ -296,7 +294,7 @@ export function usePresentationData({
                 }
             } catch (error) {
                 console.error("Error fetching presentation:", error);
-                navigate(ROUTES.presentationError, {
+                navigate("/presentation-error", {
                     replace: true,
                     state: {
                         presentationId: idToFetch,
@@ -354,7 +352,7 @@ export function usePresentationData({
     useEffect(() => {
         if (!isStreamingMode || !streamingState.error) return;
 
-        navigate(ROUTES.presentationError, {
+        navigate("/presentation-error", {
             replace: true,
             state: {
                 error: streamingState.error,

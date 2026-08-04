@@ -16,7 +16,7 @@ Rate-limited requests return `429`, include `Retry-After`, and use the
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/health` | No | Returns `{ status: "ok", timestamp }` |
+| `GET` | `/health` | No | Returns `{ status: "ok", timestamp }` |
 
 ## Authentication
 
@@ -30,9 +30,9 @@ and signed session cookies so existing accounts and sessions remain valid. See
 
 | Method | Path | Body | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/profile` | None | Get the signed-in user's profile |
-| `PUT` | `/api/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or perform a password-only Better Auth change |
-| `POST` | `/api/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
+| `GET` | `/profile` | None | Get the signed-in user's profile |
+| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or perform a password-only Better Auth change |
+| `POST` | `/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
 
 All profile routes require authentication. Password changes require both the
 current and new password, are delegated to Better Auth, and revoke other
@@ -48,13 +48,13 @@ embedded credentials or control characters are rejected.
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/api/generate-presentation-stream` | Generate and persist a deck over SSE |
-| `POST` | `/api/research-presentation` | Find sources before generation |
-| `POST` | `/api/iterate-presentation-stream` | Revise an existing deck over SSE |
-| `GET` | `/api/presentations` | List the user's decks |
-| `GET` | `/api/presentations/:id` | Get one owned deck |
-| `PATCH` | `/api/presentations/:id` | Apply persistent presentation mutations |
-| `DELETE` | `/api/presentations/:id` | Delete one owned deck and its associated memory |
+| `POST` | `/generate-presentation-stream` | Generate and persist a deck over SSE |
+| `POST` | `/research-presentation` | Find sources before generation |
+| `POST` | `/iterate-presentation-stream` | Revise an existing deck over SSE |
+| `GET` | `/presentations` | List the user's decks |
+| `GET` | `/presentations/:id` | Get one owned deck |
+| `PATCH` | `/presentations/:id` | Apply persistent presentation mutations |
+| `DELETE` | `/presentations/:id` | Delete one owned deck and its associated memory |
 
 Generation requires `topic` and `slide_count`; the web client supports custom
 slide counts from 1 through 40. Generation also accepts `detail_level`,
@@ -136,7 +136,7 @@ SVG scenes and exports their nodes, text, and connectors as editable PowerPoint
 objects. Unsupported widget data is shown explicitly rather than silently omitted.
 The API normalizes older documents on read by assigning deterministic block IDs
 and defaults for dimensions, composition fields, transitions, and effects.
-`PATCH /api/presentations/:id` accepts a non-empty
+`PATCH /presentations/:id` accepts a non-empty
 `mutations` array containing at most 50 operations. Supported operations are
 `update-presentation`, `update-slide`, `delete-slide`, and `reorder-slides`.
 Slide IDs cannot be changed, reorder requests must contain every slide exactly
@@ -146,11 +146,11 @@ Writes use the owned row's monotonic integer `revision` as a compare-and-swap
 version. Every successful write increments it; a concurrent write returns `409`
 instead of overwriting another editor mutation.
 
-`GET /api/presentations` accepts integer `limit` and `offset` query parameters.
+`GET /presentations` accepts integer `limit` and `offset` query parameters.
 `limit` defaults to 20 and is bounded from 1 through 100; `offset` defaults to 0.
 Its maximum is JavaScript's maximum safe integer. The response returns
 `presentations`, `total`, `limit`, `offset`, and `has_more`.
-`DELETE /api/presentations/:id` returns `204 No Content` with an empty body after
+`DELETE /presentations/:id` returns `204 No Content` with an empty body after
 deleting the owned deck. Database foreign-key rules remove or detach its related
 memory records as defined by each table.
 
@@ -237,10 +237,10 @@ text but no URL; grounded image blocks require HTTPS URLs.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/billing/balance` | Yes | Return `slide_tokens` |
-| `POST` | `/api/billing/checkout` | Yes | Create a Razorpay order |
-| `POST` | `/api/billing/verify` | Yes | Verify a captured provider payment and grant points idempotently |
-| `POST` | `/api/billing/webhook` | Signature | Process `payment.captured` |
+| `GET` | `/billing/balance` | Yes | Return `slide_tokens` |
+| `POST` | `/billing/checkout` | Yes | Create a Razorpay order |
+| `POST` | `/billing/verify` | Yes | Verify a captured provider payment and grant points idempotently |
+| `POST` | `/billing/webhook` | Signature | Process `payment.captured` |
 
 Checkout accepts `starter`, `pro`, `premium`, or `custom`. Starter grants 25
 points for ₹50, Pro grants 250 points for ₹450, and Premium grants 625 points for
@@ -272,13 +272,13 @@ Allowed request headers are `Content-Type` and `Authorization`.
 ## AI Provider Connections
 
 Authenticated users with more than 50 points can manage encrypted BYOK
-connections under `/api/ai`:
+connections under `/ai`:
 
-- `GET /api/ai/config`
-- `POST /api/ai/connections`
-- `PUT /api/ai/connections/:provider`
-- `DELETE /api/ai/connections/:provider`
-- `PUT /api/ai/selection`
+- `GET /ai/config`
+- `POST /ai/connections`
+- `PUT /ai/connections/:provider`
+- `DELETE /ai/connections/:provider`
+- `PUT /ai/selection`
 
 Supported providers are `openai`, `google`, and `anthropic`. Generation requests
 may include `ai: { provider, model }`; iteration resolves the user's current

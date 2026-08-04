@@ -16,23 +16,22 @@ import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useAutoHideControls } from "@/hooks/useAutoHideControls";
-import { useFullscreenMode } from "@/hooks/useFullscreenMode";
-import { useInstalledMarketplaceThemes } from "@/hooks/useInstalledMarketplaceThemes";
-import { usePlayback } from "@/hooks/usePlayback";
-import type { ViewerLocationState } from "@/hooks/usePresentationData";
-import { usePresentationData } from "@/hooks/usePresentationData";
-import { useSlideNavigation } from "@/hooks/useSlideNavigation";
-import { useViewerKeyboardNavigation } from "@/hooks/useViewerKeyboardNavigation";
-import { API_URL } from "@/lib/api";
-import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
-import { getGenerationDisplayStatus } from "@/lib/generation-status";
-import { persistPresentationMutations } from "@/lib/presentation-mutations";
-import { applySlideLayout } from "@/lib/slide-layout";
-// Import directly from source modules (not the @/modules/presentations barrel) to avoid a
-// circular dependency: the barrel re-exports this very page, which under circular evaluation
-// left the AVAILABLE_TEMPLATES binding unestablished (ReferenceError at render).
-import { useStreaming } from "@/modules/contexts/StreamingContext";
+import { useAutoHideControls } from "@slidesage/ui/hooks/useAutoHideControls";
+import { useFullscreenMode } from "@slidesage/ui/hooks/useFullscreenMode";
+import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
+import { usePlayback } from "@slidesage/ui/hooks/usePlayback";
+import {
+    type ViewerLocationState,
+    usePresentationData,
+} from "@slidesage/ui/hooks/usePresentationData";
+import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
+import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
+import { API_URL } from "@slidesage/ui/lib/api";
+import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
+import { getGenerationDisplayStatus } from "@slidesage/ui/lib/generation-status";
+import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
+import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
+import { useStreaming, useTemplate } from "@slidesage/ui";
 import {
     type ContentSlide,
     isContentSlide,
@@ -40,8 +39,7 @@ import {
     type PresentationData,
     type SlideLayout,
     type ThemeId,
-} from "@/modules/types/presentation";
-import { useTemplate } from "@/modules/useTemplate";
+} from "@slidesage/types";
 import { ROUTES } from "@/router/paths";
 
 export default function PresentationViewerPage() {
@@ -251,11 +249,11 @@ export default function PresentationViewerPage() {
 
     const exportPresentation: PresentationExporter = async (format, presentationToExport) => {
         if (format === "pptx") {
-            const { exportEditablePptx } = await import("@/lib/pptx-export");
+            const { exportEditablePptx } = await import("@slidesage/ui/lib/pptx-export");
             await exportEditablePptx(presentationToExport);
             return;
         }
-        const { exportPresentationPdf } = await import("@/lib/pdf-export");
+        const { exportPresentationPdf } = await import("@slidesage/ui/lib/pdf-export");
         await exportPresentationPdf(presentationToExport.title);
     };
 

@@ -9,9 +9,9 @@ import type {
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { API_URL } from "@/lib/api";
-import Header from "@/modules/Header";
+import { useAuth } from "@slidesage/ui";
+import { API_URL } from "@slidesage/ui/lib/api";
+import Header from "@/Header";
 import { ROUTES } from "@/router/paths";
 
 export default function ProfilePage() {

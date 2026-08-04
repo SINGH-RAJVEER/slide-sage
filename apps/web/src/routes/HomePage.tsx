@@ -2,7 +2,7 @@ import type { ApiErrorResponse, PresentationsResponse } from "@slidesage/types";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_URL, readJsonResponse } from "@/lib/api";
+import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
 import { ROUTES } from "@/router/paths";
 
 export default function HomePage() {

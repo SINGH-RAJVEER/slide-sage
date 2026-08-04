@@ -8,9 +8,9 @@ import MarketplaceCard from "@slidesage/ui/components/Marketplace/MarketplaceCar
 import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getInstalledMarketplaceThemes, installMarketplaceTheme } from "@/lib/marketplace-themes";
-import Header from "@/modules/Header";
-import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@/modules/marketplace/catalog";
+import { getInstalledMarketplaceThemes, installMarketplaceTheme } from "@slidesage/ui/lib/marketplace-themes";
+import Header from "@/Header";
+import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@slidesage/ui/lib/catalog";
 import { ROUTES } from "@/router/paths";
 
 type MarketplaceSort = "popular" | "newest";

@@ -89,8 +89,8 @@ the server embedding configuration.
 Without `RESEND_API_KEY`, development mode skips delivery and logs a warning but
 never logs the OTP. Production send requests fail with `503` when the key is
 missing or Resend rejects the request.
-OAuth callback URLs are `${BASE_URL}/api/auth/callback/google` and
-`${BASE_URL}/api/auth/callback/github`.
+OAuth callback URLs are `${BASE_URL}/auth/callback/google` and
+`${BASE_URL}/auth/callback/github`.
 
 When `BASE_URL` is unset in a deployment, auth can derive it from the
 platform-provided `CF_PAGES_URL` or `VERCEL_URL`.
@@ -108,8 +108,8 @@ Do not commit `.env`. Keep secrets in the deployment platform's secret store in
 production.
 
 Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production
-build. Client routes append `/api` themselves; a trailing `/api` in the configured
-value is tolerated and removed. As a deployment safeguard, production builds
+build. The client sends requests directly to each endpoint; a legacy trailing
+`/api` in the configured value is removed. As a deployment safeguard, production builds
 ignore loopback values such as `localhost` and `127.0.0.1` and fall back to
 same-origin routes instead.
 

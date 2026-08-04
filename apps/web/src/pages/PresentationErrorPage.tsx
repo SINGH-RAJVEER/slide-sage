@@ -4,9 +4,9 @@ import { Spinner } from "@slidesage/ui/components/spinner";
 import { CircleAlert, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { API_URL, readJsonResponse } from "@/lib/api";
-import { getPresentationRetryDestination } from "@/lib/presentation-retry";
-import Header from "@/modules/Header";
+import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
+import { getPresentationRetryDestination } from "@slidesage/ui/lib/presentation-retry";
+import Header from "@/Header";
 import { ROUTES } from "@/router/paths";
 
 interface PresentationErrorPageProps {

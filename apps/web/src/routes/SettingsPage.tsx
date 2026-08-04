@@ -1,5 +1,5 @@
-import { AISettings } from "@/modules/AISettings";
-import Header from "@/modules/Header";
+import { AISettings } from "@/pages/AISettings";
+import Header from "@/Header";
 
 export default function SettingsPage() {
     return (

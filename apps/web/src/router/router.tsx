@@ -40,42 +40,42 @@ export const router = createBrowserRouter([
                     { path: "settings", element: <SettingsPage /> },
                     {
                         path: "generate",
-                        lazy: lazyRoute(() => import("@/modules/pages/GeneratePPTPage")),
+                        lazy: lazyRoute(() => import("@/pages/GeneratePPTPage")),
                     },
                     {
                         path: "generate/research",
-                        lazy: lazyRoute(() => import("@/modules/pages/GenerateResearchPage")),
+                        lazy: lazyRoute(() => import("@/pages/GenerateResearchPage")),
                     },
                     {
                         path: "marketplace",
-                        lazy: lazyRoute(() => import("@/modules/pages/MarketplacePage")),
+                        lazy: lazyRoute(() => import("@/pages/MarketplacePage")),
                     },
                     {
                         path: "marketplace/:marketplaceId/preview",
                         lazy: lazyRoute(
-                            () => import("@/modules/pages/MarketplaceThemePreviewPage"),
+                            () => import("@/pages/MarketplaceThemePreviewPage"),
                         ),
                     },
                     {
                         path: "presentations",
-                        lazy: lazyRoute(() => import("@/modules/pages/PresentationsGridPage")),
+                        lazy: lazyRoute(() => import("@/pages/PresentationsGridPage")),
                     },
                     {
                         path: "presentations/:presentationId",
-                        lazy: lazyRoute(() => import("@/modules/pages/PresentationViewer")),
+                        lazy: lazyRoute(() => import("@/pages/PresentationViewer")),
                     },
                     // Streaming / legacy route (kept because generation navigates here before an id exists)
                     {
                         path: "presentation",
-                        lazy: lazyRoute(() => import("@/modules/pages/PresentationViewer")),
+                        lazy: lazyRoute(() => import("@/pages/PresentationViewer")),
                     },
                     {
                         path: "presentation-error",
-                        lazy: lazyRoute(() => import("@/modules/pages/PresentationErrorPage")),
+                        lazy: lazyRoute(() => import("@/pages/PresentationErrorPage")),
                     },
                     {
                         path: "purchase",
-                        lazy: lazyRoute(() => import("@/modules/pages/PurchaseTokensPage")),
+                        lazy: lazyRoute(() => import("@/pages/PurchaseTokensPage")),
                     },
                 ],
             },

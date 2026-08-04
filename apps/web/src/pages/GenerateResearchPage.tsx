@@ -4,10 +4,10 @@ import { Spinner } from "@slidesage/ui/components/spinner";
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { requestGenerationNotificationPermission } from "@/lib/generation-notifications";
-import Header from "@/modules/Header";
-import { useStreaming } from "@/modules/presentations";
-import type { ResearchPayload, ThemeId } from "@/modules/types/presentation";
+import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
+import Header from "@/Header";
+import { useStreaming } from "@slidesage/ui";
+import type { ResearchPayload, ThemeId } from "@slidesage/types";
 import { ROUTES } from "@/router/paths";
 
 interface ResearchRouteState {

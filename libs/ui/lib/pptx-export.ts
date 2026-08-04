@@ -15,7 +15,7 @@ import {
     type SlideBlock,
     type SlideRegion,
     type WidgetBlockLike,
-} from "@/modules/types/presentation";
+} from "@slidesage/types";
 
 const SLIDE_WIDTH = 13.333;
 const SLIDE_HEIGHT = 7.5;
