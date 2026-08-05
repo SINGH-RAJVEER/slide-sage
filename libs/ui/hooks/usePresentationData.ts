@@ -1,4 +1,8 @@
-import { SCENE_PRESENTATION_SCHEMA_VERSION, type PresentationData, type Slide } from "@slidesage/types";
+import {
+    SCENE_PRESENTATION_SCHEMA_VERSION,
+    type PresentationData,
+    type Slide,
+} from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 

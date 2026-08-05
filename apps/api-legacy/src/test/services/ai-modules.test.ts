@@ -1,0 +1,565 @@
+import { describe, expect, it, mock } from "bun:test";
+import { resolveScene } from "@slidesage/types";
+import { normalizePresentationSlides, processSlide } from "../../services/ai/presentation-content";
+import { compilePresentationScenes } from "../../services/ai/presentation-design";
+import {
+    buildGenerationMessages,
+    buildIterationMessages,
+} from "../../services/ai/presentation-messages";
+import {
+    normalizeResearchOptions,
+    resolveResearchSources,
+    shouldSearchForResearch,
+} from "../../services/ai/research-sources";
+import { buildGenerationPrompt, buildIterationPrompt } from "../../services/ai-prompts";
+import { buildSlideSummary } from "../../services/rag/utils";
+
+describe("AI presentation content", () => {
+    it("normalizes structured blocks, layout regions, and duplicate slide IDs", () => {
+        const slides = normalizePresentationSlides({
+            slides: [
+                {
+                    id: "slide-2",
+                    type: "content",
+                    layout: "content",
+                    title: "First",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "bullets",
+                            region: "right",
+                            items: ["One", "Two"],
+                            ordered: false,
+                            ignored: "not retained",
+                        },
+                    ],
+                },
+                {
+                    id: "slide-2",
+                    type: "content",
+                    layout: "two-column",
+                    title: "Second",
+                    subtitle: "Details",
+                    blocks: [{ type: "paragraph", region: "main", text: "Left column" }],
+                },
+            ],
+        });
+
+        expect(slides.map((slide) => slide.id)).toEqual(["slide-2", "slide-2-2"]);
+        const firstSlide = slides[0];
+        const secondSlide = slides[1];
+        expect(firstSlide?.type).toBe("content");
+        expect(firstSlide?.type === "content" ? firstSlide.blocks : []).toEqual([
+            {
+                id: "slide-2-block-1",
+                type: "bullets",
+                region: "secondary",
+                sourceIds: [],
+                emphasis: "standard",
+                treatment: "plain",
+                items: ["One", "Two"],
+                ordered: false,
+            },
+        ]);
+        expect(secondSlide?.type === "content" ? secondSlide.layout : "").toBe("split");
+        expect(secondSlide?.type === "content" ? secondSlide.blocks[0]?.region : "").toBe(
+            "primary"
+        );
+    });
+
+    it("converts invalid chart output into renderable content", () => {
+        const slide = processSlide({ id: "chart", type: "chart" }, 0);
+
+        expect(slide?.type).toBe("content");
+        expect(slide?.type === "content" ? slide.title : "").toBe("Data Visualization");
+        expect(slide?.type === "content" ? slide.blocks[0] : null).toEqual({
+            id: "chart-block-1",
+            type: "paragraph",
+            region: "main",
+            sourceIds: [],
+            emphasis: "standard",
+            treatment: "plain",
+            text: "Chart data unavailable",
+        });
+    });
+
+    it("keeps chart data while dropping arbitrary model-controlled options", () => {
+        const slide = processSlide(
+            {
+                id: "chart",
+                type: "chart",
+                chartConfig: {
+                    type: "bar",
+                    title: "Revenue",
+                    description: "Quarterly revenue",
+                    data: {
+                        labels: ["Q1", "Q2"],
+                        datasets: [{ label: "Revenue", data: [10, 12] }],
+                    },
+                    options: { plugins: { tooltip: { external: "model-controlled" } } },
+                },
+            },
+            0
+        );
+
+        expect(slide?.type).toBe("chart");
+        expect(slide?.type === "chart" ? slide.chartConfig.options : null).toEqual({});
+    });
+
+    it("normalizes image placeholders without requiring a remote URL", () => {
+        const slide = processSlide(
+            {
+                id: "visual",
+                type: "content",
+                layout: "image-right",
+                title: "Product workflow",
+                subtitle: "",
+                blocks: [
+                    {
+                        type: "image-placeholder",
+                        region: "right",
+                        alt: "Annotated product workflow screenshot",
+                        caption: "Add the final product capture",
+                        ignored: "discarded",
+                    },
+                ],
+            },
+            0
+        );
+
+        expect(slide?.type === "content" ? slide.blocks[0] : null).toEqual({
+            id: "visual-block-1",
+            type: "image-placeholder",
+            region: "media",
+            sourceIds: [],
+            emphasis: "standard",
+            treatment: "plain",
+            alt: "Annotated product workflow screenshot",
+            caption: "Add the final product capture",
+        });
+    });
+
+    it("rejects executable markup and unsafe image protocols", () => {
+        expect(
+            processSlide(
+                {
+                    id: "unsafe",
+                    type: "content",
+                    layout: "content",
+                    title: "<script>alert(1)</script>",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "image",
+                            region: "main",
+                            url: "javascript:alert(1)",
+                            alt: "Unsafe",
+                            caption: "",
+                        },
+                        {
+                            type: "paragraph",
+                            region: "main",
+                            text: "<img src=x onerror=alert(1)>",
+                        },
+                    ],
+                },
+                0
+            )
+        ).toEqual({
+            id: "unsafe",
+            type: "content",
+            transition: { type: "none", durationMs: 0 },
+            effects: [],
+            layout: "body",
+            title: "<script>alert(1)</script>",
+            subtitle: "",
+            tone: "default",
+            density: "standard",
+            pattern: "none",
+            blocks: [
+                {
+                    id: "unsafe-block-1",
+                    type: "paragraph",
+                    region: "main",
+                    sourceIds: [],
+                    emphasis: "standard",
+                    treatment: "plain",
+                    text: "<img src=x onerror=alert(1)>",
+                },
+            ],
+        });
+    });
+
+    it("bounds schema-v5 composition fields and rejects unsafe backgrounds", () => {
+        const slide = processSlide(
+            {
+                id: "composition",
+                type: "content",
+                layout: "spotlight",
+                title: "One idea",
+                subtitle: "",
+                eyebrow: "  Signal  ",
+                regionLabels: { main: "Focus", left: "Legacy", media: "Visual", css: "red" },
+                tone: "inverse",
+                density: "airy",
+                pattern: "dots",
+                backgroundImage: {
+                    url: "https://example.com/background.jpg",
+                    alt: "Abstract background",
+                    focalPoint: "25% 10%",
+                    overlay: "#0008",
+                },
+                blocks: [
+                    {
+                        type: "callout",
+                        region: "main",
+                        heading: "Result",
+                        text: "A bounded composition",
+                        emphasis: "hero",
+                        treatment: "accent",
+                        style: { color: "red" },
+                    },
+                ],
+            },
+            0
+        );
+
+        expect(slide).toMatchObject({
+            layout: "spotlight",
+            eyebrow: "Signal",
+            regionLabels: { main: "Focus", primary: "Legacy", media: "Visual" },
+            tone: "inverse",
+            density: "airy",
+            pattern: "dots",
+            backgroundImage: {
+                url: "https://example.com/background.jpg",
+                alt: "Abstract background",
+                focalPoint: "center",
+                overlay: "medium",
+            },
+            blocks: [{ emphasis: "hero", treatment: "accent" }],
+        });
+        expect(JSON.stringify(slide)).not.toContain("color");
+
+        const unsafe = processSlide(
+            {
+                id: "unsafe-background",
+                type: "content",
+                layout: "body",
+                title: "Unsafe",
+                backgroundImage: { url: "javascript:alert(1)", alt: "Unsafe" },
+            },
+            0
+        );
+        expect(
+            unsafe && "backgroundImage" in unsafe ? unsafe.backgroundImage : undefined
+        ).toBeUndefined();
+    });
+
+    it("bounds semantic widgets and drops invalid references and artifact fields", () => {
+        const slide = processSlide(
+            {
+                id: "timeline",
+                type: "content",
+                layout: "content",
+                title: "Roadmap",
+                subtitle: "",
+                blocks: [
+                    {
+                        type: "widget",
+                        region: "main",
+                        kind: "timeline",
+                        direction: "vertical",
+                        code: "renderTimeline()",
+                        nodes: Array.from({ length: 20 }, (_, index) => ({
+                            id: `step-${index}`,
+                            label: `Step ${index}`,
+                            description:
+                                index === 0 ? "https://example.com/generated" : "Milestone",
+                            role: index === 0 ? "start" : "default",
+                            tone: "neutral",
+                            url: "https://example.com",
+                        })),
+                        edges: [
+                            { from: "step-0", to: "step-1", label: "then", svg: "<svg />" },
+                            { from: "step-0", to: "step-19", label: "out of bounds" },
+                        ],
+                    },
+                ],
+            },
+            0
+        );
+        const widget = slide?.type === "content" ? slide.blocks[0] : undefined;
+
+        expect(widget?.type).toBe("widget");
+        expect(widget?.type === "widget" ? widget.nodes : []).toHaveLength(16);
+        expect(widget?.type === "widget" ? widget.nodes[0]?.description : null).toBe("");
+        expect(widget?.type === "widget" ? widget.edges : []).toEqual([
+            { from: "step-0", to: "step-1", label: "then" },
+        ]);
+        expect(JSON.stringify(widget)).not.toContain("renderTimeline");
+        expect(JSON.stringify(widget)).not.toContain("example.com");
+        expect(JSON.stringify(widget)).not.toContain("<svg");
+    });
+
+    it("serializes widget semantics for RAG without presentation artifacts", () => {
+        const slide = processSlide(
+            {
+                id: "architecture",
+                type: "content",
+                layout: "content",
+                title: "Architecture",
+                subtitle: "",
+                blocks: [
+                    {
+                        type: "widget",
+                        region: "main",
+                        kind: "architecture",
+                        direction: "horizontal",
+                        nodes: [
+                            {
+                                id: "web",
+                                label: "Web",
+                                description: "UI",
+                                role: "actor",
+                                tone: "accent",
+                            },
+                            {
+                                id: "api",
+                                label: "API",
+                                description: "Service",
+                                role: "system",
+                                tone: "neutral",
+                            },
+                        ],
+                        edges: [{ from: "web", to: "api", label: "requests" }],
+                    },
+                ],
+            },
+            0
+        );
+        if (!slide) throw new Error("Expected a normalized slide");
+
+        const summary = buildSlideSummary(slide, 0).summary;
+        expect(summary).toContain("architecture widget, horizontal");
+        expect(summary).toContain("Web (actor, accent): UI");
+        expect(summary).toContain("web -> api: requests");
+    });
+});
+
+describe("AI presentation design", () => {
+    it("maps semantic intent to dynamic scenes and creates a visual placeholder", () => {
+        const slides = normalizePresentationSlides({
+            slides: [
+                {
+                    id: "slide-1",
+                    type: "content",
+                    layout: "content",
+                    title: "Opening",
+                    subtitle: "",
+                    blocks: [],
+                },
+                {
+                    id: "slide-2",
+                    type: "content",
+                    layout: "content",
+                    title: "Workflow",
+                    subtitle: "",
+                    blocks: [
+                        {
+                            type: "bullets",
+                            region: "main",
+                            items: ["Normalize input", "Draft cards"],
+                            ordered: true,
+                        },
+                    ],
+                },
+            ],
+        });
+        const designed = compilePresentationScenes(slides, {
+            title: "System",
+            audience: "Builders",
+            thesis: "A staged pipeline creates coherent decks.",
+            cards: [
+                {
+                    id: "card-1",
+                    title: "Opening",
+                    objective: "Introduce",
+                    keyPoints: [],
+                    narrativeRole: "opening",
+                    visualIntent: "none",
+                    sourceIds: [],
+                },
+                {
+                    id: "card-2",
+                    title: "Workflow",
+                    objective: "Explain the workflow",
+                    keyPoints: [],
+                    narrativeRole: "process",
+                    visualIntent: "image",
+                    sourceIds: [],
+                },
+            ],
+        });
+
+        expect(designed[0]?.strategy).toBe("typographic-cover");
+        expect(designed[1]?.strategy).toMatch(/^media-(left|right)-adaptive$/);
+        expect(designed[1]?.semantic).toMatchObject({
+            requestedLayout: "body",
+            resolvedLayout: "body",
+        });
+        expect(JSON.stringify(designed[1]?.root)).toContain('"type":"image"');
+    });
+
+    it("preserves semantic layout families while selecting bounded variants", () => {
+        const layouts = [
+            "split",
+            "comparison",
+            "sidebar",
+            "media-left",
+            "quote",
+            "spotlight",
+            "canvas",
+        ] as const;
+        const slides = normalizePresentationSlides({
+            slides: layouts.map((layout, index) => ({
+                id: `layout-${layout}`,
+                type: "content",
+                layout,
+                title: `${layout} composition`,
+                subtitle: "A supporting line",
+                density: "standard",
+                tone: "default",
+                pattern: "none",
+                blocks: [
+                    {
+                        type: "paragraph",
+                        region: layout === "split" || layout === "comparison" ? "primary" : "main",
+                        text: `Primary idea ${index + 1}`,
+                    },
+                    {
+                        type: layout === "media-left" ? "image-placeholder" : "callout",
+                        region: layout === "media-left" ? "media" : "secondary",
+                        alt: "Supporting visual",
+                        caption: "",
+                        heading: "Evidence",
+                        text: "Supporting evidence",
+                    },
+                ],
+            })),
+        });
+
+        const designed = compilePresentationScenes(slides, undefined);
+
+        expect(designed.map((slide) => slide.semantic?.["requestedLayout"])).toEqual([...layouts]);
+        expect(new Set(designed.map((slide) => slide.strategy)).size).toBe(layouts.length);
+        expect(designed.map((slide) => slide.strategy)).toEqual([
+            expect.stringMatching(/^split-/),
+            expect.stringMatching(/^comparison-/),
+            expect.stringMatching(/^sidebar-/),
+            expect.stringMatching(/^media-left-/),
+            expect.stringMatching(/^quote-/),
+            expect.stringMatching(/^spotlight-/),
+            expect.stringMatching(/^mosaic-/),
+        ]);
+        for (const slide of designed) {
+            expect(
+                resolveScene(slide, { width: 1280, height: 720 }).diagnostics.filter(
+                    (diagnostic) => diagnostic.code === "overflow"
+                )
+            ).toEqual([]);
+        }
+    });
+});
+
+describe("AI presentation prompts", () => {
+    it("requires content-only schema V5 output for generation and iteration", () => {
+        const generationPrompt = buildGenerationPrompt("balanced", "professional", "nature-green");
+        const iterationPrompt = buildIterationPrompt("Improve the comparison");
+
+        expect(generationPrompt).toContain('Set "schemaVersion" to 5');
+        expect(generationPrompt).toContain("Never return HTML, Markdown, CSS, JSX, JavaScript");
+        expect(generationPrompt).toContain('"type": "content"');
+        expect(generationPrompt).toContain('theme to exactly "nature-green"');
+        expect(generationPrompt).toContain("Vary layouts naturally");
+        expect(generationPrompt).toContain("image-placeholder");
+        expect(generationPrompt).toContain("timeline|flow|architecture|comparison");
+        expect(generationPrompt).toContain("Never include generated code, HTML, raw SVG");
+        expect(generationPrompt).toContain("mix concise text, images or placeholders");
+        expect(generationPrompt).toContain("Never provide arbitrary colors, CSS, coordinates");
+        expect(iterationPrompt).toContain("Always output schema version 5");
+        expect(iterationPrompt).toContain("Improve the comparison");
+    });
+});
+
+describe("AI presentation messages", () => {
+    it("builds generation and iteration messages with shared research context", () => {
+        const sources = [{ url: "https://example.com", title: "Research source" }];
+        const generationMessages = buildGenerationMessages({
+            systemPrompt: "Generate a deck",
+            generationMemoryContext: "Past deck context",
+            researchSources: sources,
+            userPrompt: "Storage market",
+            slideCount: 5,
+        });
+        const iterationMessages = buildIterationMessages({
+            systemPrompt: "Revise the deck",
+            researchSources: sources,
+            feedback: "Add current data",
+        });
+
+        expect(generationMessages.map((message) => message.role)).toEqual([
+            "system",
+            "system",
+            "system",
+            "user",
+        ]);
+        expect(generationMessages[2]?.content).toContain("Research source");
+        expect(iterationMessages.map((message) => message.role)).toEqual([
+            "system",
+            "system",
+            "user",
+        ]);
+        expect(iterationMessages[1]?.content).toContain("Add current data");
+    });
+});
+
+describe("AI research sources", () => {
+    it("searches only when needed and always ranks selected sources", async () => {
+        const searchedSources = [{ url: "https://example.com/search" }];
+        const rankedSources = [{ url: "https://example.com/ranked" }];
+        const webSearch = mock(() => Promise.resolve(searchedSources));
+        const rankSourcesBySemanticRelevance = mock(() => Promise.resolve(rankedSources));
+        const research = normalizeResearchOptions({ enabled: true, maxResults: 4 });
+
+        expect(shouldSearchForResearch(research)).toBe(true);
+        expect(
+            shouldSearchForResearch(research, {
+                sources: [{ url: "https://example.com/provided" }],
+            })
+        ).toBe(false);
+
+        const sources = await resolveResearchSources({
+            query: "Storage market",
+            research,
+            searchClient: { webSearch },
+            sourceRanker: { rankSourcesBySemanticRelevance },
+        });
+
+        expect(webSearch).toHaveBeenCalledWith(
+            "Storage market",
+            {
+                enabled: true,
+                maxResults: 4,
+            },
+            undefined
+        );
+        expect(rankSourcesBySemanticRelevance).toHaveBeenCalledWith(
+            "Storage market",
+            searchedSources,
+            8,
+            undefined
+        );
+        expect(sources).toEqual(rankedSources);
+    });
+});

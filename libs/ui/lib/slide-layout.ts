@@ -1,9 +1,4 @@
-import type {
-    ContentSlide,
-    SlideBlock,
-    SlideLayout,
-    SlideRegion,
-} from "@slidesage/types";
+import type { ContentSlide, SlideBlock, SlideLayout, SlideRegion } from "@slidesage/types";
 
 const isVisualBlock = (block: SlideBlock) =>
     block.type === "image" || block.type === "image-placeholder";

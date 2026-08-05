@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/tmp/
+.env
+.env.local
+*.log
+.DS_Store
+*.sqlite
+*.db
+.biome-cache/

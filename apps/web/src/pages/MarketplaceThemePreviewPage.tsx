@@ -13,10 +13,7 @@ import { useFullscreenMode } from "@slidesage/ui/hooks/useFullscreenMode";
 import { usePlayback } from "@slidesage/ui/hooks/usePlayback";
 import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
-import {
-    createMarketplacePreviewPresentation,
-    MARKETPLACE_ITEMS,
-} from "@slidesage/ui/lib/catalog";
+import { createMarketplacePreviewPresentation, MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
 import { ROUTES } from "@/router/paths";
 
 export default function MarketplaceThemePreviewPage() {

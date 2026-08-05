@@ -5,11 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(() => {
     return {
-        plugins: [
-            react(),
-            tsconfigPaths(),
-            tailwindcss(),
-        ],
+        plugins: [react(), tsconfigPaths(), tailwindcss()],
         envDir: "../../",
     };
 });

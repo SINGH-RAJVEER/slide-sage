@@ -52,9 +52,7 @@ export const router = createBrowserRouter([
                     },
                     {
                         path: "marketplace/:marketplaceId/preview",
-                        lazy: lazyRoute(
-                            () => import("@/pages/MarketplaceThemePreviewPage"),
-                        ),
+                        lazy: lazyRoute(() => import("@/pages/MarketplaceThemePreviewPage")),
                     },
                     {
                         path: "presentations",
