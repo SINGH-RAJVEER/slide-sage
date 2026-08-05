@@ -1,4 +1,4 @@
 {
-    "root": false,
-    "extends": ["../../biome.json"]
+	"root": false,
+	"extends": ["../../biome.json"]
 }

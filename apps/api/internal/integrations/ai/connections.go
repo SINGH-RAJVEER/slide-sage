@@ -11,9 +11,9 @@ import (
 
 type Connection struct {
 	UserID, Provider, EncryptedAPIKey, EncryptionIV, KeyLastFour, Status string
-	EncryptionKeyVersion int
-	ValidatedAt time.Time
-	LastUsedAt *time.Time
+	EncryptionKeyVersion                                                 int
+	ValidatedAt                                                          time.Time
+	LastUsedAt                                                           *time.Time
 }
 
 type Selection struct {

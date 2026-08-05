@@ -15,15 +15,15 @@ import (
 type Provider string
 
 const (
-	OpenAI Provider = "openai"
-	Google Provider = "google"
+	OpenAI    Provider = "openai"
+	Google    Provider = "google"
 	Anthropic Provider = "anthropic"
 )
 
 type EncryptedCredential struct {
 	EncryptedAPIKey, EncryptionIV string
-	EncryptionKeyVersion int
-	KeyLastFour string
+	EncryptionKeyVersion          int
+	KeyLastFour                   string
 }
 
 func EncryptAPIKey(userID string, provider Provider, apiKey string) (EncryptedCredential, error) {

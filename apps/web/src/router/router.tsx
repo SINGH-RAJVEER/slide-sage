@@ -15,69 +15,69 @@ import SignUpPage from "@/routes/SignUpPage";
 import VerifyEmailPage from "@/routes/VerifyEmailPage";
 
 function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise<T>) {
-    return async () => {
-        const mod = await importer();
-        return { Component: mod.default };
-    };
+	return async () => {
+		const mod = await importer();
+		return { Component: mod.default };
+	};
 }
 
 export const router = createBrowserRouter([
-    {
-        element: <RootLayout />,
-        errorElement: <RouteErrorPage />,
-        hydrateFallbackElement: <LoadingScreen label="Loading page" />,
-        children: [
-            { path: "sign-in/*", element: <SignInPage /> },
-            { path: "sign-up/*", element: <SignUpPage /> },
-            { path: "sign-up/verify-email", element: <VerifyEmailPage /> },
-            { path: "forgot-password", element: <ForgotPasswordPage /> },
-            { path: "reset-password", element: <ResetPasswordPage /> },
-            {
-                element: <RequireSignedInLayout />,
-                children: [
-                    { index: true, element: <HomePage /> },
-                    { path: "profile", element: <ProfilePage /> },
-                    { path: "settings", element: <SettingsPage /> },
-                    {
-                        path: "generate",
-                        lazy: lazyRoute(() => import("@/pages/GeneratePPTPage")),
-                    },
-                    {
-                        path: "generate/research",
-                        lazy: lazyRoute(() => import("@/pages/GenerateResearchPage")),
-                    },
-                    {
-                        path: "marketplace",
-                        lazy: lazyRoute(() => import("@/pages/MarketplacePage")),
-                    },
-                    {
-                        path: "marketplace/:marketplaceId/preview",
-                        lazy: lazyRoute(() => import("@/pages/MarketplaceThemePreviewPage")),
-                    },
-                    {
-                        path: "presentations",
-                        lazy: lazyRoute(() => import("@/pages/PresentationsGridPage")),
-                    },
-                    {
-                        path: "presentations/:presentationId",
-                        lazy: lazyRoute(() => import("@/pages/PresentationViewer")),
-                    },
-                    // Streaming / legacy route (kept because generation navigates here before an id exists)
-                    {
-                        path: "presentation",
-                        lazy: lazyRoute(() => import("@/pages/PresentationViewer")),
-                    },
-                    {
-                        path: "presentation-error",
-                        lazy: lazyRoute(() => import("@/pages/PresentationErrorPage")),
-                    },
-                    {
-                        path: "purchase",
-                        lazy: lazyRoute(() => import("@/pages/PurchaseTokensPage")),
-                    },
-                ],
-            },
-            { path: "*", element: <NotFoundPage /> },
-        ],
-    },
+	{
+		element: <RootLayout />,
+		errorElement: <RouteErrorPage />,
+		hydrateFallbackElement: <LoadingScreen label="Loading page" />,
+		children: [
+			{ path: "sign-in/*", element: <SignInPage /> },
+			{ path: "sign-up/*", element: <SignUpPage /> },
+			{ path: "sign-up/verify-email", element: <VerifyEmailPage /> },
+			{ path: "forgot-password", element: <ForgotPasswordPage /> },
+			{ path: "reset-password", element: <ResetPasswordPage /> },
+			{
+				element: <RequireSignedInLayout />,
+				children: [
+					{ index: true, element: <HomePage /> },
+					{ path: "profile", element: <ProfilePage /> },
+					{ path: "settings", element: <SettingsPage /> },
+					{
+						path: "generate",
+						lazy: lazyRoute(() => import("@/pages/GeneratePPTPage")),
+					},
+					{
+						path: "generate/research",
+						lazy: lazyRoute(() => import("@/pages/GenerateResearchPage")),
+					},
+					{
+						path: "marketplace",
+						lazy: lazyRoute(() => import("@/pages/MarketplacePage")),
+					},
+					{
+						path: "marketplace/:marketplaceId/preview",
+						lazy: lazyRoute(() => import("@/pages/MarketplaceThemePreviewPage")),
+					},
+					{
+						path: "presentations",
+						lazy: lazyRoute(() => import("@/pages/PresentationsGridPage")),
+					},
+					{
+						path: "presentations/:presentationId",
+						lazy: lazyRoute(() => import("@/pages/PresentationViewer")),
+					},
+					// Streaming / legacy route (kept because generation navigates here before an id exists)
+					{
+						path: "presentation",
+						lazy: lazyRoute(() => import("@/pages/PresentationViewer")),
+					},
+					{
+						path: "presentation-error",
+						lazy: lazyRoute(() => import("@/pages/PresentationErrorPage")),
+					},
+					{
+						path: "purchase",
+						lazy: lazyRoute(() => import("@/pages/PurchaseTokensPage")),
+					},
+				],
+			},
+			{ path: "*", element: <NotFoundPage /> },
+		],
+	},
 ]);

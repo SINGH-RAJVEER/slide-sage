@@ -1,19 +1,19 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "jsx": "react-jsx",
-        "types": ["bun", "vite/client"],
-        "allowJs": true,
-        "module": "preserve",
-        "paths": {
-            "@/*": ["./src/*"],
-            "@slidesage/types": ["../../libs/types/src/index.ts"],
-            "@slidesage/ui": ["../../libs/ui/index.ts"],
-            "@slidesage/ui/components/*": ["../../libs/ui/components/*"],
-            "@slidesage/ui/hooks/*": ["../../libs/ui/hooks/*"],
-            "@slidesage/ui/lib/*": ["../../libs/ui/lib/*"]
-        }
-    },
-    "include": ["**/*.ts", "**/*.tsx"],
-    "exclude": ["dist", "node_modules"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"types": ["bun", "vite/client"],
+		"allowJs": true,
+		"module": "preserve",
+		"paths": {
+			"@/*": ["./src/*"],
+			"@slidesage/types": ["../../libs/types/src/index.ts"],
+			"@slidesage/ui": ["../../libs/ui/index.ts"],
+			"@slidesage/ui/components/*": ["../../libs/ui/components/*"],
+			"@slidesage/ui/hooks/*": ["../../libs/ui/hooks/*"],
+			"@slidesage/ui/lib/*": ["../../libs/ui/lib/*"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx"],
+	"exclude": ["dist", "node_modules"]
 }

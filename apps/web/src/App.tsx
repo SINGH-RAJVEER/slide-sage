@@ -5,11 +5,11 @@ import { StreamingProvider } from "@slidesage/ui";
 import { router } from "@/router/router";
 
 export default function App() {
-    return (
-        <StreamingProvider>
-            <Suspense fallback={<LoadingScreen label="Loading page" />}>
-                <RouterProvider router={router} />
-            </Suspense>
-        </StreamingProvider>
-    );
+	return (
+		<StreamingProvider>
+			<Suspense fallback={<LoadingScreen label="Loading page" />}>
+				<RouterProvider router={router} />
+			</Suspense>
+		</StreamingProvider>
+	);
 }

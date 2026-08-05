@@ -1,29 +1,29 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "composite": true,
-        "jsx": "react-jsx",
-        "types": ["react", "bun"],
-        "paths": {
-            "@slidesage/types": ["../types/src/index.ts"],
-            "@slidesage/ui": ["./index.ts"],
-            "@slidesage/ui/components": ["./components"],
-            "@slidesage/ui/components/*": ["./components/*"],
-            "@slidesage/ui/hooks": ["./hooks"],
-            "@slidesage/ui/hooks/*": ["./hooks/*"],
-            "@slidesage/ui/lib": ["./lib"],
-            "@slidesage/ui/lib/*": ["./lib/*"]
-        }
-    },
-    "include": [
-        "*.ts",
-        "components/**/*.ts",
-        "components/**/*.tsx",
-        "hooks/**/*.ts",
-        "lib/**/*.ts",
-        "test/**/*.ts",
-        "test/**/*.tsx",
-        "../types/src/**/*.ts"
-    ],
-    "exclude": ["../types/src/**/*.test.ts"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"composite": true,
+		"jsx": "react-jsx",
+		"types": ["react", "bun"],
+		"paths": {
+			"@slidesage/types": ["../types/src/index.ts"],
+			"@slidesage/ui": ["./index.ts"],
+			"@slidesage/ui/components": ["./components"],
+			"@slidesage/ui/components/*": ["./components/*"],
+			"@slidesage/ui/hooks": ["./hooks"],
+			"@slidesage/ui/hooks/*": ["./hooks/*"],
+			"@slidesage/ui/lib": ["./lib"],
+			"@slidesage/ui/lib/*": ["./lib/*"]
+		}
+	},
+	"include": [
+		"*.ts",
+		"components/**/*.ts",
+		"components/**/*.tsx",
+		"hooks/**/*.ts",
+		"lib/**/*.ts",
+		"test/**/*.ts",
+		"test/**/*.tsx",
+		"../types/src/**/*.ts"
+	],
+	"exclude": ["../types/src/**/*.test.ts"]
 }

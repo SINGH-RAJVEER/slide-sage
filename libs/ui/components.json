@@ -1,21 +1,21 @@
 {
-    "$schema": "https://ui.shadcn.com/schema.json",
-    "style": "new-york",
-    "rsc": false,
-    "tsx": true,
-    "tailwind": {
-        "config": "",
-        "css": "../../apps/web/src/globals.css",
-        "baseColor": "zinc",
-        "cssVariables": true,
-        "prefix": ""
-    },
-    "aliases": {
-        "components": "@slidesage/ui/components",
-        "utils": "@slidesage/ui/lib/utils",
-        "ui": "@slidesage/ui/components",
-        "lib": "@slidesage/ui/lib",
-        "hooks": "@slidesage/ui/hooks"
-    },
-    "iconLibrary": "lucide"
+	"$schema": "https://ui.shadcn.com/schema.json",
+	"style": "new-york",
+	"rsc": false,
+	"tsx": true,
+	"tailwind": {
+		"config": "",
+		"css": "../../apps/web/src/globals.css",
+		"baseColor": "zinc",
+		"cssVariables": true,
+		"prefix": ""
+	},
+	"aliases": {
+		"components": "@slidesage/ui/components",
+		"utils": "@slidesage/ui/lib/utils",
+		"ui": "@slidesage/ui/components",
+		"lib": "@slidesage/ui/lib",
+		"hooks": "@slidesage/ui/hooks"
+	},
+	"iconLibrary": "lucide"
 }

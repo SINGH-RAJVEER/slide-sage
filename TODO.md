@@ -27,5 +27,6 @@
 - Upvote button should only turn blue after the current user has upvoted the theme in the marketplace
 - Opening a seperate ppt when another is already generating leads to the generating ppt on the viewer page
 - Generation indicator on hover too small
-- the indicator for a generating ppt shows as retry instead of generating in the viewer page
-
+- The indicator for a generating ppt shows as retry instead of generating in the viewer page
+- Figure out what a better auth session token is doing being assigned during login
+- Remove unused type files from the types lib

@@ -105,10 +105,6 @@ in
         POSTGRES_DB = dbName;
         POSTGRES_PORT = toString dbPort;
         DATABASE_URL = "postgresql://${dbUser}:${dbPassword}@127.0.0.1:${toString dbPort}/${dbName}";
-        BASE_URL = "http://localhost:8000";
-        CORS_ORIGIN = "http://localhost:5173";
-        VITE_API_URL = "http://localhost:5173";
-        VITE_PROXY_TARGET = "http://localhost:8000";
         NODE_ENV = "development";
         LOG_LEVEL = "debug";
         CGO_ENABLED = "0";
