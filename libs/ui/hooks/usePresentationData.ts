@@ -1,6 +1,6 @@
 import {
-	SCENE_PRESENTATION_SCHEMA_VERSION,
 	type PresentationData,
+	SCENE_PRESENTATION_SCHEMA_VERSION,
 	type Slide,
 } from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -332,7 +332,7 @@ export function usePresentationData({
 		if (presentationId) return;
 
 		if (!hasLocationPresentation && !isLocationStreaming && !hasLocationPresentationId) {
-			navigate(ROUTES.home);
+			navigate("/");
 		}
 	}, [
 		hasLocationPresentation,

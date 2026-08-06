@@ -50,6 +50,44 @@ func (repository *Repository) UserByEmail(ctx context.Context, email string) (Us
 	return scanUser(repository.database.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, slide_tokens, created_at, updated_at FROM users WHERE email = $1`, email))
 }
 
+func (repository *Repository) DeleteExpiredUnverifiedUsers(ctx context.Context, cutoff, now time.Time) (int64, error) {
+	result, err := repository.database.ExecContext(ctx, `
+		WITH expired_users AS MATERIALIZED (
+			SELECT u.id, u.email
+			FROM users AS u
+			WHERE u.email_verified = false
+			AND u.created_at <= $1
+			AND NOT EXISTS (
+				SELECT 1 FROM verifications AS v
+				WHERE v.identifier = 'email-verification-otp-' || u.email
+					AND v.expires_at > $2
+			)
+			AND NOT EXISTS (
+				SELECT 1 FROM sessions AS s
+				WHERE s.user_id = u.id AND s.expires_at > $2
+			)
+			AND NOT EXISTS (
+				SELECT 1 FROM accounts AS a
+				WHERE a.user_id = u.id AND a.provider_id NOT IN ('credential', 'email')
+			)
+		), deleted_verifications AS (
+			DELETE FROM verifications AS v
+			USING expired_users AS expired
+			WHERE v.identifier IN (
+				'email-verification-otp-' || expired.email,
+				'forget-password-otp-' || expired.email
+			)
+		)
+		DELETE FROM users AS u
+		USING expired_users AS expired
+		WHERE u.id = expired.id
+	`, cutoff, now)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 func (repository *Repository) CredentialByUserID(ctx context.Context, userID string) (string, string, error) {
 	var id, password string
 	err := repository.database.QueryRowContext(ctx, `SELECT id, password FROM accounts WHERE user_id = $1 AND provider_id = 'credential' AND password IS NOT NULL ORDER BY created_at DESC LIMIT 1`, userID).Scan(&id, &password)

@@ -16,6 +16,7 @@ export type { MarketplaceCardItem } from "./components/Marketplace/MarketplaceCa
 export { default as MarketplaceCard } from "./components/Marketplace/MarketplaceCard";
 export * from "./components/Presentations";
 export * from "./components/Settings/AISettings";
+export { default as GenerationStatusIndicator } from "./components/StatusIndicator/GenerationStatusIndicator";
 export * from "./components/select";
 export * from "./components/separator";
 export * from "./components/spinner";
@@ -27,7 +28,6 @@ export * from "./lib/legacy-slide-adapter";
 export * from "./lib/presentation-motion";
 export * from "./lib/slide-block-editing";
 export * from "./lib/templates";
-export { default as GenerationStatusIndicator } from "./components/StatusIndicator/GenerationStatusIndicator";
 export { useTemplate } from "./lib/useTemplate";
 export * from "./lib/utils";
 export * from "./lib/widget-scene";

@@ -1,7 +1,7 @@
+import { StreamingProvider } from "@slidesage/ui";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { Suspense } from "react";
 import { RouterProvider } from "react-router-dom";
-import { StreamingProvider } from "@slidesage/ui";
 import { router } from "@/router/router";
 
 export default function App() {

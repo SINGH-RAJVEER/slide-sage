@@ -6,11 +6,11 @@ import type {
 	UpdateProfileRequest,
 	UserProfile,
 } from "@slidesage/types";
+import { useAuth } from "@slidesage/ui";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
+import { API_URL } from "@slidesage/ui/lib/api";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@slidesage/ui";
-import { API_URL } from "@slidesage/ui/lib/api";
 import Header from "@/Header";
 import { ROUTES } from "@/router/paths";
 

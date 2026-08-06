@@ -1,4 +1,13 @@
 import type { SceneSlide } from "@slidesage/types";
+import {
+	type ContentSlide,
+	isContentSlide,
+	isLegacyHtmlSlide,
+	type PresentationData,
+	type SlideLayout,
+	type ThemeId,
+} from "@slidesage/types";
+import { useStreaming, useTemplate } from "@slidesage/ui";
 import { Card } from "@slidesage/ui/components/card";
 import {
 	CenteredStatusScreen,
@@ -12,34 +21,25 @@ import {
 	ViewerSlideCarousel,
 	ViewerThumbnails,
 } from "@slidesage/ui/components/Viewer";
-import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
-import { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAutoHideControls } from "@slidesage/ui/hooks/useAutoHideControls";
 import { useFullscreenMode } from "@slidesage/ui/hooks/useFullscreenMode";
 import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { usePlayback } from "@slidesage/ui/hooks/usePlayback";
 import {
-	type ViewerLocationState,
 	usePresentationData,
+	type ViewerLocationState,
 } from "@slidesage/ui/hooks/usePresentationData";
 import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { getGenerationDisplayStatus } from "@slidesage/ui/lib/generation-status";
+import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
 import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
-import { useStreaming, useTemplate } from "@slidesage/ui";
-import {
-	type ContentSlide,
-	isContentSlide,
-	isLegacyHtmlSlide,
-	type PresentationData,
-	type SlideLayout,
-	type ThemeId,
-} from "@slidesage/types";
+import { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/router/paths";
 
 export default function PresentationViewerPage() {

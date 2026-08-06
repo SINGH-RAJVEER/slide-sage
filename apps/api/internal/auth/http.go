@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -114,6 +115,10 @@ func (service *Service) signUpHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 	user, err := service.SignUp(request.Context(), body.Name, body.Email, body.Password)
+	if errors.Is(err, ErrEmailUnverified) {
+		writeErrorCode(writer, http.StatusConflict, err.Error(), "EMAIL_NOT_VERIFIED")
+		return
+	}
 	if errors.Is(err, ErrEmailInUse) {
 		writeError(writer, http.StatusBadRequest, "Email already in use")
 		return
@@ -364,6 +369,9 @@ func decodeJSON(writer http.ResponseWriter, request *http.Request, target any) b
 
 func writeServiceError(writer http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, ErrEmailDelivery):
+		log.Printf("email delivery failed: %v", err)
+		writeError(writer, http.StatusServiceUnavailable, "Email delivery is temporarily unavailable")
 	case errors.Is(err, ErrEmailInUse):
 		writeError(writer, http.StatusBadRequest, "Email already in use")
 	case errors.Is(err, ErrInvalidCredentials):
@@ -382,7 +390,7 @@ func writeError(writer http.ResponseWriter, status int, message string) {
 }
 
 func writeErrorCode(writer http.ResponseWriter, status int, message, code string) {
-	writeJSON(writer, status, map[string]any{"error": map[string]string{"message": message, "code": code}})
+	writeJSON(writer, status, map[string]string{"message": message, "code": code})
 }
 
 func writeJSON(writer http.ResponseWriter, status int, value any) {

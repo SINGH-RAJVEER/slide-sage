@@ -1,6 +1,6 @@
+import { useAuth } from "@slidesage/ui";
 import { type HeaderRoutes, Header as HeaderView } from "@slidesage/ui/components/Header";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@slidesage/ui";
 import { ROUTES } from "@/router/paths";
 
 const HEADER_ROUTES: HeaderRoutes = {

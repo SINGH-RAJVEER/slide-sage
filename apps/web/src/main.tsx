@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import App from "./App";
-import "./globals.css";
+import "@slidesage/ui/styles/index.css";
 import { AuthProvider } from "@slidesage/ui";
 
 const container = document.getElementById("root");

@@ -1,33 +1,33 @@
 {
-    "root": false,
-    "extends": ["../../biome.json"],
-    "linter": {
-        "rules": {
-            "suspicious": {
-                "noExplicitAny": "warn",
-                "noArrayIndexKey": "off"
-            },
-            "style": {
-                "noNonNullAssertion": "warn",
-                "useConst": "error",
-                "useImportType": "error"
-            },
-            "complexity": {
-                "noForEach": "off"
-            }
-        }
-    },
-    "javascript": {
-        "formatter": {
-            "jsxQuoteStyle": "double",
-            "quoteProperties": "asNeeded",
-            "trailingCommas": "es5",
-            "semicolons": "always",
-            "arrowParentheses": "always",
-            "bracketSpacing": true,
-            "bracketSameLine": false,
-            "quoteStyle": "double",
-            "attributePosition": "auto"
-        }
-    }
+	"root": false,
+	"extends": ["../../biome.json"],
+	"linter": {
+		"rules": {
+			"suspicious": {
+				"noExplicitAny": "warn",
+				"noArrayIndexKey": "off"
+			},
+			"style": {
+				"noNonNullAssertion": "warn",
+				"useConst": "error",
+				"useImportType": "error"
+			},
+			"complexity": {
+				"noForEach": "off"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "es5",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true,
+			"bracketSameLine": false,
+			"quoteStyle": "double",
+			"attributePosition": "auto"
+		}
+	}
 }

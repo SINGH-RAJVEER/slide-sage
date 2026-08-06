@@ -6,14 +6,14 @@ import { ViewerHeaderControls } from "@slidesage/ui/components/Viewer/ViewerHead
 import { ViewerNavigationControls } from "@slidesage/ui/components/Viewer/ViewerNavigationControls";
 import { ViewerSlideCarousel } from "@slidesage/ui/components/Viewer/ViewerSlideCarousel";
 import { ViewerThumbnails } from "@slidesage/ui/components/Viewer/ViewerThumbnails";
-import { useRef, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAutoHideControls } from "@slidesage/ui/hooks/useAutoHideControls";
 import { useFullscreenMode } from "@slidesage/ui/hooks/useFullscreenMode";
 import { usePlayback } from "@slidesage/ui/hooks/usePlayback";
 import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { createMarketplacePreviewPresentation, MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
+import { useRef, useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/router/paths";
 
 export default function MarketplaceThemePreviewPage() {

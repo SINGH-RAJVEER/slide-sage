@@ -24,7 +24,11 @@ and Razorpay credentials for purchases.
 2. Ensures the local role, database, and vector extension exist.
 3. Applies `apps/api/migrations` with Goose.
 4. Starts the Go API on port `8000` and waits for `/health`.
-5. Starts Vite on port `5173`.
+5. Starts Bun's HTML dev server on port `5173`, with frontend bundling, Tailwind processing, static image routes, and hot module reloading.
+
+The Bun server exposes only `VITE_*` variables to browser bundles. If
+`VITE_API_URL` is absent during local development, browser API requests fall back
+to port `8000` on the same loopback hostname.
 
 Stop the foreground process with `Ctrl+C`. Devenv stops managed services with the
 development stack.
@@ -37,7 +41,7 @@ Run these from the repository root inside `devenv shell`.
 | --- | --- |
 | `just dev` | Start PostgreSQL, migrations, API, and web |
 | `just api` | Start the Go API |
-| `just web` | Start Vite |
+| `just web` | Start Bun web server |
 | `just db-shell` | Open a PostgreSQL shell |
 | `just migrate` | Apply Goose migrations |
 | `just db-generate <name>` | Create a Goose SQL migration |
@@ -125,6 +129,8 @@ just dev
 - API exits: inspect `devenv processes logs api` and confirm the configured Go toolchain.
 - Failed AI requests: confirm `OPEN_ROUTER_API_KEY` and `OPEN_ROUTER_MODEL`.
 - Failed research: confirm `EXA_API_KEY`.
-- Failed email: confirm `RESEND_API_KEY` and `RESEND_FROM_EMAIL`.
+- Failed email: confirm `RESEND_API_KEY` and that `RESEND_FROM_EMAIL` is a valid
+  address on a domain verified in Resend. Provider validation details are written
+  to the API log, while clients receive a stable `503` response.
 - Unexpected rate-limit responses: confirm migration `00012` is applied and inspect
   the API logs for `rate_limit_store_failed`.

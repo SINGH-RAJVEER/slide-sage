@@ -2,26 +2,26 @@
 
 // Type exports
 export type {
-    ChartConfig,
-    OpenRouterMessage,
-    PresentationData,
-    PresentationJSON,
-    PresentationStreamEvent,
-    ResearchFreshness,
-    ResearchOptions,
-    ResearchPayload,
-    Slide,
-    Source,
-    StreamChunk,
-    StreamCompleteEvent,
-    StreamCreatedEvent,
-    StreamErrorEvent,
-    StreamEvent,
-    StreamResearchEvent,
-    StreamSavedEvent,
-    StreamSlideEvent,
-    StreamStartEvent,
-    StreamThemeEvent,
+	ChartConfig,
+	OpenRouterMessage,
+	PresentationData,
+	PresentationJSON,
+	PresentationStreamEvent,
+	ResearchFreshness,
+	ResearchOptions,
+	ResearchPayload,
+	Slide,
+	Source,
+	StreamChunk,
+	StreamCompleteEvent,
+	StreamCreatedEvent,
+	StreamErrorEvent,
+	StreamEvent,
+	StreamResearchEvent,
+	StreamSavedEvent,
+	StreamSlideEvent,
+	StreamStartEvent,
+	StreamThemeEvent,
 } from "@slidesage/types";
 export * from "./db";
 export * from "./db/schema";
@@ -31,7 +31,7 @@ export { PresentationRepository } from "./repositories/presentation.repository";
 export { UserRepository } from "./repositories/user.repository";
 // Service exports
 export {
-    type TokenCalculationParams,
-    TokenCalculator,
-    type TokenEstimate,
+	type TokenCalculationParams,
+	TokenCalculator,
+	type TokenEstimate,
 } from "./services/token-calculator";

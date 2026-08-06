@@ -41,6 +41,15 @@ describe("resolveApiUrl", () => {
 		expect(resolveApiUrl("http://localhost:8000", false)).toBe("http://localhost:8000");
 	});
 
+	it("uses the local API when Bun receives no development build variable", () => {
+		expect(resolveApiUrl(undefined, false, "http://localhost:5173/sign-in")).toBe(
+			"http://localhost:8000",
+		);
+		expect(resolveApiUrl(undefined, false, "http://127.0.0.1:5173/sign-in")).toBe(
+			"http://127.0.0.1:8000",
+		);
+	});
+
 	it("preserves deployed and relative production API URLs", () => {
 		expect(resolveApiUrl("https://api.slidesage.app", true)).toBe("https://api.slidesage.app");
 		expect(resolveApiUrl("/backend", true)).toBe("/backend");

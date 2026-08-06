@@ -1,13 +1,12 @@
-import type { AIModelSelection } from "@slidesage/types";
+import type { AIModelSelection, ResearchPayload, ThemeId } from "@slidesage/types";
+import { useStreaming } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { Spinner } from "@slidesage/ui/components/spinner";
+import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import Header from "@/Header";
-import { useStreaming } from "@slidesage/ui";
-import type { ResearchPayload, ThemeId } from "@slidesage/types";
 import { ROUTES } from "@/router/paths";
 
 interface ResearchRouteState {

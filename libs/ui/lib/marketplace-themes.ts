@@ -1,5 +1,5 @@
-import { MARKETPLACE_ITEMS } from "./catalog";
 import type { ThemeId } from "@slidesage/types";
+import { MARKETPLACE_ITEMS } from "./catalog";
 
 const STORAGE_KEY = "slidesage-installed-marketplace-themes";
 export const MARKETPLACE_THEMES_UPDATED_EVENT = "slidesage:marketplace-themes-updated";

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"net/mail"
 	"strings"
 	"time"
 )
@@ -18,6 +19,7 @@ type Config struct {
 	AuthSecret     string
 	CookieName     string
 	SessionTTL     time.Duration
+	UnverifiedTTL  time.Duration
 	SecureCookies  bool
 	SameSite       http.SameSite
 	EmailSender    EmailSender
@@ -35,7 +37,7 @@ type ResendEmailSender struct {
 
 func (sender ResendEmailSender) SendOTP(email, code, purpose, name string) error {
 	if strings.TrimSpace(sender.APIKey) == "" {
-		return errors.New("email service is not configured")
+		return fmt.Errorf("%w: email service is not configured", ErrEmailDelivery)
 	}
 	subject := "Verify your Slide Sage email"
 	if purpose == "forget-password" {
@@ -46,6 +48,12 @@ func (sender ResendEmailSender) SendOTP(email, code, purpose, name string) error
 	from := strings.TrimSpace(sender.From)
 	if from == "" {
 		from = "onboarding@resend.dev"
+	}
+	if len(from) >= 2 && ((from[0] == '"' && from[len(from)-1] == '"') || (from[0] == '\'' && from[len(from)-1] == '\'')) {
+		from = strings.TrimSpace(from[1 : len(from)-1])
+	}
+	if _, err := mail.ParseAddress(from); err != nil {
+		return fmt.Errorf("%w: RESEND_FROM_EMAIL is invalid", ErrEmailDelivery)
 	}
 	payload, err := json.Marshal(map[string]string{
 		"from":    from,
@@ -68,11 +76,23 @@ func (sender ResendEmailSender) SendOTP(email, code, purpose, name string) error
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", ErrEmailDelivery, err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("email delivery failed with status %d", response.StatusCode)
+		var providerError struct {
+			Name    string `json:"name"`
+			Message string `json:"message"`
+		}
+		_ = json.NewDecoder(io.LimitReader(response.Body, 64*1024)).Decode(&providerError)
+		detail := strings.TrimSpace(providerError.Message)
+		if providerError.Name != "" {
+			detail = providerError.Name + ": " + detail
+		}
+		if detail == "" {
+			detail = http.StatusText(response.StatusCode)
+		}
+		return fmt.Errorf("%w: resend returned %d (%s)", ErrEmailDelivery, response.StatusCode, detail)
 	}
 	return nil
 }
@@ -92,6 +112,9 @@ func (config Config) normalized() Config {
 	}
 	if config.SessionTTL <= 0 {
 		config.SessionTTL = 7 * 24 * time.Hour
+	}
+	if config.UnverifiedTTL <= 0 {
+		config.UnverifiedTTL = 24 * time.Hour
 	}
 	if config.SameSite == 0 {
 		config.SameSite = http.SameSiteLaxMode

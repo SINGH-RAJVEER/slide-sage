@@ -1,6 +1,3 @@
-import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
-import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
-import PptxGenJS from "pptxgenjs";
 import {
 	type ChartConfig,
 	type ContentSlide,
@@ -16,6 +13,9 @@ import {
 	type SlideRegion,
 	type WidgetBlockLike,
 } from "@slidesage/types";
+import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
+import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
+import PptxGenJS from "pptxgenjs";
 
 const SLIDE_WIDTH = 13.333;
 const SLIDE_HEIGHT = 7.5;

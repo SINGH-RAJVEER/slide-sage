@@ -3,61 +3,61 @@
 import type { ThemeId } from "@slidesage/types";
 
 const DETAIL_LEVEL_GUIDE = {
-    brief: {
-        description:
-            "Brief - Minimal content with key highlights only. Focus on visual impact and headlines.",
-        example:
-            "Use 2-3 short bullet points (3-5 words). Avoid full sentences. Focus on keywords and metrics.",
-    },
-    concise: {
-        description:
-            "Concise - Essential information in compact form. Ideal for standard presentations.",
-        example: "Use 3-4 bullet points (5-10 words). Short, punchy phrases. Clear and direct.",
-    },
-    balanced: {
-        description:
-            "Balanced - Standard level of detail with clear explanations. Good for informative decks.",
-        example:
-            "Use 4-5 bullet points (10-15 words). Complete thoughts but not paragraphs. Mix text and data.",
-    },
-    detailed: {
-        description:
-            "Detailed - Comprehensive information with elaboration. Suitable for technical or academic topics.",
-        example:
-            "Use up to 5 bullet points (12-18 words) or two short paragraphs. Put overflow detail in speaker-ready phrasing across later slides.",
-    },
-    comprehensive: {
-        description:
-            "Comprehensive - In-depth coverage with extensive details. For reading decks or documentation.",
-        example:
-            "Use up to 6 concise bullets or three short content blocks. Cover more angles across slides instead of shrinking document-length prose onto one slide.",
-    },
+	brief: {
+		description:
+			"Brief - Minimal content with key highlights only. Focus on visual impact and headlines.",
+		example:
+			"Use 2-3 short bullet points (3-5 words). Avoid full sentences. Focus on keywords and metrics.",
+	},
+	concise: {
+		description:
+			"Concise - Essential information in compact form. Ideal for standard presentations.",
+		example: "Use 3-4 bullet points (5-10 words). Short, punchy phrases. Clear and direct.",
+	},
+	balanced: {
+		description:
+			"Balanced - Standard level of detail with clear explanations. Good for informative decks.",
+		example:
+			"Use 4-5 bullet points (10-15 words). Complete thoughts but not paragraphs. Mix text and data.",
+	},
+	detailed: {
+		description:
+			"Detailed - Comprehensive information with elaboration. Suitable for technical or academic topics.",
+		example:
+			"Use up to 5 bullet points (12-18 words) or two short paragraphs. Put overflow detail in speaker-ready phrasing across later slides.",
+	},
+	comprehensive: {
+		description:
+			"Comprehensive - In-depth coverage with extensive details. For reading decks or documentation.",
+		example:
+			"Use up to 6 concise bullets or three short content blocks. Cover more angles across slides instead of shrinking document-length prose onto one slide.",
+	},
 } satisfies Record<string, { description: string; example: string }>;
 
 const TONALITY_GUIDE = {
-    professional: {
-        description:
-            "Professional - Business-appropriate, objective, and polished. Trustworthy and authoritative.",
-        example:
-            "Use formal language, industry terminology, and data-driven statements. Avoid slang or casual idioms.",
-    },
-    casual: {
-        description: "Casual - Relaxed, conversational, and approachable. Friendly and relatable.",
-        example:
-            'Use everyday language, contractions ("we\'re", "it\'s"), and a warm tone. Speak directly to the audience.',
-    },
-    enthusiastic: {
-        description:
-            "Enthusiastic - Energetic, passionate, and motivational. High energy and inspiring.",
-        example:
-            'Use dynamic verbs, positive adjectives ("amazing", "incredible"), and exclamation points. Focus on potential and excitement.',
-    },
-    persuasive: {
-        description:
-            "Persuasive - Compelling, benefit-focused, and action-oriented. Designed to convert.",
-        example:
-            'Use strong calls-to-action, rhetorical questions, and benefit-driven language. Focus on the "why" and the value proposition.',
-    },
+	professional: {
+		description:
+			"Professional - Business-appropriate, objective, and polished. Trustworthy and authoritative.",
+		example:
+			"Use formal language, industry terminology, and data-driven statements. Avoid slang or casual idioms.",
+	},
+	casual: {
+		description: "Casual - Relaxed, conversational, and approachable. Friendly and relatable.",
+		example:
+			'Use everyday language, contractions ("we\'re", "it\'s"), and a warm tone. Speak directly to the audience.',
+	},
+	enthusiastic: {
+		description:
+			"Enthusiastic - Energetic, passionate, and motivational. High energy and inspiring.",
+		example:
+			'Use dynamic verbs, positive adjectives ("amazing", "incredible"), and exclamation points. Focus on potential and excitement.',
+	},
+	persuasive: {
+		description:
+			"Persuasive - Compelling, benefit-focused, and action-oriented. Designed to convert.",
+		example:
+			'Use strong calls-to-action, rhetorical questions, and benefit-driven language. Focus on the "why" and the value proposition.',
+	},
 } satisfies Record<string, { description: string; example: string }>;
 
 const STRUCTURED_PRESENTATION_CONTRACT = `
@@ -215,54 +215,54 @@ Example: {tonality_example}
 `;
 
 export function buildGenerationPrompt(
-    detailLevel = "balanced",
-    tonality = "professional",
-    theme: ThemeId = "corporate-blue"
+	detailLevel = "balanced",
+	tonality = "professional",
+	theme: ThemeId = "corporate-blue"
 ): string {
-    const selectedDetail =
-        detailLevel in DETAIL_LEVEL_GUIDE
-            ? DETAIL_LEVEL_GUIDE[detailLevel as keyof typeof DETAIL_LEVEL_GUIDE]
-            : DETAIL_LEVEL_GUIDE.balanced;
-    const selectedTonality =
-        tonality in TONALITY_GUIDE
-            ? TONALITY_GUIDE[tonality as keyof typeof TONALITY_GUIDE]
-            : TONALITY_GUIDE.professional;
+	const selectedDetail =
+		detailLevel in DETAIL_LEVEL_GUIDE
+			? DETAIL_LEVEL_GUIDE[detailLevel as keyof typeof DETAIL_LEVEL_GUIDE]
+			: DETAIL_LEVEL_GUIDE.balanced;
+	const selectedTonality =
+		tonality in TONALITY_GUIDE
+			? TONALITY_GUIDE[tonality as keyof typeof TONALITY_GUIDE]
+			: TONALITY_GUIDE.professional;
 
-    return GENERATION_SYSTEM_PROMPT_TEMPLATE.replace(
-        "{detail_description}",
-        selectedDetail.description
-    )
-        .replace("{detail_example}", selectedDetail.example)
-        .replace("{tonality_description}", selectedTonality.description)
-        .replace("{tonality_example}", selectedTonality.example)
-        .replace("{theme_id}", theme)
-        .replace("{detail_level}", detailLevel)
-        .replace("{tonality}", tonality);
+	return GENERATION_SYSTEM_PROMPT_TEMPLATE.replace(
+		"{detail_description}",
+		selectedDetail.description
+	)
+		.replace("{detail_example}", selectedDetail.example)
+		.replace("{tonality_description}", selectedTonality.description)
+		.replace("{tonality_example}", selectedTonality.example)
+		.replace("{theme_id}", theme)
+		.replace("{detail_level}", detailLevel)
+		.replace("{tonality}", tonality);
 }
 
 export function buildIterationPrompt(
-    feedback: string,
-    detailLevel = "balanced",
-    tonality = "professional"
+	feedback: string,
+	detailLevel = "balanced",
+	tonality = "professional"
 ): string {
-    const selectedDetail =
-        detailLevel in DETAIL_LEVEL_GUIDE
-            ? DETAIL_LEVEL_GUIDE[detailLevel as keyof typeof DETAIL_LEVEL_GUIDE]
-            : DETAIL_LEVEL_GUIDE.balanced;
-    const selectedTonality =
-        tonality in TONALITY_GUIDE
-            ? TONALITY_GUIDE[tonality as keyof typeof TONALITY_GUIDE]
-            : TONALITY_GUIDE.professional;
+	const selectedDetail =
+		detailLevel in DETAIL_LEVEL_GUIDE
+			? DETAIL_LEVEL_GUIDE[detailLevel as keyof typeof DETAIL_LEVEL_GUIDE]
+			: DETAIL_LEVEL_GUIDE.balanced;
+	const selectedTonality =
+		tonality in TONALITY_GUIDE
+			? TONALITY_GUIDE[tonality as keyof typeof TONALITY_GUIDE]
+			: TONALITY_GUIDE.professional;
 
-    const basePrompt = ITERATION_SYSTEM_PROMPT_TEMPLATE.replace(
-        "{detail_description}",
-        selectedDetail.description
-    )
-        .replace("{detail_example}", selectedDetail.example)
-        .replace("{tonality_description}", selectedTonality.description)
-        .replace("{tonality_example}", selectedTonality.example);
+	const basePrompt = ITERATION_SYSTEM_PROMPT_TEMPLATE.replace(
+		"{detail_description}",
+		selectedDetail.description
+	)
+		.replace("{detail_example}", selectedDetail.example)
+		.replace("{tonality_description}", selectedTonality.description)
+		.replace("{tonality_example}", selectedTonality.example);
 
-    return `${basePrompt}
+	return `${basePrompt}
 
 USER FEEDBACK AND INSTRUCTIONS:
 ${feedback}

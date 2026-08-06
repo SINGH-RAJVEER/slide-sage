@@ -5,15 +5,15 @@ import {
 	DropdownMenuTrigger,
 } from "@slidesage/ui/components/dropdown-menu";
 import MarketplaceCard from "@slidesage/ui/components/Marketplace/MarketplaceCard";
-import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@slidesage/ui/lib/catalog";
 import {
 	getInstalledMarketplaceThemes,
 	installMarketplaceTheme,
 } from "@slidesage/ui/lib/marketplace-themes";
+import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/Header";
-import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@slidesage/ui/lib/catalog";
 import { ROUTES } from "@/router/paths";
 
 type MarketplaceSort = "popular" | "newest";

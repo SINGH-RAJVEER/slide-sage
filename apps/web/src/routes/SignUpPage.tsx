@@ -1,7 +1,7 @@
-import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@slidesage/ui";
 import { authClient } from "@slidesage/ui/lib/auth-client";
+import { type FormEvent, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/Header";
 
 function sanitizeRedirectPath(value: string | null) {
@@ -56,17 +56,17 @@ export default function SignUpPage() {
 		setSubmitting(true);
 
 		try {
+			const normalizedEmail = email.trim().toLowerCase();
 			const { error } = await authClient.signUp.email({
 				name,
-				email,
+				email: normalizedEmail,
 				password,
 			});
 
-			if (error) {
+			if (error && error.code !== "EMAIL_NOT_VERIFIED") {
 				throw new Error(error.message || "Sign up failed.");
 			}
 
-			const normalizedEmail = email.trim().toLowerCase();
 			const { error: deliveryError } = await authClient.emailOtp.sendVerificationOtp({
 				email: normalizedEmail,
 				type: "email-verification",

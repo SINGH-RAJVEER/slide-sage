@@ -19,6 +19,8 @@
 		"*.ts",
 		"components/**/*.ts",
 		"components/**/*.tsx",
+		"context/**/*.ts",
+		"context/**/*.tsx",
 		"hooks/**/*.ts",
 		"lib/**/*.ts",
 		"test/**/*.ts",

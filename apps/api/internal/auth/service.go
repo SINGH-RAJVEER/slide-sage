@@ -23,6 +23,7 @@ var (
 	ErrEmailUnverified    = errors.New("email address is not verified")
 	ErrEmailInUse         = errors.New("email already in use")
 	ErrInvalidOTP         = errors.New("verification code is invalid or expired")
+	ErrEmailDelivery      = errors.New("email delivery is temporarily unavailable")
 )
 
 var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
@@ -49,7 +50,10 @@ func (service *Service) SignUp(ctx context.Context, name, email, password string
 	if name == "" || len(name) > 100 || email == "" || len(password) < 8 {
 		return User{}, errors.New("name, valid email, and a password of at least 8 characters are required")
 	}
-	if _, err := service.repository.UserByEmail(ctx, email); err == nil {
+	if existingUser, err := service.repository.UserByEmail(ctx, email); err == nil {
+		if !existingUser.EmailVerified {
+			return existingUser, ErrEmailUnverified
+		}
 		return User{}, ErrEmailInUse
 	} else if !errors.Is(err, ErrNotFound) {
 		return User{}, err
@@ -72,6 +76,11 @@ func (service *Service) SignUp(ctx context.Context, name, email, password string
 		return User{}, err
 	}
 	return user, nil
+}
+
+func (service *Service) CleanupExpiredUnverifiedUsers(ctx context.Context) (int64, error) {
+	now := service.config.Now().UTC()
+	return service.repository.DeleteExpiredUnverifiedUsers(ctx, now.Add(-service.config.UnverifiedTTL), now)
 }
 
 func (service *Service) SignIn(ctx context.Context, email, password, userAgent, ipAddress string) (Session, User, error) {

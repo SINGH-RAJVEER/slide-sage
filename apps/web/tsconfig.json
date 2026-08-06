@@ -2,11 +2,27 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"jsx": "react-jsx",
-		"types": ["bun", "vite/client"],
+		"types": ["bun"],
 		"allowJs": true,
 		"module": "preserve",
 		"paths": {
 			"@/*": ["./src/*"],
+			"@/modules/*": ["../../libs/ui/*", "./src/*"],
+			"@/modules/contexts/*": ["../../libs/ui/context/*"],
+			"@/modules/marketplace/*": ["../../libs/ui/lib/*", "../../libs/ui/components/Marketplace/*"],
+			"@/modules/Header": ["./src/Header.tsx"],
+			"@/modules/AISettings": ["./src/pages/AISettings.tsx"],
+			"@/modules/GenerationStatusIndicator": [
+				"../../libs/ui/components/StatusIndicator/GenerationStatusIndicator.tsx"
+			],
+			"@/modules/types/*": ["../../libs/types/src/*"],
+			"../types/*": ["../../libs/types/src/*"],
+			"../../modules/Header": ["./src/Header.tsx"],
+			"../../hooks/usePlayback": ["../../libs/ui/hooks/usePlayback.ts"],
+			"../../hooks/useAutoHideControls": ["../../libs/ui/hooks/useAutoHideControls.ts"],
+			"@/lib/*": ["../../libs/ui/lib/*", "./src/lib/*"],
+			"@/hooks/*": ["../../libs/ui/hooks/*", "./src/hooks/*"],
+			"@/contexts/*": ["../../libs/ui/context/*", "./src/context/*"],
 			"@slidesage/types": ["../../libs/types/src/index.ts"],
 			"@slidesage/ui": ["../../libs/ui/index.ts"],
 			"@slidesage/ui/components/*": ["../../libs/ui/components/*"],

@@ -1,45 +1,45 @@
 {
-    "name": "slidesage",
-    "version": "0.0.2",
-    "private": true,
-    "workspaces": [
-        "apps/*",
-        "libs/*"
-    ],
-    "scripts": {
-        "build": "bun run build:web",
-        "build:api": "CGO_ENABLED=0 go -C apps/api build ./...",
-        "build:web": "bun --cwd apps/web build",
-        "dev": "just dev",
-        "dev:stream": "bun run dev",
-        "dev:api": "CGO_ENABLED=0 go -C apps/api run ./cmd/api",
-        "dev:web": "bun --cwd apps/web dev",
-        "test": "bun run test:api && bun run test:types && bun run test:ui && bun run test:web",
-        "test:api": "CGO_ENABLED=0 go -C apps/api test ./...",
-        "test:web": "bun --cwd apps/web test",
-        "test:types": "bun --cwd libs/types test",
-        "test:ui": "bun --cwd libs/ui test",
-        "type-check": "bun run type-check:web && bun run type-check:types && bun run type-check:ui",
-        "type-check:web": "bun node_modules/typescript/bin/tsc -p apps/web/tsconfig.json --tsBuildInfoFile node_modules/.cache/slidesage-web.tsbuildinfo",
-        "type-check:types": "bun node_modules/typescript/bin/tsc -p libs/types/tsconfig.json --tsBuildInfoFile node_modules/.cache/slidesage-types.tsbuildinfo",
-        "type-check:ui": "bun node_modules/typescript/bin/tsc -p libs/ui/tsconfig.json --tsBuildInfoFile node_modules/.cache/slidesage-ui.tsbuildinfo",
-        "lint": "bun run lint:api && bun --cwd apps/web lint && bun --cwd libs/types lint && bun --cwd libs/ui lint",
-        "lint:api": "CGO_ENABLED=0 go -C apps/api vet ./...",
-        "lint:web": "bun --cwd apps/web lint",
-        "load-test": "bun scripts/load-test.ts",
-        "migrate:api": "bash apps/api/scripts/migrate.sh",
-        "migration:create": "goose -dir apps/api/migrations create",
-        "format": "bun run format:api && bun --cwd apps/web format && bun --cwd libs/types format && bun --cwd libs/ui format",
-        "format:api": "go -C apps/api fmt ./...",
-        "format:web": "bun --cwd apps/web format"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "^2.5.6",
-        "@tailwindcss/vite": "^4.3.3",
-        "@types/bun": "1.3.14",
-        "tailwindcss": "^4.3.3",
-        "typescript": "^7.0.2"
-    },
-    "trustedDependencies": [],
-    "packageManager": "bun@1.3.10"
+	"name": "slidesage",
+	"version": "0.0.2",
+	"private": true,
+	"workspaces": [
+		"apps/*",
+		"libs/*"
+	],
+	"scripts": {
+		"build": "bun run build:web",
+		"build:api": "CGO_ENABLED=0 go -C apps/api build ./...",
+		"build:web": "bun --cwd apps/web build",
+		"dev": "just dev",
+		"dev:stream": "bun run dev",
+		"dev:api": "CGO_ENABLED=0 go -C apps/api run ./cmd/api",
+		"dev:web": "bun --cwd apps/web dev",
+		"test": "bun run test:api && bun run test:types && bun run test:ui && bun run test:web",
+		"test:api": "CGO_ENABLED=0 go -C apps/api test ./...",
+		"test:web": "bun --cwd apps/web test",
+		"test:types": "bun --cwd libs/types test",
+		"test:ui": "bun --cwd libs/ui test",
+		"type-check": "bun run type-check:web && bun run type-check:types && bun run type-check:ui",
+		"type-check:web": "bun node_modules/typescript/bin/tsc -p apps/web/tsconfig.json --tsBuildInfoFile node_modules/.cache/slidesage-web.tsbuildinfo",
+		"type-check:types": "bun node_modules/typescript/bin/tsc -p libs/types/tsconfig.json --tsBuildInfoFile node_modules/.cache/slidesage-types.tsbuildinfo",
+		"type-check:ui": "bun node_modules/typescript/bin/tsc -p libs/ui/tsconfig.json --tsBuildInfoFile node_modules/.cache/slidesage-ui.tsbuildinfo",
+		"lint": "bun run lint:api && bun --cwd apps/web lint && bun --cwd libs/types lint && bun --cwd libs/ui lint",
+		"lint:api": "CGO_ENABLED=0 go -C apps/api vet ./...",
+		"lint:web": "bun --cwd apps/web lint",
+		"load-test": "bun scripts/load-test.ts",
+		"migrate:api": "bash apps/api/scripts/migrate.sh",
+		"migration:create": "goose -dir apps/api/migrations create",
+		"format": "bun run format:api && bun --cwd apps/web format && bun --cwd libs/types format && bun --cwd libs/ui format",
+		"format:api": "go -C apps/api fmt ./...",
+		"format:web": "bun --cwd apps/web format"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.6",
+		"@tailwindcss/vite": "^4.3.3",
+		"@types/bun": "1.3.14",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^7.0.2"
+	},
+	"trustedDependencies": [],
+	"packageManager": "bun@1.3.10"
 }

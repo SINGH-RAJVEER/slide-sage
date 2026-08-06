@@ -65,6 +65,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	cleanupContext, cancelCleanup := context.WithCancel(context.Background())
+	defer cancelCleanup()
+	go cleanupUnverifiedUsers(cleanupContext, service)
 
 	mux := http.NewServeMux()
 	auth.RegisterAuthRoutes(mux, service)
@@ -109,6 +112,33 @@ func main() {
 	log.Printf("api listening on %s", server.Addr)
 	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
+	}
+}
+
+func cleanupUnverifiedUsers(ctx context.Context, service *auth.Service) {
+	cleanup := func() {
+		deleted, err := service.CleanupExpiredUnverifiedUsers(ctx)
+		if err != nil {
+			if !errors.Is(err, context.Canceled) {
+				log.Printf("unverified account cleanup failed: %v", err)
+			}
+			return
+		}
+		if deleted > 0 {
+			log.Printf("deleted %d expired unverified accounts", deleted)
+		}
+	}
+
+	cleanup()
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			cleanup()
+		}
 	}
 }
 

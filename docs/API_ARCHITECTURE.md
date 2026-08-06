@@ -7,7 +7,7 @@ contracts, and shared UI components.
 
 ```text
 apps/api   Go HTTP API, PostgreSQL repositories, Goose migrations, providers
-apps/web   React application built by Vite
+apps/web   React application bundled and served by Bun
 libs/types Shared API and presentation contracts
 libs/ui    Shared React UI primitives and slide renderer
 ```
@@ -21,7 +21,7 @@ and PostgreSQL persistence.
 The local stack is coordinated by devenv:
 
 ```text
-PostgreSQL ready -> Goose migrations complete -> Go API ready -> Vite ready
+PostgreSQL ready -> Goose migrations complete -> Go API ready -> Bun web ready
 ```
 
 The API entry point is `apps/api/cmd/api/main.go`. It exposes:

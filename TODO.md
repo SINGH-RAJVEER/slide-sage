@@ -15,6 +15,7 @@
 - Make the deletion of a presentation a one click process with an undo colldown
 - Introduce a vim mode to navigate the entire application
 - Give each slide a proper gird for user assisted placement of things
+- The presentations page makes a db request everytime its switched off of, make it keep a local copy of metadata ready
 
 ## Issues
 

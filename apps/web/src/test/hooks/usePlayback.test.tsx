@@ -2,7 +2,7 @@
 
 import { describe, expect, it, mock } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
-import { usePlayback } from "../../hooks/usePlayback";
+import { usePlayback } from "@/hooks/usePlayback";
 
 describe("usePlayback", () => {
 	it("does not start playback for a single-slide deck", () => {

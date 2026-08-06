@@ -1,7 +1,7 @@
-import { type FormEvent, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@slidesage/ui";
 import { authClient } from "@slidesage/ui/lib/auth-client";
+import { type FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "@/Header";
 
 export default function ForgotPasswordPage() {

@@ -1,2 +1,10 @@
 [test]
 preload = ["./src/test/setup.ts"]
+
+[serve]
+port = 5173
+development = true
+
+[serve.static]
+plugins = ["bun-plugin-tailwind"]
+env = "VITE_*"

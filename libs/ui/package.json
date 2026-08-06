@@ -10,7 +10,8 @@
 		"./components/Viewer": "./components/Viewer/index.ts",
 		"./components/*": "./components/*.tsx",
 		"./hooks/*": "./hooks/*.ts",
-		"./lib/*": "./lib/*.ts"
+		"./lib/*": "./lib/*.ts",
+		"./styles/*": "./styles/*"
 	},
 	"scripts": {
 		"test": "bun test --isolate",

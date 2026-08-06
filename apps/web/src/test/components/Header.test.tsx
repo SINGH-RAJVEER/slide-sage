@@ -28,8 +28,7 @@ describe("Header", () => {
 	it("renders header component", async () => {
 		mockAuthState.user = null;
 
-		// Import after mocking AuthContext.
-		const { default: Header } = await import("../../modules/Header");
+		const { default: Header } = await import("@/Header");
 
 		const { container } = render(
 			<BrowserRouter>
@@ -45,8 +44,7 @@ describe("Header", () => {
 	it("hides navigation tabs on auth pages", async () => {
 		mockAuthState.user = null;
 
-		// Import after mocking AuthContext.
-		const { default: Header } = await import("../../modules/Header");
+		const { default: Header } = await import("@/Header");
 
 		const { queryByText } = render(
 			<MemoryRouter initialEntries={["/sign-in"]}>
@@ -62,8 +60,7 @@ describe("Header", () => {
 	it("hides navigation tabs on nested auth pages", async () => {
 		mockAuthState.user = null;
 
-		// Import after mocking AuthContext.
-		const { default: Header } = await import("../../modules/Header");
+		const { default: Header } = await import("@/Header");
 
 		const { queryByText, rerender } = render(
 			<MemoryRouter initialEntries={["/sign-in/sso-callback"]}>
@@ -98,7 +95,7 @@ describe("Header", () => {
 			slideTokens: 10,
 		};
 
-		const { default: Header } = await import("../../modules/Header");
+		const { default: Header } = await import("@/Header");
 
 		const { getByText } = render(
 			<BrowserRouter>
@@ -121,7 +118,7 @@ describe("Header", () => {
 			slideTokens: 10,
 		};
 
-		const { default: Header } = await import("../../modules/Header");
+		const { default: Header } = await import("@/Header");
 		const { container, getByText } = render(
 			<BrowserRouter>
 				<Header />
@@ -144,7 +141,7 @@ describe("Header", () => {
 			slideTokens: 10,
 		};
 
-		const { default: Header } = await import("../../modules/Header");
+		const { default: Header } = await import("@/Header");
 		const view = render(
 			<MemoryRouter initialEntries={["/generate"]}>
 				<Header />

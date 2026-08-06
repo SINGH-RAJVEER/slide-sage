@@ -1,39 +1,39 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "useDefineForClassFields": true,
-        "module": "ESNext",
-        "lib": ["ESNext", "DOM", "DOM.Iterable"],
-        "skipLibCheck": true,
+	"compilerOptions": {
+		"target": "ESNext",
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"skipLibCheck": true,
 
-        "moduleResolution": "bundler",
-        "paths": {
-            "@slidesage/types": ["./libs/types/src/index.ts"],
-            "@slidesage/ui": ["./libs/ui/index.ts"],
-            "@slidesage/ui/components/*": ["./libs/ui/components/*"],
-            "@slidesage/ui/hooks/*": ["./libs/ui/hooks/*"],
-            "@slidesage/ui/lib/*": ["./libs/ui/lib/*"]
-        },
-        "allowImportingTsExtensions": true,
-        "verbatimModuleSyntax": true,
-        "esModuleInterop": true,
-        "resolveJsonModule": true,
-        "moduleDetection": "force",
-        "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true,
-        "noEmit": true,
+		"moduleResolution": "bundler",
+		"paths": {
+			"@slidesage/types": ["./libs/types/src/index.ts"],
+			"@slidesage/ui": ["./libs/ui/index.ts"],
+			"@slidesage/ui/components/*": ["./libs/ui/components/*"],
+			"@slidesage/ui/hooks/*": ["./libs/ui/hooks/*"],
+			"@slidesage/ui/lib/*": ["./libs/ui/lib/*"]
+		},
+		"allowImportingTsExtensions": true,
+		"verbatimModuleSyntax": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"moduleDetection": "force",
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmit": true,
 
-        "strict": true,
+		"strict": true,
 
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "allowUnusedLabels": false,
-        "noUncheckedSideEffectImports": true,
-        "noFallthroughCasesInSwitch": true,
-        "allowUnreachableCode": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowUnusedLabels": false,
+		"noUncheckedSideEffectImports": true,
+		"noFallthroughCasesInSwitch": true,
+		"allowUnreachableCode": false,
 
-        "noUncheckedIndexedAccess": true,
-        "noPropertyAccessFromIndexSignature": true,
-        "erasableSyntaxOnly": true
-    }
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"erasableSyntaxOnly": true
+	}
 }

@@ -1,8 +1,8 @@
-import { type FormEvent, useEffect, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@slidesage/ui";
 import { API_URL } from "@slidesage/ui/lib/api";
 import { authClient } from "@slidesage/ui/lib/auth-client";
+import { type FormEvent, useEffect, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/Header";
 import { ROUTES } from "@/router/paths";
 

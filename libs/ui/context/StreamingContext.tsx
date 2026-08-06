@@ -1,9 +1,5 @@
-import type { AIModelSelection } from "@slidesage/types";
-import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { API_URL, readJsonResponse } from "../lib/api";
-import { publishPresentationUpdated } from "../lib/presentation-events";
 import type {
+	AIModelSelection,
 	PresentationData,
 	PresentationGenerationStage,
 	PresentationOutline,
@@ -11,7 +7,11 @@ import type {
 	Slide,
 	Source,
 	ThemeId,
-} from "../types/presentation";
+} from "@slidesage/types";
+import type { ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { API_URL, readJsonResponse } from "../lib/api";
+import { publishPresentationUpdated } from "../lib/presentation-events";
 
 export interface StreamingState {
 	isStreaming: boolean;

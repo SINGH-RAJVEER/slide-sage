@@ -1,4 +1,4 @@
-import type { Slide, Source, WidgetBlock } from "@slidesage/types";
+import type { Slide, Source, WidgetBlock } from "./index";
 
 export type WidgetSpecV1 = Pick<WidgetBlock, "version" | "kind" | "direction" | "nodes" | "edges">;
 export type WidgetBlockLike = WidgetBlock;

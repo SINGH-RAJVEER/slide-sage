@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "bun:test";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { useAutoHideControls } from "../../hooks/useAutoHideControls";
+import { useAutoHideControls } from "@/hooks/useAutoHideControls";
 
 describe("useAutoHideControls", () => {
 	it("keeps controls visible when disabled", async () => {

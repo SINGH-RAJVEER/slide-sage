@@ -16,7 +16,7 @@ Copy `.env.example` to `.env`. Devenv loads it for the Go API and Bun workspace 
 | `DATABASE_POOL_MAX` | No | `5` | Maximum open and idle connections in the Go API pool |
 | `RATE_LIMIT_HASH_SECRET` | Production | `AUTH_SECRET` | Independent secret mixed into hashed rate-limit identities |
 | `TRUST_PROXY_HEADERS` | No | `false` | Allows Go to use proxy-supplied client-IP headers; enable only behind a proxy that replaces them |
-| `CORS_ORIGINS` | No | Local Vite origins, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
+| `CORS_ORIGINS` | No | Local Bun origins, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated allowed web origins; trailing slashes are normalized |
 | `CORS_ORIGIN` | No | Default CORS origins | Single-origin fallback; trailing slashes are normalized |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app` | Comma-separated auth callback origins; trailing slashes are normalized |
 | `VITE_API_URL` | No | `http://localhost:8000` | Browser API origin; set production to `https://api.slidesage.app` and omit the `/api` suffix |
@@ -78,7 +78,7 @@ the server embedding configuration.
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
 | `RESEND_API_KEY` | Production email | None | Sends verification and password-reset OTPs |
-| `RESEND_FROM_EMAIL` | No | `onboarding@resend.dev` | Sender address |
+| `RESEND_FROM_EMAIL` | No | `onboarding@resend.dev` | Sender address on a Resend-verified domain; prefer plain `email@example.com` syntax because some dotenv loaders preserve quotes |
 | `EMAIL_DELIVERY_TIMEOUT_MS` | No | `10000` | Maximum wait for Resend to accept an OTP email |
 | `GOOGLE_CLIENT_ID` | For Google OAuth | None | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | For Google OAuth | None | Google OAuth client secret |
