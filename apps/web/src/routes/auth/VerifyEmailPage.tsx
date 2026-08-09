@@ -59,7 +59,7 @@ export default function VerifyEmailPage() {
 
 		if (!email) return;
 
-		if (!code || code.length !== 6) {
+		if (code?.length !== 6) {
 			setError("Please enter a valid 6-digit code");
 			return;
 		}

@@ -1,3 +1,4 @@
+import { useAuth } from "@slidesage/ui";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -9,14 +10,34 @@ import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@slidesage/ui/lib/catal
 import {
 	getInstalledMarketplaceThemes,
 	installMarketplaceTheme,
+	removeMarketplaceTheme,
 } from "@slidesage/ui/lib/marketplace-themes";
 import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/app/Header";
 import { ROUTES } from "@/app/router/paths";
 
 type MarketplaceSort = "popular" | "newest";
+const VOTES_STORAGE_PREFIX = "slidesage-marketplace-votes";
+
+function getVoteStorageKey(userId: string | null) {
+	return `${VOTES_STORAGE_PREFIX}:${userId ?? "anonymous"}`;
+}
+
+function getVotedMarketplaceIds(userId: string | null) {
+	if (typeof window === "undefined") return new Set<string>();
+
+	try {
+		const storedIds = JSON.parse(window.localStorage.getItem(getVoteStorageKey(userId)) || "[]");
+		const validIds = Array.isArray(storedIds)
+			? storedIds.filter((id: unknown): id is string => typeof id === "string")
+			: [];
+		return new Set<string>(validIds);
+	} catch {
+		return new Set<string>();
+	}
+}
 
 function matchesSearch(item: MarketplaceItem, query: string) {
 	const searchable = [item.name, item.description, item.author, ...item.tags]
@@ -26,13 +47,19 @@ function matchesSearch(item: MarketplaceItem, query: string) {
 }
 
 export default function MarketplacePage() {
+	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [sort, setSort] = useState<MarketplaceSort>("popular");
 	const [query, setQuery] = useState("");
-	const [votedIds, setVotedIds] = useState<Set<string>>(() => new Set());
+	const [votedIds, setVotedIds] = useState<Set<string>>(() => getVotedMarketplaceIds(null));
 	const [installedThemeIds, setInstalledThemeIds] = useState<Set<string>>(
 		() => new Set(getInstalledMarketplaceThemes().map((theme) => theme.marketplaceId)),
 	);
+	const voterId = user?.id ?? null;
+
+	useEffect(() => {
+		setVotedIds(getVotedMarketplaceIds(voterId));
+	}, [voterId]);
 	const visibleItems = MARKETPLACE_ITEMS.filter((item) => matchesSearch(item, query)).sort(
 		(a, b) => {
 			if (a.isNew !== b.isNew) return a.isNew ? -1 : 1;
@@ -45,6 +72,7 @@ export default function MarketplacePage() {
 			const next = new Set(current);
 			if (next.has(itemId)) next.delete(itemId);
 			else next.add(itemId);
+			window.localStorage.setItem(getVoteStorageKey(voterId), JSON.stringify([...next]));
 			return next;
 		});
 	};
@@ -52,6 +80,15 @@ export default function MarketplacePage() {
 	const handleInstall = (itemId: string) => {
 		if (!installMarketplaceTheme(itemId)) return;
 		setInstalledThemeIds((current) => new Set(current).add(itemId));
+	};
+
+	const handleRemove = (itemId: string) => {
+		if (!removeMarketplaceTheme(itemId)) return;
+		setInstalledThemeIds((current) => {
+			const next = new Set(current);
+			next.delete(itemId);
+			return next;
+		});
 	};
 
 	const handleOpen = (itemId: string) => {
@@ -142,6 +179,7 @@ export default function MarketplacePage() {
 										onOpen={handleOpen}
 										onVote={handleVote}
 										onInstall={handleInstall}
+										onRemove={handleRemove}
 									/>
 								))}
 							</div>
@@ -159,11 +197,6 @@ export default function MarketplacePage() {
 								</button>
 							</div>
 						)}
-
-						<p className="mt-12 border-t border-white/10 pt-5 text-xs leading-5 text-white/30">
-							Marketplace voting is an interactive preview and lasts for this page session. Theme
-							previews use SlideSage's current rendering system.
-						</p>
 					</div>
 				</section>
 			</main>

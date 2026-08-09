@@ -1,6 +1,6 @@
 import type { Slide } from "@slidesage/types";
 import { cn } from "@slidesage/ui/lib/utils";
-import { ArrowUp, Check, Palette, Plus } from "lucide-react";
+import { ArrowUp, Palette, Plus, Trash2 } from "lucide-react";
 import { ScaledSlide } from "../Viewer/ScaledSlide";
 import { SlideRenderer } from "../Viewer/SlideRenderer";
 
@@ -22,6 +22,7 @@ interface MarketplaceCardProps {
 	onOpen: (itemId: string) => void;
 	onVote: (itemId: string) => void;
 	onInstall: (itemId: string) => void;
+	onRemove: (itemId: string) => void;
 }
 
 export default function MarketplaceCard({
@@ -31,6 +32,7 @@ export default function MarketplaceCard({
 	onOpen,
 	onVote,
 	onInstall,
+	onRemove,
 }: MarketplaceCardProps) {
 	return (
 		<article className="group min-w-0 break-inside-avoid">
@@ -75,13 +77,12 @@ export default function MarketplaceCard({
 				</button>
 				<button
 					type="button"
-					aria-label={`${installed ? "Added" : "Add theme"} ${item.name}`}
-					disabled={installed}
-					onClick={() => onInstall(item.id)}
+					aria-label={`${installed ? "Remove" : "Add theme"} ${item.name}`}
+					onClick={() => (installed ? onRemove(item.id) : onInstall(item.id))}
 					className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:border-emerald-300/20 disabled:bg-emerald-300/10 disabled:text-emerald-100"
 				>
-					{installed ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-					{installed ? "Added" : "Add theme"}
+					{installed ? <Trash2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+					{installed ? "Remove" : "Add theme"}
 				</button>
 				<button
 					type="button"
@@ -92,7 +93,7 @@ export default function MarketplaceCard({
 						"flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400/40",
 						voted
 							? "border-blue-500/30 bg-blue-500/20 text-blue-300"
-							: "border-blue-500/20 bg-blue-500/10 text-blue-300/80 hover:bg-blue-500/20 hover:text-blue-200",
+							: "border-white/10 bg-white/[0.04] text-white/55 hover:border-white/20 hover:bg-white/10 hover:text-white",
 					)}
 				>
 					<ArrowUp className="h-3.5 w-3.5" />

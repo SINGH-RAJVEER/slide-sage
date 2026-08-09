@@ -11,7 +11,8 @@ navy application shell.
 - Preview every item through the production `SlideRenderer` using supported themes.
 - Open a dedicated, URL-addressable theme preview by selecting a theme card.
 - Search theme and creator metadata and sort the catalog.
-- Upvote designs optimistically for the current page session.
+- Upvote designs for the active user in this browser.
+- Remove previously added themes from the installed collection.
 - Add supported marketplace themes to the Generate and Viewer theme dropdowns.
 - Show a disabled `Contribute a theme` toolbar action for the future theme editor.
 - Use a responsive navigation tab and catalog layout on desktop and mobile.
@@ -20,11 +21,10 @@ navy application shell.
 - Scale marketplace previews from the canonical 1280x720 canvas to each card's measured size,
   preserving all slide element positions and proportions without cropping.
 
-The first implementation is intentionally frontend-only. Installed marketplace themes persist in
-browser local storage, while catalog metadata, usage counts, and votes are seeded data. All current
-catalog entries identify SlideSage as their author.
-Votes and creator-access requests are not persisted. The interface states this boundary rather than
-presenting mock behavior as a completed community backend.
+The first implementation is intentionally frontend-only. Installed marketplace themes and the active
+user's upvotes persist in browser local storage, while catalog metadata, usage counts, and aggregate
+votes are seeded data. All current catalog entries identify SlideSage as their author. A persistent
+community backend still needs to replace these browser-local records.
 
 ## Renderer Constraints
 

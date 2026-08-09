@@ -52,6 +52,7 @@ describe("MarketplacePage", () => {
 				onOpen={() => undefined}
 				onVote={() => undefined}
 				onInstall={() => undefined}
+				onRemove={() => undefined}
 			/>,
 		);
 		const preview = getByRole("button", { name: `Preview ${item.name} theme` });
@@ -70,13 +71,29 @@ describe("MarketplacePage", () => {
 
 		fireEvent.click(getByRole("button", { name: "Add theme Midnight Signal" }));
 
-		expect(getByRole("button", { name: "Added Midnight Signal" })).toBeDisabled();
+		expect(getByRole("button", { name: "Remove Midnight Signal" })).toBeEnabled();
 		expect(localStorage.getItem("slidesage-installed-marketplace-themes")).toContain(
 			"midnight-signal",
 		);
 	});
 
+	it("removes a marketplace theme from the installed collection", async () => {
+		localStorage.setItem("slidesage-installed-marketplace-themes", '["midnight-signal"]');
+		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
+		const { getByRole } = render(
+			<MemoryRouter initialEntries={["/marketplace"]}>
+				<MarketplacePage />
+			</MemoryRouter>,
+		);
+
+		fireEvent.click(getByRole("button", { name: "Remove Midnight Signal" }));
+
+		expect(getByRole("button", { name: "Add theme Midnight Signal" })).toBeInTheDocument();
+		expect(localStorage.getItem("slidesage-installed-marketplace-themes")).toBe("[]");
+	});
+
 	it("shows themes only and toggles an upvote", async () => {
+		localStorage.removeItem("slidesage-marketplace-votes:anonymous");
 		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
 		const { getByRole, queryByText } = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
@@ -88,10 +105,14 @@ describe("MarketplacePage", () => {
 		expect(queryByText("Split Decision", { selector: "h2" })).toBeNull();
 
 		const voteButton = getByRole("button", { name: "Upvote Midnight Signal" });
+		expect(voteButton).not.toHaveClass("bg-blue-500/20");
 		fireEvent.click(voteButton);
 		expect(getByRole("button", { name: "Remove upvote from Midnight Signal" })).toHaveAttribute(
 			"aria-pressed",
 			"true",
+		);
+		expect(getByRole("button", { name: "Remove upvote from Midnight Signal" })).toHaveClass(
+			"bg-blue-500/20",
 		);
 	});
 

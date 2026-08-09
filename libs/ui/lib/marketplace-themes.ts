@@ -42,6 +42,20 @@ export function installMarketplaceTheme(marketplaceId: string) {
 	return true;
 }
 
+export function removeMarketplaceTheme(marketplaceId: string) {
+	if (typeof window === "undefined") return false;
+
+	const installedIds = getInstalledMarketplaceThemes().map((theme) => theme.marketplaceId);
+	if (!installedIds.includes(marketplaceId)) return false;
+
+	window.localStorage.setItem(
+		STORAGE_KEY,
+		JSON.stringify(installedIds.filter((id) => id !== marketplaceId)),
+	);
+	window.dispatchEvent(new Event(MARKETPLACE_THEMES_UPDATED_EVENT));
+	return true;
+}
+
 export function isMarketplaceThemeInstalled(marketplaceId: string) {
 	return getInstalledMarketplaceThemes().some((theme) => theme.marketplaceId === marketplaceId);
 }
