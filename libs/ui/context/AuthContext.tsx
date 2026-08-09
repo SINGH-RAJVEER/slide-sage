@@ -1,5 +1,6 @@
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { POINTS_UPDATED_EVENT, readPointBalanceStorage } from "../lib/points";
 import { fetchSessionWithRetry, isSessionCheckStale, type SessionUser } from "../lib/session";
 
 export type User = SessionUser;
@@ -98,9 +99,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 			);
 		};
 
-		window.addEventListener("slidesage:points-updated", handlePointsUpdated);
+		const handleStorage = (event: StorageEvent) => {
+			if (event.key !== POINTS_UPDATED_EVENT) return;
+			const slideTokens = readPointBalanceStorage(event.newValue);
+			if (slideTokens !== null) {
+				handlePointsUpdated(new CustomEvent(POINTS_UPDATED_EVENT, { detail: { slideTokens } }));
+			}
+		};
+		window.addEventListener(POINTS_UPDATED_EVENT, handlePointsUpdated);
+		window.addEventListener("storage", handleStorage);
 		return () => {
-			window.removeEventListener("slidesage:points-updated", handlePointsUpdated);
+			window.removeEventListener(POINTS_UPDATED_EVENT, handlePointsUpdated);
+			window.removeEventListener("storage", handleStorage);
 		};
 	}, []);
 

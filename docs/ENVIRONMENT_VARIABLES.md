@@ -54,7 +54,7 @@ identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md
 | `OPEN_ROUTER_RETRY_BASE_DELAY_MS` | No | `1000` | Initial retry backoff delay |
 | `OPEN_ROUTER_RETRY_MAX_DELAY_MS` | No | `30000` | Maximum retry delay, including provider `Retry-After` values |
 | `OPEN_ROUTER_MAX_RESPONSE_BYTES` | No | `8388608` | Maximum streamed response size accepted per attempt |
-| `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | `32768` | Maximum output-token budget; generation scales the request up to this limit based on slide count |
+| `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | Not used | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |
 | `PROVIDER_VALIDATION_TIMEOUT_MS` | No | `15000` | Total timeout for listing models from a user-connected BYOK provider |
 | `EMBEDDING_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum embedding request duration; caller cancellation can stop it earlier |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |

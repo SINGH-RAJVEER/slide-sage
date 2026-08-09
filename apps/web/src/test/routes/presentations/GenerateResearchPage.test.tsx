@@ -60,7 +60,7 @@ describe("GenerateResearchPage", () => {
 
 			await waitFor(() => expect(view.getByText("Saved source")).toBeInTheDocument());
 			expect(view.getByText("Stored with the failed presentation.")).toBeInTheDocument();
-			expect(view.getByText("Estimated 8.4 points")).toBeInTheDocument();
+			expect(view.getByText("Research costs 1 point when a search succeeds.")).toBeInTheDocument();
 			expect(view.getByText("Proceed to Generate").closest("button")).not.toBeDisabled();
 			expect(fetchMock).not.toHaveBeenCalled();
 		} finally {
@@ -138,7 +138,7 @@ describe("GenerateResearchPage", () => {
 			});
 			expect(view.getByRole("table", { name: "Research sources" })).toBeInTheDocument();
 			expect(view.getByText("A complete source preview.")).toBeInTheDocument();
-			expect(view.getByText("Estimated 5.8 points")).toBeInTheDocument();
+			expect(view.getByText("Research costs 1 point when a search succeeds.")).toBeInTheDocument();
 			const sourceLink = view.getByRole("link", {
 				name: "Open source: Battery storage outlook",
 			});
@@ -236,7 +236,7 @@ describe("GenerateResearchPage", () => {
 				expect(view.getByText("Storage policy update")).toBeInTheDocument();
 			});
 			expect(view.getByText("The request completed while the page was away.")).toBeInTheDocument();
-			expect(view.getByText("Estimated 6.2 points")).toBeInTheDocument();
+			expect(view.getByText("Research costs 1 point when a search succeeds.")).toBeInTheDocument();
 			expect(fetchMock).toHaveBeenCalledTimes(1);
 		} finally {
 			globalThis.fetch = originalFetch;

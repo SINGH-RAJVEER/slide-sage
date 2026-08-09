@@ -92,21 +92,31 @@ func TestGeneratedContentRejectsSyntheticPlaceholder(t *testing.T) {
 	}
 }
 
-func TestPointAccountingMatchesApplicationContract(t *testing.T) {
-	if got := estimate(5, "balanced", "professional", 0); got != 5 {
-		t.Fatalf("estimate = %v", got)
+func TestPointAccountingUsesMilliPoints(t *testing.T) {
+	quote := authorizationMillis(5, "A concise topic", nil, nil, nil, 0)
+	if quote <= 0 {
+		t.Fatalf("authorization = %v", quote)
 	}
-	if got := estimate(10, "detailed", "persuasive", 0); got != 22 {
-		t.Fatalf("estimate = %v", got)
-	}
-	if got := actualCharge(2500, 5); got != 2.5 {
+	if got := actualCharge(2500, quote); got != 2500 {
 		t.Fatalf("charge = %v", got)
 	}
-	if got := actualCharge(9000, 5); got != 5 {
-		t.Fatalf("capped charge = %v", got)
+	if got := actualCharge(int(quote+1), quote); got != quote {
+		t.Fatalf("bounded charge = %v", got)
 	}
 	if got := actualCharge(9000, 0); got != 0 {
 		t.Fatalf("BYOK charge = %v", got)
+	}
+}
+
+func TestIdempotencyKeyValidation(t *testing.T) {
+	request := httptest.NewRequest(http.MethodPost, "/generate-presentation-stream", nil)
+	request.Header.Set("Idempotency-Key", "operation-123456789")
+	if key, err := idempotencyKey(request); err != nil || key != "operation-123456789" {
+		t.Fatalf("idempotency key = %q, %v", key, err)
+	}
+	request.Header.Set("Idempotency-Key", "invalid key")
+	if _, err := idempotencyKey(request); err == nil {
+		t.Fatal("invalid idempotency key was accepted")
 	}
 }
 

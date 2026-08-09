@@ -17,6 +17,7 @@ import {
 } from "@slidesage/ui/components/card";
 import { Input } from "@slidesage/ui/components/input";
 import { API_URL } from "@slidesage/ui/lib/api";
+import { publishPointsBalance } from "@slidesage/ui/lib/points";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/app/Header";
@@ -157,11 +158,7 @@ export default function PurchaseTokensPage() {
 							setBalance({
 								slide_tokens: verifyData.new_balance,
 							});
-							window.dispatchEvent(
-								new CustomEvent("slidesage:points-updated", {
-									detail: { slideTokens: verifyData.new_balance },
-								}),
-							);
+							publishPointsBalance(verifyData.new_balance);
 							setSuccessMessage(`${verifyData.tokens_awarded} points added to your account!`);
 							resolve();
 						} catch (err) {

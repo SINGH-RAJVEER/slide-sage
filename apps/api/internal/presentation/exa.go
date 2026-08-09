@@ -99,11 +99,11 @@ func (s *ExaResearchService) Search(ctx context.Context, query string, options R
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return []Source{}, nil
+		return nil, fmt.Errorf("request Exa: %w", err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode > 299 {
-		return []Source{}, nil
+		return nil, fmt.Errorf("Exa request failed with status %d", response.StatusCode)
 	}
 	if response.ContentLength > maxExaResponseBytes {
 		return nil, errors.New("Exa response is too large")
@@ -126,7 +126,7 @@ func (s *ExaResearchService) Search(ctx context.Context, query string, options R
 		} `json:"results"`
 	}
 	if err := json.Unmarshal(raw, &result); err != nil {
-		return []Source{}, nil
+		return nil, errors.New("Exa returned invalid JSON")
 	}
 	retrievedAt := time.Now().UTC().Format(time.RFC3339Nano)
 	sources := make([]Source, 0, min(len(result.Results), maxResults))

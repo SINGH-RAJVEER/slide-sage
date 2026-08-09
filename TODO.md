@@ -23,7 +23,6 @@
 - When checking presentations, the entire page shouldnt load, instead just the part with the actual presentations listing
 - The second generate is pressed it should lead to the viewer page with loaders waiting for the stream to start
 - The charts showing percentages and other metrics on hover should instead have it displayed from the get go
-- Points should be consumed for every successful search
 - Fix the pricing model and make the discounts apply to the custom values
 - Opening a seperate ppt when another is already generating leads to the generating ppt on the viewer page
 - Generation indicator on hover too small

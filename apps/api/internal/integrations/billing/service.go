@@ -25,19 +25,19 @@ func (s PaymentService) Balance(ctx context.Context, userID string) (float64, er
 	if s.DB == nil {
 		return 0, errors.New("database is required")
 	}
-	var balance float64
-	err := s.DB.QueryRowContext(ctx, `SELECT slide_tokens FROM users WHERE id = $1`, userID).Scan(&balance)
+	var balanceMillis int64
+	err := s.DB.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1`, userID).Scan(&balanceMillis)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, errors.New("user not found")
 	}
-	return balance, err
+	return points(balanceMillis), err
 }
 
 func (s PaymentService) RecordOrder(ctx context.Context, userID string, order Order) error {
 	if s.DB == nil {
 		return errors.New("database is required")
 	}
-	_, err := s.DB.ExecContext(ctx, `INSERT INTO payments (id, user_id, razorpay_order_id, amount_paise, tokens_granted, status) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, $3, $4, 'created')`, userID, order.OrderID, order.AmountPaise, order.Tokens)
+	_, err := s.DB.ExecContext(ctx, `INSERT INTO payments (id, user_id, razorpay_order_id, amount_paise, tokens_granted_millis, status) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, $3, $4, 'created')`, userID, order.OrderID, order.AmountPaise, int64(order.Tokens)*1000)
 	return err
 }
 
@@ -45,8 +45,8 @@ func (s PaymentService) VerificationOrder(ctx context.Context, orderID, paymentI
 	var userID, status string
 	var linked sql.NullString
 	var amount int
-	var tokens float64
-	err := s.DB.QueryRowContext(ctx, `SELECT user_id, status, razorpay_payment_id, amount_paise, tokens_granted FROM payments WHERE razorpay_order_id = $1`, orderID).Scan(&userID, &status, &linked, &amount, &tokens)
+	var tokensMillis int64
+	err := s.DB.QueryRowContext(ctx, `SELECT user_id, status, razorpay_payment_id, amount_paise, tokens_granted_millis FROM payments WHERE razorpay_order_id = $1`, orderID).Scan(&userID, &status, &linked, &amount, &tokensMillis)
 	if errors.Is(err, sql.ErrNoRows) {
 		return VerificationOrder{}, ErrPaymentNotFound
 	}
@@ -64,7 +64,7 @@ func (s PaymentService) VerificationOrder(ctx context.Context, orderID, paymentI
 		if err != nil {
 			return VerificationOrder{}, err
 		}
-		completed := &Fulfillment{TokensGranted: tokens, NewBalance: balance}
+		completed := &Fulfillment{TokensGranted: points(tokensMillis), NewBalance: balance}
 		return VerificationOrder{AmountPaise: amount, Completed: completed}, nil
 	}
 	if status != "created" {
@@ -73,7 +73,7 @@ func (s PaymentService) VerificationOrder(ctx context.Context, orderID, paymentI
 	return VerificationOrder{AmountPaise: amount}, nil
 }
 
-// Fulfill atomically claims a created payment and credits users.slide_tokens once.
+// Fulfill atomically claims a created payment and credits users.balance_millis once.
 func (s PaymentService) Fulfill(ctx context.Context, payment CapturedPayment, expectedUserID string) (Fulfillment, error) {
 	if s.DB == nil {
 		return Fulfillment{}, errors.New("database is required")
@@ -99,24 +99,28 @@ func (s PaymentService) Fulfill(ctx context.Context, payment CapturedPayment, ex
 	}
 	if claimed == 1 {
 		var userID string
-		var tokens float64
-		if err := tx.QueryRowContext(ctx, `SELECT user_id, tokens_granted FROM payments WHERE razorpay_order_id = $1`, payment.OrderID).Scan(&userID, &tokens); err != nil {
+		var paymentID string
+		var tokensMillis int64
+		if err := tx.QueryRowContext(ctx, `SELECT id, user_id, tokens_granted_millis FROM payments WHERE razorpay_order_id = $1`, payment.OrderID).Scan(&paymentID, &userID, &tokensMillis); err != nil {
 			return Fulfillment{}, err
 		}
-		var balance float64
-		if err := tx.QueryRowContext(ctx, `UPDATE users SET slide_tokens = slide_tokens + $1, updated_at = NOW() WHERE id = $2 RETURNING slide_tokens`, tokens, userID).Scan(&balance); err != nil {
+		var balanceMillis int64
+		if err := tx.QueryRowContext(ctx, `UPDATE users SET balance_millis = balance_millis + $1, updated_at = NOW() WHERE id = $2 RETURNING balance_millis`, tokensMillis, userID).Scan(&balanceMillis); err != nil {
+			return Fulfillment{}, err
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT INTO point_ledger (id, user_id, payment_id, entry_type, delta_millis, balance_after_millis) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, 'purchase_credit', $3, $4)`, userID, paymentID, tokensMillis, balanceMillis); err != nil {
 			return Fulfillment{}, err
 		}
 		if err := tx.Commit(); err != nil {
 			return Fulfillment{}, err
 		}
-		return Fulfillment{tokens, balance}, nil
+		return Fulfillment{points(tokensMillis), points(balanceMillis)}, nil
 	}
 	var userID, status string
 	var linked sql.NullString
 	var amount int
-	var tokens float64
-	err = tx.QueryRowContext(ctx, `SELECT user_id, status, razorpay_payment_id, amount_paise, tokens_granted FROM payments WHERE razorpay_order_id = $1`, payment.OrderID).Scan(&userID, &status, &linked, &amount, &tokens)
+	var tokensMillis int64
+	err = tx.QueryRowContext(ctx, `SELECT user_id, status, razorpay_payment_id, amount_paise, tokens_granted_millis FROM payments WHERE razorpay_order_id = $1`, payment.OrderID).Scan(&userID, &status, &linked, &amount, &tokensMillis)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Fulfillment{}, ErrPaymentNotFound
 	}
@@ -132,12 +136,16 @@ func (s PaymentService) Fulfill(ctx context.Context, payment CapturedPayment, ex
 	if status != "paid" || !linked.Valid || linked.String != payment.PaymentID {
 		return Fulfillment{}, ErrPaymentConflict
 	}
-	var balance float64
-	if err := tx.QueryRowContext(ctx, `SELECT slide_tokens FROM users WHERE id = $1`, userID).Scan(&balance); err != nil {
+	var balanceMillis int64
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1`, userID).Scan(&balanceMillis); err != nil {
 		return Fulfillment{}, fmt.Errorf("load payment balance: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
 		return Fulfillment{}, err
 	}
-	return Fulfillment{tokens, balance}, nil
+	return Fulfillment{points(tokensMillis), points(balanceMillis)}, nil
+}
+
+func points(millis int64) float64 {
+	return float64(millis) / 1000
 }

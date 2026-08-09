@@ -11,7 +11,12 @@ import type {
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_URL, readJsonResponse } from "../lib/api";
+import { publishPointsBalance } from "../lib/points";
 import { publishPresentationUpdated } from "../lib/presentation-events";
+
+function idempotencyKey() {
+	return crypto.randomUUID();
+}
 
 export interface StreamingState {
 	isStreaming: boolean;
@@ -110,15 +115,6 @@ const StreamingContext = createContext<StreamingContextValue | null>(null);
 function getResearchPreviewKey(request: ResearchPreviewRequest) {
 	return [request.prompt.trim(), request.slideCount, request.detailLevel, request.tonality].join(
 		"\u001f",
-	);
-}
-
-function publishPointsBalance(slideTokens: unknown) {
-	if (typeof slideTokens !== "number" || !Number.isFinite(slideTokens)) return;
-	window.dispatchEvent(
-		new CustomEvent("slidesage:points-updated", {
-			detail: { slideTokens },
-		}),
 	);
 }
 
@@ -235,6 +231,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					credentials: "include",
 					headers: {
 						"Content-Type": "application/json",
+						"Idempotency-Key": idempotencyKey(),
 					},
 					body: JSON.stringify({
 						topic: request.prompt,
@@ -256,7 +253,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					const errorData = await readJsonResponse<{
 						error?: string | { message?: string };
 						message?: string;
+						slide_tokens_remaining?: number;
 					}>(response);
+					publishPointsBalance(errorData?.slide_tokens_remaining);
 					const errorMessage =
 						typeof errorData?.error === "string"
 							? errorData.error
@@ -270,7 +269,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					return false;
 				}
 
-				const data = await readJsonResponse<ResearchPayload>(response);
+				const data = await readJsonResponse<ResearchPayload & { slide_tokens_remaining?: number }>(
+					response,
+				);
 				if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
 					return false;
 				}
@@ -283,6 +284,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					}));
 					return false;
 				}
+				publishPointsBalance(data.slide_tokens_remaining);
 
 				updateResearchPreviewState({
 					...request,
@@ -360,6 +362,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					credentials: "include",
 					headers: {
 						"Content-Type": "application/json",
+						"Idempotency-Key": idempotencyKey(),
 					},
 					body: JSON.stringify({
 						topic: prompt,
@@ -403,6 +406,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						slide_tokens_remaining?: number;
 						slide_tokens_required?: number;
 					}>(response);
+					publishPointsBalance(errorData?.slide_tokens_remaining);
 					releaseActiveStream();
 					setStreamingState((prev) => ({
 						...prev,
@@ -742,6 +746,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					credentials: "include",
 					headers: {
 						"Content-Type": "application/json",
+						"Idempotency-Key": idempotencyKey(),
 					},
 					body: JSON.stringify({
 						topic: prompt,

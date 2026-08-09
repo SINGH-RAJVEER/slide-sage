@@ -93,8 +93,8 @@ func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
 		r.errorResponse(w, errors.New("database is required"))
 		return
 	}
-	var balance float64
-	err = r.connections.DB.QueryRowContext(request.Context(), `SELECT slide_tokens FROM users WHERE id = $1`, userID).Scan(&balance)
+	var balanceMillis int64
+	err = r.connections.DB.QueryRowContext(request.Context(), `SELECT balance_millis FROM users WHERE id = $1`, userID).Scan(&balanceMillis)
 	if err != nil {
 		r.errorResponse(w, err)
 		return
@@ -111,7 +111,8 @@ func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
 			generation["model"] = nil
 		}
 	}
-	response := map[string]any{"generation": generation, "eligibility": map[string]any{"eligible": balance > 50, "slideTokens": balance, "minimumPointsExclusive": 50}, "connections": summaries, "models": models, "selection": selectionBody}
+	balance := float64(balanceMillis) / 1000
+	response := map[string]any{"generation": generation, "eligibility": map[string]any{"eligible": balanceMillis > 50000, "slideTokens": balance, "minimumPointsExclusive": 50}, "connections": summaries, "models": models, "selection": selectionBody}
 	if len(catalogErrors) > 0 {
 		response["modelCatalogErrors"] = catalogErrors
 	}

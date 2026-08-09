@@ -107,8 +107,9 @@ at most eight source objects. Source URLs must be HTTP or HTTPS and no longer
 than 2,048 characters. Titles are limited to 500 characters, snippets to 2,000,
 authors to 200, summaries to 4,000, and each source may have at most eight
 highlights of 1,200 characters each. Retrieval and publication date strings are
-limited to 64 characters, and optional `estimated_tokens` must be finite from 0
-through 1,000,000. Server-generated and rendered presentation image URLs remain
+limited to 64 characters. Legacy `estimated_tokens` metadata is accepted for
+retry compatibility but ignored for billing; point charges are server-owned.
+Server-generated and rendered presentation image URLs remain
 HTTPS-only even though cited research links may use HTTP.
 
 Generated presentation documents use bounded block schema version 5. The API
@@ -155,29 +156,34 @@ deleting the owned deck. Database foreign-key rules remove or detach its related
 memory records as defined by each table.
 
 Without a valid user provider connection, generation and iteration use the
-configured SlideSage OpenRouter model. Before opening the stream, the API
-atomically reserves the full quote; a new generation also creates its initial
-presentation row in that transaction. Insufficient funds return `402` with the
-remaining, required, and shortfall amounts.
+configured SlideSage OpenRouter model. Point balances use integer milli-points:
+one point is 1,000 milli-points and one provider token is one milli-point. Before
+provider work begins, the API reserves a bounded authorization covering the
+serialized prompt plus the explicit output-token ceiling. A new generation also
+creates its placeholder presentation in that transaction. All chargeable requests
+must include an `Idempotency-Key` containing 16-128 URL-safe characters. Reusing
+the key with the same request prevents another reservation; reusing it with a
+different request returns `409`.
 
-Reservation leases expire after one hour. Later reservations lazily recover expired reservations for that
-user; the ordinary billing balance endpoint is not a recovery trigger, and there
-is no periodic recovery job.
-Ordinary failures, cancellation, incomplete streams, and final revision
-conflicts refund an active reservation. On success, one transaction marks the
-operation settled, compare-and-swap updates the presentation, refunds the
-difference between quote and measured charge, and records the resulting balance.
-Each failure refund likewise uses one transaction to transition a still-reserved
-operation and restore the full quote.
-The measured charge is one point per 1,000 aggregate AI tokens and never exceeds
-the quote.
+Successful generation settles against the provider's authoritative aggregate token
+usage and releases the unused authorization. Missing provider usage is a failure:
+the presentation is not marked ready and its reservation is released. A client
+disconnect does not cancel provider work, so completed provider usage remains
+settleable. Failures, revision conflicts, and failed persistence release the active
+authorization even if the presentation was changed or deleted. A background worker
+recovers expired reservations every minute.
+
+Every balance change is recorded in the immutable `point_ledger`, including signup
+credits, payment credits, reservations, and releases. Balances are never allowed to
+be negative. The final `saved` event includes `slide_tokens_charged` and
+`slide_tokens_remaining` as point values for browser display.
 
 Once a user connects a provider key, model generation is billed by that provider
-and the presentation request reports zero SlideSage generation points. Generation
-estimates include the research estimate supplied with reviewed sources, and
-the research endpoint returns an `estimated_tokens` value when slide
-count and options are supplied. The final `saved` event includes
-`slide_tokens_charged` and `slide_tokens_remaining`.
+and reserves zero SlideSage model points. SlideSage web research is separate from
+model billing: each successful Exa search costs one point, including for BYOK users.
+Research has its own idempotent point operation; provider and parsing failures refund
+the fee. The research response includes `slide_tokens_remaining` and the final
+generation event includes the model charge and remaining balance.
 
 Presentation summaries include `status` (`generating`, `ready`, or `failed`) and
 `has_research`. A new placeholder remains `generating` until durable settlement;
@@ -186,9 +192,8 @@ generation remains in the presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
 the original prompt, slide count, detail level, tonality, theme, research setting,
 error message, and any sources collected before the failure. Failed generations
-refund their active reservation; if a process stops before refunding, one-hour
-expiry recovery returns the quote during a later reservation or internal
-point-accounting balance transaction. Clients fetch the full presentation on
+release their active authorization; the background worker recovers abandoned
+operations after their lease expires. Clients fetch the full presentation on
 click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they
 do not. The same retry action is available directly from `/presentation-error`,

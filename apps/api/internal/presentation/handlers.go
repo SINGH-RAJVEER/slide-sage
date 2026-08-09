@@ -2,6 +2,9 @@ package presentation
 
 import (
 	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -15,11 +18,11 @@ type UserIdentity func(context.Context, *http.Request) (string, error)
 
 // RegisterRoutes registers direct presentation endpoints on mux. The identity
 // callback must return the authenticated application user ID for each request.
-func RegisterRoutes(mux *http.ServeMux, service *Service, identity UserIdentity, research *ExaResearchService) {
-	if mux == nil || service == nil || identity == nil || research == nil {
-		panic("presentation routes require mux, service, identity callback, and Exa service")
+func RegisterRoutes(mux *http.ServeMux, service *Service, identity UserIdentity, research *ExaResearchService, database *sql.DB) {
+	if mux == nil || service == nil || identity == nil || research == nil || database == nil {
+		panic("presentation routes require mux, service, identity callback, Exa service, and database")
 	}
-	handler := &presentationHandler{service: service, identity: identity, research: research}
+	handler := &presentationHandler{service: service, identity: identity, research: research, database: database}
 	mux.HandleFunc("GET /presentations", handler.list)
 	mux.HandleFunc("GET /presentations/{id}", handler.detail)
 	mux.HandleFunc("DELETE /presentations/{id}", handler.delete)
@@ -31,6 +34,7 @@ type presentationHandler struct {
 	service  *Service
 	identity UserIdentity
 	research *ExaResearchService
+	database *sql.DB
 }
 
 func (h *presentationHandler) list(writer http.ResponseWriter, request *http.Request) {
@@ -84,6 +88,10 @@ func (h *presentationHandler) delete(writer http.ResponseWriter, request *http.R
 		writeError(writer, http.StatusBadRequest, "Invalid presentation ID")
 		return
 	}
+	if h.hasActiveOperation(request.Context(), id, userID) {
+		writeError(writer, http.StatusConflict, "Presentation generation is still active")
+		return
+	}
 	if err := h.service.Delete(request.Context(), id, userID); err != nil {
 		writeServiceError(writer, err)
 		return
@@ -99,6 +107,10 @@ func (h *presentationHandler) patch(writer http.ResponseWriter, request *http.Re
 	id := strings.TrimSpace(request.PathValue("id"))
 	if id == "" {
 		writeError(writer, http.StatusBadRequest, "Invalid presentation ID")
+		return
+	}
+	if h.hasActiveOperation(request.Context(), id, userID) {
+		writeError(writer, http.StatusConflict, "Presentation generation is still active")
 		return
 	}
 	body, err := readRequestBody(request, 1024*1024)
@@ -119,8 +131,15 @@ func (h *presentationHandler) patch(writer http.ResponseWriter, request *http.Re
 	writeJSON(writer, http.StatusOK, map[string]any{"presentation": presentation})
 }
 
+func (h *presentationHandler) hasActiveOperation(ctx context.Context, presentationID, userID string) bool {
+	var active bool
+	err := h.database.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM generation_point_operations WHERE presentation_id = $1 AND user_id = $2 AND status = 'reserved')`, presentationID, userID).Scan(&active)
+	return err == nil && active
+}
+
 func (h *presentationHandler) researchPresentation(writer http.ResponseWriter, request *http.Request) {
-	if _, ok := h.userID(writer, request); !ok {
+	userID, ok := h.userID(writer, request)
+	if !ok {
 		return
 	}
 	body, err := readRequestBody(request, MaxResearchBodyBytes)
@@ -133,12 +152,35 @@ func (h *presentationHandler) researchPresentation(writer http.ResponseWriter, r
 		writeInputError(writer, err)
 		return
 	}
+	key, err := researchIdempotencyKey(request)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
+	hash := sha256.Sum256(body)
+	operationID, err := researchOperationID()
+	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "Unable to start research")
+		return
+	}
+	balance, err := h.reserveResearch(request.Context(), operationID, userID, key, hex.EncodeToString(hash[:]))
+	if err != nil {
+		h.writeResearchReservationError(writer, err)
+		return
+	}
 	sources, err := h.research.Search(request.Context(), input.Topic, input.Research)
 	if err != nil {
+		_ = h.refundResearch(context.WithoutCancel(request.Context()), operationID, userID, "Research provider failed")
 		writeError(writer, http.StatusBadGateway, "Research service is unavailable")
 		return
 	}
+	if err := h.settleResearch(request.Context(), operationID, userID, balance); err != nil {
+		_ = h.refundResearch(context.WithoutCancel(request.Context()), operationID, userID, "Research settlement failed")
+		writeError(writer, http.StatusInternalServerError, "Unable to settle research points")
+		return
+	}
 	response := map[string]any{"sources": sources}
+	response["slide_tokens_remaining"] = float64(balance) / 1000
 	if input.SlideCount != nil {
 		encoded, _ := json.Marshal(sources)
 		response["estimated_tokens"] = estimatePoints(*input.SlideCount, input.DetailLevel, input.Tonality, (len(encoded)+3)/4)

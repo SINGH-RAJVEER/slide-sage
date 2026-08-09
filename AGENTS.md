@@ -8,7 +8,7 @@ Rules for AI agents in this repository.
 
 ## Indentation
 
-- Always use tab for indentation in TypeScript, JSON, Nix, Markdown, and other repository files.
+- Always use tab for indentation in all repository files.
 
 ## Version Control System
 

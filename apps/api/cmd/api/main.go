@@ -68,6 +68,7 @@ func main() {
 	cleanupContext, cancelCleanup := context.WithCancel(context.Background())
 	defer cancelCleanup()
 	go cleanupUnverifiedUsers(cleanupContext, service)
+	go recoverPointOperations(cleanupContext, database)
 
 	mux := http.NewServeMux()
 	auth.RegisterAuthRoutes(mux, service)
@@ -75,7 +76,7 @@ func main() {
 	identity := service.AuthenticatedUserID
 	presentation.RegisterRoutes(mux, presentation.NewService(presentation.NewRepository(database)), func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
-	}, presentation.NewExaResearchService(os.Getenv("EXA_API_KEY"), nil))
+	}, presentation.NewExaResearchService(os.Getenv("EXA_API_KEY"), nil), database)
 	ai.RegisterRoutes(mux, ai.ConnectionService{DB: database}, identity)
 	var razorpay *billing.RazorpayClient
 	if os.Getenv("RAZORPAY_KEY_ID") != "" && os.Getenv("RAZORPAY_KEY_SECRET") != "" {
@@ -94,7 +95,7 @@ func main() {
 	address := net.JoinHostPort(env("HOST", "0.0.0.0"), env("PORT", "8000"))
 	server := &http.Server{
 		Addr:              address,
-		Handler:           withRecovery(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, withSecurity(mux))),
+		Handler:           withRecovery(withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, mux))),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -142,6 +143,25 @@ func cleanupUnverifiedUsers(ctx context.Context, service *auth.Service) {
 	}
 }
 
+func recoverPointOperations(ctx context.Context, database *sql.DB) {
+	recover := func() {
+		if err := generation.RecoverExpired(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
+			log.Printf("point operation recovery failed: %v", err)
+		}
+	}
+	recover()
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			recover()
+		}
+	}
+}
+
 func healthHandler(writer http.ResponseWriter, _ *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(http.StatusOK)
@@ -164,7 +184,7 @@ func withSecurity(next http.Handler) http.Handler {
 		if allowed[origin] {
 			writer.Header().Set("Access-Control-Allow-Origin", origin)
 			writer.Header().Set("Access-Control-Allow-Credentials", "true")
-			writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key")
 			writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			writer.Header().Set("Access-Control-Max-Age", "86400")
 		}

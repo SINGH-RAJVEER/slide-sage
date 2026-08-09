@@ -10,7 +10,8 @@ key or change the selected model. Existing connections remain visible, usable,
 and removable below this threshold.
 
 Direct model usage is billed by the selected provider and does not consume
-SlideSage generation points. Web research and OpenRouter embedding work continue
+SlideSage generation points. Each successful SlideSage web research request still
+costs one point, while OpenRouter embedding work continues
 to use SlideSage infrastructure without receiving the user's provider key.
 
 ## Credential Handling

@@ -183,11 +183,9 @@ export default function GenerateResearchPage() {
 					<div className="space-y-8">
 						<div className="text-center">
 							<h2 className="text-3xl font-semibold text-white md:text-4xl">Research Insights</h2>
-							{estimatedTokens !== null && (
-								<p className="mt-3 text-lg font-medium text-white/60">
-									Estimated {estimatedTokens.toFixed(1)} points
-								</p>
-							)}
+							<p className="mt-3 text-lg font-medium text-white/60">
+								Research costs 1 point when a search succeeds.
+							</p>
 						</div>
 
 						{researchStatus === "error" && (

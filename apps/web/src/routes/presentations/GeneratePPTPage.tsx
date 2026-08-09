@@ -130,34 +130,6 @@ export default function GeneratePPTPage() {
 		debouncedGenerate(prompt);
 	};
 
-	const calculateEstimatedTokens = () => {
-		const count =
-			slideCountMode === "preset" ? parseInt(slideCount, 10) : parseInt(customSlideCount, 10);
-
-		let baseTokenPerSlide = 1;
-
-		if (detailLevel === "brief") {
-			baseTokenPerSlide = 0.6;
-		} else if (detailLevel === "concise") {
-			baseTokenPerSlide = 0.8;
-		} else if (detailLevel === "detailed") {
-			baseTokenPerSlide = 2.0;
-		} else if (detailLevel === "comprehensive") {
-			baseTokenPerSlide = 2.5;
-		}
-
-		let tonalityMultiplier = 1.0;
-		if (tonality === "casual") {
-			tonalityMultiplier = 0.9;
-		} else if (tonality === "enthusiastic") {
-			tonalityMultiplier = 1.05;
-		} else if (tonality === "persuasive") {
-			tonalityMultiplier = 1.1;
-		}
-
-		return count * baseTokenPerSlide * tonalityMultiplier;
-	};
-
 	return (
 		<div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-transparent">
 			<Header />
@@ -188,9 +160,9 @@ export default function GeneratePPTPage() {
 						data-generation-estimate
 						className="absolute top-full mt-4 text-center text-lg font-medium text-white/80"
 					>
-						{generationMode === "byok" && !useWebResearch
-							? "Generation billed by your provider"
-							: `Estimated ${calculateEstimatedTokens().toFixed(1)} points`}
+						{generationMode === "byok"
+							? `Model usage is billed by your provider${useWebResearch ? ". Research costs 1 point on success." : "."}`
+							: "Model usage is charged from measured provider tokens."}
 					</p>
 				)}
 			</div>

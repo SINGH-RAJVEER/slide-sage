@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -45,6 +46,26 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 	handler := &handler{database: database, identity: identity, connections: connections, client: &http.Client{Timeout: 3 * time.Minute}}
 	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
 	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
+}
+
+// RecoverExpired finalizes abandoned authorizations even when their user does
+// not submit another request. It is safe to call concurrently from API nodes.
+func RecoverExpired(ctx context.Context, database *sql.DB) error {
+	rows, err := database.QueryContext(ctx, `SELECT DISTINCT user_id FROM generation_point_operations WHERE status = 'reserved' AND expires_at <= NOW()`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
+			return err
+		}
+		if err := (&handler{database: database}).recoverExpired(ctx, userID); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
 }
 
 type handler struct {
@@ -108,7 +129,7 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 		encoded, _ := json.Marshal(input.ResearchPayload.Sources)
 		researchTokens = (len(encoded) + 3) / 4
 	}
-	quote := estimate(input.SlideCount, input.DetailLevel, input.Tonality, researchTokens)
+	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, researchTokens)
 	operationID, err := uuid()
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
@@ -129,9 +150,15 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 	if selection != nil {
 		quote = 0
 	}
+	idempotencyKey, err := idempotencyKey(request)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
+	requestHash := requestHash(input)
 	initial := map[string]any{"schemaVersion": presentation.PresentationSchemaVersion, "title": "Generating...", "theme": input.Theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "theme": input.Theme, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
 	initialJSON, _ := json.Marshal(initial)
-	balance, revision, err := h.reserve(request.Context(), operationID, userID, presentationID, "generation", quote, input.RetryID == "", input.Topic, initialJSON)
+	balance, revision, err := h.reserve(request.Context(), operationID, userID, presentationID, "generation", quote, idempotencyKey, requestHash, input.RetryID == "", input.Topic, initialJSON)
 	if err != nil {
 		h.reservationError(writer, err)
 		return
@@ -165,7 +192,7 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 		writeError(writer, http.StatusInternalServerError, "Unable to start iteration")
 		return
 	}
-	quote := estimate(count, input.DetailLevel, input.Tonality, 0)
+	quote := authorizationMillis(count, input.Feedback, base.Data, input.Research, nil, 0)
 	selection, credential, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
 	if err != nil {
 		writeError(writer, http.StatusConflict, err.Error())
@@ -174,7 +201,12 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 	if selection != nil {
 		quote = 0
 	}
-	balance, _, err := h.reserve(request.Context(), operationID, userID, base.ID, "iteration", quote, false, "", nil)
+	idempotencyKey, err := idempotencyKey(request)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
+	balance, _, err := h.reserve(request.Context(), operationID, userID, base.ID, "iteration", quote, idempotencyKey, requestHash(input), false, "", nil)
 	if err != nil {
 		h.reservationError(writer, err)
 		return
@@ -185,7 +217,7 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 type streamJob struct {
 	userID, operationID, presentationID string
 	expectedRevision                    int
-	quote, balance                      float64
+	quote, balance                      int64
 	prompt                              string
 	slideCount                          int
 	detailLevel, tonality, theme, kind  string
@@ -217,6 +249,11 @@ func (h *handler) stream(writer http.ResponseWriter, request *http.Request, job 
 	if err != nil {
 		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, err.Error()) })
 		writeEvent(writer, flusher, "error", map[string]any{"error": "Presentation generation failed. Please try again.", "presentation_id": job.presentationID})
+		return
+	}
+	if job.quote > 0 && tokens <= 0 {
+		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "Provider usage was unavailable") })
+		writeEvent(writer, flusher, "error", map[string]any{"error": "Unable to verify provider usage. Your points were released.", "presentation_id": job.presentationID})
 		return
 	}
 	document["schemaVersion"] = presentation.PresentationSchemaVersion
@@ -251,7 +288,7 @@ func (h *handler) stream(writer http.ResponseWriter, request *http.Request, job 
 	}
 	completed, _ := json.Marshal(document)
 	charged := actualCharge(tokens, job.quote)
-	balance, err := h.settle(request.Context(), job, completed, truncate(title, 255), charged)
+	balance, err := h.settle(request.Context(), job, completed, truncate(title, 255), charged, tokens)
 	if err != nil {
 		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "Unable to save presentation") })
 		writeEvent(writer, flusher, "error", map[string]any{"error": "Unable to save presentation", "presentation_id": job.presentationID})
@@ -259,7 +296,7 @@ func (h *handler) stream(writer http.ResponseWriter, request *http.Request, job 
 	}
 	writeEvent(writer, flusher, "complete", document)
 	writeEvent(writer, flusher, "stage", map[string]any{"stage": "finalizing", "message": "Saving presentation", "completed": 3, "total": 3})
-	writeEvent(writer, flusher, "saved", map[string]any{"presentation_id": job.presentationID, "success": true, "slide_tokens_remaining": balance, "slide_tokens_charged": charged})
+	writeEvent(writer, flusher, "saved", map[string]any{"presentation_id": job.presentationID, "success": true, "slide_tokens_remaining": points(balance), "slide_tokens_charged": points(charged)})
 	if job.selection != nil {
 		_ = h.connections.MarkUsed(context.WithoutCancel(request.Context()), job.userID, job.selection.Provider)
 	}
@@ -274,20 +311,25 @@ type generationResult struct {
 func (h *handler) generateWithKeepalive(writer http.ResponseWriter, flusher http.Flusher, ctx context.Context, job streamJob) (map[string]any, int, error) {
 	result := make(chan generationResult, 1)
 	go func() {
-		document, tokens, err := h.generateDocument(ctx, job)
+		// Provider usage is billable work. A disconnected SSE subscriber must not
+		// cancel the provider request and turn already-incurred usage into a refund.
+		document, tokens, err := h.generateDocument(context.WithoutCancel(ctx), job)
 		result <- generationResult{document: document, tokens: tokens, err: err}
 	}()
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
+	connectionDone := ctx.Done()
 	for {
 		select {
 		case generated := <-result:
 			return generated.document, generated.tokens, generated.err
 		case <-ticker.C:
-			_, _ = io.WriteString(writer, ": keepalive\n\n")
-			flusher.Flush()
-		case <-ctx.Done():
-			return nil, 0, ctx.Err()
+			if connectionDone != nil {
+				_, _ = io.WriteString(writer, ": keepalive\n\n")
+				flusher.Flush()
+			}
+		case <-connectionDone:
+			connectionDone = nil
 		}
 	}
 }
@@ -321,10 +363,11 @@ func (h *handler) generateDocument(ctx context.Context, job streamJob) (map[stri
 		encoded, _ := json.Marshal(job.researchPayload.Sources)
 		user += "\n\nUse these reviewed sources and preserve factual attribution: " + string(encoded)
 	}
+	maxOutput := maxOutputTokens(job.slideCount)
 	if provider != "openrouter" {
-		return h.directProvider(ctx, provider, model, key, system, user)
+		return h.directProvider(ctx, provider, model, key, system, user, maxOutput)
 	}
-	payload := map[string]any{"model": model, "stream": true, "stream_options": map[string]bool{"include_usage": true}, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+	payload := map[string]any{"model": model, "max_tokens": maxOutput, "stream": true, "stream_options": map[string]bool{"include_usage": true}, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
 	encoded, _ := json.Marshal(payload)
 	endpoint := strings.TrimSpace(os.Getenv("OPEN_ROUTER_API_BASE"))
 	if endpoint == "" {
@@ -399,7 +442,7 @@ func (h *handler) generateDocument(ctx context.Context, job streamJob) (map[stri
 	return document, tokens, nil
 }
 
-func (h *handler) directProvider(ctx context.Context, provider ai.Provider, model, key, system, user string) (map[string]any, int, error) {
+func (h *handler) directProvider(ctx context.Context, provider ai.Provider, model, key, system, user string, maxOutput int) (map[string]any, int, error) {
 	var endpoint string
 	var payload any
 	headers := map[string]string{"Content-Type": "application/json"}
@@ -407,16 +450,16 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	case ai.OpenAI:
 		endpoint = "https://api.openai.com/v1/chat/completions"
 		headers["Authorization"] = "Bearer " + key
-		payload = map[string]any{"model": model, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+		payload = map[string]any{"model": model, "max_tokens": maxOutput, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
 	case ai.Google:
 		endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
 		headers["x-goog-api-key"] = key
-		payload = map[string]any{"systemInstruction": map[string]any{"parts": []map[string]string{{"text": system}}}, "contents": []map[string]any{{"role": "user", "parts": []map[string]string{{"text": user}}}}, "generationConfig": map[string]string{"responseMimeType": "application/json"}}
+		payload = map[string]any{"systemInstruction": map[string]any{"parts": []map[string]string{{"text": system}}}, "contents": []map[string]any{{"role": "user", "parts": []map[string]string{{"text": user}}}}, "generationConfig": map[string]any{"responseMimeType": "application/json", "maxOutputTokens": maxOutput}}
 	case ai.Anthropic:
 		endpoint = "https://api.anthropic.com/v1/messages"
 		headers["x-api-key"] = key
 		headers["anthropic-version"] = "2023-06-01"
-		payload = map[string]any{"model": model, "max_tokens": 32768, "system": system, "messages": []map[string]string{{"role": "user", "content": user}}}
+		payload = map[string]any{"model": model, "max_tokens": maxOutput, "system": system, "messages": []map[string]string{{"role": "user", "content": user}}}
 	default:
 		return nil, 0, errors.New("unsupported AI provider")
 	}
@@ -665,32 +708,39 @@ func (h *handler) ownedPresentation(ctx context.Context, id, userID string) (per
 	return item, err
 }
 
-// reserve atomically creates the reservation and, for generation, its placeholder deck.
-func (h *handler) reserve(ctx context.Context, operationID, userID, presentationID, kind string, quote float64, create bool, prompt string, data []byte) (float64, int, error) {
+// reserve atomically creates a bounded authorization and, for generation, its placeholder deck.
+func (h *handler) reserve(ctx context.Context, operationID, userID, presentationID, kind string, quote int64, idempotencyKey, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
+	if err := h.recoverExpired(ctx, userID); err != nil {
+		return 0, 0, err
+	}
 	tx, err := h.database.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, 0, err
 	}
 	defer tx.Rollback()
-	var balance float64
-	if err := tx.QueryRowContext(ctx, `SELECT slide_tokens FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&balance); err != nil {
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, userID+":"+kind+":"+idempotencyKey); err != nil {
 		return 0, 0, err
 	}
-	var recovered float64
-	if err := tx.QueryRowContext(ctx, `WITH expired AS (UPDATE generation_point_operations SET status = 'refunded', charged_points = 0, finalized_at = NOW(), updated_at = NOW() WHERE user_id = $1 AND status = 'reserved' AND expires_at <= NOW() RETURNING presentation_id, quoted_points, kind), failed AS (UPDATE presentations p SET title = 'Generation failed', slides_data = jsonb_set(jsonb_set(p.slides_data, '{status}', '"failed"'::jsonb, true), '{failure,message}', to_jsonb('Generation was interrupted before completion'::text), true), revision = revision + 1, updated_at = NOW() FROM expired e WHERE e.kind = 'generation' AND p.id = e.presentation_id AND p.slides_data->>'status' = 'generating' RETURNING p.id) SELECT COALESCE(SUM(quoted_points), 0) FROM expired`, userID).Scan(&recovered); err != nil {
-		return 0, 0, err
-	}
-	if recovered > 0 {
-		if _, err := tx.ExecContext(ctx, `UPDATE users SET slide_tokens = slide_tokens + $1, updated_at = NOW() WHERE id = $2`, recovered, userID); err != nil {
-			return 0, 0, err
+	var existingHash string
+	err = tx.QueryRowContext(ctx, `SELECT request_hash FROM generation_point_operations WHERE user_id = $1 AND kind = $2 AND idempotency_key = $3 FOR UPDATE`, userID, kind, idempotencyKey).Scan(&existingHash)
+	if err == nil {
+		if existingHash == requestHash {
+			return 0, 0, duplicateOperation{}
 		}
-		balance += recovered
+		return 0, 0, idempotencyConflict{}
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return 0, 0, err
+	}
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&balance); err != nil {
+		return 0, 0, err
 	}
 	if balance < quote {
 		return 0, 0, insufficient{balance: balance, required: quote}
 	}
 	if quote > 0 {
-		if _, err := tx.ExecContext(ctx, `UPDATE users SET slide_tokens = slide_tokens - $1, updated_at = NOW() WHERE id = $2`, quote, userID); err != nil {
+		if _, err := tx.ExecContext(ctx, `UPDATE users SET balance_millis = balance_millis - $1, updated_at = NOW() WHERE id = $2`, quote, userID); err != nil {
 			return 0, 0, err
 		}
 		balance -= quote
@@ -709,9 +759,18 @@ func (h *handler) reserve(ctx context.Context, operationID, userID, presentation
 			return 0, 0, err
 		}
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, quoted_points, expires_at) VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '1 hour')`, operationID, userID, presentationID, kind, quote)
+	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, operationID, userID, presentationID, kind, idempotencyKey, requestHash, quote)
 	if err != nil {
 		return 0, 0, err
+	}
+	if quote > 0 {
+		entryType := "model_reservation"
+		if kind == "research" {
+			entryType = "research_reservation"
+		}
+		if err := recordLedger(tx, userID, operationID, entryType, -quote, balance); err != nil {
+			return 0, 0, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return 0, 0, err
@@ -719,19 +778,23 @@ func (h *handler) reserve(ctx context.Context, operationID, userID, presentation
 	return balance, revision, nil
 }
 
-func (h *handler) settle(ctx context.Context, job streamJob, data []byte, title string, charged float64) (float64, error) {
+func (h *handler) settle(ctx context.Context, job streamJob, data []byte, title string, charged int64, providerTokens int) (int64, error) {
 	tx, err := h.database.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
 	defer tx.Rollback()
-	result, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET status = 'settled', charged_points = $1, finalized_at = NOW(), updated_at = NOW() WHERE id = $2 AND user_id = $3 AND presentation_id = $4 AND status = 'reserved' AND quoted_points >= $1`, charged, job.operationID, job.userID, job.presentationID)
+	result, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET status = 'settled', charged_millis = $1, provider_total_tokens = $2, finalized_at = NOW(), updated_at = NOW() WHERE id = $3 AND user_id = $4 AND presentation_id = $5 AND status = 'reserved' AND quoted_millis >= $1`, charged, providerTokens, job.operationID, job.userID, job.presentationID)
 	if err != nil {
 		return 0, err
 	}
 	affected, _ := result.RowsAffected()
 	if affected != 1 {
 		return 0, errors.New("Generation point reservation is not active")
+	}
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
+		return 0, err
 	}
 	provider, selectedModel := "openrouter", model()
 	if job.selection != nil {
@@ -747,16 +810,16 @@ func (h *handler) settle(ctx context.Context, job streamJob, data []byte, title 
 	}
 	refund := job.quote - charged
 	if refund > 0 {
-		_, err = tx.ExecContext(ctx, `UPDATE users SET slide_tokens = slide_tokens + $1, updated_at = NOW() WHERE id = $2`, refund, job.userID)
-		if err != nil {
+		if err := tx.QueryRowContext(ctx, `UPDATE users SET balance_millis = balance_millis + $1, updated_at = NOW() WHERE id = $2 RETURNING balance_millis`, refund, job.userID).Scan(&balance); err != nil {
 			return 0, err
 		}
 	}
-	var balance float64
-	if err := tx.QueryRowContext(ctx, `SELECT slide_tokens FROM users WHERE id = $1`, job.userID).Scan(&balance); err != nil {
-		return 0, err
+	if refund > 0 {
+		if err := recordLedger(tx, job.userID, job.operationID, "reservation_release", refund, balance); err != nil {
+			return 0, err
+		}
 	}
-	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after = $1 WHERE id = $2`, balance, job.operationID); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, job.operationID); err != nil {
 		return 0, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -771,6 +834,27 @@ func (h *handler) fail(ctx context.Context, job streamJob, message string) error
 		return err
 	}
 	defer tx.Rollback()
+
+	var quote int64
+	err = tx.QueryRowContext(ctx, `UPDATE generation_point_operations SET status = 'refunded', charged_millis = 0, error_reason = $1, finalized_at = NOW(), updated_at = NOW() WHERE id = $2 AND user_id = $3 AND status = 'reserved' RETURNING quoted_millis`, message, job.operationID, job.userID).Scan(&quote)
+	if errors.Is(err, sql.ErrNoRows) {
+		return tx.Commit()
+	}
+	if err != nil {
+		return err
+	}
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `UPDATE users SET balance_millis = balance_millis + $1, updated_at = NOW() WHERE id = $2 RETURNING balance_millis`, quote, job.userID).Scan(&balance); err != nil {
+		return err
+	}
+	if quote > 0 {
+		if err := recordLedger(tx, job.userID, job.operationID, "reservation_release", quote, balance); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, job.operationID); err != nil {
+		return err
+	}
 
 	if job.kind == "generation" {
 		failed := map[string]any{
@@ -794,48 +878,153 @@ func (h *handler) fail(ctx context.Context, job streamJob, message string) error
 			},
 		}
 		data, _ := json.Marshal(failed)
-		result, err := tx.ExecContext(ctx, `UPDATE presentations SET title = $1, prompt = $2, slides_data = $3::jsonb, revision = revision + 1, updated_at = NOW() WHERE id = $4 AND user_id = $5 AND revision = $6`, "Generation failed", job.prompt, data, job.presentationID, job.userID, job.expectedRevision)
+		// Presentation state is secondary to the financial finalization. A user
+		// edit or deletion must never retain a reserved balance.
+		_, _ = tx.ExecContext(ctx, `UPDATE presentations SET title = $1, prompt = $2, slides_data = $3::jsonb, revision = revision + 1, updated_at = NOW() WHERE id = $4 AND user_id = $5 AND revision = $6`, "Generation failed", job.prompt, data, job.presentationID, job.userID, job.expectedRevision)
+	}
+	return tx.Commit()
+}
+
+func (h *handler) recoverExpired(ctx context.Context, userID string) error {
+	tx, err := h.database.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	rows, err := tx.QueryContext(ctx, `SELECT id, quoted_millis FROM generation_point_operations WHERE user_id = $1 AND status = 'reserved' AND expires_at <= NOW() FOR UPDATE SKIP LOCKED`, userID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	type expiredOperation struct {
+		id    string
+		quote int64
+	}
+	expired := []expiredOperation{}
+	for rows.Next() {
+		var item expiredOperation
+		if err := rows.Scan(&item.id, &item.quote); err != nil {
+			return err
+		}
+		expired = append(expired, item)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	if len(expired) == 0 {
+		return tx.Commit()
+	}
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&balance); err != nil {
+		return err
+	}
+	for _, item := range expired {
+		result, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET status = 'refunded', charged_millis = 0, error_reason = 'lease expired', finalized_at = NOW(), updated_at = NOW() WHERE id = $1 AND status = 'reserved'`, item.id)
 		if err != nil {
 			return err
 		}
 		affected, err := result.RowsAffected()
 		if err != nil || affected != 1 {
-			return errors.New("Presentation changed while generation was running")
+			return errors.New("expired operation was not active")
 		}
-	}
-
-	var quote float64
-	err = tx.QueryRowContext(ctx, `UPDATE generation_point_operations SET status = 'refunded', charged_points = 0, finalized_at = NOW(), updated_at = NOW() WHERE id = $1 AND user_id = $2 AND status = 'reserved' RETURNING quoted_points`, job.operationID, job.userID).Scan(&quote)
-	if errors.Is(err, sql.ErrNoRows) {
-		return tx.Commit()
-	}
-	if err != nil {
-		return err
-	}
-	if quote > 0 {
-		if _, err := tx.ExecContext(ctx, `UPDATE users SET slide_tokens = slide_tokens + $1, updated_at = NOW() WHERE id = $2`, quote, job.userID); err != nil {
+		balance += item.quote
+		if err := recordLedger(tx, userID, item.id, "lease_release", item.quote, balance); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, item.id); err != nil {
 			return err
 		}
 	}
-	var balance float64
-	if err := tx.QueryRowContext(ctx, `SELECT slide_tokens FROM users WHERE id = $1`, job.userID).Scan(&balance); err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after = $1 WHERE id = $2`, balance, job.operationID); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE users SET balance_millis = $1, updated_at = NOW() WHERE id = $2`, balance, userID); err != nil {
 		return err
 	}
 	return tx.Commit()
 }
 
-type insufficient struct{ balance, required float64 }
+func recordLedger(tx *sql.Tx, userID, operationID, entryType string, delta, balance int64) error {
+	if delta == 0 {
+		return nil
+	}
+	_, err := tx.Exec(`INSERT INTO point_ledger (id, user_id, operation_id, entry_type, delta_millis, balance_after_millis) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, $3, $4, $5)`, userID, operationID, entryType, delta, balance)
+	return err
+}
+
+type duplicateOperation struct{}
+
+func (duplicateOperation) Error() string { return "duplicate operation" }
+
+type idempotencyConflict struct{}
+
+func (idempotencyConflict) Error() string { return "idempotency conflict" }
+
+func idempotencyKey(request *http.Request) (string, error) {
+	key := strings.TrimSpace(request.Header.Get("Idempotency-Key"))
+	if len(key) < 16 || len(key) > 128 {
+		return "", errors.New("Idempotency-Key must contain 16-128 characters")
+	}
+	for _, character := range key {
+		if !(character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || character >= '0' && character <= '9' || character == '-' || character == '_' || character == '.') {
+			return "", errors.New("Idempotency-Key contains invalid characters")
+		}
+	}
+	return key, nil
+}
+
+func requestHash(value any) string {
+	encoded, _ := json.Marshal(value)
+	sum := sha256.Sum256(encoded)
+	return hex.EncodeToString(sum[:])
+}
+
+func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, _ int) int64 {
+	encodedResearch, _ := json.Marshal(research)
+	encodedSources, _ := json.Marshal(payload)
+	inputBytes := len(generationSystemPrompt) + len(prompt) + len(current) + len(encodedResearch) + len(encodedSources) + 256
+	inputTokens := (inputBytes + 3) / 4
+	outputTokens := maxOutputTokens(slideCount)
+	// The provider may add protocol tokens beyond the serialized prompt. The
+	// buffer makes the authorization a real maximum while settlement charges the
+	// provider's exact aggregate usage.
+	return int64(outputTokens + (inputTokens*12+9)/10)
+}
+
+func maxOutputTokens(slideCount int) int {
+	outputTokens := slideCount * 1200
+	if outputTokens < 2000 {
+		return 2000
+	}
+	if outputTokens > 16000 {
+		return 16000
+	}
+	return outputTokens
+}
+
+func points(millis int64) float64 {
+	return float64(millis) / 1000
+}
+
+type insufficient struct{ balance, required int64 }
 
 func (e insufficient) Error() string { return "Insufficient points" }
 func (h *handler) reservationError(writer http.ResponseWriter, err error) {
-	var points insufficient
-	if errors.As(err, &points) {
+	var funds insufficient
+	if errors.As(err, &funds) {
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusPaymentRequired)
-		_ = json.NewEncoder(writer).Encode(map[string]any{"error": map[string]string{"message": points.Error(), "code": "INSUFFICIENT_TOKENS"}, "slide_tokens_remaining": points.balance, "slide_tokens_required": points.required, "slide_tokens_shortfall": points.required - points.balance})
+		_ = json.NewEncoder(writer).Encode(map[string]any{"error": map[string]string{"message": funds.Error(), "code": "INSUFFICIENT_TOKENS"}, "slide_tokens_remaining": points(funds.balance), "slide_tokens_required": points(funds.required), "slide_tokens_shortfall": points(funds.required - funds.balance)})
+		return
+	}
+	var duplicate duplicateOperation
+	if errors.As(err, &duplicate) {
+		writeError(writer, http.StatusConflict, "This request is already being processed")
+		return
+	}
+	var conflict idempotencyConflict
+	if errors.As(err, &conflict) {
+		writeError(writer, http.StatusConflict, "Idempotency key was reused with a different request")
 		return
 	}
 	writeError(writer, http.StatusInternalServerError, "Unable to reserve generation points")
@@ -863,18 +1052,14 @@ func parseResearch(value any) (any, error) {
 	if value == nil {
 		return nil, nil
 	}
-	object, ok := value.(map[string]any)
-	if !ok {
-		return nil, errors.New("research must be an object")
+	options, err := presentation.ParseResearchOptions(value)
+	if err != nil {
+		return nil, err
 	}
-	enabled, ok := object["enabled"].(bool)
-	if !ok {
-		return nil, errors.New("research.enabled must be a boolean")
-	}
-	if !enabled {
+	if !options.Enabled {
 		return nil, nil
 	}
-	return object, nil
+	return options, nil
 }
 func slideCount(body map[string]any, mandatory bool) (int, error) {
 	value := first(body, "slide_count", "slideCount")
@@ -941,14 +1126,11 @@ func estimate(slides int, detail, tonality string, researchTokens int) float64 {
 	}
 	return math.Round((float64(slides)*detailMultiplier*toneMultiplier+float64(researchTokens)/1000)*10) / 10
 }
-func actualCharge(tokens int, quote float64) float64 {
-	if quote == 0 {
+func actualCharge(tokens int, quote int64) int64 {
+	if quote == 0 || tokens <= 0 {
 		return 0
 	}
-	if tokens <= 0 {
-		return quote
-	}
-	charge := float64(tokens) / 1000
+	charge := int64(tokens)
 	if charge > quote {
 		return quote
 	}

@@ -222,15 +222,15 @@ func (s ConnectionService) CredentialForGeneration(ctx context.Context, userID s
 }
 
 func (s ConnectionService) requireEligibility(ctx context.Context, userID string) error {
-	var tokens float64
-	err := s.DB.QueryRowContext(ctx, `SELECT slide_tokens FROM users WHERE id = $1`, userID).Scan(&tokens)
+	var balanceMillis int64
+	err := s.DB.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1`, userID).Scan(&balanceMillis)
 	if errors.Is(err, sql.ErrNoRows) {
 		return errors.New("user not found")
 	}
 	if err != nil {
 		return err
 	}
-	if tokens <= 50 {
+	if balanceMillis <= 50000 {
 		return errors.New("provider connections require more than 50 points")
 	}
 	return nil
