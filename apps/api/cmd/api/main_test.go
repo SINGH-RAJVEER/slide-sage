@@ -28,4 +28,10 @@ func TestSecuritySetsCredentialedCORSHeaders(t *testing.T) {
 	if response.Header().Get("Access-Control-Allow-Origin") != "https://slidesage.app" {
 		t.Fatalf("headers: %#v", response.Header())
 	}
+	if response.Header().Get("Access-Control-Allow-Headers") != "Content-Type, Authorization, Idempotency-Key, Last-Event-ID" {
+		t.Fatalf("allowed headers: %q", response.Header().Get("Access-Control-Allow-Headers"))
+	}
+	if response.Header().Get("Access-Control-Expose-Headers") != "X-Generation-Job-ID, X-Presentation-ID" {
+		t.Fatalf("exposed headers: %q", response.Header().Get("Access-Control-Expose-Headers"))
+	}
 }

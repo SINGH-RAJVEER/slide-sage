@@ -1,6 +1,7 @@
 # Environment Variables
 
-Copy `.env.example` to `.env`. Devenv loads it for the Go API and Bun workspace processes.
+Copy `.env.example` to `.env`. Devenv loads it for the Go API, generation worker,
+and Bun workspace processes.
 
 ## Core
 
@@ -40,6 +41,30 @@ Set `RATE_LIMIT_HASH_SECRET` to a separate random deployment secret. Falling bac
 to `AUTH_SECRET` is supported, but an independent value avoids coupling rate-limit
 identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md).
 
+## Generation Worker
+
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `WORKER_CONCURRENCY` | No | `2` | Maximum concurrent River generation jobs in one worker process |
+| `WORKER_DATABASE_POOL_MAX` | No | `WORKER_CONCURRENCY + 3` | Maximum open and idle connections in the worker database pool |
+| `WORKER_DRAIN_TIMEOUT` | No | `8` | Graceful shutdown timeout in seconds after `SIGINT` or `SIGTERM` |
+| `WORKER_HEALTH_PORT` | No | `8080` | Worker `/live` and `/ready` health server port |
+
+The worker also requires `DATABASE_URL` and uses
+`DATABASE_CONNECT_TIMEOUT` and `DATABASE_IDLE_TIMEOUT`. It must receive the same
+generation provider and BYOK encryption configuration as the API because provider
+execution occurs in `cmd/worker`, not in the submission request.
+
+`GET /live` returns `204` while the worker health server is running. `GET /ready`
+returns `204` only when PostgreSQL is reachable. The health server is for platform
+probes; application coordination between the API and worker occurs through
+PostgreSQL.
+
+For Cloud Run Worker Pools, start with one instance and change the fixed/manual
+instance count deliberately. Account for both the instance count and
+`WORKER_CONCURRENCY` when sizing PostgreSQL connection limits and provider
+capacity. See [GENERATION_WORKER.md](GENERATION_WORKER.md).
+
 ## AI and Research
 
 | Variable | Required | Default | Purpose |
@@ -48,12 +73,6 @@ identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md
 | `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it` | Generation model; the default is a paid OpenRouter endpoint for production reliability |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
-| `OPEN_ROUTER_MAX_ATTEMPTS` | No | `3` | Maximum full generation attempts for transient, interrupted, or invalid responses |
-| `OPEN_ROUTER_REQUEST_TIMEOUT_MS` | No | `180000` | Maximum wait for OpenRouter to return response headers per attempt |
-| `OPEN_ROUTER_STREAM_IDLE_TIMEOUT_MS` | No | `120000` | Maximum silence between OpenRouter stream chunks before retrying |
-| `OPEN_ROUTER_RETRY_BASE_DELAY_MS` | No | `1000` | Initial retry backoff delay |
-| `OPEN_ROUTER_RETRY_MAX_DELAY_MS` | No | `30000` | Maximum retry delay, including provider `Retry-After` values |
-| `OPEN_ROUTER_MAX_RESPONSE_BYTES` | No | `8388608` | Maximum streamed response size accepted per attempt |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | Not used | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |
 | `PROVIDER_VALIDATION_TIMEOUT_MS` | No | `15000` | Total timeout for listing models from a user-connected BYOK provider |
 | `EMBEDDING_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum embedding request duration; caller cancellation can stop it earlier |

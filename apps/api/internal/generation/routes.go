@@ -38,20 +38,28 @@ Block region must be main, primary, secondary, or media. Do not rename text or i
 
 type Identity func(context.Context, *http.Request) (string, error)
 
-// RegisterRoutes installs the direct OpenRouter-backed generation endpoints.
+// RegisterRoutes installs durable generation submission and event endpoints.
 func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, connections ai.ConnectionService) {
 	if mux == nil || database == nil || identity == nil {
 		panic("generation routes require mux, database, and identity callback")
 	}
-	handler := &handler{database: database, identity: identity, connections: connections, client: &http.Client{Timeout: 3 * time.Minute}}
+	queue, err := newInsertClient(database)
+	if err != nil {
+		panic(fmt.Sprintf("create generation queue client: %v", err))
+	}
+	handler := &handler{database: database, identity: identity, connections: connections, client: &http.Client{Timeout: 3 * time.Minute}, queue: queue}
 	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
 	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
+	mux.HandleFunc("GET /generation-jobs/{id}", handler.jobStatus)
+	mux.HandleFunc("GET /generation-jobs/by-idempotency/{key}", handler.jobByIdempotency)
+	mux.HandleFunc("GET /generation-jobs/{id}/events", handler.jobEvents)
+	mux.HandleFunc("POST /generation-jobs/{id}/cancel", handler.cancelJob)
 }
 
 // RecoverExpired finalizes abandoned authorizations even when their user does
 // not submit another request. It is safe to call concurrently from API nodes.
 func RecoverExpired(ctx context.Context, database *sql.DB) error {
-	rows, err := database.QueryContext(ctx, `SELECT DISTINCT user_id FROM generation_point_operations WHERE status = 'reserved' AND expires_at <= NOW()`)
+	rows, err := database.QueryContext(ctx, `SELECT DISTINCT operation.user_id FROM generation_point_operations operation WHERE operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying'))`)
 	if err != nil {
 		return err
 	}
@@ -73,6 +81,7 @@ type handler struct {
 	identity    Identity
 	client      *http.Client
 	connections ai.ConnectionService
+	queue       *queueClient
 }
 
 type generationInput struct {
@@ -110,6 +119,12 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 	if !ok {
 		return
 	}
+	idempotencyKey, err := idempotencyKey(request)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
+	requestHash := requestHash(input)
 	presentationID := input.RetryID
 	if presentationID != "" {
 		existing, err := h.ownedPresentation(request.Context(), presentationID, userID)
@@ -120,6 +135,16 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 		var document map[string]any
 		_ = json.Unmarshal(existing.Data, &document)
 		if document["status"] != "failed" {
+			duplicate, err := h.existingOperation(request.Context(), userID, "generation", idempotencyKey, requestHash)
+			if err == nil && duplicate.jobID != "" {
+				setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
+				h.streamEvents(writer, request, duplicate.jobID, userID, 0)
+				return
+			}
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				h.reservationError(writer, err)
+				return
+			}
 			writeError(writer, http.StatusConflict, "Only failed presentations can be retried")
 			return
 		}
@@ -142,7 +167,12 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 	}
-	selection, credential, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
+	jobID, err := uuid()
+	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
+		return
+	}
+	selection, _, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
 	if err != nil {
 		writeError(writer, http.StatusConflict, err.Error())
 		return
@@ -150,20 +180,24 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 	if selection != nil {
 		quote = 0
 	}
-	idempotencyKey, err := idempotencyKey(request)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	requestHash := requestHash(input)
 	initial := map[string]any{"schemaVersion": presentation.PresentationSchemaVersion, "title": "Generating...", "theme": input.Theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "theme": input.Theme, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
 	initialJSON, _ := json.Marshal(initial)
-	balance, revision, err := h.reserve(request.Context(), operationID, userID, presentationID, "generation", quote, idempotencyKey, requestHash, input.RetryID == "", input.Topic, initialJSON)
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: input.Theme, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
+	balance, revision, err := h.enqueue(request.Context(), job, idempotencyKey, requestHash, input.RetryID == "", input.Topic, initialJSON)
 	if err != nil {
+		var duplicate duplicateOperation
+		if errors.As(err, &duplicate) && duplicate.jobID != "" {
+			setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
+			h.streamEvents(writer, request, duplicate.jobID, userID, 0)
+			return
+		}
 		h.reservationError(writer, err)
 		return
 	}
-	h.stream(writer, request, streamJob{userID: userID, operationID: operationID, presentationID: presentationID, expectedRevision: revision, quote: quote, balance: balance, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: input.Theme, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, credential: credential, kind: "generation"})
+	_ = balance
+	_ = revision
+	setGenerationHeaders(writer, jobID, presentationID)
+	h.streamEvents(writer, request, jobID, userID, 0)
 }
 
 func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
@@ -193,7 +227,7 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	quote := authorizationMillis(count, input.Feedback, base.Data, input.Research, nil, 0)
-	selection, credential, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
+	selection, _, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
 	if err != nil {
 		writeError(writer, http.StatusConflict, err.Error())
 		return
@@ -206,132 +240,45 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	balance, _, err := h.reserve(request.Context(), operationID, userID, base.ID, "iteration", quote, idempotencyKey, requestHash(input), false, "", nil)
+	jobID, err := uuid()
 	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "Unable to start iteration")
+		return
+	}
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Feedback, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: documentTheme(base.Data), research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
+	balance, _, err := h.enqueue(request.Context(), job, idempotencyKey, requestHash(input), false, "", nil)
+	if err != nil {
+		var duplicate duplicateOperation
+		if errors.As(err, &duplicate) && duplicate.jobID != "" {
+			setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
+			h.streamEvents(writer, request, duplicate.jobID, userID, 0)
+			return
+		}
 		h.reservationError(writer, err)
 		return
 	}
-	h.stream(writer, request, streamJob{userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, balance: balance, prompt: input.Feedback, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: documentTheme(base.Data), research: input.Research, selection: selection, credential: credential, current: base.Data, kind: "iteration"})
+	_ = balance
+	setGenerationHeaders(writer, jobID, base.ID)
+	h.streamEvents(writer, request, jobID, userID, 0)
+}
+
+func setGenerationHeaders(writer http.ResponseWriter, jobID, presentationID string) {
+	writer.Header().Set("X-Generation-Job-ID", jobID)
+	writer.Header().Set("X-Presentation-ID", presentationID)
 }
 
 type streamJob struct {
-	userID, operationID, presentationID string
-	expectedRevision                    int
-	quote, balance                      int64
-	prompt                              string
-	slideCount                          int
-	detailLevel, tonality, theme, kind  string
-	research                            any
-	researchPayload                     *presentation.ResearchPayload
-	selection                           *ai.Selection
-	credential                          string
-	current                             json.RawMessage
-}
-
-func (h *handler) stream(writer http.ResponseWriter, request *http.Request, job streamJob) {
-	flusher, ok := writer.(http.Flusher)
-	if !ok {
-		writeError(writer, http.StatusInternalServerError, "Streaming is unavailable")
-		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "Streaming is unavailable") })
-		return
-	}
-	writer.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
-	writer.Header().Set("Cache-Control", "no-cache, no-transform")
-	writer.Header().Set("X-Accel-Buffering", "no")
-	writeEvent(writer, flusher, "created", map[string]any{"presentation_id": job.presentationID})
-	if job.researchPayload != nil {
-		writeEvent(writer, flusher, "research", map[string]any{"status": "ready", "sources": job.researchPayload.Sources})
-	}
-	writeEvent(writer, flusher, "theme", map[string]any{"theme": job.theme})
-	writeEvent(writer, flusher, "stage", map[string]any{"stage": "planning", "message": "Structuring the narrative", "completed": 1, "total": 3})
-
-	document, tokens, err := h.generateWithKeepalive(writer, flusher, request.Context(), job)
-	if err != nil {
-		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, err.Error()) })
-		writeEvent(writer, flusher, "error", map[string]any{"error": "Presentation generation failed. Please try again.", "presentation_id": job.presentationID})
-		return
-	}
-	if job.quote > 0 && tokens <= 0 {
-		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "Provider usage was unavailable") })
-		writeEvent(writer, flusher, "error", map[string]any{"error": "Unable to verify provider usage. Your points were released.", "presentation_id": job.presentationID})
-		return
-	}
-	document["schemaVersion"] = presentation.PresentationSchemaVersion
-	document["title"] = truncate(text(document["title"], "Untitled Presentation"), 255)
-	document["theme"] = text(document["theme"], job.theme)
-	document["status"] = "ready"
-	document["tokens_used"] = tokens
-	rawSlides, slidesOK := document["slides"].([]any)
-	if !slidesOK || len(rawSlides) < job.slideCount {
-		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "The provider returned fewer slides than requested") })
-		writeEvent(writer, flusher, "error", map[string]any{"error": "The provider returned an incomplete presentation", "presentation_id": job.presentationID})
-		return
-	}
-	if len(rawSlides) > job.slideCount {
-		document["slides"] = rawSlides[:job.slideCount]
-	}
-	if job.researchPayload != nil {
-		document["sources"] = job.researchPayload.Sources
-	}
-	document, err = presentation.NormalizeDocument(document)
-	slides, ok := document["slides"].([]any)
-	if !ok || len(slides) == 0 || !hasSubstantiveGeneratedContent(slides) {
-		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "Generated presentation was invalid") })
-		writeEvent(writer, flusher, "error", map[string]any{"error": "Failed to generate valid presentation content", "presentation_id": job.presentationID})
-		return
-	}
-	title := text(document["title"], "Untitled Presentation")
-	writeEvent(writer, flusher, "outline", outline(title, slides))
-	writeEvent(writer, flusher, "stage", map[string]any{"stage": "drafting", "message": "Writing slide content", "completed": 2, "total": 3})
-	for index, slide := range slides {
-		writeEvent(writer, flusher, "slide", map[string]any{"index": index, "slide": slide, "title": title})
-	}
-	completed, _ := json.Marshal(document)
-	charged := actualCharge(tokens, job.quote)
-	balance, err := h.settle(request.Context(), job, completed, truncate(title, 255), charged, tokens)
-	if err != nil {
-		h.cleanup(request.Context(), func(ctx context.Context) { _ = h.fail(ctx, job, "Unable to save presentation") })
-		writeEvent(writer, flusher, "error", map[string]any{"error": "Unable to save presentation", "presentation_id": job.presentationID})
-		return
-	}
-	writeEvent(writer, flusher, "complete", document)
-	writeEvent(writer, flusher, "stage", map[string]any{"stage": "finalizing", "message": "Saving presentation", "completed": 3, "total": 3})
-	writeEvent(writer, flusher, "saved", map[string]any{"presentation_id": job.presentationID, "success": true, "slide_tokens_remaining": points(balance), "slide_tokens_charged": points(charged)})
-	if job.selection != nil {
-		_ = h.connections.MarkUsed(context.WithoutCancel(request.Context()), job.userID, job.selection.Provider)
-	}
-}
-
-type generationResult struct {
-	document map[string]any
-	tokens   int
-	err      error
-}
-
-func (h *handler) generateWithKeepalive(writer http.ResponseWriter, flusher http.Flusher, ctx context.Context, job streamJob) (map[string]any, int, error) {
-	result := make(chan generationResult, 1)
-	go func() {
-		// Provider usage is billable work. A disconnected SSE subscriber must not
-		// cancel the provider request and turn already-incurred usage into a refund.
-		document, tokens, err := h.generateDocument(context.WithoutCancel(ctx), job)
-		result <- generationResult{document: document, tokens: tokens, err: err}
-	}()
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
-	connectionDone := ctx.Done()
-	for {
-		select {
-		case generated := <-result:
-			return generated.document, generated.tokens, generated.err
-		case <-ticker.C:
-			if connectionDone != nil {
-				_, _ = io.WriteString(writer, ": keepalive\n\n")
-				flusher.Flush()
-			}
-		case <-connectionDone:
-			connectionDone = nil
-		}
-	}
+	jobID, userID, operationID, presentationID string
+	expectedRevision                           int
+	quote                                      int64
+	prompt                                     string
+	slideCount                                 int
+	detailLevel, tonality, theme, kind         string
+	research                                   any
+	researchPayload                            *presentation.ResearchPayload
+	selection                                  *ai.Selection
+	credential                                 string
+	current                                    json.RawMessage
 }
 
 func (h *handler) generateDocument(ctx context.Context, job streamJob) (map[string]any, int, error) {
@@ -388,7 +335,7 @@ func (h *handler) generateDocument(ctx context.Context, job streamJob) (map[stri
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(response.Body, 16*1024))
-		return nil, 0, fmt.Errorf("OpenRouter request failed: %s", strings.TrimSpace(string(body)))
+		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("OpenRouter request failed: %s", strings.TrimSpace(string(body)))}
 	}
 	var content strings.Builder
 	tokens := 0
@@ -487,7 +434,7 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 		return nil, 0, errors.New("AI provider response is too large")
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, 0, fmt.Errorf("AI provider request failed with status %d", response.StatusCode)
+		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("AI provider request failed with status %d", response.StatusCode)}
 	}
 	var envelope struct {
 		Choices []struct {
@@ -708,9 +655,26 @@ func (h *handler) ownedPresentation(ctx context.Context, id, userID string) (per
 	return item, err
 }
 
-// reserve atomically creates a bounded authorization and, for generation, its placeholder deck.
-func (h *handler) reserve(ctx context.Context, operationID, userID, presentationID, kind string, quote int64, idempotencyKey, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
-	if err := h.recoverExpired(ctx, userID); err != nil {
+func (h *handler) existingOperation(ctx context.Context, userID, kind, idempotencyKey, requestHash string) (duplicateOperation, error) {
+	var existingHash string
+	var duplicate duplicateOperation
+	err := h.database.QueryRowContext(ctx, `SELECT operation.request_hash, COALESCE(job.id, ''), operation.presentation_id FROM generation_point_operations operation LEFT JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3`, userID, kind, idempotencyKey).Scan(&existingHash, &duplicate.jobID, &duplicate.presentationID)
+	if err != nil {
+		return duplicateOperation{}, err
+	}
+	if existingHash != requestHash {
+		return duplicateOperation{}, idempotencyConflict{}
+	}
+	return duplicate, nil
+}
+
+// enqueue atomically creates the authorization, placeholder, durable domain job,
+// and River queue record.
+func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
+	if h.queue == nil {
+		return 0, 0, errors.New("generation queue is unavailable")
+	}
+	if err := h.recoverExpired(ctx, job.userID); err != nil {
 		return 0, 0, err
 	}
 	tx, err := h.database.BeginTx(ctx, nil)
@@ -718,14 +682,14 @@ func (h *handler) reserve(ctx context.Context, operationID, userID, presentation
 		return 0, 0, err
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, userID+":"+kind+":"+idempotencyKey); err != nil {
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, job.userID+":"+job.kind+":"+idempotencyKey); err != nil {
 		return 0, 0, err
 	}
-	var existingHash string
-	err = tx.QueryRowContext(ctx, `SELECT request_hash FROM generation_point_operations WHERE user_id = $1 AND kind = $2 AND idempotency_key = $3 FOR UPDATE`, userID, kind, idempotencyKey).Scan(&existingHash)
+	var existingHash, existingJobID, existingPresentationID string
+	err = tx.QueryRowContext(ctx, `SELECT operation.request_hash, COALESCE(job.id, ''), COALESCE(operation.presentation_id, '') FROM generation_point_operations operation LEFT JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3 FOR UPDATE OF operation`, job.userID, job.kind, idempotencyKey).Scan(&existingHash, &existingJobID, &existingPresentationID)
 	if err == nil {
 		if existingHash == requestHash {
-			return 0, 0, duplicateOperation{}
+			return 0, 0, duplicateOperation{jobID: existingJobID, presentationID: existingPresentationID}
 		}
 		return 0, 0, idempotencyConflict{}
 	}
@@ -733,44 +697,73 @@ func (h *handler) reserve(ctx context.Context, operationID, userID, presentation
 		return 0, 0, err
 	}
 	var balance int64
-	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&balance); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
 		return 0, 0, err
 	}
-	if balance < quote {
-		return 0, 0, insufficient{balance: balance, required: quote}
+	if balance < job.quote {
+		return 0, 0, insufficient{balance: balance, required: job.quote}
 	}
-	if quote > 0 {
-		if _, err := tx.ExecContext(ctx, `UPDATE users SET balance_millis = balance_millis - $1, updated_at = NOW() WHERE id = $2`, quote, userID); err != nil {
+	if job.quote > 0 {
+		if _, err := tx.ExecContext(ctx, `UPDATE users SET balance_millis = balance_millis - $1, updated_at = NOW() WHERE id = $2`, job.quote, job.userID); err != nil {
 			return 0, 0, err
 		}
-		balance -= quote
+		balance -= job.quote
 	}
 	revision := 0
 	if create {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO presentations (id, user_id, title, prompt, slides_data) VALUES ($1, $2, $3, $4, $5::jsonb)`, presentationID, userID, "Generating...", prompt, data); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO presentations (id, user_id, title, prompt, slides_data) VALUES ($1, $2, $3, $4, $5::jsonb)`, job.presentationID, job.userID, "Generating...", prompt, data); err != nil {
 			return 0, 0, err
 		}
 	} else if data != nil {
-		if err := tx.QueryRowContext(ctx, `UPDATE presentations SET title = $1, prompt = $2, slides_data = $3::jsonb, revision = revision + 1, updated_at = NOW() WHERE id = $4 AND user_id = $5 AND slides_data->>'status' = 'failed' RETURNING revision`, "Generating...", prompt, data, presentationID, userID).Scan(&revision); err != nil {
+		if err := tx.QueryRowContext(ctx, `UPDATE presentations SET title = $1, prompt = $2, slides_data = $3::jsonb, revision = revision + 1, updated_at = NOW() WHERE id = $4 AND user_id = $5 AND slides_data->>'status' = 'failed' RETURNING revision`, "Generating...", prompt, data, job.presentationID, job.userID).Scan(&revision); err != nil {
 			return 0, 0, err
 		}
 	} else {
-		if err := tx.QueryRowContext(ctx, `SELECT revision FROM presentations WHERE id = $1 AND user_id = $2`, presentationID, userID).Scan(&revision); err != nil {
+		if err := tx.QueryRowContext(ctx, `SELECT revision FROM presentations WHERE id = $1 AND user_id = $2`, job.presentationID, job.userID).Scan(&revision); err != nil {
 			return 0, 0, err
 		}
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, operationID, userID, presentationID, kind, idempotencyKey, requestHash, quote)
+	job.expectedRevision = revision
+	payload, err := json.Marshal(payloadFromJob(job))
 	if err != nil {
 		return 0, 0, err
 	}
-	if quote > 0 {
+	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, job.operationID, job.userID, job.presentationID, job.kind, idempotencyKey, requestHash, job.quote)
+	if err != nil {
+		return 0, 0, err
+	}
+	if job.quote > 0 {
 		entryType := "model_reservation"
-		if kind == "research" {
+		if job.kind == "research" {
 			entryType = "research_reservation"
 		}
-		if err := recordLedger(tx, userID, operationID, entryType, -quote, balance); err != nil {
+		if err := recordLedger(tx, job.userID, job.operationID, entryType, -job.quote, balance); err != nil {
 			return 0, 0, err
 		}
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO generation_jobs (id, operation_id, user_id, presentation_id, kind, payload, expected_revision, status, stage, progress_completed, progress_total) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, 'queued', 'planning', 1, 3)`, job.jobID, job.operationID, job.userID, job.presentationID, job.kind, payload, revision); err != nil {
+		return 0, 0, err
+	}
+	inserted, err := h.queue.InsertTx(ctx, tx, JobArgs{JobID: job.jobID}, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE generation_jobs SET river_job_id = $1 WHERE id = $2`, inserted.Job.ID, job.jobID); err != nil {
+		return 0, 0, err
+	}
+	if err := appendEventTx(ctx, tx, job.jobID, "created", map[string]any{"job_id": job.jobID, "presentation_id": job.presentationID}); err != nil {
+		return 0, 0, err
+	}
+	if job.researchPayload != nil {
+		if err := appendEventTx(ctx, tx, job.jobID, "research", map[string]any{"status": "ready", "sources": job.researchPayload.Sources}); err != nil {
+			return 0, 0, err
+		}
+	}
+	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": job.theme}); err != nil {
+		return 0, 0, err
+	}
+	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Structuring the narrative", "completed": 1, "total": 3}); err != nil {
+		return 0, 0, err
 	}
 	if err := tx.Commit(); err != nil {
 		return 0, 0, err
@@ -778,19 +771,14 @@ func (h *handler) reserve(ctx context.Context, operationID, userID, presentation
 	return balance, revision, nil
 }
 
-func (h *handler) settle(ctx context.Context, job streamJob, data []byte, title string, charged int64, providerTokens int) (int64, error) {
-	tx, err := h.database.BeginTx(ctx, nil)
-	if err != nil {
-		return 0, err
-	}
-	defer tx.Rollback()
+func settleTx(ctx context.Context, tx *sql.Tx, job streamJob, data []byte, title string, charged int64, providerTokens int) (int64, error) {
 	result, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET status = 'settled', charged_millis = $1, provider_total_tokens = $2, finalized_at = NOW(), updated_at = NOW() WHERE id = $3 AND user_id = $4 AND presentation_id = $5 AND status = 'reserved' AND quoted_millis >= $1`, charged, providerTokens, job.operationID, job.userID, job.presentationID)
 	if err != nil {
 		return 0, err
 	}
 	affected, _ := result.RowsAffected()
 	if affected != 1 {
-		return 0, errors.New("Generation point reservation is not active")
+		return 0, errInactiveReservation
 	}
 	var balance int64
 	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
@@ -806,7 +794,7 @@ func (h *handler) settle(ctx context.Context, job streamJob, data []byte, title 
 	}
 	affected, _ = result.RowsAffected()
 	if affected != 1 {
-		return 0, errors.New("Presentation changed while generation was running")
+		return 0, errPresentationChanged
 	}
 	refund := job.quote - charged
 	if refund > 0 {
@@ -822,37 +810,12 @@ func (h *handler) settle(ctx context.Context, job streamJob, data []byte, title 
 	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, job.operationID); err != nil {
 		return 0, err
 	}
-	if err := tx.Commit(); err != nil {
-		return 0, err
-	}
 	return balance, nil
 }
 
-func (h *handler) fail(ctx context.Context, job streamJob, message string) error {
-	tx, err := h.database.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	var quote int64
-	err = tx.QueryRowContext(ctx, `UPDATE generation_point_operations SET status = 'refunded', charged_millis = 0, error_reason = $1, finalized_at = NOW(), updated_at = NOW() WHERE id = $2 AND user_id = $3 AND status = 'reserved' RETURNING quoted_millis`, message, job.operationID, job.userID).Scan(&quote)
-	if errors.Is(err, sql.ErrNoRows) {
-		return tx.Commit()
-	}
-	if err != nil {
-		return err
-	}
-	var balance int64
-	if err := tx.QueryRowContext(ctx, `UPDATE users SET balance_millis = balance_millis + $1, updated_at = NOW() WHERE id = $2 RETURNING balance_millis`, quote, job.userID).Scan(&balance); err != nil {
-		return err
-	}
-	if quote > 0 {
-		if err := recordLedger(tx, job.userID, job.operationID, "reservation_release", quote, balance); err != nil {
-			return err
-		}
-	}
-	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, job.operationID); err != nil {
+func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) error {
+	refunded, err := refundReservationTx(ctx, tx, job.operationID, job.userID, message)
+	if err != nil || !refunded {
 		return err
 	}
 
@@ -882,7 +845,31 @@ func (h *handler) fail(ctx context.Context, job streamJob, message string) error
 		// edit or deletion must never retain a reserved balance.
 		_, _ = tx.ExecContext(ctx, `UPDATE presentations SET title = $1, prompt = $2, slides_data = $3::jsonb, revision = revision + 1, updated_at = NOW() WHERE id = $4 AND user_id = $5 AND revision = $6`, "Generation failed", job.prompt, data, job.presentationID, job.userID, job.expectedRevision)
 	}
-	return tx.Commit()
+	return nil
+}
+
+func refundReservationTx(ctx context.Context, tx *sql.Tx, operationID, userID, message string) (bool, error) {
+	var quote int64
+	err := tx.QueryRowContext(ctx, `UPDATE generation_point_operations SET status = 'refunded', charged_millis = 0, error_reason = $1, finalized_at = NOW(), updated_at = NOW() WHERE id = $2 AND user_id = $3 AND status = 'reserved' RETURNING quoted_millis`, message, operationID, userID).Scan(&quote)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `UPDATE users SET balance_millis = balance_millis + $1, updated_at = NOW() WHERE id = $2 RETURNING balance_millis`, quote, userID).Scan(&balance); err != nil {
+		return false, err
+	}
+	if quote > 0 {
+		if err := recordLedger(tx, userID, operationID, "reservation_release", quote, balance); err != nil {
+			return false, err
+		}
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, operationID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (h *handler) recoverExpired(ctx context.Context, userID string) error {
@@ -891,19 +878,19 @@ func (h *handler) recoverExpired(ctx context.Context, userID string) error {
 		return err
 	}
 	defer tx.Rollback()
-	rows, err := tx.QueryContext(ctx, `SELECT id, quoted_millis FROM generation_point_operations WHERE user_id = $1 AND status = 'reserved' AND expires_at <= NOW() FOR UPDATE SKIP LOCKED`, userID)
+	rows, err := tx.QueryContext(ctx, `SELECT operation.id, operation.quoted_millis, operation.presentation_id, operation.kind FROM generation_point_operations operation WHERE operation.user_id = $1 AND operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) FOR UPDATE OF operation SKIP LOCKED`, userID)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	type expiredOperation struct {
-		id    string
-		quote int64
+		id, presentationID, kind string
+		quote                    int64
 	}
 	expired := []expiredOperation{}
 	for rows.Next() {
 		var item expiredOperation
-		if err := rows.Scan(&item.id, &item.quote); err != nil {
+		if err := rows.Scan(&item.id, &item.quote, &item.presentationID, &item.kind); err != nil {
 			return err
 		}
 		expired = append(expired, item)
@@ -937,6 +924,9 @@ func (h *handler) recoverExpired(ctx context.Context, userID string) error {
 		if _, err := tx.ExecContext(ctx, `UPDATE generation_point_operations SET balance_after_millis = $1 WHERE id = $2`, balance, item.id); err != nil {
 			return err
 		}
+		if item.kind == "generation" && item.presentationID != "" {
+			_, _ = tx.ExecContext(ctx, `UPDATE presentations SET title = 'Generation failed', slides_data = jsonb_set(jsonb_set(slides_data, '{status}', '"failed"'::jsonb, true), '{failure,message}', to_jsonb('Generation was interrupted before completion'::text), true), revision = revision + 1, updated_at = NOW() WHERE id = $1 AND slides_data->>'status' = 'generating'`, item.presentationID)
+		}
 	}
 	if _, err := tx.ExecContext(ctx, `UPDATE users SET balance_millis = $1, updated_at = NOW() WHERE id = $2`, balance, userID); err != nil {
 		return err
@@ -952,7 +942,9 @@ func recordLedger(tx *sql.Tx, userID, operationID, entryType string, delta, bala
 	return err
 }
 
-type duplicateOperation struct{}
+type duplicateOperation struct {
+	jobID, presentationID string
+}
 
 func (duplicateOperation) Error() string { return "duplicate operation" }
 
@@ -961,7 +953,11 @@ type idempotencyConflict struct{}
 func (idempotencyConflict) Error() string { return "idempotency conflict" }
 
 func idempotencyKey(request *http.Request) (string, error) {
-	key := strings.TrimSpace(request.Header.Get("Idempotency-Key"))
+	return validateIdempotencyKey(request.Header.Get("Idempotency-Key"))
+}
+
+func validateIdempotencyKey(value string) (string, error) {
+	key := strings.TrimSpace(value)
 	if len(key) < 16 || len(key) > 128 {
 		return "", errors.New("Idempotency-Key must contain 16-128 characters")
 	}
@@ -1030,11 +1026,6 @@ func (h *handler) reservationError(writer http.ResponseWriter, err error) {
 	writeError(writer, http.StatusInternalServerError, "Unable to reserve generation points")
 }
 
-func writeEvent(writer http.ResponseWriter, flusher http.Flusher, event string, data any) {
-	encoded, _ := json.Marshal(data)
-	_, _ = fmt.Fprintf(writer, "event: %s\ndata: %s\n\n", event, encoded)
-	flusher.Flush()
-}
 func writeError(writer http.ResponseWriter, status int, message string) {
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	writer.WriteHeader(status)
@@ -1198,10 +1189,4 @@ func parseAISelection(value any) (*ai.Selection, error) {
 		return nil, errors.New("Invalid AI model selection")
 	}
 	return selection, nil
-}
-
-func (h *handler) cleanup(parent context.Context, action func(context.Context)) {
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(parent), 10*time.Second)
-	defer cancel()
-	action(ctx)
 }

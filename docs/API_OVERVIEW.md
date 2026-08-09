@@ -51,6 +51,9 @@ embedded credentials or control characters are rejected.
 | `POST` | `/generate-presentation-stream` | Generate and persist a deck over SSE |
 | `POST` | `/research-presentation` | Find sources before generation |
 | `POST` | `/iterate-presentation-stream` | Revise an existing deck over SSE |
+| `GET` | `/generation-jobs/{id}` | Get an owned durable generation job |
+| `GET` | `/generation-jobs/{id}/events` | Stream persisted events for an owned generation job |
+| `POST` | `/generation-jobs/{id}/cancel` | Request cancellation of an active generation job |
 | `GET` | `/presentations` | List the user's decks |
 | `GET` | `/presentations/:id` | Get one owned deck |
 | `PATCH` | `/presentations/:id` | Apply persistent presentation mutations |
@@ -69,12 +72,15 @@ and supports Enter as a shortcut to begin generation.
 Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
 and slide-count fields are accepted for compatibility.
 
-Generation creates a `generating` presentation before contacting the provider.
-Provider, content-validation, streaming, and final-save failures atomically mark
-that record as `failed`, retain its prompt and generation settings, and refund
-reserved points. Retrying reuses the failed presentation ID and moves the record
-back to `generating`; malformed requests and other failures before reservation do
-not create presentation records.
+Generation creates a `generating` presentation placeholder before work is
+available to the worker. Point reservation, placeholder creation, application job
+creation, initial event persistence, and River insertion commit in one database
+transaction. Iteration records the existing presentation revision in the same
+durable handoff. Provider, content-validation, cancellation, and final-save
+failures mark the job terminal and release the active reservation. Retrying reuses
+the failed presentation ID and moves the record back to `generating`; malformed
+requests and failures before the submission transaction do not create a job or
+presentation record.
 
 Provider output must use the schema-v5 content block contract with explicit
 `text` fields for paragraphs, quotes, and callouts and `items` for bullets. The
@@ -158,20 +164,28 @@ memory records as defined by each table.
 Without a valid user provider connection, generation and iteration use the
 configured SlideSage OpenRouter model. Point balances use integer milli-points:
 one point is 1,000 milli-points and one provider token is one milli-point. Before
-provider work begins, the API reserves a bounded authorization covering the
-serialized prompt plus the explicit output-token ceiling. A new generation also
-creates its placeholder presentation in that transaction. All chargeable requests
-must include an `Idempotency-Key` containing 16-128 URL-safe characters. Reusing
-the key with the same request prevents another reservation; reusing it with a
-different request returns `409`.
+the job is enqueued, the API reserves a bounded authorization covering the
+serialized prompt plus the explicit output-token ceiling. The reservation,
+ledger entry, placeholder when applicable, application job, initial events, and
+River `InsertTx` are one transaction. All chargeable requests must include an
+`Idempotency-Key` containing 16-128 URL-safe characters. Reusing the key with the
+same request tails the existing job and prevents another reservation; reusing it
+with a different request returns `409`.
 
 Successful generation settles against the provider's authoritative aggregate token
 usage and releases the unused authorization. Missing provider usage is a failure:
 the presentation is not marked ready and its reservation is released. A client
-disconnect does not cancel provider work, so completed provider usage remains
-settleable. Failures, revision conflicts, and failed persistence release the active
-authorization even if the presentation was changed or deleted. A background worker
-recovers expired reservations every minute.
+or API stream disconnect does not cancel the River job. The worker continues and
+persists events for later replay. Failures, revision conflicts, cancellation, and
+failed persistence finalize and release the active authorization even if the
+presentation was changed or deleted.
+
+External provider execution is at-least-once. A worker interruption after sending
+a provider request but before recording its result can cause a later River attempt
+to call the provider again. The provider may therefore observe or bill duplicate
+execution. SlideSage accounting remains idempotent: operation status, balance
+updates, ledger entries, final presentation persistence, settlement, and refunds
+use transactions so an authorization is settled or refunded only once.
 
 Every balance change is recorded in the immutable `point_ledger`, including signup
 credits, payment credits, reservations, and releases. Balances are never allowed to
@@ -186,14 +200,13 @@ the fee. The research response includes `slide_tokens_remaining` and the final
 generation event includes the model charge and remaining balance.
 
 Presentation summaries include `status` (`generating`, `ready`, or `failed`) and
-`has_research`. A new placeholder remains `generating` until durable settlement;
-stale generating placeholders are converted to recoverable failures. A failed
-generation remains in the presentation library with an
+`has_research`. A new placeholder remains `generating` while its durable job is
+queued, running, or retrying. A terminally failed generation remains in the
+presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
 the original prompt, slide count, detail level, tonality, theme, research setting,
-error message, and any sources collected before the failure. Failed generations
-release their active authorization; the background worker recovers abandoned
-operations after their lease expires. Clients fetch the full presentation on
+error message, and any sources collected before the failure. Failed and cancelled
+jobs release their active authorization. Clients fetch the full presentation on
 click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they
 do not. The same retry action is available directly from `/presentation-error`,
@@ -207,23 +220,27 @@ generation replaces it. A retry therefore never adds another failed card.
 
 ### Streaming
 
-Streaming endpoints respond with server-sent events over a POST response. The
-stream begins with `created` for new decks, forwards generation events such as
-`stage`, `outline`, theme, and slide updates, and ends with `saved`. Generation
-stages are `researching`, `planning`, `drafting`, `designing`, and `finalizing`;
-each stage includes a display message and bounded progress counts. The outline
+Streaming submission endpoints respond with server-sent events over a POST
+response. Before streaming, the API transactionally creates the application job,
+persists its initial events, and inserts the River job. It then tails persisted
+`generation_job_events`; provider execution occurs in `cmd/worker`, not in the
+request handler.
+
+The stream begins with `created`, forwards generation events such as `stage`,
+`retry`, `outline`, theme, and slide updates, and ends with `saved`. Worker stages
+are `planning`, `drafting`, and `finalizing`; each stage includes a display
+message and bounded progress counts. The outline
 contains the presentation title and one entry per generated slide. Generated
 slides are normalized into safe schema-v5 content slides with allowlisted layouts,
 blocks, themes, dimensions, and stable IDs before they are streamed or saved.
 Clients treat slide events as index-based upserts. Iteration uses the current deck
-as authoritative context and returns the same schema-v5 format. The
-API sends SSE keepalive
-comments while the selected provider is silent. A `complete` event contains the
-normalized document after durable persistence and point settlement; `saved`
+as authoritative context and returns the same schema-v5 format. The API sends SSE
+keepalive comments while no new persisted event is available. A `complete` event
+contains the normalized document after durable persistence and point settlement; `saved`
 immediately follows as the durable success acknowledgement. Failures
 use an `error` event and persist retry metadata without partial slides. Clients
-must use `saved` as the durable success signal and should refetch after a
-disconnect because the commit can succeed even if delivery of `saved` does not.
+must use `saved` as the durable success signal. Closing the POST response does not
+cancel generation; clients can inspect and resume the same job after a disconnect.
 Clients should parse the
 response stream rather than use the browser `EventSource` API, which only
 supports GET. Web clients also treat non-JSON deployment and proxy error pages as
@@ -231,6 +248,38 @@ service failures rather than exposing a JSON parser exception.
 Provider errors that happen before slide streaming, including account rate limits,
 are preserved in the failed presentation so the retry screen can show an
 actionable cause instead of a generic generation message.
+
+### Durable Job Status and Replay
+
+`GET /generation-jobs/{id}` returns the authenticated owner's durable job state.
+The response includes `id`, `presentation_id`, `kind`, `status`, `progress`,
+`created_at`, and `updated_at`, with `stage` and `error` when available. Status is
+`queued`, `running`, `retrying`, `succeeded`, `failed`, or `cancelled`.
+
+`GET /generation-jobs/{id}/events` replays ordered persisted SSE events and then
+tails new events until `saved` or `error`. Every event has a numeric SSE `id`
+from `generation_job_events`. Send the last received ID in `Last-Event-ID` or as
+`?after=<id>`; the header takes precedence when both are present. The API returns
+only events after that cursor. Browser clients that cannot set the resume header
+can use the query parameter.
+
+Submission SSE responses expose `X-Generation-Job-ID` and `X-Presentation-ID`
+as soon as response headers are available. If the connection fails before those
+headers arrive, an authenticated client can recover the committed job with
+`GET /generation-jobs/by-idempotency/{key}?kind=generation|iteration` and then
+open its event stream. Clients should persist the idempotency key before sending
+the submission to avoid creating duplicate charged work after an ambiguous
+network failure.
+
+`POST /generation-jobs/{id}/cancel` transactionally finalizes cancellation for a
+`queued`, `running`, or `retrying` job and returns `202` with
+`{"status":"cancellation_requested"}`. It returns `409` when no active owned job
+can be updated. River cooperatively cancels an in-flight job context. The provider
+may still finish its external work, but the locked terminal application state
+prevents a late success from settling after cancellation.
+
+See [GENERATION_WORKER.md](GENERATION_WORKER.md) for queue, delivery, accounting,
+worker operation, and deployment details.
 
 The API validates the requested theme before generation. Invalid or omitted
 values fall back to the `corporate-blue` theme. Layout and visual composition are
@@ -272,7 +321,10 @@ The API permits credentialed requests from `CORS_ORIGINS` or `CORS_ORIGIN`.
 Local defaults are `http://localhost:5173` and `http://127.0.0.1:5173`.
 Allowed methods are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `OPTIONS`, so
 browser presentation mutations can complete a credentialed `PATCH` preflight.
-Allowed request headers are `Content-Type` and `Authorization`.
+Allowed request headers are `Content-Type`, `Authorization`, `Idempotency-Key`,
+and `Last-Event-ID`. Browser event replay can also use `?after=` without adding a
+custom header. Submission responses expose `X-Generation-Job-ID` and
+`X-Presentation-ID` to browser clients.
 
 ## AI Provider Connections
 

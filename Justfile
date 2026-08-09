@@ -50,4 +50,10 @@ format:
     bun run biome format --write .
 
 docker-build:
-    docker build --file docker/Dockerfile.api --tag slidesage-api .
+	docker build --target api --file docker/Dockerfile.api --tag slidesage-api .
+
+docker-worker:
+	docker build --target worker --file docker/Dockerfile.api --tag slidesage-worker .
+
+docker-migrate:
+	docker build --target migrate --file docker/Dockerfile.api --tag slidesage-migrate .

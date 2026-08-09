@@ -79,10 +79,28 @@ in
                 failure_threshold = 30;
             };
         };
+		worker = {
+			exec = ''
+				DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" go run ./cmd/worker
+			'';
+			cwd = "apps/api";
+			after = [ "db:migrate" ];
+			ready = {
+				http.get = {
+					port = 8080;
+					path = "/ready";
+				};
+				initial_delay = 1;
+				period = 1;
+				probe_timeout = 3;
+				success_threshold = 1;
+				failure_threshold = 30;
+			};
+		};
         web = {
             exec = "bun run dev:web";
             cwd = ".";
-            after = [ "devenv:processes:api" ];
+			after = [ "devenv:processes:api" "devenv:processes:worker" ];
             ready = {
                 http.get = {
                     host = "localhost";
@@ -108,5 +126,7 @@ in
         NODE_ENV = "development";
         LOG_LEVEL = "debug";
         CGO_ENABLED = "0";
+		WORKER_CONCURRENCY = "2";
+		WORKER_DATABASE_POOL_MAX = "5";
     };
 }

@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-import { expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, expect, it, mock } from "bun:test";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import {
@@ -8,6 +8,14 @@ import {
 	type PresentationUpdatedDetail,
 } from "@/lib/presentation-events";
 import { StreamingProvider, useStreaming } from "@/modules/contexts/StreamingContext";
+
+beforeEach(() => {
+	localStorage.removeItem("slidesage-active-generation");
+});
+
+afterEach(() => {
+	localStorage.removeItem("slidesage-active-generation");
+});
 
 function StreamingStarter({ onNavigateAway }: { onNavigateAway: () => void }) {
 	const { startStreaming, streamingState } = useStreaming();
@@ -197,7 +205,7 @@ it("keeps generation incomplete when the stream ends before saved", async () => 
 	}
 });
 
-it("clears iteration completion when an error follows complete and saved", async () => {
+it("treats saved as terminal when a later frame follows it", async () => {
 	const originalFetch = globalThis.fetch;
 	const encoder = new TextEncoder();
 	let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
@@ -234,11 +242,255 @@ it("clears iteration completion when an error follows complete and saved", async
 		});
 
 		await waitFor(() => {
-			expect(view.getByTestId("iteration-state")).toHaveTextContent(
-				"idle:pending:Save confirmation was revoked",
-			);
+			expect(view.getByTestId("iteration-state")).toHaveTextContent("idle:complete:no-error");
 		});
 	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("replays a durable generation stream after the provider remounts", async () => {
+	const originalFetch = globalThis.fetch;
+	localStorage.setItem(
+		"slidesage-active-generation",
+		JSON.stringify({
+			jobId: "job_1",
+			presentationId: "presentation_1",
+			operation: "generation",
+			prompt: "Reconnect this deck",
+			requestedSlides: 1,
+			theme: "corporate-blue",
+			lastEventId: 1,
+		}),
+	);
+	let requestedURL = "";
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		requestedURL = String(input);
+		return new Response(
+			'id: 2\nevent: stage\ndata: {"stage":"drafting","message":"Writing slide content","completed":2,"total":3}\n\n' +
+				'id: 3\nevent: complete\ndata: {"title":"Reconnected","theme":"corporate-blue","slides":[{"id":"slide_1","type":"content","blocks":[]}],"totalSlides":1}\n\n' +
+				'id: 4\nevent: saved\ndata: {"presentation_id":"presentation_1"}\n\n',
+			{ status: 200, headers: { "Content-Type": "text/event-stream" } },
+		);
+	}) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<AwayPage />
+			</StreamingProvider>,
+		);
+		await waitFor(() => {
+			expect(view.getByText("stopped:complete:1:presentation_1:drafting")).toBeInTheDocument();
+		});
+		expect(requestedURL).toContain("/generation-jobs/job_1/events?after=0");
+		expect(localStorage.getItem("slidesage-active-generation")).toBeNull();
+	} finally {
+		localStorage.removeItem("slidesage-active-generation");
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("reconnects when the initial response ends after exposing the job id", async () => {
+	const originalFetch = globalThis.fetch;
+	let requestCount = 0;
+	let replayURL = "";
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		requestCount++;
+		if (requestCount === 1) {
+			return new Response("", {
+				status: 200,
+				headers: {
+					"Content-Type": "text/event-stream",
+					"X-Generation-Job-ID": "job_from_header",
+					"X-Presentation-ID": "presentation_from_header",
+				},
+			});
+		}
+		replayURL = String(input);
+		return new Response(
+			'id: 1\nevent: complete\ndata: {"title":"Recovered","theme":"corporate-blue","slides":[{"id":"slide_1","type":"content","blocks":[]}]}\n\n' +
+				'id: 2\nevent: saved\ndata: {"presentation_id":"presentation_from_header"}\n\n',
+			{ status: 200, headers: { "Content-Type": "text/event-stream" } },
+		);
+	}) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<StreamingStarter onNavigateAway={() => {}} />
+			</StreamingProvider>,
+		);
+		fireEvent.click(view.getByRole("button", { name: "Start" }));
+		await waitFor(() => {
+			expect(view.getByTestId("generation-state")).toHaveTextContent("complete:no-error");
+		});
+		expect(replayURL).toContain("/generation-jobs/job_from_header/events?after=0");
+		expect(localStorage.getItem("slidesage-active-generation")).toBeNull();
+	} finally {
+		localStorage.removeItem("slidesage-active-generation");
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("clears a stored job that is no longer available", async () => {
+	const originalFetch = globalThis.fetch;
+	localStorage.setItem(
+		"slidesage-active-generation",
+		JSON.stringify({
+			jobId: "expired_job",
+			presentationId: "expired_presentation",
+			operation: "generation",
+			requestedSlides: 1,
+			theme: "corporate-blue",
+			lastEventId: 0,
+		}),
+	);
+	globalThis.fetch = mock(async () =>
+		Response.json({}, { status: 404 }),
+	) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<StreamingStarter onNavigateAway={() => {}} />
+			</StreamingProvider>,
+		);
+		await waitFor(() => {
+			expect(view.getByTestId("generation-state")).toHaveTextContent(
+				"pending:The saved generation job is no longer available.",
+			);
+		});
+		expect(localStorage.getItem("slidesage-active-generation")).toBeNull();
+	} finally {
+		localStorage.removeItem("slidesage-active-generation");
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("discovers a committed job when the POST fails before response headers", async () => {
+	const originalFetch = globalThis.fetch;
+	let requestCount = 0;
+	let lookupURL = "";
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		requestCount++;
+		if (requestCount === 1) throw new TypeError("Connection closed before headers");
+		if (String(input).includes("/by-idempotency/")) {
+			lookupURL = String(input);
+			return Response.json({
+				id: "discovered_job",
+				presentation_id: "discovered_presentation",
+			});
+		}
+		return new Response(
+			'id: 1\nevent: complete\ndata: {"title":"Discovered","theme":"corporate-blue","slides":[{"id":"slide_1","type":"content","blocks":[]}]}\n\n' +
+				'id: 2\nevent: saved\ndata: {"presentation_id":"discovered_presentation"}\n\n',
+			{ status: 200, headers: { "Content-Type": "text/event-stream" } },
+		);
+	}) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<StreamingStarter onNavigateAway={() => {}} />
+			</StreamingProvider>,
+		);
+		fireEvent.click(view.getByRole("button", { name: "Start" }));
+		await waitFor(() => {
+			expect(view.getByTestId("generation-state")).toHaveTextContent("complete:no-error");
+		});
+		expect(lookupURL).toContain("/generation-jobs/by-idempotency/");
+		expect(lookupURL).toContain("?kind=generation");
+		expect(requestCount).toBe(3);
+	} finally {
+		localStorage.removeItem("slidesage-active-generation");
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("discovers a committed job after an ambiguous gateway failure", async () => {
+	const originalFetch = globalThis.fetch;
+	let requestCount = 0;
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		requestCount++;
+		if (requestCount === 1) return new Response("Bad gateway", { status: 502 });
+		if (String(input).includes("/by-idempotency/")) {
+			return Response.json({ id: "gateway_job", presentation_id: "gateway_presentation" });
+		}
+		return new Response(
+			'id: 1\nevent: complete\ndata: {"title":"Gateway recovery","theme":"corporate-blue","slides":[{"id":"slide_1","type":"content","blocks":[]}]}\n\n' +
+				'id: 2\nevent: saved\ndata: {"presentation_id":"gateway_presentation"}\n\n',
+			{ status: 200, headers: { "Content-Type": "text/event-stream" } },
+		);
+	}) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<StreamingStarter onNavigateAway={() => {}} />
+			</StreamingProvider>,
+		);
+		fireEvent.click(view.getByRole("button", { name: "Start" }));
+		await waitFor(() => {
+			expect(view.getByTestId("generation-state")).toHaveTextContent("complete:no-error");
+		});
+		expect(requestCount).toBe(3);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("keeps replay recovery durable until a saved-only deck can be loaded", async () => {
+	const originalFetch = globalThis.fetch;
+	localStorage.setItem(
+		"slidesage-active-generation",
+		JSON.stringify({
+			jobId: "saved_job",
+			presentationId: "saved_presentation",
+			operation: "generation",
+			requestedSlides: 1,
+			theme: "corporate-blue",
+			lastEventId: 5,
+		}),
+	);
+	let presentationRequests = 0;
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		if (String(input).includes("/presentations/")) {
+			presentationRequests++;
+			if (presentationRequests === 1) return Response.json({}, { status: 503 });
+			return Response.json({
+				presentation: {
+					slides_data: {
+						status: "ready",
+						title: "Recovered saved deck",
+						theme: "corporate-blue",
+						slides: [{ id: "slide_saved", type: "content", blocks: [] }],
+					},
+				},
+			});
+		}
+		return new Response('id: 6\nevent: saved\ndata: {"presentation_id":"saved_presentation"}\n\n', {
+			status: 200,
+			headers: { "Content-Type": "text/event-stream" },
+		});
+	}) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<AwayPage />
+			</StreamingProvider>,
+		);
+		await waitFor(
+			() => {
+				expect(view.getByText("stopped:complete:1:saved_presentation:none")).toBeInTheDocument();
+			},
+			{ timeout: 3000 },
+		);
+		expect(presentationRequests).toBe(2);
+		expect(localStorage.getItem("slidesage-active-generation")).toBeNull();
+	} finally {
+		localStorage.removeItem("slidesage-active-generation");
 		globalThis.fetch = originalFetch;
 	}
 });

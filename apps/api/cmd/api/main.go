@@ -68,7 +68,6 @@ func main() {
 	cleanupContext, cancelCleanup := context.WithCancel(context.Background())
 	defer cancelCleanup()
 	go cleanupUnverifiedUsers(cleanupContext, service)
-	go recoverPointOperations(cleanupContext, database)
 
 	mux := http.NewServeMux()
 	auth.RegisterAuthRoutes(mux, service)
@@ -143,25 +142,6 @@ func cleanupUnverifiedUsers(ctx context.Context, service *auth.Service) {
 	}
 }
 
-func recoverPointOperations(ctx context.Context, database *sql.DB) {
-	recover := func() {
-		if err := generation.RecoverExpired(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
-			log.Printf("point operation recovery failed: %v", err)
-		}
-	}
-	recover()
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			recover()
-		}
-	}
-}
-
 func healthHandler(writer http.ResponseWriter, _ *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(http.StatusOK)
@@ -184,7 +164,8 @@ func withSecurity(next http.Handler) http.Handler {
 		if allowed[origin] {
 			writer.Header().Set("Access-Control-Allow-Origin", origin)
 			writer.Header().Set("Access-Control-Allow-Credentials", "true")
-			writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key")
+			writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key, Last-Event-ID")
+			writer.Header().Set("Access-Control-Expose-Headers", "X-Generation-Job-ID, X-Presentation-ID")
 			writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			writer.Header().Set("Access-Control-Max-Age", "86400")
 		}

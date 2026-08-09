@@ -15,6 +15,7 @@ if (typeof document === "undefined") {
 
 afterEach(() => {
 	cleanup();
+	window.localStorage.removeItem("slidesage-active-generation");
 	document.body.innerHTML = "";
 });
 

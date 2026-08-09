@@ -499,7 +499,27 @@ export interface StreamStartEvent {
 
 export interface StreamCreatedEvent {
 	event: "created";
-	data: { presentation_id: string | number };
+	data: { job_id?: string; presentation_id: string | number };
+}
+
+export type GenerationJobStatus =
+	| "queued"
+	| "running"
+	| "retrying"
+	| "succeeded"
+	| "failed"
+	| "cancelled";
+
+export interface GenerationJob {
+	id: string;
+	presentation_id: string;
+	kind: "generation" | "iteration";
+	status: GenerationJobStatus;
+	stage?: PresentationGenerationStage;
+	progress: { completed: number; total: number };
+	error?: string;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface StreamThemeEvent {

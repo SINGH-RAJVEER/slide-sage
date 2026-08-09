@@ -13,6 +13,7 @@
 		"dev": "just dev",
 		"dev:stream": "bun run dev",
 		"dev:api": "CGO_ENABLED=0 go -C apps/api run ./cmd/api",
+		"dev:worker": "CGO_ENABLED=0 go -C apps/api run ./cmd/worker",
 		"dev:web": "bun --cwd apps/web dev",
 		"test": "bun run test:api && bun run test:types && bun run test:ui && bun run test:web",
 		"test:api": "CGO_ENABLED=0 go -C apps/api test ./...",
