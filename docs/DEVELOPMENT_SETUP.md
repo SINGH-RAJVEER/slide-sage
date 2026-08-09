@@ -30,6 +30,10 @@ The Bun server exposes only `VITE_*` variables to browser bundles. If
 `VITE_API_URL` is absent during local development, browser API requests fall back
 to port `8000` on the same loopback hostname.
 
+The web entry stylesheet is `apps/web/styles.css`. It imports the shared UI
+stylesheet, which is split into global styles in `libs/ui/styles/base.css` and
+viewer styles in `libs/ui/styles/viewer.css`.
+
 Stop the foreground process with `Ctrl+C`. Devenv stops managed services with the
 development stack.
 
@@ -55,6 +59,22 @@ Run these from the repository root inside `devenv shell`.
 
 The repository uses a Go module for `apps/api` and a Bun workspace for the web,
 shared types, and UI packages. It does not use a separate monorepo task runner.
+
+## Project Structure
+
+The active application is split into three workspace areas:
+
+- `apps/api`: Go HTTP API, domain services, migrations, and integrations.
+- `apps/web`: Browser application shell, router, and route-level screens.
+- `libs/types`: Shared presentation, scene, and research types.
+- `libs/ui`: Shared React components, hooks, UI contexts, and client-side helpers.
+
+Web routes are grouped by domain under `apps/web/src/routes`: `auth`,
+`presentations`, `marketplace`, `settings`, and `billing`. Application startup and
+router infrastructure live under `apps/web/src/app`.
+
+The former TypeScript API has been removed. `apps/api` is the only API
+implementation and the only source of database migrations.
 
 ## API Load Testing
 

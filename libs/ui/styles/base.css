@@ -1,0 +1,157 @@
+/* Shared Tailwind sources and application-wide tokens. */
+@import "tailwindcss";
+@source "../components";
+@source "../hooks";
+@source "../lib";
+@source "../context";
+
+html,
+body {
+	overflow-x: hidden;
+	max-width: 100vw;
+	width: 100vw;
+	margin: 0;
+	padding: 0;
+	min-height: 100vh;
+	background-color: hsl(222 27% 12%);
+	background-image: radial-gradient(circle at top, hsl(220 20% 18%), hsl(222 27% 12%) 60%);
+	position: relative;
+}
+
+:root {
+	--background: hsl(0 0% 100%);
+	--foreground: hsl(240 10% 3.9%);
+	--card: hsl(0 0% 100%);
+	--card-foreground: hsl(240 10% 3.9%);
+	--popover: hsl(0 0% 100%);
+	--popover-foreground: hsl(240 10% 3.9%);
+	--primary: hsl(240 5.9% 10%);
+	--primary-foreground: hsl(0 0% 98%);
+	--secondary: hsl(240 4.8% 95.9%);
+	--secondary-foreground: hsl(240 5.9% 10%);
+	--muted: hsl(240 4.8% 95.9%);
+	--muted-foreground: hsl(240 3.8% 46.1%);
+	--accent: hsl(240 4.8% 95.9%);
+	--accent-foreground: hsl(240 5.9% 10%);
+	--destructive: hsl(0 84.2% 60.2%);
+	--destructive-foreground: hsl(0 0% 98%);
+	--border: hsl(240 5.9% 90%);
+	--input: hsl(240 5.9% 90%);
+	--ring: hsl(240 10% 3.9%);
+	--chart-1: hsl(12 76% 61%);
+	--chart-2: hsl(173 58% 39%);
+	--chart-3: hsl(197 37% 24%);
+	--chart-4: hsl(43 74% 66%);
+	--chart-5: hsl(27 87% 67%);
+	--radius: 0.6rem;
+	--sidebar-background: hsl(0 0% 98%);
+	--sidebar-foreground: hsl(240 5.3% 26.1%);
+	--sidebar-primary: hsl(240 5.9% 10%);
+	--sidebar-primary-foreground: hsl(0 0% 98%);
+	--sidebar-accent: hsl(240 4.8% 95.9%);
+	--sidebar-accent-foreground: hsl(240 5.9% 10%);
+	--sidebar-border: hsl(220 13% 91%);
+	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+	--ss-slide-width: 1280px;
+	--ss-slide-height: 720px;
+}
+
+.dark {
+	--background: hsl(240 10% 3.9%);
+	--foreground: hsl(0 0% 98%);
+	--card: hsl(240 10% 3.9%);
+	--card-foreground: hsl(0 0% 98%);
+	--popover: hsl(240 10% 3.9%);
+	--popover-foreground: hsl(0 0% 98%);
+	--primary: hsl(0 0% 98%);
+	--primary-foreground: hsl(240 5.9% 10%);
+	--secondary: hsl(240 3.7% 15.9%);
+	--secondary-foreground: hsl(0 0% 98%);
+	--muted: hsl(240 3.7% 15.9%);
+	--muted-foreground: hsl(240 5% 64.9%);
+	--accent: hsl(240 3.7% 15.9%);
+	--accent-foreground: hsl(0 0% 98%);
+	--destructive: hsl(0 62.8% 30.6%);
+	--destructive-foreground: hsl(0 0% 98%);
+	--border: hsl(240 3.7% 15.9%);
+	--input: hsl(240 3.7% 15.9%);
+	--ring: hsl(240 4.9% 83.9%);
+	--chart-1: hsl(220 70% 50%);
+	--chart-2: hsl(160 60% 45%);
+	--chart-3: hsl(30 80% 55%);
+	--chart-4: hsl(280 65% 60%);
+	--chart-5: hsl(340 75% 55%);
+	--sidebar-background: hsl(240 5.9% 10%);
+	--sidebar-foreground: hsl(240 4.8% 95.9%);
+	--sidebar-primary: hsl(224.3 76.3% 48%);
+	--sidebar-primary-foreground: hsl(0 0% 100%);
+	--sidebar-accent: hsl(240 3.7% 15.9%);
+	--sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+	--sidebar-border: hsl(240 3.7% 15.9%);
+	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+::view-transition-group(generation-prompt-input),
+::view-transition-old(generation-prompt-input),
+::view-transition-new(generation-prompt-input),
+::view-transition-group(generation-prompt-action),
+::view-transition-old(generation-prompt-action),
+::view-transition-new(generation-prompt-action) {
+	animation-duration: 480ms;
+	animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+	mix-blend-mode: normal;
+}
+
+.generation-prompt-input {
+	view-transition-name: generation-prompt-input;
+}
+
+.generation-prompt-action {
+	view-transition-name: generation-prompt-action;
+}
+
+::view-transition-group(generation-prompt-action) {
+	z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(generation-prompt-input),
+	::view-transition-old(generation-prompt-input),
+	::view-transition-new(generation-prompt-input),
+	::view-transition-group(generation-prompt-action),
+	::view-transition-old(generation-prompt-action),
+	::view-transition-new(generation-prompt-action) {
+		animation-duration: 0.01ms;
+	}
+}
+
+/* Shared browser control normalization. */
+.scrollbar-thin::-webkit-scrollbar {
+	height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track,
+.scrollbar-thin::-webkit-scrollbar-thumb,
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+	background: transparent;
+	border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+	pointer-events: none;
+}
+
+.scrollbar-thin {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+input.hide-number-spin::-webkit-outer-spin-button,
+input.hide-number-spin::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input.hide-number-spin[type="number"] {
+	-moz-appearance: textfield;
+}

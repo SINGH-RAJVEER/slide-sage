@@ -13,7 +13,7 @@ mock.module("@/contexts/AuthContext", () => ({
 	useAuth: () => authState,
 }));
 
-const { default: RequireSignedInLayout } = await import("@/router/RequireSignedInLayout");
+const { default: RequireSignedInLayout } = await import("@/app/router/RequireSignedInLayout");
 
 function CurrentLocation() {
 	const location = useLocation();
