@@ -41,7 +41,7 @@ not leave a placeholder or reserved balance behind. Reusing an
 reusing it with different input returns `409`. Submission responses expose the
 job and presentation IDs in `X-Generation-Job-ID` and `X-Presentation-ID`. If a
 connection fails before those headers arrive, the client can recover the job via
-`GET /generation-jobs/by-idempotency/{key}?kind=generation|iteration`.
+`GET /generation-jobs/idempotency/{key}/job?kind=generation|iteration`.
 
 The POST response remains an SSE response for compatibility, but provider work
 is not performed by the API process. Closing that response only stops that
@@ -84,7 +84,7 @@ All job endpoints require the authenticated owner of the job.
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/generation-jobs/{id}` | Return status, stage, progress, timestamps, presentation ID, kind, and any terminal error |
-| `GET` | `/generation-jobs/by-idempotency/{key}?kind=...` | Recover a committed job after an ambiguous submission connection failure |
+| `GET` | `/generation-jobs/idempotency/{key}/job?kind=...` | Recover a committed job after an ambiguous submission connection failure |
 | `GET` | `/generation-jobs/{id}/events` | Stream persisted events and continue tailing until a terminal event |
 | `POST` | `/generation-jobs/{id}/cancel` | Request cooperative cancellation of a queued, running, or retrying job |
 

@@ -51,7 +51,7 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
 	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
 	mux.HandleFunc("GET /generation-jobs/{id}", handler.jobStatus)
-	mux.HandleFunc("GET /generation-jobs/by-idempotency/{key}", handler.jobByIdempotency)
+	mux.HandleFunc("GET /generation-jobs/idempotency/{key}/job", handler.jobByIdempotency)
 	mux.HandleFunc("GET /generation-jobs/{id}/events", handler.jobEvents)
 	mux.HandleFunc("POST /generation-jobs/{id}/cancel", handler.cancelJob)
 }

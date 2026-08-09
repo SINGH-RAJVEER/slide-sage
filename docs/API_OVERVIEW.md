@@ -266,7 +266,7 @@ can use the query parameter.
 Submission SSE responses expose `X-Generation-Job-ID` and `X-Presentation-ID`
 as soon as response headers are available. If the connection fails before those
 headers arrive, an authenticated client can recover the committed job with
-`GET /generation-jobs/by-idempotency/{key}?kind=generation|iteration` and then
+`GET /generation-jobs/idempotency/{key}/job?kind=generation|iteration` and then
 open its event stream. Clients should persist the idempotency key before sending
 the submission to avoid creating duplicate charged work after an ambiguous
 network failure.

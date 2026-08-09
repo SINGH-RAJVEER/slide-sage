@@ -1379,7 +1379,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				}
 				try {
 					const response = await fetch(
-						`${API_URL}/generation-jobs/by-idempotency/${encodeURIComponent(stored.idempotencyKey)}?kind=${stored.operation}`,
+						`${API_URL}/generation-jobs/idempotency/${encodeURIComponent(stored.idempotencyKey)}/job?kind=${stored.operation}`,
 						{ credentials: "include", signal: controller.signal },
 					);
 					if (response.status === 401 || response.status === 403) {

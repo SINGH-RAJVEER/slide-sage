@@ -53,3 +53,12 @@ func TestGenerationJobQueueOptions(t *testing.T) {
 		t.Fatalf("unexpected queue options: %#v", options)
 	}
 }
+
+func TestGenerationJobRoutePatternsDoNotConflict(t *testing.T) {
+	mux := http.NewServeMux()
+	handler := func(http.ResponseWriter, *http.Request) {}
+	mux.HandleFunc("GET /generation-jobs/{id}", handler)
+	mux.HandleFunc("GET /generation-jobs/idempotency/{key}/job", handler)
+	mux.HandleFunc("GET /generation-jobs/{id}/events", handler)
+	mux.HandleFunc("POST /generation-jobs/{id}/cancel", handler)
+}

@@ -375,7 +375,7 @@ it("discovers a committed job when the POST fails before response headers", asyn
 	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
 		requestCount++;
 		if (requestCount === 1) throw new TypeError("Connection closed before headers");
-		if (String(input).includes("/by-idempotency/")) {
+		if (String(input).includes("/idempotency/")) {
 			lookupURL = String(input);
 			return Response.json({
 				id: "discovered_job",
@@ -399,7 +399,8 @@ it("discovers a committed job when the POST fails before response headers", asyn
 		await waitFor(() => {
 			expect(view.getByTestId("generation-state")).toHaveTextContent("complete:no-error");
 		});
-		expect(lookupURL).toContain("/generation-jobs/by-idempotency/");
+		expect(lookupURL).toContain("/generation-jobs/idempotency/");
+		expect(lookupURL).toContain("/job?kind=generation");
 		expect(lookupURL).toContain("?kind=generation");
 		expect(requestCount).toBe(3);
 	} finally {
@@ -414,7 +415,7 @@ it("discovers a committed job after an ambiguous gateway failure", async () => {
 	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
 		requestCount++;
 		if (requestCount === 1) return new Response("Bad gateway", { status: 502 });
-		if (String(input).includes("/by-idempotency/")) {
+		if (String(input).includes("/idempotency/")) {
 			return Response.json({ id: "gateway_job", presentation_id: "gateway_presentation" });
 		}
 		return new Response(
