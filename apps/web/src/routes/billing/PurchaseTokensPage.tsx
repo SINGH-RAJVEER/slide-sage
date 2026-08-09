@@ -211,11 +211,11 @@ export default function PurchaseTokensPage() {
 	};
 
 	return (
-		<div className="h-screen overflow-hidden bg-transparent flex flex-col">
+		<div className="flex h-dvh flex-col overflow-hidden bg-transparent">
 			<Header />
 
 			{/* Main Content */}
-			<div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+			<div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:px-8 md:py-8">
 				<div className="w-full max-w-[1800px] mx-auto relative">
 					<div className="mb-6 flex items-center justify-start gap-4">
 						<h1 className="text-2xl font-semibold text-white md:text-3xl">Purchase Points</h1>

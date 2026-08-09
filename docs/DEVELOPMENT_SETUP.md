@@ -146,6 +146,14 @@ job; runtime startup does not apply schema changes.
 Devenv may move PostgreSQL from `5432` when the port is occupied. Use the active
 `PGPORT` for direct database commands.
 
+## Mobile Layouts
+
+The primary generation, research, presentation, marketplace, billing, and viewer
+flows support phone-sized portrait viewports. Verify changes at 320px and 375px
+wide in both normal and fullscreen viewer modes. Mobile controls reflow rather
+than relying on horizontal page scrolling; fullscreen and iterate actions remain
+reachable with touch input and safe-area padding.
+
 ## Reset PostgreSQL
 
 This permanently deletes local development data:

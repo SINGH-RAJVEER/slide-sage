@@ -1,9 +1,7 @@
-import type { ThemeId } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { Globe } from "lucide-react";
 import type React from "react";
 import { DetailLevelSelector } from "./DetailLevelSelector";
-import { GenerationThemeSelector, type InstalledThemeOption } from "./GenerationThemeSelector";
 import { SlideCountSelector } from "./SlideCountSelector";
 import { TonalitySelector } from "./TonalitySelector";
 
@@ -14,15 +12,12 @@ interface GenerateOptionsBarProps {
 	slideCountMode: string;
 	slideCount: string;
 	customSlideCount: string;
-	theme: ThemeId;
 	onDetailLevelChange: (level: string) => void;
 	onTonalityChange: (tonality: string) => void;
 	onUseWebResearchChange: (enabled: boolean) => void;
 	onSlideCountModeChange: (mode: string) => void;
 	onSlideCountChange: (count: string) => void;
 	onCustomSlideCountChange: (count: string) => void;
-	onThemeChange: (theme: ThemeId) => void;
-	installedThemes?: InstalledThemeOption[];
 }
 
 export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
@@ -32,19 +27,16 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 	slideCountMode,
 	slideCount,
 	customSlideCount,
-	theme,
 	onDetailLevelChange,
 	onTonalityChange,
 	onUseWebResearchChange,
 	onSlideCountModeChange,
 	onSlideCountChange,
 	onCustomSlideCountChange,
-	onThemeChange,
-	installedThemes = [],
 }) => {
 	return (
 		<div className="mb-2 w-full flex items-center justify-center">
-			<div className="flex w-fit max-w-full flex-nowrap items-center justify-start gap-3 overflow-x-auto whitespace-nowrap rounded-lg border border-white/10 bg-black/20 px-4 py-3 custom-scrollbar xl:justify-center">
+			<div className="flex w-full max-w-full flex-wrap items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-3 sm:w-fit sm:flex-nowrap sm:justify-start sm:gap-3 sm:overflow-x-auto sm:px-4 sm:whitespace-nowrap sm:custom-scrollbar xl:justify-center">
 				<div className="flex items-center gap-2 shrink-0">
 					<Button
 						type="button"
@@ -65,11 +57,6 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 
 				<DetailLevelSelector detailLevel={detailLevel} onDetailLevelChange={onDetailLevelChange} />
 				<TonalitySelector tonality={tonality} onTonalityChange={onTonalityChange} />
-				<GenerationThemeSelector
-					theme={theme}
-					onThemeChange={onThemeChange}
-					installedThemes={installedThemes}
-				/>
 				<SlideCountSelector
 					slideCountMode={slideCountMode}
 					slideCount={slideCount}

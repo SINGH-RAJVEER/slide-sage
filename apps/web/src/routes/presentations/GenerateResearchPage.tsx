@@ -167,9 +167,9 @@ export default function GenerateResearchPage() {
 	}, [handleProceed]);
 
 	return (
-		<div className="h-screen overflow-hidden bg-transparent flex flex-col">
+		<div className="flex h-dvh flex-col overflow-hidden bg-transparent">
 			<Header />
-			<div className="flex-1 overflow-y-auto relative">
+			<div className="relative min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
 				<button
 					type="button"
 					onClick={() => navigate(-1)}
@@ -183,9 +183,6 @@ export default function GenerateResearchPage() {
 					<div className="space-y-8">
 						<div className="text-center">
 							<h2 className="text-3xl font-semibold text-white md:text-4xl">Research Insights</h2>
-							<p className="mt-3 text-lg font-medium text-white/60">
-								Research costs 1 point when a search succeeds.
-							</p>
 						</div>
 
 						{researchStatus === "error" && (
@@ -215,16 +212,16 @@ export default function GenerateResearchPage() {
 								)}
 							</div>
 
-							<div className="max-h-[62vh] overflow-auto rounded-md border border-white/10 bg-black/15">
+							<div className="max-h-[62dvh] overflow-auto rounded-md border border-white/10 bg-black/15">
 								<table
-									className="w-full min-w-[880px] table-fixed text-left"
+									className="w-full min-w-full table-fixed text-left md:min-w-[880px]"
 									aria-label="Research sources"
 								>
 									<colgroup>
-										<col className="w-[28%]" />
-										<col className="w-[48%]" />
-										<col className="w-[17%]" />
-										<col className="w-[7%]" />
+										<col className="w-auto md:w-[28%]" />
+										<col className="hidden md:table-column md:w-[48%]" />
+										<col className="hidden md:table-column md:w-[17%]" />
+										<col className="w-14 md:w-[7%]" />
 									</colgroup>
 									<thead className="sticky top-0 z-20 bg-[hsl(222,27%,12%)]">
 										<tr className="border-b border-white/10 bg-white/[0.025]">
@@ -236,13 +233,13 @@ export default function GenerateResearchPage() {
 											</th>
 											<th
 												scope="col"
-												className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
+												className="sticky top-0 hidden bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45 md:table-cell"
 											>
 												Research note
 											</th>
 											<th
 												scope="col"
-												className="sticky top-0 bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45"
+												className="sticky top-0 hidden bg-[hsl(222,27%,12%)] px-4 py-3 text-xs font-medium text-white/45 md:table-cell"
 											>
 												Details
 											</th>
@@ -271,15 +268,20 @@ export default function GenerateResearchPage() {
 															<p className="mt-1 truncate text-xs text-white/35">
 																{getSourceLabel(source.url)}
 															</p>
+															<p className="mt-3 line-clamp-4 whitespace-pre-line text-sm leading-6 text-white/60 md:hidden">
+																{source.summary ||
+																	source.snippet ||
+																	"No preview available for this source."}
+															</p>
 														</td>
-														<td className="px-5 py-5 align-top">
+														<td className="hidden px-5 py-5 align-top md:table-cell">
 															<p className="line-clamp-4 whitespace-pre-line text-sm leading-6 text-white/60">
 																{source.summary ||
 																	source.snippet ||
 																	"No preview available for this source."}
 															</p>
 														</td>
-														<td className="px-5 py-5 align-top text-xs leading-5 text-white/45">
+														<td className="hidden px-5 py-5 align-top text-xs leading-5 text-white/45 md:table-cell">
 															{source.author || source.published_date ? (
 																<div className="space-y-0.5">
 																	{source.author && (
@@ -323,11 +325,11 @@ export default function GenerateResearchPage() {
 														<div className="mb-2 h-4 w-4/5 rounded bg-white/5" />
 														<div className="h-3 w-2/5 rounded bg-white/5" />
 													</td>
-													<td className="px-4 py-5">
+													<td className="hidden px-4 py-5 md:table-cell">
 														<div className="mb-2 h-3 w-full rounded bg-white/5" />
 														<div className="h-3 w-3/4 rounded bg-white/5" />
 													</td>
-													<td className="px-4 py-5">
+													<td className="hidden px-4 py-5 md:table-cell">
 														<div className="h-3 w-2/3 rounded bg-white/5" />
 													</td>
 													<td className="sticky right-0 bg-background/95 px-3 py-5">

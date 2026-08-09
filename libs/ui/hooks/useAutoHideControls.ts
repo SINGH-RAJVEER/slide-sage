@@ -27,12 +27,14 @@ export function useAutoHideControls({
 		};
 
 		scheduleHide();
-		window.addEventListener("mousemove", handleActivity, { passive: true });
+		window.addEventListener("pointermove", handleActivity, { passive: true });
+		window.addEventListener("pointerdown", handleActivity, { passive: true });
 		window.addEventListener("keydown", handleActivity);
 
 		return () => {
 			if (timerRef.current) clearTimeout(timerRef.current);
-			window.removeEventListener("mousemove", handleActivity);
+			window.removeEventListener("pointermove", handleActivity);
+			window.removeEventListener("pointerdown", handleActivity);
 			window.removeEventListener("keydown", handleActivity);
 		};
 	}, [enabled, hideAfterMs]);

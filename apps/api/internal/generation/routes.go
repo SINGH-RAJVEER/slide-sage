@@ -762,7 +762,7 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, re
 	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": job.theme}); err != nil {
 		return 0, 0, err
 	}
-	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Structuring the narrative", "completed": 1, "total": 3}); err != nil {
+	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Preparing presentation", "completed": 1, "total": 3}); err != nil {
 		return 0, 0, err
 	}
 	if err := tx.Commit(); err != nil {

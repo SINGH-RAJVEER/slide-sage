@@ -5,12 +5,15 @@ import IterateModal from "@slidesage/ui/components/Viewer/IterateModal";
 import { fireEvent, render } from "@testing-library/react";
 
 it("renders a single accessible form only while open", () => {
+	const onOpenChange = mock(() => {});
 	const view = render(
-		<IterateModal open={true} onOpenChange={mock()} onIterate={mock()} isStreaming={false} />,
+		<IterateModal open={true} onOpenChange={onOpenChange} onIterate={mock()} isStreaming={false} />,
 	);
 
 	expect(view.getAllByRole("textbox")).toHaveLength(1);
 	expect(document.querySelectorAll("#iteratePrompt")).toHaveLength(1);
+	fireEvent.click(view.getByRole("button", { name: "Close iterate sidebar" }));
+	expect(onOpenChange).toHaveBeenCalledWith(false);
 
 	view.unmount();
 	const closedView = render(

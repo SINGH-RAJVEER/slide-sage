@@ -15,8 +15,6 @@ interface ViewerSlideCarouselProps {
 	containerRef: React.RefObject<HTMLDivElement | null>;
 	onSelectSlide: (index: number) => void;
 	isWaitingForFirstSlide?: boolean;
-	generationMessage?: string;
-	generationProgress?: number;
 	savingEdit?: boolean;
 	onSaveEdit?: (slide: ContentSlide | SceneSlide) => Promise<void>;
 	onCancelEdit?: () => void;
@@ -30,8 +28,6 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 	containerRef,
 	onSelectSlide,
 	isWaitingForFirstSlide = false,
-	generationMessage = "Preparing your presentation",
-	generationProgress = 0,
 	savingEdit = false,
 	onSaveEdit,
 	onCancelEdit,
@@ -39,7 +35,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 	return (
 		<div
 			className="viewer-slide-area flex-1 mt-3 flex flex-col"
-			style={{ maxHeight: "calc(100vh - 40px - 28px - 48px - 56px)" }}
+			style={{ maxHeight: "calc(100dvh - 40px - 28px - 48px - 56px)" }}
 		>
 			<div
 				ref={containerRef}
@@ -58,29 +54,8 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 					>
 						<div className="ss-slide-stage flex-shrink-0">
 							<Card className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[hsl(222,27%,12%)] shadow-2xl">
-								<div className="flex flex-col items-center gap-4 text-center text-white/70">
+								<div className="flex items-center justify-center text-white/70">
 									<Spinner className="size-8 text-blue-400" />
-									<div aria-live="polite">
-										<p className="text-sm font-medium text-white/85">
-											Generating your presentation
-										</p>
-										<p className="mt-1 text-xs text-white/40">{generationMessage}</p>
-										<div
-											role="progressbar"
-											aria-label={generationMessage}
-											aria-valuemin={0}
-											aria-valuemax={100}
-											aria-valuenow={Math.round(generationProgress * 100)}
-											className="mx-auto mt-3 h-1 w-40 overflow-hidden rounded-full bg-white/10"
-										>
-											<div
-												className="h-full origin-left rounded-full bg-blue-400 transition-transform duration-500"
-												style={{
-													transform: `scaleX(${generationProgress})`,
-												}}
-											/>
-										</div>
-									</div>
 								</div>
 							</Card>
 						</div>

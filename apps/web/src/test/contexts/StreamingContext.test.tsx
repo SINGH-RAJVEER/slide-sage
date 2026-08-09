@@ -133,7 +133,7 @@ it("continues processing and publishes the saved deck after the initiating page 
 			streamController?.enqueue(
 				encoder.encode(
 					'event: created\ndata: {"presentation_id":"presentation_1"}\n\n' +
-						'event: stage\ndata: {"stage":"planning","message":"Structuring the narrative","completed":1,"total":4}\n\n' +
+						'event: stage\ndata: {"stage":"planning","message":"Preparing presentation","completed":1,"total":4}\n\n' +
 						'event: outline\ndata: {"title":"Background deck","audience":"Leaders","thesis":"A thesis","cards":[]}\n\n' +
 						'event: slide\ndata: {"slide":{"id":"slide_draft","type":"content","content":{}},"index":0,"title":"Background deck"}\n\n' +
 						'event: slide\ndata: {"slide":{"id":"slide_1","type":"content","content":{}},"index":0,"title":"Background deck"}\n\n' +

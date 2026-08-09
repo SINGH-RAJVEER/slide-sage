@@ -55,17 +55,17 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 	onMouseEnter,
 }) => {
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: UI hover effect
 		<div
 			className={`
-        fixed bottom-4 left-1/2 transform -translate-x-1/2
-        flex items-center gap-4 bg-black/50 backdrop-blur-md rounded-full px-6 py-3
-        transition-opacity duration-300
-        ${showControls ? "opacity-100" : "opacity-0"}
-      `}
-			onMouseEnter={onMouseEnter}
+				fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2
+				flex flex-col gap-2 rounded-2xl bg-black/50 px-3 py-3 backdrop-blur-md
+				sm:w-auto sm:max-w-none sm:flex-row sm:gap-4 sm:rounded-full sm:px-6
+				transition-opacity duration-300
+				${showControls ? "opacity-100" : "pointer-events-none opacity-0"}
+			`}
+			onPointerEnter={onMouseEnter}
 		>
-			<div className="flex items-center gap-2">
+			<div className="flex w-full items-center gap-2 sm:w-auto">
 				{intervalMode === "preset" ? (
 					<Select
 						value={slideInterval.toString()}
@@ -79,7 +79,7 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 							}
 						}}
 					>
-						<SelectTrigger className="w-24 text-white bg-transparent border-0 shadow-none hover:bg-white/20">
+						<SelectTrigger className="h-11 w-24 text-white bg-transparent border-0 shadow-none hover:bg-white/20">
 							{!["2", "3", "5", "10", "15"].includes(slideInterval.toString()) &&
 							slideInterval !== 0 ? (
 								<span>{slideInterval}s</span>
@@ -129,7 +129,7 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 								setIntervalMode("preset");
 							}
 						}}
-						className="w-24 px-3 py-2 rounded-md border bg-transparent border-0 shadow-none text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 hide-number-spin"
+						className="h-11 w-24 rounded-md border border-0 bg-transparent px-3 py-2 text-white shadow-none hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 hide-number-spin"
 						placeholder="Custom (s)"
 						inputMode="numeric"
 						style={{ MozAppearance: "textfield" }}
@@ -139,7 +139,7 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 				<Button
 					onClick={onTogglePlayback}
 					variant="ghost"
-					className="text-white hover:bg-white/20"
+					className="h-11 flex-1 text-white hover:bg-white/20 sm:flex-none"
 					disabled={playbackDisabled}
 				>
 					{isPlaying ? (
@@ -156,12 +156,13 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 				</Button>
 			</div>
 
-			<div className="flex items-center gap-2">
+			<div className="grid w-full grid-cols-5 gap-1 sm:flex sm:w-auto sm:items-center sm:gap-2">
 				<Button
 					variant="ghost"
 					onClick={onFirst}
 					disabled={currentSlide === 0}
-					className="text-white hover:bg-white/20"
+					className="size-11 text-white hover:bg-white/20"
+					aria-label="First slide"
 				>
 					<SkipBack className="w-5 h-5" />
 				</Button>
@@ -169,7 +170,8 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 					variant="ghost"
 					onClick={onPrev}
 					disabled={currentSlide === 0}
-					className="text-white hover:bg-white/20"
+					className="size-11 text-white hover:bg-white/20"
+					aria-label="Previous slide"
 				>
 					<ChevronLeft className="w-5 h-5" />
 				</Button>
@@ -177,7 +179,8 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 					variant="ghost"
 					onClick={onNext}
 					disabled={currentSlide === totalSlides - 1}
-					className="text-white hover:bg-white/20"
+					className="size-11 text-white hover:bg-white/20"
+					aria-label="Next slide"
 				>
 					<ChevronRight className="w-5 h-5" />
 				</Button>
@@ -185,11 +188,17 @@ export const ViewerFullscreenOverlayControls: React.FC<ViewerFullscreenOverlayCo
 					variant="ghost"
 					onClick={onLast}
 					disabled={currentSlide === totalSlides - 1}
-					className="text-white hover:bg-white/20"
+					className="size-11 text-white hover:bg-white/20"
+					aria-label="Last slide"
 				>
 					<SkipForward className="w-5 h-5" />
 				</Button>
-				<Button variant="ghost" onClick={onExit} className="text-white hover:bg-white/20">
+				<Button
+					variant="ghost"
+					onClick={onExit}
+					className="size-11 px-0 text-xs text-white hover:bg-white/20"
+					aria-label="Exit presentation"
+				>
 					Exit
 				</Button>
 			</div>

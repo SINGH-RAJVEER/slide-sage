@@ -44,12 +44,6 @@ it("prefills a failed presentation prompt and generation options", () => {
 	expect(view.getByDisplayValue("12")).toBeInTheDocument();
 	expect(view.getByText("Comprehensive")).toBeInTheDocument();
 	expect(view.getByText("Casual")).toBeInTheDocument();
-	expect(view.getByText("Nature Green")).toBeInTheDocument();
-	expect(view.getByText("Model usage is charged from measured provider tokens.")).toHaveClass(
-		"absolute",
-		"mt-4",
-		"text-lg",
-	);
 	expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
 	expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled();
 });

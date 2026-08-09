@@ -1,7 +1,6 @@
 import type { PresentationRetryOptions, ThemeId } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
-import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { fetchAIConfiguration } from "@slidesage/ui/lib/ai-connections";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
@@ -32,11 +31,10 @@ export default function GeneratePPTPage() {
 	const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
-	const [theme, setTheme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
+	const [theme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
 	const [generationMode, setGenerationMode] = useState<"openrouter" | "byok">("openrouter");
 	const navigate = useNavigate();
 	const { streamingState, startStreaming } = useStreaming();
-	const installedThemes = useInstalledMarketplaceThemes();
 
 	useEffect(() => {
 		void fetchAIConfiguration()
@@ -145,24 +143,19 @@ export default function GeneratePPTPage() {
 					slideCountMode={slideCountMode}
 					slideCount={slideCount}
 					customSlideCount={customSlideCount}
-					theme={theme}
 					onDetailLevelChange={setDetailLevel}
 					onTonalityChange={setTonality}
 					onUseWebResearchChange={setUseWebResearch}
 					onSlideCountModeChange={setSlideCountMode}
 					onSlideCountChange={setSlideCount}
 					onCustomSlideCountChange={setCustomSlideCount}
-					onThemeChange={setTheme}
-					installedThemes={installedThemes}
 				/>
-				{prompt.trim() && (
+				{prompt.trim() && generationMode === "byok" && (
 					<p
 						data-generation-estimate
 						className="absolute top-full mt-4 text-center text-lg font-medium text-white/80"
 					>
-						{generationMode === "byok"
-							? `Model usage is billed by your provider${useWebResearch ? ". Research costs 1 point on success." : "."}`
-							: "Model usage is charged from measured provider tokens."}
+						{`Model usage is billed by your provider${useWebResearch ? ". Research costs 1 point on success." : "."}`}
 					</p>
 				)}
 			</div>

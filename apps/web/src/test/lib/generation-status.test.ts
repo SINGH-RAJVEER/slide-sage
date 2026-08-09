@@ -7,10 +7,10 @@ describe("generation display status", () => {
 			getGenerationDisplayStatus({
 				slides: [],
 				requestedSlides: 5,
-				generationMessage: "Structuring the narrative",
+				generationMessage: "Preparing presentation",
 				generationProgress: { completed: 1, total: 4 },
 			}),
-		).toEqual({ message: "Structuring the narrative", progress: 0.25 });
+		).toEqual({ message: "Preparing presentation", progress: 0.25 });
 	});
 
 	it("uses research and slide progress fallbacks before stages arrive", () => {

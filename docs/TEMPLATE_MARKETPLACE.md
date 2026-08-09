@@ -13,7 +13,7 @@ navy application shell.
 - Search theme and creator metadata and sort the catalog.
 - Upvote designs for the active user in this browser.
 - Remove previously added themes from the installed collection.
-- Add supported marketplace themes to the Generate and Viewer theme dropdowns.
+- Add supported marketplace themes to the Viewer theme dropdown.
 - Show a disabled `Contribute a theme` toolbar action for the future theme editor.
 - Use a responsive navigation tab and catalog layout on desktop and mobile.
 - Use a centered, flexible marketplace search field with contribution and sorting actions anchored

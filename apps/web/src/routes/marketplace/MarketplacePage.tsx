@@ -98,9 +98,9 @@ export default function MarketplacePage() {
 	};
 
 	return (
-		<div className="flex h-screen flex-col overflow-hidden bg-transparent text-white">
+		<div className="flex h-dvh flex-col overflow-hidden bg-transparent text-white">
 			<Header />
-			<main className="min-h-0 flex-1 overflow-y-auto pb-20">
+			<main className="min-h-0 flex-1 overflow-y-auto pb-[max(5rem,env(safe-area-inset-bottom))]">
 				<section className="px-4 py-8 md:px-8 md:py-12">
 					<div className="mx-auto max-w-7xl">
 						<div className="grid gap-3 border-b border-white/10 pb-6 md:grid-cols-[auto_minmax(16rem,1fr)_auto] md:items-center">

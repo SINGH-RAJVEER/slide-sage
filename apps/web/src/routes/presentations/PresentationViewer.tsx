@@ -33,7 +33,6 @@ import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
-import { getGenerationDisplayStatus } from "@slidesage/ui/lib/generation-status";
 import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
 import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
@@ -274,7 +273,6 @@ export default function PresentationViewerPage() {
 			totalSlides: 0,
 		} satisfies PresentationData);
 	const hasSlides = viewerPresentation.slides.length > 0;
-	const generationStatus = getGenerationDisplayStatus(streamingState);
 	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
 	const activeContentSlide =
 		activeSlide && isContentSlide(activeSlide)
@@ -356,17 +354,13 @@ export default function PresentationViewerPage() {
 	};
 
 	return (
-		<div
-			className="presentation-viewer flex min-h-screen bg-transparent p-0"
-			style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
-		>
+		<div className="presentation-viewer flex h-dvh min-h-dvh max-h-dvh bg-transparent p-0">
 			<div
 				className={
 					isFullscreenMode
-						? "h-screen w-screen flex flex-col"
+						? "flex h-dvh w-screen flex-col"
 						: "presentation-viewer__shell mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
 				}
-				style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
 			>
 				{showControls && !isFullscreenMode && (
 					<ViewerHeaderControls
@@ -394,8 +388,6 @@ export default function PresentationViewerPage() {
 						currentTemplate={currentTemplate}
 						containerRef={slideContainerRef}
 						isWaitingForFirstSlide={shouldShowGenerating}
-						generationMessage={generationStatus.message}
-						generationProgress={generationStatus.progress}
 						onSelectSlide={(idx) => {
 							if (idx !== navigation.currentSlide) {
 								playback.stop();

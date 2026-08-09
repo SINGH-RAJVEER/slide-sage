@@ -3,7 +3,7 @@ import { DialogHeader } from "@slidesage/ui/components/dialog";
 import { Spinner } from "@slidesage/ui/components/spinner";
 import { Textarea } from "@slidesage/ui/components/textarea";
 import { Globe, Sparkles, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface IterateModalProps {
 	open: boolean;
@@ -19,7 +19,7 @@ interface IterateModalProps {
 }
 
 const panelClassName =
-	"flex h-dvh w-[28rem] flex-col gap-0 overflow-hidden border-l border-white/10 bg-[hsl(222_27%_12%)] bg-[radial-gradient(circle_at_top,hsl(220_20%_18%),hsl(222_27%_12%)_60%)] text-white shadow-2xl";
+	"flex h-dvh w-full flex-col gap-0 overflow-hidden border-l border-white/10 bg-[hsl(222_27%_12%)] bg-[radial-gradient(circle_at_top,hsl(220_20%_18%),hsl(222_27%_12%)_60%)] text-white shadow-2xl sm:w-[28rem]";
 const detailLevels = ["brief", "concise", "balanced", "detailed", "comprehensive"];
 const tonalities = ["professional", "casual", "enthusiastic", "persuasive"];
 const optionClassName =
@@ -39,6 +39,15 @@ export default function IterateModal({
 	const [tonality, setTonality] = useState("professional");
 	const [useWebResearch, setUseWebResearch] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+	useEffect(() => {
+		if (!open) return;
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === "Escape") onOpenChange(false);
+		};
+		window.addEventListener("keydown", closeOnEscape);
+		return () => window.removeEventListener("keydown", closeOnEscape);
+	}, [onOpenChange, open]);
 
 	const handlePromptChange = (value: string) => {
 		setIteratePrompt(value);
@@ -63,11 +72,11 @@ export default function IterateModal({
 
 	const panelContent = (
 		<>
-			<DialogHeader className="relative space-y-2 border-b border-white/10 px-6 py-5 pr-14 text-left">
+			<DialogHeader className="relative space-y-2 border-b border-white/10 px-5 py-4 pr-16 text-left sm:px-6 sm:py-5">
 				<button
 					type="button"
 					onClick={() => onOpenChange(false)}
-					className="absolute right-4 top-4 hidden size-8 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white xl:flex"
+					className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white sm:right-4 sm:top-4"
 					aria-label="Close iterate sidebar"
 				>
 					<X className="size-4" />
@@ -244,7 +253,7 @@ export default function IterateModal({
 					</div>
 				</div>
 			</div>
-			<div className="border-t border-white/10 bg-black/20 px-6 py-4 backdrop-blur-xl">
+			<div className="border-t border-white/10 bg-black/20 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-6">
 				<Button
 					onClick={handleSubmit}
 					disabled={!iteratePrompt.trim() || isStreaming}
@@ -269,11 +278,19 @@ export default function IterateModal({
 	if (!open) return null;
 
 	return (
-		<aside
-			className={`${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0`}
-			aria-label="Iterate on presentation"
-		>
-			{panelContent}
-		</aside>
+		<>
+			<button
+				type="button"
+				className="fixed inset-0 z-40 bg-black/45 xl:hidden"
+				onClick={() => onOpenChange(false)}
+				aria-label="Dismiss iterate panel"
+			/>
+			<aside
+				className={`${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0`}
+				aria-label="Iterate on presentation"
+			>
+				{panelContent}
+			</aside>
+		</>
 	);
 }

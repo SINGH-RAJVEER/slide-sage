@@ -24,8 +24,6 @@ it("renders a blank loading slide before the first streamed slide", () => {
 			containerRef={createRef<HTMLDivElement>()}
 			onSelectSlide={mock()}
 			isWaitingForFirstSlide={true}
-			generationMessage="Structuring the narrative"
-			generationProgress={0.25}
 		/>,
 	);
 
@@ -33,12 +31,6 @@ it("renders a blank loading slide before the first streamed slide", () => {
 		view.getByRole("option", { name: "Waiting for the first generated slide" }),
 	).toBeInTheDocument();
 	expect(view.getByRole("status", { name: "Loading" })).toBeInTheDocument();
-	expect(view.getByText("Generating your presentation")).toBeInTheDocument();
-	expect(view.getByText("Structuring the narrative")).toBeInTheDocument();
-	expect(view.getByRole("progressbar", { name: "Structuring the narrative" })).toHaveAttribute(
-		"aria-valuenow",
-		"25",
-	);
 });
 
 it("keeps empty-presentation controls visible and disabled", () => {

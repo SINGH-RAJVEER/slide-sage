@@ -59,8 +59,7 @@ describe("GenerateResearchPage", () => {
 			);
 
 			await waitFor(() => expect(view.getByText("Saved source")).toBeInTheDocument());
-			expect(view.getByText("Stored with the failed presentation.")).toBeInTheDocument();
-			expect(view.getByText("Research costs 1 point when a search succeeds.")).toBeInTheDocument();
+			expect(view.getAllByText("Stored with the failed presentation.")).not.toHaveLength(0);
 			expect(view.getByText("Proceed to Generate").closest("button")).not.toBeDisabled();
 			expect(fetchMock).not.toHaveBeenCalled();
 		} finally {
@@ -137,8 +136,7 @@ describe("GenerateResearchPage", () => {
 				expect(view.getByText("Battery storage outlook")).toBeInTheDocument();
 			});
 			expect(view.getByRole("table", { name: "Research sources" })).toBeInTheDocument();
-			expect(view.getByText("A complete source preview.")).toBeInTheDocument();
-			expect(view.getByText("Research costs 1 point when a search succeeds.")).toBeInTheDocument();
+			expect(view.getAllByText("A complete source preview.")).not.toHaveLength(0);
 			const sourceLink = view.getByRole("link", {
 				name: "Open source: Battery storage outlook",
 			});
@@ -235,8 +233,9 @@ describe("GenerateResearchPage", () => {
 			await waitFor(() => {
 				expect(view.getByText("Storage policy update")).toBeInTheDocument();
 			});
-			expect(view.getByText("The request completed while the page was away.")).toBeInTheDocument();
-			expect(view.getByText("Research costs 1 point when a search succeeds.")).toBeInTheDocument();
+			expect(view.getAllByText("The request completed while the page was away.")).not.toHaveLength(
+				0,
+			);
 			expect(fetchMock).toHaveBeenCalledTimes(1);
 		} finally {
 			globalThis.fetch = originalFetch;

@@ -97,7 +97,7 @@ export function Header({
 				sticky && "sticky top-0 z-50",
 			)}
 		>
-			<div className="grid h-20 w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-4 md:grid-cols-3 md:px-10 md:py-5">
+			<div className="grid min-h-16 w-full grid-cols-[auto_1fr] items-center gap-3 px-4 py-3 md:h-20 md:grid-cols-3 md:px-10 md:py-5">
 				<div className="flex items-center md:w-full">
 					<LinkComponent to={routes.home} aria-label="Go to home">
 						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain md:h-12" />
@@ -105,8 +105,8 @@ export function Header({
 				</div>
 
 				{!isAuthPage && (
-					<div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-						<nav className="flex w-max items-center gap-1 md:mx-auto md:gap-2">
+					<div className="order-3 col-span-2 -mx-4 min-w-0 overflow-x-auto border-t border-white/10 px-4 py-2 md:order-none md:col-span-1 md:mx-0 md:border-0 md:px-0 md:py-0">
+						<nav className="flex min-w-max items-center gap-1 md:mx-auto md:w-max md:gap-2">
 							{[
 								[routes.generate, "Generate"],
 								[routes.presentations, "Presentations"],
@@ -116,7 +116,7 @@ export function Header({
 									key={path}
 									to={path as string}
 									className={cn(
-										"rounded-lg px-3 py-2 text-sm font-medium transition-colors md:px-4 md:py-2.5 md:text-base",
+										"flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors md:min-h-0 md:px-4 md:py-2.5 md:text-base",
 										isActive(path as string)
 											? "bg-white/10 text-white"
 											: "text-white/70 hover:bg-white/5 hover:text-white",

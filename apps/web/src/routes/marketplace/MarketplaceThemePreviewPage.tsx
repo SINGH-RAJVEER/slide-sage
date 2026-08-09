@@ -55,17 +55,13 @@ export default function MarketplaceThemePreviewPage() {
 	};
 
 	return (
-		<div
-			className="flex min-h-screen bg-transparent p-0"
-			style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
-		>
+		<div className="flex h-dvh min-h-dvh max-h-dvh bg-transparent p-0">
 			<div
 				className={
 					isFullscreenMode
-						? "h-screen w-screen flex flex-col"
+						? "flex h-dvh w-screen flex-col"
 						: "mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
 				}
-				style={{ height: "100vh", minHeight: "100vh", maxHeight: "100vh" }}
 			>
 				{showControls && !isFullscreenMode && (
 					<ViewerHeaderControls

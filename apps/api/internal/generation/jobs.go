@@ -232,7 +232,7 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	if riverJob.Attempt > 1 {
 		_ = h.appendEvent(ctx, record.ID, "retry", map[string]any{"attempt": riverJob.Attempt, "max_attempts": riverJob.MaxAttempts, "delay_ms": 0, "reason": "Retrying after a temporary provider failure"})
 	}
-	_ = h.updateStage(ctx, record.ID, "planning", "Structuring the narrative", 1, 3)
+	_ = h.updateStage(ctx, record.ID, "planning", "Preparing presentation", 1, 3)
 
 	selection, credential, err := h.connections.CredentialForGeneration(ctx, record.UserID, job.selection)
 	if err != nil {
