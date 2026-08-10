@@ -5,6 +5,7 @@ go 1.26.3
 require github.com/jackc/pgx/v5 v5.10.0
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/pressly/goose/v3 v3.27.3
 	github.com/riverqueue/river v0.43.0
 	github.com/riverqueue/river/riverdriver/riverdatabasesql v0.43.0

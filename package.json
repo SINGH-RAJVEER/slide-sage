@@ -27,7 +27,6 @@
 		"lint": "bun run lint:api && bun --cwd apps/web lint && bun --cwd libs/types lint && bun --cwd libs/ui lint",
 		"lint:api": "CGO_ENABLED=0 go -C apps/api vet ./...",
 		"lint:web": "bun --cwd apps/web lint",
-		"load-test": "bun scripts/load-test.ts",
 		"migrate:api": "bash apps/api/scripts/migrate.sh",
 		"migration:create": "goose -dir apps/api/migrations create",
 		"format": "bun run format:api && bun --cwd apps/web format && bun --cwd libs/types format && bun --cwd libs/ui format",

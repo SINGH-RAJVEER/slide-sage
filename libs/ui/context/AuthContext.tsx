@@ -119,9 +119,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		sessionRequestId.current += 1;
 
 		try {
-			const { authClient } = await import("../lib/auth-client");
-			const { error } = await authClient.signOut();
-			if (error) throw new Error(error.message || "Sign out failed");
+			const { auth } = await import("../lib/auth-client");
+			await auth.signOut();
 
 			setUser(null);
 			window.location.replace("/sign-in");

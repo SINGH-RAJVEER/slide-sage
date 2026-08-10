@@ -5,6 +5,7 @@ import { Spinner } from "@slidesage/ui/components/spinner";
 import type React from "react";
 import { EditableSceneCanvas } from "./EditableSceneCanvas";
 import { EditableSlideCanvas } from "./EditableSlideCanvas";
+import { ScaledSlide } from "./ScaledSlide";
 import { SlideRenderer } from "./SlideRenderer";
 
 interface ViewerSlideCarouselProps {
@@ -52,7 +53,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 						aria-label="Waiting for the first generated slide"
 						className="slide-carousel__item"
 					>
-						<div className="ss-slide-stage flex-shrink-0">
+						<div className="h-full w-full">
 							<Card className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[hsl(222,27%,12%)] shadow-2xl">
 								<div className="flex items-center justify-center text-white/70">
 									<Spinner className="size-8 text-blue-400" />
@@ -76,7 +77,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 							data-active={isActive}
 							onClick={() => onSelectSlide(idx)}
 						>
-							<div className="ss-slide-stage flex-shrink-0 cursor-pointer">
+							<ScaledSlide className="cursor-pointer rounded-2xl" fit="width">
 								<Card className="w-full h-full rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 flex items-stretch">
 									{currentSlide === idx && onSaveEdit && onCancelEdit ? (
 										isSceneSlide(slide) ? (
@@ -110,7 +111,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 										/>
 									)}
 								</Card>
-							</div>
+							</ScaledSlide>
 						</div>
 					);
 				})}

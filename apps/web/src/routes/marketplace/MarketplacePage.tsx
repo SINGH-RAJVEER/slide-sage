@@ -104,7 +104,7 @@ export default function MarketplacePage() {
 				<section className="px-4 py-8 md:px-8 md:py-12">
 					<div className="mx-auto max-w-7xl">
 						<div className="grid gap-3 border-b border-white/10 pb-6 md:grid-cols-[auto_minmax(16rem,1fr)_auto] md:items-center">
-							<div className="flex justify-start">
+							<div className="hidden md:flex md:justify-start">
 								<button
 									type="button"
 									disabled

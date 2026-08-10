@@ -97,15 +97,15 @@ export function Header({
 				sticky && "sticky top-0 z-50",
 			)}
 		>
-			<div className="grid min-h-16 w-full grid-cols-[auto_1fr] items-center gap-3 px-4 py-3 md:h-20 md:grid-cols-3 md:px-10 md:py-5">
-				<div className="flex items-center md:w-full">
+			<div className="grid min-h-16 w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 md:h-20 md:grid-cols-3 md:px-10 md:py-5">
+				<div className="hidden items-center md:flex md:w-full">
 					<LinkComponent to={routes.home} aria-label="Go to home">
 						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain md:h-12" />
 					</LinkComponent>
 				</div>
 
 				{!isAuthPage && (
-					<div className="order-3 col-span-2 -mx-4 min-w-0 overflow-x-auto border-t border-white/10 px-4 py-2 md:order-none md:col-span-1 md:mx-0 md:border-0 md:px-0 md:py-0">
+					<div className="min-w-0 overflow-x-auto md:col-span-1">
 						<nav className="flex min-w-max items-center gap-1 md:mx-auto md:w-max md:gap-2">
 							{[
 								[routes.generate, "Generate"],

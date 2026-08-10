@@ -1,5 +1,5 @@
 import { useAuth } from "@slidesage/ui";
-import { authClient } from "@slidesage/ui/lib/auth-client";
+import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/app/Header";
@@ -25,10 +25,9 @@ export default function ForgotPasswordPage() {
 		const normalizedEmail = email.trim().toLowerCase();
 
 		try {
-			const { error } = await authClient.emailOtp.requestPasswordReset({
+			await auth.requestPasswordReset({
 				email: normalizedEmail,
 			});
-			if (error) throw new Error(error.message || "Failed to send reset code.");
 			navigate(`/reset-password?email=${encodeURIComponent(normalizedEmail)}&sent=1`);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to send reset code.");

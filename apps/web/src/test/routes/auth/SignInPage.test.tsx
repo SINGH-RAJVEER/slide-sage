@@ -4,13 +4,22 @@ import { expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
-const signIn = mock(async () => ({
-	error: {
-		code: "EMAIL_NOT_VERIFIED",
-		message: "email address is not verified",
-	},
-}));
-const sendVerificationOtp = mock(async () => ({ error: null }));
+class MockAuthError extends Error {
+	readonly status: number;
+	readonly code: string | undefined;
+
+	constructor(message: string, status: number, code?: string) {
+		super(message);
+		this.name = "AuthError";
+		this.status = status;
+		this.code = code;
+	}
+}
+
+const signIn = mock(async () => {
+	throw new MockAuthError("email address is not verified", 401, "EMAIL_NOT_VERIFIED");
+});
+const sendVerificationOtp = mock(async () => ({ success: true }));
 
 mock.module("@/contexts/AuthContext", () => ({
 	useAuth: () => ({
@@ -21,9 +30,10 @@ mock.module("@/contexts/AuthContext", () => ({
 }));
 
 mock.module("@/lib/auth-client", () => ({
-	authClient: {
-		signIn: { email: signIn, social: mock() },
-		emailOtp: { sendVerificationOtp },
+	auth: {
+		signInEmail: signIn,
+		startSocialSignIn: mock(),
+		sendVerificationOtp,
 	},
 }));
 

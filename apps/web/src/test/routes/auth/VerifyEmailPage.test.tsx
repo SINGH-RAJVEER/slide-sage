@@ -5,17 +5,15 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 
-const sendVerificationOtp = mock(async () => ({ error: null }));
-const verifyEmail = mock(async () => ({ error: null }));
+const sendVerificationOtp = mock(async () => ({ success: true }));
+const verifyEmail = mock(async () => ({ status: true, token: "jwt", user: { id: "user_1" } }));
 const refreshSession = mock(async () => {});
 
 mock.module("@/lib/auth-client", () => {
 	return {
-		authClient: {
-			emailOtp: {
-				sendVerificationOtp,
-				verifyEmail,
-			},
+		auth: {
+			sendVerificationOtp,
+			verifyEmail,
 		},
 	};
 });

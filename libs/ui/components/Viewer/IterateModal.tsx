@@ -286,7 +286,7 @@ export default function IterateModal({
 				aria-label="Dismiss iterate panel"
 			/>
 			<aside
-				className={`${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0`}
+				className={`viewer-iterate-panel ${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0`}
 				aria-label="Iterate on presentation"
 			>
 				{panelContent}

@@ -1,6 +1,6 @@
 import { useAuth } from "@slidesage/ui";
 import { API_URL } from "@slidesage/ui/lib/api";
-import { authClient } from "@slidesage/ui/lib/auth-client";
+import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/app/Header";
@@ -81,13 +81,10 @@ export default function VerifyEmailPage() {
 					throw new Error(data?.error?.message || "Verification failed");
 				}
 			} else {
-				const { error } = await authClient.emailOtp.verifyEmail({
+				await auth.verifyEmail({
 					email,
 					otp: code,
 				});
-				if (error) {
-					throw new Error(error.message || "Verification failed");
-				}
 			}
 
 			setSuccess(true);
@@ -109,14 +106,10 @@ export default function VerifyEmailPage() {
 		setError(null);
 
 		try {
-			const { error } = await authClient.emailOtp.sendVerificationOtp({
+			await auth.sendVerificationOtp({
 				email,
 				type: "email-verification",
 			});
-
-			if (error) {
-				throw new Error(error.message || "Failed to resend code");
-			}
 
 			setResendCooldownSeconds(30);
 		} catch (err) {

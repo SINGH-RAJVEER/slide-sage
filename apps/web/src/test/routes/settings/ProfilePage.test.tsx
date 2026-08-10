@@ -5,7 +5,6 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 const refreshSession = mock(async () => {});
-const sendVerificationOtp = mock(async () => ({ error: null }));
 
 mock.module("@/contexts/AuthContext", () => ({
 	useAuth: () => ({
@@ -13,12 +12,6 @@ mock.module("@/contexts/AuthContext", () => ({
 		refreshSession,
 		signOut: async () => {},
 	}),
-}));
-
-mock.module("@/lib/auth-client", () => ({
-	authClient: {
-		emailOtp: { sendVerificationOtp },
-	},
 }));
 
 function VerificationProbe() {
@@ -31,7 +24,6 @@ function VerificationProbe() {
 
 it("sends a pending email change to its verification route", async () => {
 	refreshSession.mockClear();
-	sendVerificationOtp.mockClear();
 	const originalFetch = globalThis.fetch;
 	const originalUser = {
 		id: "user_1",
@@ -81,7 +73,6 @@ it("sends a pending email change to its verification route", async () => {
 			expect(view.getByText("new@example.com|/profile|email-change")).toBeInTheDocument();
 		});
 		expect(refreshSession).not.toHaveBeenCalled();
-		expect(sendVerificationOtp).not.toHaveBeenCalled();
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

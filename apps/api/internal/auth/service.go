@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -113,7 +112,12 @@ func (service *Service) createSession(ctx context.Context, userID, userAgent, ip
 	if err != nil {
 		return Session{}, err
 	}
-	token, err := randomToken()
+	user, err := service.repository.UserByID(ctx, userID)
+	email := ""
+	if err == nil {
+		email = user.Email
+	}
+	token, err := service.GenerateJWT(userID, email, service.config.SessionTTL)
 	if err != nil {
 		return Session{}, err
 	}
@@ -128,6 +132,14 @@ func (service *Service) createSession(ctx context.Context, userID, userAgent, ip
 func (service *Service) Session(ctx context.Context, token string) (Session, User, error) {
 	if token == "" {
 		return Session{}, User{}, ErrNotFound
+	}
+	if userID, err := service.VerifyJWT(token); err == nil {
+		user, err := service.repository.UserByID(ctx, userID)
+		if err == nil {
+			now := service.config.Now().UTC()
+			session := Session{ID: userID, Token: token, UserID: userID, ExpiresAt: now.Add(service.config.SessionTTL)}
+			return session, user, nil
+		}
 	}
 	return service.repository.SessionByToken(ctx, token, service.config.Now().UTC())
 }
@@ -385,14 +397,6 @@ func randomID() (string, error) {
 	bytes[6] = bytes[6]&0x0f | 0x40
 	bytes[8] = bytes[8]&0x3f | 0x80
 	return fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:16]), nil
-}
-
-func randomToken() (string, error) {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }
 
 func randomOTP() (string, error) {

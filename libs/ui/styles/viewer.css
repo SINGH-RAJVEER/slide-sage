@@ -23,22 +23,15 @@
 }
 
 .slide-carousel__item {
-	/* allow child width to determine slide size so original sizing (max-w-[75vw], aspect-video) is preserved */
+	/* fixed 1280x720 stage; ScaledSlide scales it to fit this box */
 	flex: 0 0 auto;
 	scroll-snap-align: center;
 	box-sizing: border-box;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: auto;
-	position: relative;
-}
-
-/* Fixed slide stage: never flexes or resizes with viewport */
-.ss-slide-stage {
 	width: var(--ss-slide-width);
 	height: var(--ss-slide-height);
-	flex: 0 0 auto;
 	position: relative;
 }
 
@@ -952,22 +945,19 @@
 	}
 
 	.viewer-header {
-		grid-template-columns: minmax(0, 1fr) auto;
+		position: relative;
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-areas:
-			"identity present"
-			"tools tools";
+			"tools";
 		gap: 8px 10px;
 		padding: 8px 12px 4px;
 	}
 
 	.viewer-header__identity {
-		grid-area: identity;
-		gap: 8px;
+		display: none;
 	}
 
-	.viewer-header__back,
-	.viewer-header__present-button,
-	.viewer-header__iterate {
+	.viewer-header__back {
 		min-width: 44px;
 		height: 44px;
 	}
@@ -982,8 +972,9 @@
 	.viewer-header__tools {
 		grid-area: tools;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 0.88fr) 44px;
-		width: 100%;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 8px;
+		width: calc(100% - 56px);
 	}
 
 	.viewer-header__tools > *,
@@ -997,7 +988,11 @@
 	}
 
 	.viewer-header__iterate {
+		position: absolute;
+		top: 8px;
+		right: 12px;
 		width: 44px !important;
+		height: 44px !important;
 		padding: 0;
 		font-size: 0;
 	}
@@ -1007,17 +1002,7 @@
 	}
 
 	.viewer-header__present {
-		grid-area: present;
-	}
-
-	.viewer-header__present-button {
-		width: 44px;
-		padding: 0;
-		font-size: 0;
-	}
-
-	.viewer-header__present-button svg {
-		margin: 0;
+		display: none;
 	}
 
 	.viewer-slide-area {
@@ -1036,27 +1021,19 @@
 
 	.slide-carousel__item {
 		width: calc(100vw - 24px);
-		scroll-snap-stop: always;
-	}
-
-	.slide-carousel__item .ss-slide-stage {
-		width: 100%;
 		height: auto;
 		aspect-ratio: 16 / 9;
-	}
-
-	.slide-carousel__item .ss-slide-stage > * {
-		border-radius: 12px;
+		scroll-snap-stop: always;
 	}
 
 	.viewer-thumbnails {
 		order: 2;
-		min-height: 76px !important;
+		min-height: 66px !important;
 	}
 
 	.viewer-thumbnails .slide-thumbnails-container {
 		gap: 8px;
-		padding: 8px 12px;
+		padding: 4px 12px 8px;
 		scroll-padding-inline: 12px;
 		mask-image: none;
 		-webkit-mask-image: none;
@@ -1071,31 +1048,31 @@
 
 	.viewer-navigation {
 		order: 3;
-		display: grid;
-		grid-template-columns: 44px minmax(0, 1fr) 44px;
-		min-height: calc(68px + env(safe-area-inset-bottom)) !important;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		min-height: calc(64px + env(safe-area-inset-bottom)) !important;
 		margin-top: 0;
-		padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+		padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
 		border-top: 1px solid rgba(255, 255, 255, 0.08);
 		background: rgba(11, 18, 32, 0.94);
 		backdrop-filter: blur(18px);
 	}
 
+	.viewer-navigation__pager {
+		display: none;
+	}
+
 	.viewer-navigation__download,
-	.viewer-navigation__pager,
 	.viewer-navigation__delete {
 		position: static;
 		transform: none;
 	}
 
-	.viewer-navigation__download {
-		grid-column: 1;
-	}
-
 	.viewer-navigation__download button,
 	.viewer-navigation__delete button {
-		width: 44px;
-		height: 44px;
+		width: 40px;
+		height: 40px;
 		padding: 0;
 		font-size: 0;
 	}
@@ -1109,36 +1086,23 @@
 		display: none;
 	}
 
-	.viewer-navigation__pager {
-		grid-column: 2;
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 8px;
-		padding-inline: 10px;
+	.slide-thumbnails-container {
+		scrollbar-width: none;
+		-ms-overflow-style: none;
 	}
 
-	.viewer-navigation__pager button {
-		min-width: 0;
-		height: 44px;
-	}
-
-	.viewer-navigation__edge {
+	.slide-thumbnails-container::-webkit-scrollbar {
 		display: none;
 	}
 
-	.viewer-navigation__previous,
-	.viewer-navigation__next {
-		padding-inline: 10px;
-	}
-
-	.viewer-navigation__delete {
-		grid-column: 3;
+	.viewer-iterate-panel {
+		width: 100vw !important;
 	}
 }
 
 @media (orientation: portrait) and (max-width: 380px) {
 	.viewer-header__tools {
-		grid-template-columns: minmax(0, 1fr) 44px 44px;
+		grid-template-columns: minmax(0, 1fr) 44px;
 	}
 
 	.viewer-header__tools > :nth-child(2) button {

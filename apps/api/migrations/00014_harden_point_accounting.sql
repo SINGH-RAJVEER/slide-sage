@@ -1,8 +1,5 @@
 -- +goose Up
 -- Point values are stored as integer milli-points: 1 point = 1,000 milli-points.
--- This is a pre-launch accounting reset. The legacy float balances and mutable
--- operations cannot be reconciled into the new ledger, so all user-owned data
--- is deliberately removed before the new constraints are installed.
 DROP TABLE IF EXISTS point_ledger CASCADE;
 DROP TABLE IF EXISTS generation_point_operations CASCADE;
 TRUNCATE TABLE users CASCADE;

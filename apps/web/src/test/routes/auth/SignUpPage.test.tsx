@@ -4,10 +4,20 @@ import { expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
-const signUp = mock(
-	async (): Promise<{ error: { code?: string; message?: string } | null }> => ({ error: null }),
-);
-const sendVerificationOtp = mock(async () => ({ error: null }));
+class MockAuthError extends Error {
+	readonly status: number;
+	readonly code: string | undefined;
+
+	constructor(message: string, status: number, code?: string) {
+		super(message);
+		this.name = "AuthError";
+		this.status = status;
+		this.code = code;
+	}
+}
+
+const signUp = mock(async () => ({ user: { id: "user_1" } }));
+const sendVerificationOtp = mock(async () => ({ success: true }));
 
 mock.module("@/contexts/AuthContext", () => ({
 	useAuth: () => ({
@@ -18,10 +28,10 @@ mock.module("@/contexts/AuthContext", () => ({
 }));
 
 mock.module("@/lib/auth-client", () => ({
-	authClient: {
-		signUp: { email: signUp },
-		signIn: { social: mock() },
-		emailOtp: { sendVerificationOtp },
+	auth: {
+		signUpEmail: signUp,
+		startSocialSignIn: mock(),
+		sendVerificationOtp,
 	},
 }));
 
@@ -68,12 +78,9 @@ it("requests a verification OTP after creating an email account", async () => {
 it("resends verification when the email belongs to an unverified account", async () => {
 	signUp.mockClear();
 	sendVerificationOtp.mockClear();
-	signUp.mockImplementationOnce(async () => ({
-		error: {
-			code: "EMAIL_NOT_VERIFIED",
-			message: "email address is not verified",
-		},
-	}));
+	signUp.mockImplementationOnce(async () => {
+		throw new MockAuthError("email address is not verified", 409, "EMAIL_NOT_VERIFIED");
+	});
 	const { default: SignUpPage } = await import("@/routes/auth/SignUpPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-up"]}>

@@ -1,5 +1,5 @@
 import { useAuth } from "@slidesage/ui";
-import { authClient } from "@slidesage/ui/lib/auth-client";
+import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/app/Header";
@@ -9,6 +9,12 @@ function sanitizeRedirectPath(value: string | null) {
 	if (!value.startsWith("/")) return "/";
 	if (value.startsWith("//")) return "/";
 	return value;
+}
+
+function getErrorCode(value: unknown): string | undefined {
+	if (typeof value !== "object" || value === null) return undefined;
+	const code = (value as { code?: unknown }).code;
+	return typeof code === "string" ? code : undefined;
 }
 
 export default function SignInPage() {
@@ -29,18 +35,22 @@ export default function SignInPage() {
 		}
 	}, [isSignedIn, navigate]);
 
-	const handleGoogleSignIn = () => {
-		authClient.signIn.social({
-			provider: "google",
-			callbackURL: window.location.origin + redirectTo,
-		});
+	const handleGoogleSignIn = async () => {
+		try {
+			const result = await auth.startSocialSignIn("google", window.location.origin + redirectTo);
+			window.location.href = result.url;
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Google sign-in failed.");
+		}
 	};
 
-	const handleGithubSignIn = () => {
-		authClient.signIn.social({
-			provider: "github",
-			callbackURL: window.location.origin + redirectTo,
-		});
+	const handleGithubSignIn = async () => {
+		try {
+			const result = await auth.startSocialSignIn("github", window.location.origin + redirectTo);
+			window.location.href = result.url;
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "GitHub sign-in failed.");
+		}
 	};
 
 	const handleEmailSignIn = async (event: FormEvent<HTMLFormElement>) => {
@@ -48,41 +58,44 @@ export default function SignInPage() {
 		setError(null);
 		setSubmitting(true);
 
+		const normalizedEmail = email.trim().toLowerCase();
+
 		try {
-			const normalizedEmail = email.trim().toLowerCase();
-			const { error } = await authClient.signIn.email({
+			await auth.signInEmail({
 				email: normalizedEmail,
 				password,
 				rememberMe,
 			});
 
-			if (error) {
-				if (error.code === "EMAIL_NOT_VERIFIED") {
-					const { error: deliveryError } = await authClient.emailOtp.sendVerificationOtp({
-						email: normalizedEmail,
-						type: "email-verification",
-					});
-					navigate(
-						`/sign-up/verify-email?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(redirectTo)}`,
-						{
-							replace: true,
-							state: {
-								deliveryError: deliveryError?.message || null,
-							},
-						},
-					);
-					return;
-				}
-				if (error.code === "INVALID_EMAIL_OR_PASSWORD") {
-					setError("Incorrect email or password.");
-					return;
-				}
-				throw new Error(error.message || "Sign in failed.");
-			}
-
 			await refreshSession({ force: true });
 			navigate(redirectTo, { replace: true });
 		} catch (err) {
+			if (getErrorCode(err) === "EMAIL_NOT_VERIFIED") {
+				let deliveryError: string | null = null;
+				try {
+					await auth.sendVerificationOtp({
+						email: normalizedEmail,
+						type: "email-verification",
+					});
+				} catch (deliveryErr) {
+					deliveryError =
+						deliveryErr instanceof Error ? deliveryErr.message : "Failed to send verification code";
+				}
+				navigate(
+					`/sign-up/verify-email?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(redirectTo)}`,
+					{
+						replace: true,
+						state: {
+							deliveryError,
+						},
+					},
+				);
+				return;
+			}
+			if (getErrorCode(err) === "INVALID_EMAIL_OR_PASSWORD") {
+				setError("Incorrect email or password.");
+				return;
+			}
 			setError(err instanceof Error ? err.message : "Sign in failed.");
 		} finally {
 			setSubmitting(false);

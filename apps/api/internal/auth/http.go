@@ -284,7 +284,14 @@ func (service *Service) requireSession(writer http.ResponseWriter, request *http
 }
 
 func (service *Service) AuthenticatedUserID(request *http.Request) (string, error) {
-	_, user, err := service.Session(request.Context(), service.sessionToken(request))
+	token := service.sessionToken(request)
+	if token == "" {
+		return "", errors.New("unauthorized")
+	}
+	if userID, err := service.VerifyJWT(token); err == nil {
+		return userID, nil
+	}
+	_, user, err := service.Session(request.Context(), token)
 	if err != nil {
 		return "", err
 	}
@@ -292,7 +299,11 @@ func (service *Service) AuthenticatedUserID(request *http.Request) (string, erro
 }
 
 func (service *Service) sessionToken(request *http.Request) string {
-	names := []string{service.config.CookieName, "better-auth.session_token", "__Secure-better-auth.session_token"}
+	authHeader := request.Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		return strings.TrimPrefix(authHeader, "Bearer ")
+	}
+	names := []string{"token", "authorization", service.config.CookieName, "better-auth.session_token", "__Secure-better-auth.session_token"}
 	for _, name := range names {
 		cookie, err := request.Cookie(name)
 		if err != nil {
@@ -300,6 +311,9 @@ func (service *Service) sessionToken(request *http.Request) string {
 		}
 		if token := service.verifyCookieValue(cookie.Value); token != "" {
 			return token
+		}
+		if cookie.Value != "" {
+			return cookie.Value
 		}
 	}
 	return ""

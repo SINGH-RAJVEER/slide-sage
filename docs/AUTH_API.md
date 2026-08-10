@@ -1,10 +1,16 @@
 # Authentication
 
-SlideSage exposes a Better Auth-compatible browser contract at `/auth`. It supports email and password,
+SlideSage exposes a custom JWT-authenticated browser contract at `/auth`. It supports email and password,
 six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
 session cookies, and sign-out.
 
-The primary implementation is owned by the Go API in `apps/api/internal/auth`.
+The implementation is owned by the Go API in `apps/api/internal/auth`.
+
+Sessions are short-lived HS256 JWTs generated and verified by the Go service
+via `github.com/golang-jwt/jwt/v5` (`apps/api/internal/auth/jwt.go`) and stored
+as an HMAC-signed HTTP-only cookie. The JWT carries the user id as the `sub`
+claim, the user email, and `exp`/`iat` registered claims. Sign-in, email
+verification, and OAuth callbacks all issue a JWT session.
 
 ## Configuration
 
@@ -36,10 +42,11 @@ Register these callback URLs with the providers:
 The production frontend uses `https://slidesage.app`, while the browser-facing API
 uses `https://api.slidesage.app`. Set `VITE_API_URL=https://api.slidesage.app` in
 the web build without a trailing `/api`; the client sends requests directly to endpoint paths.
-The API must allow the frontend in both `CORS_ORIGINS` and
-`BETTER_AUTH_TRUSTED_ORIGINS`. Authentication fetches include credentials, and
-production session cookies use `Secure` and `SameSite=None` for the cross-origin
-requests.
+The API must allow the frontend in `CORS_ORIGINS` and in the trusted-origin list
+used to validate OAuth `callbackURL` values (configured via
+`BETTER_AUTH_TRUSTED_ORIGINS`, falling back to `CORS_ORIGINS`). Authentication
+fetches include credentials, and production session cookies use `Secure` and
+`SameSite=None` for the cross-origin requests.
 The web build script also pins `NODE_ENV=production` so production bundles use
 React's production runtime and Bun's production environment flags even when the
 calling shell defaults to development.
@@ -72,7 +79,7 @@ new session. Point balance changes from generation and payment verification are
 applied from those operations' server responses instead of fetching the entire
 session again.
 
-Sign-out invalidates pending session refreshes before clearing the Better Auth
+Sign-out invalidates pending session refreshes before clearing the JWT
 session. This prevents an older session response from restoring the signed-out
 user in the frontend.
 
@@ -93,8 +100,10 @@ user in the frontend.
 | `POST` | `/profile/email/verify` | Complete a pending authenticated email change |
 
 The web application uses the endpoints listed above plus
-`POST /auth/sign-in/social`. Use the Better Auth client in
-`apps/web/src/lib/auth-client.ts` for supported browser flows.
+`POST /auth/sign-in/social` to start OAuth flows. Use the custom fetch-based
+client in `libs/ui/lib/auth-client.ts` for supported browser flows; it sends
+credentials with every request and throws an `AuthError` carrying the backend
+`code` (for example `EMAIL_NOT_VERIFIED` or `INVALID_EMAIL_OR_PASSWORD`).
 
 ## Password and Email Changes
 
@@ -102,8 +111,8 @@ The web application uses the endpoints listed above plus
 session and Better Auth verification:
 
 - A password-only request must include non-empty `currentPassword` and
-  `newPassword`. The route verifies the current password, writes a Better
-  Auth-compatible scrypt hash, and
+  `newPassword`. The route verifies the current password, writes an
+  scrypt hash, and
   revokes other sessions. Password changes cannot be combined with name or email
   changes in the same request.
 - Starting an email change must include `currentPassword`. The route calls the
@@ -121,10 +130,10 @@ session and Better Auth verification:
   the current-password proof for an email change.
 
 For older accounts, the password verifier can read a 64-character
-SHA-256 hash. A successful email/password sign-in lazily replaces that hash with
-a Better Auth hash. It also converts the old `email` provider account record to
-the `credential` provider format when necessary. Failed password checks never
-trigger an upgrade.
+SHA-256 hash or a legacy `pbkdf2-sha256` hash. A successful email/password sign-in lazily replaces
+that hash with a new scrypt hash. It also converts the old `email` provider
+account record to the `credential` provider format when necessary. Failed
+password checks never trigger an upgrade.
 
 ## OTP Delivery
 
@@ -133,16 +142,16 @@ codes contain six digits and expire after 15 minutes.
 
 When replacing an OTP, including an authenticated email-change code, the API
 serializes replacement by identifier and keeps the previous record until Resend
-has accepted the replacement email. Success removes the superseded record. A
-Better Auth rejection or delivery failure removes only the newly-created,
-unusable record, preserving a previously valid code.
+has accepted the replacement email. Success removes the superseded record. An
+email delivery failure removes only the newly-created, unusable record,
+preserving a previously valid code.
 
 If Resend reports an error, exceeds `EMAIL_DELIVERY_TIMEOUT_MS` (10 seconds by
 default), or if `RESEND_API_KEY` is missing in production, the
 send and reset-request wrappers return `503` with `Email delivery is temporarily
 unavailable`; those error cases do not report success for an undelivered code.
 Development without a Resend key skips delivery and logs a warning without
-logging the OTP. Better Auth can still return success and replace the previous
+logging the OTP. The API can still return success and replace the previous
 OTP in that development-only case even though no email was sent. Use a configured
 test sender when the code must be received.
 
@@ -156,7 +165,7 @@ and deployment caveat.
 - Sign-in with a correct password and repeated sign-up for an existing unverified
   address both send a fresh OTP and continue on the verification page. A verified
   address still receives the normal `Email already in use` response during sign-up.
-  Coded authentication failures use Better Auth's top-level `code` and `message`
+  Coded authentication failures use a top-level `code` and `message`
   response shape so the browser can distinguish `EMAIL_NOT_VERIFIED`.
 - Verification OTPs expire after 15 minutes.
 - Unverified credential-only accounts are retained for 24 hours. Cleanup runs at
@@ -169,10 +178,21 @@ and deployment caveat.
 - Development without `RESEND_API_KEY` logs only that delivery was skipped; it
   never logs the code.
 - The session user includes the server-owned `slideTokens` field.
-- API authorization uses the session cookie, not bearer tokens.
+- API authorization uses the session cookie or an `Authorization: Bearer <jwt>`
+  header; both resolve to the same user identity.
 - Password-reset completion revokes existing sessions.
 - The sign-in wrapper upgrades older email credential records only when the
   supplied password matches their old hash.
 
-Browser requests must send credentials. API and Better Auth trusted origins must
-both include the web origin.
+Browser requests must send credentials.
+
+## JWT Sessions
+
+Sessions are HS256 JWTs from `github.com/golang-jwt/jwt/v5`, signed with
+`AUTH_SECRET`, carrying the user id as the `sub` claim, the user email, and
+`exp`/`iat` registered claims. Verification enforces the HS256 signing method
+and requires a present, unexpired `exp`. The same
+`AUTH_SECRET` signs the HTTP-only session cookie with HMAC-SHA256 so the cookie
+value cannot be forged without the secret. `GET /auth/get-session` accepts the
+cookie (or bearer token) and returns the current user. Sign-out clears the
+cookie and removes the stored session row.

@@ -1,5 +1,5 @@
 import { useAuth } from "@slidesage/ui";
-import { authClient } from "@slidesage/ui/lib/auth-client";
+import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/app/Header";
@@ -52,12 +52,11 @@ export default function ResetPasswordPage() {
 		setSubmitting(true);
 
 		try {
-			const { error } = await authClient.emailOtp.resetPassword({
+			await auth.resetPassword({
 				email: normalizedEmail,
 				otp: code,
 				password,
 			});
-			if (error) throw new Error(error.message || "Failed to reset password.");
 			setSuccess("Password reset successfully. Redirecting to sign in...");
 			setTimeout(() => {
 				navigate("/sign-in", { replace: true });
@@ -82,10 +81,9 @@ export default function ResetPasswordPage() {
 		setSuccess(null);
 
 		try {
-			const { error } = await authClient.emailOtp.requestPasswordReset({
+			await auth.requestPasswordReset({
 				email: normalizedEmail,
 			});
-			if (error) throw new Error(error.message || "Failed to resend reset code.");
 			setSuccess("A new reset code was sent to your email.");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to resend reset code.");
