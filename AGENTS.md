@@ -22,6 +22,7 @@ Rules for AI agents in this repository.
 ## Test updates
 
 - After changes are made, update any related tests if required.
+- Testing is good but endless smoke tests and regression tests for feature deletions is bad.
 
 ## UI
 

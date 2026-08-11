@@ -13,7 +13,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGISTRY_LOCATION: global
   REGISTRY_REPOSITORY: slidesage
-  RUN_REGION: us-central1
+  RUN_REGION: asia-south1
   IMAGE_VERSION: ${{ github.sha }}
   API_AUTH_FLAG: ${{ vars.API_AUTH_FLAG || '--allow-unauthenticated' }}
 
