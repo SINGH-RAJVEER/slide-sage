@@ -130,7 +130,7 @@ jobs:
             --max-instances=10 \
             --concurrency=80 \
             --timeout=300s \
-            --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest \
+            --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest \
             --set-env-vars=NODE_ENV=production
 
       - name: Deploy worker service
