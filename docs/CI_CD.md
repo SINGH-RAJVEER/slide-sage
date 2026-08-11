@@ -35,15 +35,15 @@ Run these once with the account that owns the project. Set `PROJECT_ID` to `slid
 
 ```bash
 PROJECT_ID=slidesage-504414
-PROJECT_NUMBER=123456789012
-REPO_URL=SINGH-RAJVEER/SlideSage
+PROJECT_NUMBER=94621805506
+REPO_URL=SINGH-RAJVEER/slidesage
 
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
 gcloud config set project $PROJECT_ID
 
 gcloud artifacts repositories create slidesage \
   --repository-format=docker \
-  --location=global \
+  --location=asia-south1 \
   --project=$PROJECT_ID
 
 gcloud iam service-accounts create slidesage-deploy \
@@ -101,13 +101,15 @@ Optional variable:
 
 ## Secret Manager
 
-`DATABASE_URL` and `AUTH_SECRET` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
+`DATABASE_URL`, `AUTH_SECRET`, and `RATE_LIMIT_HASH_SECRET` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
 
 ```bash
 printf "postgresql://user:pass@.../slidesage" | \
   gcloud secrets create DATABASE_URL --data-file=- --project=$PROJECT_ID
 printf "<32+ char random secret>" | \
   gcloud secrets create AUTH_SECRET --data-file=- --project=$PROJECT_ID
+printf "<independent random secret>" | \
+  gcloud secrets create RATE_LIMIT_HASH_SECRET --data-file=- --project=$PROJECT_ID
 ```
 
 The Go code reads every other value from its own env defaults; add more `--set-secrets`/`--set-env-vars` entries to the `deploy` job as you move the variables from [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) into production.
