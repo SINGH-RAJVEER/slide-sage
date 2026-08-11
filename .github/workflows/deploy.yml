@@ -11,7 +11,7 @@ concurrency:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGISTRY_LOCATION: global
+  REGISTRY_LOCATION: asia-south1
   REGISTRY_REPOSITORY: slidesage
   RUN_REGION: asia-south1
   IMAGE_VERSION: ${{ github.sha }}

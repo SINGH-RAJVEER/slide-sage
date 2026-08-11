@@ -16,18 +16,18 @@ Trigger: `git push origin main` (or `workflow_dispatch` for a manual run). Concu
 
 ## Artifact Registry layout
 
-Location is the multi-region `global`, repository `slidesage`.
+Location is `asia-south1`, repository `slidesage`.
 
 ```text
-global-docker.pkg.dev/<PROJECT_ID>/slidesage/api:<sha>
-global-docker.pkg.dev/<PROJECT_ID>/slidesage/api:latest
-global-docker.pkg.dev/<PROJECT_ID>/slidesage/worker:<sha>
-global-docker.pkg.dev/<PROJECT_ID>/slidesage/worker:latest
-global-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:<sha>
-global-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:latest
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/api:<sha>
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/api:latest
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/worker:<sha>
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/worker:latest
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:<sha>
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:latest
 ```
 
-Cloud Run runs in `us-central1`. Change `RUN_REGION` and `REGISTRY_LOCATION` in `.github/workflows/deploy.yml` if you move regions.
+Cloud Run runs in `asia-south1`. Change `RUN_REGION` and `REGISTRY_LOCATION` in `.github/workflows/deploy.yml` if you move regions.
 
 ## One-time GCP bootstrap
 
@@ -129,11 +129,11 @@ Every deploy is a Cloud Run revision pinned to an immutable SHA image, so rollba
 
 ```bash
 gcloud run services update-traffic api \
-  --region=us-central1 \
+  --region=asia-south1 \
   --to-revisions=api-20260810-1200=100
 
 gcloud run services update-traffic worker \
-  --region=us-central1 \
+  --region=asia-south1 \
   --to-revisions=worker-20260810-1200=100
 ```
 
@@ -142,15 +142,15 @@ or atomically in the console: Cloud Run -> service -> Revisions -> select revisi
 ## Manual equivalents
 
 ```bash
-gcloud auth configure-docker global-docker.pkg.dev
+gcloud auth configure-docker asia-south1-docker.pkg.dev
 
-docker build --target api --file docker/Dockerfile.api --tag global-docker.pkg.dev/slidesage-504414/slidesage/api:dev .
-docker push global-docker.pkg.dev/slidesage-504414/slidesage/api:dev
+docker build --target api --file docker/Dockerfile.api --tag asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev .
+docker push asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev
 ```
 
 ## Troubleshooting
 
-- `403` pushing to Artifact Registry: re-run `gcloud auth configure-docker global-docker.pkg.dev` and confirm the service account has `roles/artifactregistry.writer`.
+- `403` pushing to Artifact Registry: re-run `gcloud auth configure-docker asia-south1-docker.pkg.dev` and confirm the service account has `roles/artifactregistry.writer`.
 - `Permission 'iam.serviceAccounts.actAs' denied` during deploy: re-apply the `roles/iam.serviceAccountUser` binding.
 - WIF auth step fails: confirm `GCP_WIF_PROVIDER`/`GCP_SERVICE_ACCOUNT` match the pool that was created and that the binding uses the same `REPO_URL` casing as the repository.
 
