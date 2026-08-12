@@ -131,7 +131,7 @@ jobs:
             --concurrency=80 \
             --timeout=300s \
             --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest \
-            --set-env-vars=NODE_ENV=production
+            --set-env-vars=NODE_ENV=production,BASE_URL=https://api.slidesage.app
 
       - name: Deploy worker service
         run: |
