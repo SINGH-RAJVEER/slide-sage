@@ -12,7 +12,7 @@ Rules for AI agents in this repository.
 
 ## Version Control System
 
-- This repo uses Jusjutsu(jj) for its version control.
+- Use Jusjutsu(jj) for its version control.
 
 ## Documentation updates
 
