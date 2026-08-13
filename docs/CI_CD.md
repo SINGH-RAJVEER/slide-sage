@@ -31,7 +31,7 @@ Cloud Run runs in `asia-south1`. Change `RUN_REGION` and `REGISTRY_LOCATION` in 
 
 The production API is served at `https://api.slidesage.app` through a global external HTTPS load balancer. Its reserved IPv4 address is `34.107.143.198`; the Cloudflare `api` record must be a DNS-only `A` record pointing to that address. Cloud Run custom domain mappings are unavailable in `asia-south1`, so the load balancer connects to the `api` service through the `slidesage-api-neg` serverless NEG.
 
-Cloudflare Pages builds `apps/web` with Bun 1.3.13. The HTML entry-point build deliberately omits `--splitting`; Bun can otherwise write a helper chunk into the generated script tag instead of the application entry bundle.
+Cloudflare Pages runs `bun run build` from `apps/web`. Vite bundles the React application into `apps/web/dist`, handles route-level code splitting, processes Tailwind through `@tailwindcss/vite`, and copies static files from `apps/web/public`.
 
 ## One-time GCP bootstrap
 
