@@ -8,8 +8,8 @@
 	"scripts": {
 		"dev": "bun --hot server.ts",
 		"prebuild": "bun install --no-frozen-lockfile",
-		"build": "bun build index.html --outdir=dist --target=browser --minify --splitting",
-		"preview": "bun build index.html --outdir=dist --target=browser --minify --splitting && bun server.ts",
+		"build": "bun build index.html --outdir=dist --target=browser --minify",
+		"preview": "bun build index.html --outdir=dist --target=browser --minify && bun server.ts",
 		"test": "bun test --isolate",
 		"test:watch": "bun test --watch --isolate",
 		"lint": "bunx biome check .",
