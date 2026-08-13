@@ -7,7 +7,7 @@ application, shared TypeScript contracts, and shared UI components.
 
 ```text
 apps/api   Go API, River generation worker, migrations, repositories, providers
-apps/web   React application bundled and served by Bun
+apps/web   React application developed and bundled with Vite
 libs/types Shared API and presentation contracts
 libs/ui    Shared React UI primitives and slide renderer
 ```
@@ -22,7 +22,7 @@ generation worker owns queued AI provider execution.
 The local stack is coordinated by devenv:
 
 ```text
-PostgreSQL ready -> Goose and River migrations complete -> API and worker ready -> Bun web ready
+PostgreSQL ready -> Goose and River migrations complete -> API and worker ready -> Vite web ready
 ```
 
 The API entry point is `apps/api/cmd/api/main.go`. It exposes:

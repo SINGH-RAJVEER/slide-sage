@@ -25,9 +25,9 @@ and Razorpay credentials for purchases.
 3. Runs `cmd/migrate`, which applies embedded Goose application migrations and River migrations.
 4. Starts the Go API on port `8000` and waits for `/health`.
 5. Starts the durable generation worker and waits for `/ready` on port `8080`.
-6. Starts Bun's HTML dev server on port `5173`, with frontend bundling, Tailwind processing, static image routes, and hot module reloading.
+6. Starts the Vite development server on port `5173`, with React Fast Refresh, Tailwind processing, and static assets from `apps/web/public`.
 
-The Bun server exposes only `VITE_*` variables to browser bundles. If
+Vite exposes only `VITE_*` variables to browser bundles. If
 `VITE_API_URL` is absent during local development, browser API requests fall back
 to port `8000` on the same loopback hostname.
 
@@ -47,7 +47,7 @@ Run these from the repository root inside `devenv shell`.
 | `just dev` | Start PostgreSQL, migrations, API, generation worker, and web |
 | `just api` | Start the Go API |
 | `bun run dev:worker` | Start the durable generation worker |
-| `just web` | Start Bun web server |
+| `just web` | Start Vite web server |
 | `just db-shell` | Open a PostgreSQL shell |
 | `just migrate` | Apply embedded Goose and River migrations |
 | `just db-generate <name>` | Create a Goose SQL migration |

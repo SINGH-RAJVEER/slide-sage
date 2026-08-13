@@ -2,7 +2,7 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"jsx": "react-jsx",
-		"types": ["bun"],
+		"types": ["bun", "vite/client"],
 		"allowJs": true,
 		"module": "preserve",
 		"paths": {

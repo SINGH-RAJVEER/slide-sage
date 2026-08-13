@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import App from "./App";
 import "../../styles.css";
 import { AuthProvider } from "@slidesage/ui";
@@ -9,24 +9,10 @@ if (!container) {
 	throw new Error("Missing #root element");
 }
 
-const rootContainer: HTMLElement = container;
-
-const app = (
+createRoot(container).render(
 	<StrictMode>
 		<AuthProvider>
 			<App />
 		</AuthProvider>
-	</StrictMode>
+	</StrictMode>,
 );
-
-if (import.meta.hot) {
-	const data = import.meta.hot.data as { root?: Root };
-
-	if (!data.root) {
-		data.root = createRoot(rootContainer);
-	}
-
-	data.root.render(app);
-} else {
-	createRoot(rootContainer).render(app);
-}
