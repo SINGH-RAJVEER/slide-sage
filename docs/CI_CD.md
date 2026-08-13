@@ -29,6 +29,8 @@ asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:latest
 
 Cloud Run runs in `asia-south1`. Change `RUN_REGION` and `REGISTRY_LOCATION` in `.github/workflows/deploy.yml` if you move regions.
 
+The production API is served at `https://api.slidesage.app` through a global external HTTPS load balancer. Its reserved IPv4 address is `34.107.143.198`; the Cloudflare `api` record must be a DNS-only `A` record pointing to that address. Cloud Run custom domain mappings are unavailable in `asia-south1`, so the load balancer connects to the `api` service through the `slidesage-api-neg` serverless NEG.
+
 ## One-time GCP bootstrap
 
 Run these once with the account that owns the project. Set `PROJECT_ID` to `slidesage-504414` and `PROJECT_NUMBER` to the project number (see `gcloud projects describe $PROJECT_ID`).
