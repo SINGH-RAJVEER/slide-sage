@@ -130,7 +130,7 @@ jobs:
             --max-instances=10 \
             --concurrency=80 \
             --timeout=300s \
-            --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest \
+            --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,EXA_API_KEY=EXA_API_KEY:latest \
             --set-env-vars='^@^NODE_ENV=production@BASE_URL=https://api.slidesage.app@CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slide-sage.pages.dev@BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slide-sage.pages.dev'
 
       - name: Deploy worker service
