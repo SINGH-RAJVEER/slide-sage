@@ -103,7 +103,7 @@ Optional variable:
 
 ## Secret Manager
 
-`DATABASE_URL`, `AUTH_SECRET`, and `RATE_LIMIT_HASH_SECRET` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
+`DATABASE_URL`, `AUTH_SECRET`, `RATE_LIMIT_HASH_SECRET`, and the OAuth credentials are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
 
 ```bash
 printf "postgresql://user:pass@.../slidesage" | \
@@ -112,7 +112,17 @@ printf "<32+ char random secret>" | \
   gcloud secrets create AUTH_SECRET --data-file=- --project=$PROJECT_ID
 printf "<independent random secret>" | \
   gcloud secrets create RATE_LIMIT_HASH_SECRET --data-file=- --project=$PROJECT_ID
+printf "<Google OAuth client ID>" | \
+  gcloud secrets create GOOGLE_CLIENT_ID --data-file=- --project=$PROJECT_ID
+printf "<Google OAuth client secret>" | \
+  gcloud secrets create GOOGLE_CLIENT_SECRET --data-file=- --project=$PROJECT_ID
+printf "<GitHub OAuth client ID>" | \
+  gcloud secrets create GITHUB_CLIENT_ID --data-file=- --project=$PROJECT_ID
+printf "<GitHub OAuth client secret>" | \
+  gcloud secrets create GITHUB_CLIENT_SECRET --data-file=- --project=$PROJECT_ID
 ```
+
+The API deployment sets `BASE_URL=https://api.slidesage.app` and trusts `https://slidesage.app`, `https://www.slidesage.app`, and `https://slide-sage.pages.dev` for browser authentication callbacks. Configure the provider callback URLs as `https://api.slidesage.app/auth/callback/google` and `https://api.slidesage.app/auth/callback/github`.
 
 The Go code reads every other value from its own env defaults; add more `--set-secrets`/`--set-env-vars` entries to the `deploy` job as you move the variables from [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) into production.
 
