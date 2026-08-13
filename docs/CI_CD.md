@@ -105,7 +105,7 @@ Optional variable:
 
 ## Secret Manager
 
-`DATABASE_URL`, `AUTH_SECRET`, `RATE_LIMIT_HASH_SECRET`, OAuth credentials, and `EXA_API_KEY` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
+`DATABASE_URL`, `AUTH_SECRET`, `RATE_LIMIT_HASH_SECRET`, OAuth credentials, `EXA_API_KEY`, and `OPEN_ROUTER_API_KEY` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
 
 ```bash
 printf "postgresql://user:pass@.../slidesage" | \
@@ -124,6 +124,8 @@ printf "<GitHub OAuth client secret>" | \
   gcloud secrets create GITHUB_CLIENT_SECRET --data-file=- --project=$PROJECT_ID
 printf "<Exa API key>" | \
   gcloud secrets create EXA_API_KEY --data-file=- --project=$PROJECT_ID
+printf "<OpenRouter API key>" | \
+  gcloud secrets create OPEN_ROUTER_API_KEY --data-file=- --project=$PROJECT_ID
 ```
 
 The API deployment sets `BASE_URL=https://api.slidesage.app` and trusts `https://slidesage.app`, `https://www.slidesage.app`, and `https://slide-sage.pages.dev` for browser authentication callbacks. Configure the provider callback URLs as `https://api.slidesage.app/auth/callback/google` and `https://api.slidesage.app/auth/callback/github`.
@@ -137,7 +139,7 @@ If the database is Cloud SQL, add `--add-cloudsql-instances=<INSTANCE_CONNECTION
 | Service | Port | Instances | Concurrency | Notes |
 | --- | --- | --- | --- | --- |
 | `api` | 8000 | min 0, max 10 | 80 | Scales from zero on traffic |
-| `worker` | 8080 | min 1, max 1 | 1 | Must stay resident to poll the River queue and run its minute-tick recovery loop. One always-warm instance is billed continuously; scale out if job throughput grows. |
+| `worker` | 8080 | min 1, max 1 | 1 | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`; one always-warm instance is billed continuously. |
 
 The worker is not request-driven, so a `min-instances=1` keeps a warm, always-on instance polling Postgres. River uses row-level `SKIP LOCKED` so scaling out further is safe if needed.
 
