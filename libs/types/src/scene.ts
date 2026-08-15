@@ -10,6 +10,7 @@ import type {
 
 export const SCENE_PRESENTATION_SCHEMA_VERSION = 6 as const;
 export const SCENE_ENGINE_VERSION = "1.0.0" as const;
+export const SCENE_GRID_SIZE = 8 as const;
 
 export type SceneResponsiveProfile = "wide" | "standard" | "portrait" | "compact";
 export type SceneLayoutMode = "absolute" | "stack" | "grid" | "overlay";

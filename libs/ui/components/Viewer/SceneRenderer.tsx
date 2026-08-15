@@ -100,6 +100,7 @@ function SceneNodeView({
 	onEditText,
 	onSelectWidget,
 	onEditWidget,
+	onSelectObject,
 }: {
 	node: ResolvedSceneNode;
 	parent: ResolvedSceneNode;
@@ -112,6 +113,7 @@ function SceneNodeView({
 	onEditText?: (nodeId: string, text: string) => void;
 	onSelectWidget?: (nodeId: string) => void;
 	onEditWidget?: (nodeId: string, props: Record<string, unknown>) => void;
+	onSelectObject?: (node: ResolvedSceneNode, parent: ResolvedSceneNode) => void;
 }) {
 	if (node.hidden) return null;
 	const style = nodeCss(node, parent);
@@ -132,6 +134,7 @@ function SceneNodeView({
 						onEditText={onEditText}
 						onSelectWidget={onSelectWidget}
 						onEditWidget={onEditWidget}
+						onSelectObject={onSelectObject}
 					/>
 				))}
 			</div>
@@ -193,9 +196,10 @@ function SceneNodeView({
 					}
 				}}
 				onClick={(event) => {
-					if (!onSelectText) return;
+					if (!onSelectText && !onSelectObject) return;
 					event.stopPropagation();
-					onSelectText(node.id);
+					onSelectObject?.(node, parent);
+					onSelectText?.(node.id);
 				}}
 				style={textStyle}
 			>
@@ -214,12 +218,45 @@ function SceneNodeView({
 		);
 	}
 	if (node.type === "image") {
-		return <SceneImage node={node} style={style} accent={accent} muted={muted} />;
+		if (!onSelectObject)
+			return <SceneImage node={node} style={style} accent={accent} muted={muted} />;
+		return (
+			<button
+				type="button"
+				data-scene-node-id={node.id}
+				className="ss-editable-object ss-scene-object-button"
+				style={style}
+				onClick={(event) => {
+					event.stopPropagation();
+					onSelectObject?.(node, parent);
+				}}
+			>
+				<SceneImage node={node} accent={accent} muted={muted} />
+			</button>
+		);
 	}
 	if (node.type === "shape") {
+		if (!onSelectObject) {
+			return (
+				<div
+					aria-hidden="true"
+					data-scene-node-id={node.id}
+					style={{
+						...style,
+						...(node.shape === "ellipse" ? { borderRadius: "50%" } : {}),
+						...(node.shape === "line"
+							? {
+									height: node.style?.strokeWidth || 2,
+									background: node.style?.stroke || accent,
+								}
+							: {}),
+					}}
+				/>
+			);
+		}
 		return (
-			<div
-				aria-hidden="true"
+			<button
+				type="button"
 				data-scene-node-id={node.id}
 				style={{
 					...style,
@@ -230,6 +267,12 @@ function SceneNodeView({
 								background: node.style?.stroke || accent,
 							}
 						: {}),
+				}}
+				className="ss-editable-object ss-scene-object-button"
+				aria-label={`Select ${node.shape || "shape"} object`}
+				onClick={(event) => {
+					event.stopPropagation();
+					onSelectObject?.(node, parent);
 				}}
 			/>
 		);
@@ -247,6 +290,7 @@ function SceneNodeView({
 				},
 				onClick: (event) => {
 					event.stopPropagation();
+					onSelectObject?.(node, parent);
 					onSelectWidget(node.id);
 				},
 			}
@@ -272,15 +316,21 @@ function SceneImage({
 	muted,
 }: {
 	node: ResolvedSceneNode;
-	style: React.CSSProperties;
+	style?: React.CSSProperties;
 	accent: string;
 	muted: string;
 }) {
 	const [failed, setFailed] = React.useState(false);
 	return (
 		<figure
-			data-scene-node-id={node.id}
-			style={{ ...style, margin: 0, background: `${accent}12`, color: muted }}
+			style={{
+				...style,
+				margin: 0,
+				width: "100%",
+				height: "100%",
+				background: `${accent}12`,
+				color: muted,
+			}}
 		>
 			{node.url && !failed ? (
 				<img
@@ -322,6 +372,7 @@ export function SceneRenderer({
 	onEditText,
 	onSelectWidget,
 	onEditWidget,
+	onSelectObject,
 }: {
 	slide: SceneSlide;
 	currentTemplate: string;
@@ -333,6 +384,7 @@ export function SceneRenderer({
 	onEditText?: (nodeId: string, text: string) => void;
 	onSelectWidget?: (nodeId: string) => void;
 	onEditWidget?: (nodeId: string, props: Record<string, unknown>) => void;
+	onSelectObject?: (node: ResolvedSceneNode, parent: ResolvedSceneNode) => void;
 }) {
 	const viewportProfile = React.useSyncExternalStore(
 		subscribeToViewport,
@@ -368,6 +420,7 @@ export function SceneRenderer({
 					onEditText={onEditText}
 					onSelectWidget={onSelectWidget}
 					onEditWidget={onEditWidget}
+					onSelectObject={onSelectObject}
 				/>
 			))}
 		</div>

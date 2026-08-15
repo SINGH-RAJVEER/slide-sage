@@ -19,7 +19,7 @@ interface IterateModalProps {
 }
 
 const panelClassName =
-	"flex h-dvh w-full flex-col gap-0 overflow-hidden border-l border-white/10 bg-[hsl(222_27%_12%)] bg-[radial-gradient(circle_at_top,hsl(220_20%_18%),hsl(222_27%_12%)_60%)] text-white shadow-2xl sm:w-[28rem]";
+	"flex h-dvh w-full flex-col gap-0 overflow-hidden border-l border-white/10 bg-[hsl(222_27%_12%)] bg-[radial-gradient(circle_at_top,hsl(220_20%_18%),hsl(222_27%_12%)_60%)] text-white shadow-2xl";
 const detailLevels = ["brief", "concise", "balanced", "detailed", "comprehensive"];
 const tonalities = ["professional", "casual", "enthusiastic", "persuasive"];
 const optionClassName =
@@ -275,19 +275,23 @@ export default function IterateModal({
 		</>
 	);
 
-	if (!open) return null;
-
 	return (
 		<>
-			<button
-				type="button"
-				className="fixed inset-0 z-40 bg-black/45 xl:hidden"
-				onClick={() => onOpenChange(false)}
-				aria-label="Dismiss iterate panel"
-			/>
+			{open && (
+				<button
+					type="button"
+					className="fixed inset-0 z-40 bg-black/45 xl:hidden"
+					onClick={() => onOpenChange(false)}
+					aria-label="Dismiss iterate panel"
+				/>
+			)}
 			<aside
-				className={`viewer-iterate-panel ${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0`}
+				className={`viewer-iterate-panel ${panelClassName} fixed inset-y-0 right-0 z-50 max-w-full xl:static xl:z-auto xl:shrink-0 ${
+					open ? "viewer-iterate-panel--open" : "viewer-iterate-panel--closed"
+				}`}
 				aria-label="Iterate on presentation"
+				aria-hidden={!open}
+				inert={!open ? true : undefined}
 			>
 				{panelContent}
 			</aside>

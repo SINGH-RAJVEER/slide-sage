@@ -1,6 +1,6 @@
 import type { PresentationData } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
-import { ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash } from "lucide-react";
 import type React from "react";
 import DownloadMenu, { type PresentationExporter } from "./DownloadMenu";
 
@@ -14,6 +14,8 @@ interface ViewerNavigationControlsProps {
 	onLast: () => void;
 	onDelete: () => void;
 	deleteDisabled: boolean;
+	onSave?: () => void;
+	saveDisabled?: boolean;
 	showDownload?: boolean;
 	showDelete?: boolean;
 	onExport?: PresentationExporter;
@@ -29,6 +31,8 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
 	onLast,
 	onDelete,
 	deleteDisabled,
+	onSave,
+	saveDisabled = false,
 	showDownload = true,
 	showDelete = true,
 	onExport,
@@ -87,7 +91,12 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
 			</div>
 
 			{showDelete && (
-				<div className="viewer-navigation__delete absolute right-0 top-1/2 -translate-y-1/2">
+				<div className="viewer-navigation__delete absolute right-0 top-1/2 flex -translate-y-1/2 gap-2">
+					{onSave && (
+						<Button variant="outline" onClick={onSave} disabled={saveDisabled}>
+							<Check className="mr-2 size-4" /> Save
+						</Button>
+					)}
 					<Button
 						variant="destructive"
 						onClick={onDelete}

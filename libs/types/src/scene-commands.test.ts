@@ -37,6 +37,20 @@ describe("scene commands", () => {
 		expect(findSceneNode(changed.root, "title")?.hidden).toBeUndefined();
 	});
 
+	it("materializes automatic group children into absolute bounds", () => {
+		const changed = applySceneCommand(slide, {
+			type: "materialize-group",
+			nodeId: "root",
+			childBounds: [{ nodeId: "title", bounds: { x: 80, y: 90, width: 720, height: 180 } }],
+		});
+
+		expect(changed.root).toMatchObject({ layout: "absolute" });
+		expect(findSceneNode(changed.root, "title")).toMatchObject({
+			bounds: { x: 80, y: 90, width: 720, height: 180 },
+		});
+		expect(slide.root).toMatchObject({ layout: "stack" });
+	});
+
 	it("keeps text and semantic metadata synchronized across responsive roots", () => {
 		const responsiveSlide: SceneSlide = {
 			...slide,
