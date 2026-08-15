@@ -260,7 +260,6 @@ function SceneWidgetEditor({ node, foreground, onEditProps }: SceneWidgetProps) 
 					<input
 						aria-label={`Edit chart series ${index + 1} label`}
 						className={editorFieldClass}
-						// biome-ignore lint/suspicious/noArrayIndexKey: Chart series cannot be reordered in this editor.
 						key={`${node.id}-series-${index}`}
 						value={dataset.label || ""}
 						onInput={(event) =>
@@ -317,11 +316,7 @@ function SceneWidgetEditor({ node, foreground, onEditProps }: SceneWidgetProps) 
 		return (
 			<div className="ss-scene-widget-editor grid gap-2" style={{ color: foreground }}>
 				{items.map((item, index) => (
-					<div
-						className="grid grid-cols-[1fr_2fr] gap-2"
-						// biome-ignore lint/suspicious/noArrayIndexKey: Statistics cannot be reordered in this editor.
-						key={`${node.id}-stat-${index}`}
-					>
+					<div className="grid grid-cols-[1fr_2fr] gap-2" key={`${node.id}-stat-${index}`}>
 						<input
 							aria-label={`Edit statistic ${index + 1} value`}
 							className={editorFieldClass}
@@ -394,11 +389,7 @@ function SceneWidgetEditor({ node, foreground, onEditProps }: SceneWidgetProps) 
 				const title =
 					typeof item === "string" ? item : record?.label || record?.value || record?.title || "";
 				return (
-					<div
-						className="grid grid-cols-2 gap-2"
-						// biome-ignore lint/suspicious/noArrayIndexKey: Diagram items cannot be reordered in this editor.
-						key={`${node.id}-item-${index}`}
-					>
+					<div className="grid grid-cols-2 gap-2" key={`${node.id}-item-${index}`}>
 						<input
 							aria-label={`Edit ${node.kind} item ${index + 1} title`}
 							className={editorFieldClass}
