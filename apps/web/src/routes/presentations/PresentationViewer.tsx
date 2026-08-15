@@ -182,6 +182,7 @@ export default function PresentationViewerPage() {
 
 	const [showIterateModal, setShowIterateModal] = useState(false);
 	const [savingEdit, setSavingEdit] = useState(false);
+	const [pendingSlides, setPendingSlides] = useState<Record<string, SceneSlide>>({});
 	const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
 
 	const handleIteratePresentation = async (
@@ -213,6 +214,7 @@ export default function PresentationViewerPage() {
 
 		const slideToDelete = presentation.slides[navigation.currentSlide];
 		const slideId = slideToDelete?.id;
+		if (!slideId) return;
 
 		const newSlides = presentation.slides.filter((_, idx) => idx !== navigation.currentSlide);
 
@@ -222,6 +224,10 @@ export default function PresentationViewerPage() {
 			...presentation,
 			slides: newSlides,
 			totalSlides: newSlides.length,
+		});
+		setPendingSlides((current) => {
+			const { [slideId]: _, ...remaining } = current;
+			return remaining;
 		});
 
 		navigation.scrollToSlide(newCurrent, "auto");
@@ -264,7 +270,7 @@ export default function PresentationViewerPage() {
 		return null;
 	}
 
-	const viewerPresentation =
+	const baseViewerPresentation =
 		presentation ||
 		({
 			title: streamingState.prompt || "Generating presentation",
@@ -272,6 +278,10 @@ export default function PresentationViewerPage() {
 			slides: [],
 			totalSlides: 0,
 		} satisfies PresentationData);
+	const viewerPresentation = {
+		...baseViewerPresentation,
+		slides: baseViewerPresentation.slides.map((slide) => pendingSlides[slide.id] || slide),
+	};
 	const hasSlides = viewerPresentation.slides.length > 0;
 	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
 	const activeContentSlide =
@@ -353,13 +363,26 @@ export default function PresentationViewerPage() {
 		}
 	};
 
+	const savePendingSlide = async () => {
+		const active = presentation?.slides[navigation.currentSlide];
+		if (!active) return;
+		const pending = pendingSlides[active.id];
+		if (!pending) return;
+		await saveCanvasEdit(pending);
+		setPendingSlides((current) => {
+			if (current[pending.id] !== pending) return current;
+			const { [pending.id]: _, ...remaining } = current;
+			return remaining;
+		});
+	};
+
 	return (
 		<div className="presentation-viewer flex h-dvh min-h-dvh max-h-dvh bg-transparent p-0">
 			<div
 				className={
 					isFullscreenMode
 						? "flex h-dvh w-screen flex-col"
-						: "presentation-viewer__shell mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
+						: "presentation-viewer__shell mx-auto flex h-full min-w-0 flex-1 flex-col pt-3"
 				}
 			>
 				{showControls && !isFullscreenMode && (
@@ -394,9 +417,9 @@ export default function PresentationViewerPage() {
 								navigation.scrollToSlide(idx, "smooth");
 							}
 						}}
-						savingEdit={savingEdit}
-						onSaveEdit={saveCanvasEdit}
-						onCancelEdit={() => undefined}
+						onSlideChange={(slide) =>
+							setPendingSlides((current) => ({ ...current, [slide.id]: slide }))
+						}
 					/>
 				)}
 
@@ -423,6 +446,8 @@ export default function PresentationViewerPage() {
 						}}
 						onDelete={deleteCurrentSlide}
 						deleteDisabled={viewerPresentation.slides.length <= 1}
+						onSave={pendingSlides[activeSlide?.id || ""] ? savePendingSlide : undefined}
+						saveDisabled={savingEdit}
 						onExport={exportPresentation}
 					/>
 				)}

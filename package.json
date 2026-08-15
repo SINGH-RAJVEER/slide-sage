@@ -11,7 +11,6 @@
 		"build:api": "CGO_ENABLED=0 go -C apps/api build ./...",
 		"build:web": "bun --cwd apps/web build",
 		"dev": "just dev",
-		"dev:stream": "bun run dev",
 		"dev:api": "CGO_ENABLED=0 go -C apps/api run ./cmd/api",
 		"dev:worker": "CGO_ENABLED=0 go -C apps/api run ./cmd/worker",
 		"dev:web": "bun --cwd apps/web dev",

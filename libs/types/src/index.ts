@@ -50,7 +50,7 @@ export type {
 	SceneWidgetKind,
 	SceneWidgetNode,
 } from "./scene";
-export { SCENE_ENGINE_VERSION, SCENE_PRESENTATION_SCHEMA_VERSION } from "./scene";
+export { SCENE_ENGINE_VERSION, SCENE_GRID_SIZE, SCENE_PRESENTATION_SCHEMA_VERSION } from "./scene";
 export type { SceneCommand } from "./scene-commands";
 export { applySceneCommand, findSceneNode, invertSceneCommand } from "./scene-commands";
 export { resolveScene, sceneForProfile, slideToScene, validateSceneSlide } from "./scene-engine";

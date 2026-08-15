@@ -85,10 +85,10 @@ describe("scene engine", () => {
 		);
 
 		expect(resolved.root.children?.[0]?.children?.[0]?.bounds).toEqual({
-			x: 100,
+			x: 104,
 			y: 80,
 			width: 400,
-			height: 300,
+			height: 304,
 		});
 	});
 
@@ -136,5 +136,35 @@ describe("scene engine", () => {
 		expect(title?.style?.fontSize).toBeGreaterThanOrEqual(28);
 		expect(body?.style?.fontSize).toBeGreaterThanOrEqual(16);
 		expect((body?.bounds.y || 0) + (body?.bounds.height || 0)).toBeLessThanOrEqual(660);
+	});
+
+	it("resolves default object rectangles onto the scene grid", () => {
+		const resolved = resolveScene(
+			{
+				id: "grid-aligned",
+				type: "scene",
+				root: {
+					id: "root",
+					type: "group",
+					order: 0,
+					layout: "absolute",
+					children: [
+						{
+							id: "object",
+							type: "shape",
+							order: 0,
+							shape: "rectangle",
+							bounds: { x: 101, y: 83, width: 203, height: 119 },
+						},
+					],
+				},
+			},
+			{ width: 1280, height: 720 },
+		);
+		const bounds = resolved.root.children?.[0]?.bounds;
+		expect(bounds).toEqual({ x: 104, y: 80, width: 200, height: 120 });
+		for (const value of [bounds?.x, bounds?.y, bounds?.width, bounds?.height]) {
+			expect(value % 8).toBe(0);
+		}
 	});
 });

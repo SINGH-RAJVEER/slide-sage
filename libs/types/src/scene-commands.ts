@@ -1,10 +1,16 @@
-import type { SceneNode, SceneNodePatch, SceneSlide } from "./scene";
+import type { SceneLayoutMode, SceneNode, SceneNodePatch, SceneRect, SceneSlide } from "./scene";
 
 export type SceneCommand =
 	| { type: "set-text"; nodeId: string; text: string }
 	| { type: "set-widget-props"; nodeId: string; props: Record<string, unknown> }
 	| { type: "set-style"; nodeId: string; style: NonNullable<SceneNode["style"]> }
 	| { type: "set-bounds"; nodeId: string; bounds: NonNullable<SceneNode["bounds"]> }
+	| {
+			type: "materialize-group";
+			nodeId: string;
+			layout?: Extract<SceneLayoutMode, "absolute" | "overlay">;
+			childBounds: Array<{ nodeId: string; bounds: SceneRect }>;
+	  }
 	| { type: "insert-node"; parentId: string; node: SceneNode }
 	| { type: "delete-node"; nodeId: string }
 	| { type: "reorder-node"; nodeId: string; order: number }
@@ -92,7 +98,7 @@ export function applySceneCommand(slide: SceneSlide, command: SceneCommand): Sce
 				semantic["subtitle"] = text;
 			}
 		}
-		if (!nextRoot || nextRoot.type !== "group") throw new Error("Invalid scene command result");
+		if (nextRoot?.type !== "group") throw new Error("Invalid scene command result");
 		return { ...slide, root: nextRoot, variants, semantic };
 	} else if (command.type === "set-widget-props") {
 		nextRoot = updateNode(slide.root, command.nodeId, (node) =>
@@ -105,7 +111,7 @@ export function applySceneCommand(slide: SceneSlide, command: SceneCommand): Sce
 			);
 			return root?.type === "group" ? { ...variant, root } : variant;
 		});
-		if (!nextRoot || nextRoot.type !== "group") throw new Error("Invalid scene command result");
+		if (nextRoot?.type !== "group") throw new Error("Invalid scene command result");
 		return { ...slide, root: nextRoot, variants };
 	} else if (command.type === "set-style") {
 		nextRoot = updateNode(slide.root, command.nodeId, (node) => ({
@@ -117,19 +123,35 @@ export function applySceneCommand(slide: SceneSlide, command: SceneCommand): Sce
 			...node,
 			bounds: command.bounds,
 		}));
+	} else if (command.type === "materialize-group") {
+		const boundsByNodeId = new Map(
+			command.childBounds.map((child) => [child.nodeId, child.bounds]),
+		);
+		nextRoot = updateNode(slide.root, command.nodeId, (node) => {
+			if (node.type !== "group") return node;
+			return {
+				...node,
+				layout: command.layout || "absolute",
+				children: node.children.map((child) => {
+					const bounds = boundsByNodeId.get(child.id);
+					return bounds ? { ...child, bounds, grid: undefined } : child;
+				}),
+			};
+		});
 	} else {
 		nextRoot = updateNode(slide.root, command.nodeId, (node) => ({
 			...node,
 			order: command.order,
 		}));
 	}
-	if (!nextRoot || nextRoot.type !== "group") throw new Error("Invalid scene command result");
+	if (nextRoot?.type !== "group") throw new Error("Invalid scene command result");
 	return { ...slide, root: nextRoot };
 }
 
 export function invertSceneCommand(slide: SceneSlide, command: SceneCommand): SceneCommand | null {
 	if (command.type === "insert-node") return { type: "delete-node", nodeId: command.node.id };
-	if (command.type === "set-responsive-override") return null;
+	if (command.type === "set-responsive-override" || command.type === "materialize-group")
+		return null;
 	const node = findSceneNode(slide.root, command.nodeId);
 	if (!node) return null;
 	if (command.type === "set-text" && node.type === "text") {
