@@ -112,6 +112,61 @@ export const PRESENTATION_VISUAL_INTENTS = [
 
 export type PresentationVisualIntent = (typeof PRESENTATION_VISUAL_INTENTS)[number];
 
+export const DECK_PLAN_PURPOSES = [
+	"cover",
+	"section",
+	"context",
+	"problem",
+	"insight",
+	"solution",
+	"evidence",
+	"comparison",
+	"process",
+	"recommendation",
+	"closing",
+] as const;
+
+export type DeckPlanPurpose = (typeof DECK_PLAN_PURPOSES)[number];
+
+export type DeckVisualIntent =
+	| { kind: "none" }
+	| { kind: "image-hero"; imagePrompt: string; focalPoint: BackgroundFocalPoint }
+	| {
+			kind: "timeline";
+			events: Array<{ label: string; title: string; description: string }>;
+	  }
+	| { kind: "process"; nodes: Array<{ label: string; description: string }> }
+	| {
+			kind: "comparison";
+			left: { title: string; items: string[] };
+			right: { title: string; items: string[] };
+	  }
+	| { kind: "metric-grid"; metrics: Array<{ value: string; label: string }> }
+	| {
+			kind: "chart";
+			chartType: ChartConfig["type"];
+			dataSeries: Array<{ label: string; values: number[] }>;
+	  };
+
+export interface DeckPlanSlide {
+	id: string;
+	purpose: DeckPlanPurpose;
+	title: string;
+	message: string;
+	evidence: string[];
+	visualIntent: DeckVisualIntent;
+	layout: SlideLayout;
+}
+
+export interface DeckPlan {
+	version: 1;
+	title: string;
+	audience: string;
+	thesis: string;
+	style: "minimal" | "visual" | "classic" | "consultant";
+	slides: DeckPlanSlide[];
+}
+
 export interface PresentationOutlineCard {
 	id: string;
 	title: string;
@@ -182,12 +237,20 @@ export interface SlideBackgroundImage {
 	overlay: BackgroundOverlay;
 }
 
+export interface SlideObjectBounds {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
 export interface BaseSlideBlock {
 	id?: string;
 	region: SlideRegion;
 	sourceIds?: string[];
 	emphasis?: BlockEmphasis;
 	treatment?: BlockTreatment;
+	bounds?: SlideObjectBounds;
 }
 
 export interface ParagraphBlock extends BaseSlideBlock {
@@ -212,12 +275,14 @@ export interface ImageBlock extends BaseSlideBlock {
 	url: string;
 	alt: string;
 	caption: string;
+	focalPoint?: BackgroundFocalPoint;
 }
 
 export interface ImagePlaceholderBlock extends BaseSlideBlock {
 	type: "image-placeholder";
 	alt: string;
 	caption: string;
+	focalPoint?: BackgroundFocalPoint;
 }
 
 export interface QuoteBlock extends BaseSlideBlock {
@@ -317,6 +382,8 @@ export interface ContentSlide extends BaseSlide {
 	density: SlideDensity;
 	pattern: SlidePattern;
 	backgroundImage?: SlideBackgroundImage;
+	titleBounds?: SlideObjectBounds;
+	subtitleBounds?: SlideObjectBounds;
 	blocks: SlideBlock[];
 }
 
@@ -440,6 +507,7 @@ export interface PresentationData {
 	tokens_used?: number;
 	engineVersion?: string;
 	outline?: PresentationOutline;
+	deckPlan?: DeckPlan;
 	outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 }
 
@@ -473,6 +541,7 @@ export interface PresentationJSON {
 	tokens_used?: number;
 	sources?: Source[];
 	outline?: PresentationOutline;
+	deckPlan?: DeckPlan;
 	outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 	[key: string]: unknown;
 }
@@ -550,6 +619,11 @@ export interface StreamOutlineEvent {
 	data: PresentationOutline;
 }
 
+export interface StreamPlanEvent {
+	event: "plan";
+	data: DeckPlan;
+}
+
 export interface StreamSlideEvent {
 	event: "slide";
 	data: {
@@ -600,6 +674,7 @@ export type PresentationStreamEvent =
 	| StreamResearchEvent
 	| StreamStageEvent
 	| StreamOutlineEvent
+	| StreamPlanEvent
 	| StreamThemeEvent
 	| StreamRetryEvent
 	| StreamSlideEvent
@@ -725,3 +800,5 @@ export interface BillingVerifyResponse {
 }
 
 export type { WidgetBlockLike, WidgetSpecV1 } from "./presentation";
+export type { SlideSupportVisual, SlideSupportVisualPlacement } from "./slide-background";
+export { resolveSlideSupportVisual } from "./slide-background";

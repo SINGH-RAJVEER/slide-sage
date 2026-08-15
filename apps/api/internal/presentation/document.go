@@ -3,6 +3,8 @@ package presentation
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"net/url"
 	"strings"
 	"unicode/utf8"
 )
@@ -80,6 +82,17 @@ func NormalizeDocument(value map[string]any) (map[string]any, error) {
 	result["dimensions"] = dimensions
 	result["slides"] = slides
 	result["totalSlides"] = len(slides)
+	if rawPlan, hasPlan := value["deckPlan"]; hasPlan && !allScenes {
+		plan, err := NormalizeDeckPlan(rawPlan, len(slides))
+		if err == nil {
+			result = ApplyDeckPlan(result, plan)
+			result["outline"] = OutlineFromDeckPlan(plan)
+		} else {
+			delete(result, "deckPlan")
+		}
+	} else if allScenes {
+		delete(result, "deckPlan")
+	}
 	if _, ok := result["sources"].([]any); !ok {
 		result["sources"] = []any{}
 	}
@@ -167,7 +180,7 @@ func normalizeSlide(value any, index int, used map[string]bool) (map[string]any,
 			"sourceIds": []any{},
 		}}
 	}
-	return map[string]any{
+	result := map[string]any{
 		"id":         id,
 		"type":       "content",
 		"layout":     layout,
@@ -179,7 +192,31 @@ func normalizeSlide(value any, index int, used map[string]bool) (map[string]any,
 		"blocks":     blocks,
 		"transition": map[string]any{"type": "none", "durationMs": 0},
 		"effects":    []any{},
-	}, true
+	}
+	if eyebrow := boundedText(input["eyebrow"], 180); eyebrow != "" {
+		result["eyebrow"] = eyebrow
+	}
+	if labels, ok := input["regionLabels"].(map[string]any); ok {
+		normalized := map[string]any{}
+		for _, region := range []string{"main", "primary", "secondary", "media"} {
+			if label := boundedText(labels[region], 120); label != "" {
+				normalized[region] = label
+			}
+		}
+		if len(normalized) > 0 {
+			result["regionLabels"] = normalized
+		}
+	}
+	if background := normalizeBackgroundImage(input["backgroundImage"]); background != nil {
+		result["backgroundImage"] = background
+	}
+	if bounds := normalizeObjectBounds(input["titleBounds"]); bounds != nil {
+		result["titleBounds"] = bounds
+	}
+	if bounds := normalizeObjectBounds(input["subtitleBounds"]); bounds != nil {
+		result["subtitleBounds"] = bounds
+	}
+	return result, true
 }
 
 func normalizeBlocks(input map[string]any, slideID string) []any {
@@ -205,6 +242,9 @@ func normalizeBlocks(input map[string]any, slideID string) []any {
 			"treatment": knownText(block["treatment"], "plain", "plain", "card", "outline", "accent"),
 			"sourceIds": stringArray(block["sourceIds"], 12, 120),
 		}
+		if bounds := normalizeObjectBounds(block["bounds"]); bounds != nil {
+			base["bounds"] = bounds
+		}
 		switch block["type"] {
 		case "paragraph", "text":
 			if text := boundedText(firstValue(block, "text", "content"), 700); text != "" {
@@ -227,11 +267,88 @@ func normalizeBlocks(input map[string]any, slideID string) []any {
 				result = append(result, base)
 			}
 		case "image-placeholder":
-			base["type"], base["alt"], base["caption"] = "image-placeholder", knownText(block["alt"], "Supporting visual"), boundedText(block["caption"], 300)
+			base["type"], base["alt"], base["caption"] = "image-placeholder", boundedText(block["alt"], 700), boundedText(block["caption"], 300)
+			if base["alt"] == "" {
+				base["alt"] = "Supporting visual"
+			}
+			base["focalPoint"] = knownText(block["focalPoint"], "center", "center", "top", "bottom", "left", "right")
+			result = append(result, base)
+		case "image":
+			imageURL := boundedText(block["url"], 2048)
+			if !isHTTPSURL(imageURL) {
+				base["type"], base["alt"], base["caption"] = "image-placeholder", boundedText(block["alt"], 700), boundedText(block["caption"], 300)
+				if base["alt"] == "" {
+					base["alt"] = "Supporting visual"
+				}
+				base["focalPoint"] = knownText(block["focalPoint"], "center", "center", "top", "bottom", "left", "right")
+				result = append(result, base)
+				continue
+			}
+			base["type"], base["url"], base["alt"], base["caption"] = "image", imageURL, boundedText(block["alt"], 700), boundedText(block["caption"], 300)
+			base["focalPoint"] = knownText(block["focalPoint"], "center", "center", "top", "bottom", "left", "right")
 			result = append(result, base)
 		}
 	}
 	return result
+}
+
+func normalizeBackgroundImage(value any) map[string]any {
+	input, ok := value.(map[string]any)
+	if !ok {
+		return nil
+	}
+	imageURL := boundedText(input["url"], 2048)
+	if !isHTTPSURL(imageURL) {
+		return nil
+	}
+	return map[string]any{
+		"url":        imageURL,
+		"alt":        boundedText(input["alt"], 700),
+		"focalPoint": knownText(input["focalPoint"], "center", "center", "top", "bottom", "left", "right"),
+		"overlay":    knownText(input["overlay"], "none", "none", "subtle", "medium", "strong"),
+	}
+}
+
+func normalizeObjectBounds(value any) map[string]any {
+	input, ok := value.(map[string]any)
+	if !ok {
+		return nil
+	}
+	x, xOK := numericValue(input["x"])
+	y, yOK := numericValue(input["y"])
+	width, widthOK := numericValue(input["width"])
+	height, heightOK := numericValue(input["height"])
+	if !xOK || !yOK || !widthOK || !heightOK {
+		return nil
+	}
+	snap := func(number float64) float64 { return math.Round(number/8) * 8 }
+	width = math.Max(8, math.Min(1280, snap(width)))
+	height = math.Max(8, math.Min(720, snap(height)))
+	x = math.Max(0, math.Min(1280-width, snap(x)))
+	y = math.Max(0, math.Min(720-height, snap(y)))
+	return map[string]any{"x": x, "y": y, "width": width, "height": height}
+}
+
+func numericValue(value any) (float64, bool) {
+	switch number := value.(type) {
+	case json.Number:
+		parsed, err := number.Float64()
+		return parsed, err == nil && !math.IsNaN(parsed) && !math.IsInf(parsed, 0)
+	case float64:
+		return number, !math.IsNaN(number) && !math.IsInf(number, 0)
+	case float32:
+		parsed := float64(number)
+		return parsed, !math.IsNaN(parsed) && !math.IsInf(parsed, 0)
+	case int:
+		return float64(number), true
+	default:
+		return 0, false
+	}
+}
+
+func isHTTPSURL(value string) bool {
+	parsed, err := url.Parse(value)
+	return err == nil && parsed.Scheme == "https" && parsed.Host != ""
 }
 
 func firstValue(values map[string]any, keys ...string) any {

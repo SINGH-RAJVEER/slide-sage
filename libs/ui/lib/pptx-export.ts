@@ -8,6 +8,7 @@ import {
 	type PresentationDimensions,
 	type ResolvedSceneNode,
 	resolveScene,
+	resolveSlideSupportVisual,
 	type SceneSlide,
 	type SlideBlock,
 	type SlideRegion,
@@ -43,6 +44,13 @@ interface ContentRegion {
 	w: number;
 	h: number;
 }
+
+const boundsRegion = (bounds: NonNullable<SlideBlock["bounds"]>): ContentRegion => ({
+	x: (bounds.x * SLIDE_WIDTH) / 1280,
+	y: (bounds.y * SLIDE_HEIGHT) / 720,
+	w: (bounds.width * SLIDE_WIDTH) / 1280,
+	h: (bounds.height * SLIDE_HEIGHT) / 720,
+});
 
 interface RenderContext {
 	slide: PptxGenJS.Slide;
@@ -222,18 +230,22 @@ const addBackgroundImage = async (
 	pptx: PptxGenJS,
 	background: NonNullable<ContentSlide["backgroundImage"]>,
 	theme: PptxTheme,
+	placement: "full" | "left" | "right" = "full",
 ) => {
+	const region =
+		placement === "left"
+			? { x: 0, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
+			: placement === "right"
+				? { x: SLIDE_WIDTH * 0.58, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
+				: { x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT };
 	try {
 		const response = await fetch(background.url);
 		if (!response.ok) return;
 		const data = await blobToDataUri(await response.blob());
 		slide.addImage({
 			data,
-			x: 0,
-			y: 0,
-			w: SLIDE_WIDTH,
-			h: SLIDE_HEIGHT,
-			sizing: { type: "cover", w: SLIDE_WIDTH, h: SLIDE_HEIGHT },
+			...region,
+			sizing: { type: "cover", w: region.w, h: region.h },
 			altText: background.alt,
 			objectName: "Slide background image",
 		});
@@ -247,10 +259,7 @@ const addBackgroundImage = async (
 						: undefined;
 		if (transparency !== undefined) {
 			slide.addShape(pptx.ShapeType.rect, {
-				x: 0,
-				y: 0,
-				w: SLIDE_WIDTH,
-				h: SLIDE_HEIGHT,
+				...region,
 				line: { transparency: 100 },
 				fill: { color: theme.background, transparency },
 				objectName: "Background image overlay",
@@ -259,6 +268,39 @@ const addBackgroundImage = async (
 	} catch {
 		// The slide remains fully editable and uses its tone background if remote media is unavailable.
 	}
+};
+
+const addSupportBackgroundPlaceholder = (
+	slide: PptxGenJS.Slide,
+	pptx: PptxGenJS,
+	alt: string,
+	theme: PptxTheme,
+	placement: "full" | "left" | "right",
+) => {
+	const region =
+		placement === "left"
+			? { x: 0, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
+			: placement === "right"
+				? { x: SLIDE_WIDTH * 0.58, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
+				: { x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT };
+	slide.addShape(pptx.ShapeType.rect, {
+		...region,
+		fill: { color: theme.surface, transparency: placement === "full" ? 28 : 8 },
+		line: { color: theme.muted, transparency: 70, dashType: "dash" },
+		objectName: "Background visual placeholder",
+	});
+	slide.addText(alt || "Supporting visual", {
+		...region,
+		margin: 0.3,
+		fontFace: theme.bodyFont,
+		fontSize: 13,
+		color: theme.muted,
+		transparency: 22,
+		align: "center",
+		valign: "middle",
+		fit: "shrink",
+		objectName: "Background visual description",
+	});
 };
 
 const prepareSlide = (slide: PptxGenJS.Slide, theme: PptxTheme) => {
@@ -552,12 +594,13 @@ const addHeader = (
 	}
 	const titleSize = options.titleSize || 40;
 	const titleHeight = Math.min(1.55, estimateTextHeight(slideData.title, region.w, titleSize));
+	const positionedTitle = slideData.titleBounds ? boundsRegion(slideData.titleBounds) : undefined;
 	const title = cleanText(slideData.title);
 	slide.addText(theme.titleUppercase ? title.toUpperCase() : title, {
-		x: region.x,
-		y,
-		w: region.w,
-		h: titleHeight,
+		x: positionedTitle?.x ?? region.x,
+		y: positionedTitle?.y ?? y,
+		w: positionedTitle?.w ?? region.w,
+		h: positionedTitle?.h ?? titleHeight,
 		fontFace: theme.headingFont,
 		fontSize: titleSize,
 		bold: theme.titleBold ?? true,
@@ -572,11 +615,14 @@ const addHeader = (
 	y += titleHeight;
 	if (slideData.subtitle) {
 		const subtitleHeight = Math.min(0.7, estimateTextHeight(slideData.subtitle, region.w, 16));
+		const positionedSubtitle = slideData.subtitleBounds
+			? boundsRegion(slideData.subtitleBounds)
+			: undefined;
 		slide.addText(cleanText(slideData.subtitle), {
-			x: region.x,
-			y: y + 0.1,
-			w: region.w,
-			h: subtitleHeight,
+			x: positionedSubtitle?.x ?? region.x,
+			y: positionedSubtitle?.y ?? y + 0.1,
+			w: positionedSubtitle?.w ?? region.w,
+			h: positionedSubtitle?.h ?? subtitleHeight,
 			fontFace: theme.bodyFont,
 			fontSize: 16,
 			color: theme.muted,
@@ -1277,7 +1323,21 @@ const renderStructuredRegion = async (
 		cursorY,
 		fillMedia: options.fillMedia,
 	};
-	for (const block of blocks) await renderStructuredBlock(context, block);
+	for (const block of blocks) {
+		if (!block.bounds) {
+			await renderStructuredBlock(context, block);
+			continue;
+		}
+		const semanticCursor = context.cursorY;
+		const positioned = boundsRegion(block.bounds);
+		const positionedContext: RenderContext = {
+			...context,
+			region: positioned,
+			cursorY: positioned.y,
+		};
+		await renderStructuredBlock(positionedContext, { ...block, bounds: undefined });
+		context.cursorY = semanticCursor + estimateBlockHeight(block, context.region.w);
+	}
 };
 
 const renderStructuredSlide = async (
@@ -1288,19 +1348,46 @@ const renderStructuredSlide = async (
 	const slide = pptx.addSlide();
 	const slideTheme = themeForTone(theme, slideData.tone || "default");
 	slide.background = { color: slideTheme.background };
+	const supportVisual = slideData.backgroundImage
+		? undefined
+		: resolveSlideSupportVisual(slideData);
 	if (slideData.backgroundImage) {
 		await addBackgroundImage(slide, pptx, slideData.backgroundImage, slideTheme);
+	} else if (supportVisual?.block.type === "image") {
+		await addBackgroundImage(
+			slide,
+			pptx,
+			{
+				url: supportVisual.block.url,
+				alt: supportVisual.block.alt,
+				focalPoint: supportVisual.focalPoint,
+				overlay: supportVisual.overlay,
+			},
+			slideTheme,
+			supportVisual.placement,
+		);
+	} else if (supportVisual) {
+		addSupportBackgroundPlaceholder(
+			slide,
+			pptx,
+			supportVisual.block.alt,
+			slideTheme,
+			supportVisual.placement,
+		);
 	}
 	addPattern(slide, pptx, slideTheme, slideData.pattern || "none");
 	prepareSlide(slide, slideTheme);
 
+	const foregroundBlocks = supportVisual
+		? slideData.blocks.filter((block) => block !== supportVisual.block)
+		: slideData.blocks;
 	const blocksFor = (region: SlideRegion) =>
-		slideData.blocks.filter((block) => block.region === region);
+		foregroundBlocks.filter((block) => block.region === region);
 	const main = blocksFor("main");
 	const primary = blocksFor("primary");
 	const secondary = blocksFor("secondary");
 	const media = blocksFor("media");
-	const all = slideData.blocks;
+	const all = foregroundBlocks;
 	const hasAuthoredPair = primary.length > 0 && secondary.length > 0;
 	const pairedPrimary = hasAuthoredPair ? primary : all.filter((_, index) => index % 2 === 0);
 	const pairedSecondary = hasAuthoredPair ? secondary : all.filter((_, index) => index % 2 === 1);
@@ -1440,20 +1527,22 @@ const renderStructuredSlide = async (
 				w: mediaWidth,
 				h: bottom - topMargin,
 			};
-			surface(mediaRegion, "Media surface", true);
-			await renderStructuredRegion(
-				slide,
-				pptx,
-				slideTheme,
-				visual,
-				{
-					x: mediaX + 0.08,
-					y: topMargin + 0.08,
-					w: mediaWidth - 0.16,
-					h: bottom - topMargin - 0.16,
-				},
-				regionOptions("media", true),
-			);
+			if (!supportVisual) {
+				surface(mediaRegion, "Media surface", true);
+				await renderStructuredRegion(
+					slide,
+					pptx,
+					slideTheme,
+					visual,
+					{
+						x: mediaX + 0.08,
+						y: topMargin + 0.08,
+						w: mediaWidth - 0.16,
+						h: bottom - topMargin - 0.16,
+					},
+					regionOptions("media", true),
+				);
+			}
 			const headerBottom = addHeader(
 				slide,
 				slideTheme,

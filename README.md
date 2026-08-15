@@ -34,3 +34,4 @@ Justfile        Common development commands
 - [API reference](docs/API_OVERVIEW.md)
 - [Authentication](docs/AUTH_API.md)
 - [RAG and semantic memory](docs/RAG_IMPLEMENTATION.md)
+- [Deck planning](docs/DECK_PLANNING.md)

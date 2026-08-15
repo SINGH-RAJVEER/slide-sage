@@ -1,9 +1,10 @@
-import type { Slide } from "@slidesage/types";
-import { isSceneSlide, type SceneSlide, slideToScene } from "@slidesage/types";
+import type { ContentSlide, Slide } from "@slidesage/types";
+import { isContentSlide, isSceneSlide, type SceneSlide } from "@slidesage/types";
 import { Card } from "@slidesage/ui/components/card";
 import { Spinner } from "@slidesage/ui/components/spinner";
 import type React from "react";
 import { EditableSceneCanvas } from "./EditableSceneCanvas";
+import { EditableSlideCanvas } from "./EditableSlideCanvas";
 import { ScaledSlide } from "./ScaledSlide";
 import { SlideRenderer } from "./SlideRenderer";
 
@@ -15,7 +16,8 @@ interface ViewerSlideCarouselProps {
 	containerRef: React.RefObject<HTMLDivElement | null>;
 	onSelectSlide: (index: number) => void;
 	isWaitingForFirstSlide?: boolean;
-	onSlideChange?: (slide: SceneSlide) => void;
+	draftSlide?: ContentSlide | SceneSlide;
+	onSlideChange?: (slide: ContentSlide | SceneSlide) => void;
 }
 
 export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
@@ -26,6 +28,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 	containerRef,
 	onSelectSlide,
 	isWaitingForFirstSlide = false,
+	draftSlide,
 	onSlideChange,
 }) => {
 	return (
@@ -59,6 +62,8 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 				)}
 				{slides.map((slide, idx) => {
 					const isActive = visibleSlide === idx;
+					const editableSlide =
+						currentSlide === idx && draftSlide?.id === slide.id ? draftSlide : slide;
 
 					return (
 						// biome-ignore lint/a11y/useKeyWithClickEvents: click only
@@ -75,15 +80,15 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 							<ScaledSlide className="cursor-pointer rounded-2xl" fit="width">
 								<Card className="w-full h-full rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 flex items-stretch">
 									{currentSlide === idx && onSlideChange ? (
-										isSceneSlide(slide) ? (
+										isSceneSlide(editableSlide) ? (
 											<EditableSceneCanvas
-												slide={slide}
+												slide={editableSlide}
 												currentTemplate={currentTemplate}
 												onChange={onSlideChange}
 											/>
-										) : "blocks" in slide ? (
-											<EditableSceneCanvas
-												slide={slideToScene(slide)}
+										) : isContentSlide(editableSlide) ? (
+											<EditableSlideCanvas
+												slide={editableSlide}
 												currentTemplate={currentTemplate}
 												onChange={onSlideChange}
 											/>

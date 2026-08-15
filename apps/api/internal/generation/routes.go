@@ -23,8 +23,17 @@ import (
 )
 
 const (
-	maxBodyBytes           = 256 * 1024
-	defaultModel           = "google/gemma-4-26b-a4b-it"
+	maxBodyBytes         = 256 * 1024
+	defaultModel         = "google/gemma-4-26b-a4b-it"
+	planningSystemPrompt = `Return exactly one JSON object and no Markdown. Create a DeckPlan with title, audience, thesis, style, and slides. style must be minimal, visual, classic, or consultant. Return exactly the requested number of slides. Each slide requires id, purpose, title, message, evidence, and visualIntent. purpose must be cover, section, context, problem, insight, solution, evidence, comparison, process, recommendation, or closing. visualIntent must be one of these data-only shapes:
+- {"kind":"none"}
+- {"kind":"image-hero","imagePrompt":"Specific visual direction","focalPoint":"center"}
+- {"kind":"timeline","events":[{"label":"2024","title":"Milestone","description":"What changed"},{"label":"2025","title":"Next milestone","description":"What changes next"}]}
+- {"kind":"process","nodes":[{"label":"Step","description":"What happens"},{"label":"Next step","description":"What happens next"}]}
+- {"kind":"comparison","left":{"title":"Option A","items":["Point"]},"right":{"title":"Option B","items":["Point"]}}
+- {"kind":"metric-grid","metrics":[{"value":"42%","label":"Metric"},{"value":"3x","label":"Metric"}]}
+- {"kind":"chart","chartType":"bar","dataSeries":[{"label":"Series","values":[1,2]}]}
+Use visual intents only when they clarify the slide message. Evidence must contain short source references from the supplied research, never invented citations. Never return HTML, Markdown, CSS, code, coordinates, colors, URLs, styles, or class names.`
 	generationSystemPrompt = `Return exactly one JSON object and no Markdown.
 The object must contain title, theme, and slides. Every slide must use type "content" and contain id, layout, title, subtitle, tone, density, pattern, and a top-level blocks array. Every slide must contain at least one substantive text block.
 Use only these exact block shapes:
@@ -32,7 +41,7 @@ Use only these exact block shapes:
 - {"type":"bullets","region":"main","items":["Specific point"],"ordered":false}
 - {"type":"quote","region":"main","text":"Quote","attribution":"Source"}
 - {"type":"callout","region":"main","heading":"Key point","text":"Supporting detail"}
-- {"type":"image-placeholder","region":"media","alt":"Description of a useful visual","caption":"Optional caption"}
+- {"type":"image-placeholder","region":"media","alt":"Description of a useful visual","caption":"Optional caption","focalPoint":"center"}
 Block region must be main, primary, secondary, or media. Do not rename text or items, do not nest blocks under content, and do not return empty blocks. Never return HTML, Markdown, CSS, code, styles, class names, coordinates, or arbitrary colors.`
 )
 
@@ -149,12 +158,7 @@ func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 	}
-	researchTokens := 0
-	if input.ResearchPayload != nil {
-		encoded, _ := json.Marshal(input.ResearchPayload.Sources)
-		researchTokens = (len(encoded) + 3) / 4
-	}
-	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, researchTokens)
+	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
 	operationID, err := uuid()
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
@@ -281,7 +285,44 @@ type streamJob struct {
 	current                                    json.RawMessage
 }
 
-func (h *handler) generateDocument(ctx context.Context, job streamJob) (map[string]any, int, error) {
+func generationUserPrompt(job streamJob) string {
+	user := fmt.Sprintf("Create a %d-slide %s, %s presentation about: %s", job.slideCount, job.detailLevel, job.tonality, job.prompt)
+	if job.kind == "iteration" {
+		user = fmt.Sprintf("Revise this presentation according to: %s\n\nCurrent presentation: %s", job.prompt, string(job.current))
+	}
+	if job.research != nil {
+		encoded, _ := json.Marshal(job.research)
+		user += "\n\nResearch constraints: " + string(encoded)
+	}
+	if job.researchPayload != nil {
+		encoded, _ := json.Marshal(job.researchPayload.Sources)
+		user += "\n\nUse these reviewed sources and preserve factual attribution: " + string(encoded)
+	}
+	return user
+}
+
+func (h *handler) generatePlan(ctx context.Context, job streamJob) (map[string]any, int, error) {
+	plan, tokens, err := h.generateJSON(ctx, job, planningSystemPrompt, generationUserPrompt(job), maxPlanOutputTokens(job.slideCount))
+	if err != nil {
+		return nil, 0, err
+	}
+	normalized, err := presentation.NormalizeDeckPlan(plan, job.slideCount)
+	if err != nil {
+		return nil, 0, err
+	}
+	return normalized, tokens, nil
+}
+
+func (h *handler) generateDocument(ctx context.Context, job streamJob, plan map[string]any) (map[string]any, int, error) {
+	user := generationUserPrompt(job)
+	if plan != nil {
+		encoded, _ := json.Marshal(plan)
+		user += "\n\nDraft this validated DeckPlan in order. Preserve every planned slide's id, title, message, evidence, and semantic layout intent. Write substantive slide copy for each plan entry: " + string(encoded)
+	}
+	return h.generateJSON(ctx, job, generationSystemPrompt, user, maxOutputTokens(job.slideCount))
+}
+
+func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user string, maxOutput int) (map[string]any, int, error) {
 	key := strings.TrimSpace(os.Getenv("OPEN_ROUTER_API_KEY"))
 	if key == "" {
 		key = strings.TrimSpace(os.Getenv("OPENROUTER_API_KEY"))
@@ -297,20 +338,6 @@ func (h *handler) generateDocument(ctx context.Context, job streamJob) (map[stri
 	if key == "" {
 		return nil, 0, errors.New("AI provider is not configured")
 	}
-	system := generationSystemPrompt
-	user := fmt.Sprintf("Create a %d-slide %s, %s presentation about: %s", job.slideCount, job.detailLevel, job.tonality, job.prompt)
-	if job.kind == "iteration" {
-		user = fmt.Sprintf("Revise this presentation according to: %s\n\nCurrent presentation: %s", job.prompt, string(job.current))
-	}
-	if job.research != nil {
-		encoded, _ := json.Marshal(job.research)
-		user += "\n\nResearch constraints: " + string(encoded)
-	}
-	if job.researchPayload != nil {
-		encoded, _ := json.Marshal(job.researchPayload.Sources)
-		user += "\n\nUse these reviewed sources and preserve factual attribution: " + string(encoded)
-	}
-	maxOutput := maxOutputTokens(job.slideCount)
 	if provider != "openrouter" {
 		return h.directProvider(ctx, provider, model, key, system, user, maxOutput)
 	}
@@ -975,12 +1002,14 @@ func requestHash(value any) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, _ int) int64 {
+func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, planningOutputTokens int) int64 {
 	encodedResearch, _ := json.Marshal(research)
 	encodedSources, _ := json.Marshal(payload)
 	inputBytes := len(generationSystemPrompt) + len(prompt) + len(current) + len(encodedResearch) + len(encodedSources) + 256
-	inputTokens := (inputBytes + 3) / 4
-	outputTokens := maxOutputTokens(slideCount)
+	// The validated plan becomes part of the drafting input after the planning
+	// call, so reserve for its bounded output a second time as prompt context.
+	inputTokens := (inputBytes+3)/4 + planningOutputTokens
+	outputTokens := maxOutputTokens(slideCount) + planningOutputTokens
 	// The provider may add protocol tokens beyond the serialized prompt. The
 	// buffer makes the authorization a real maximum while settlement charges the
 	// provider's exact aggregate usage.
@@ -994,6 +1023,14 @@ func maxOutputTokens(slideCount int) int {
 	}
 	if outputTokens > 16000 {
 		return 16000
+	}
+	return outputTokens
+}
+
+func maxPlanOutputTokens(slideCount int) int {
+	outputTokens := 600 + slideCount*240
+	if outputTokens > 4000 {
+		return 4000
 	}
 	return outputTokens
 }

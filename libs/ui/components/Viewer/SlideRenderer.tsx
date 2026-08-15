@@ -3,8 +3,10 @@ import {
 	isChartSlide,
 	isLegacyHtmlSlide,
 	isSceneSlide,
+	resolveSlideSupportVisual,
 	type Slide,
 	type SlideBlock,
+	type SlideObjectBounds,
 	type SlideRegion,
 } from "@slidesage/types";
 import { Image as ImageIcon } from "lucide-react";
@@ -26,6 +28,77 @@ function keyed<T>(items: T[], keyFor: (item: T) => string): Array<{ item: T; key
 		occurrences.set(base, occurrence + 1);
 		return { item, key: occurrence === 0 ? base : `${base}-${occurrence}` };
 	});
+}
+
+function ContentObjectFrame({
+	objectId,
+	bounds,
+	children,
+}: {
+	objectId: string;
+	bounds?: SlideObjectBounds;
+	children: React.ReactNode;
+}) {
+	const anchorRef = React.useRef<HTMLDivElement>(null);
+	const [natural, setNatural] = React.useState<SlideObjectBounds>();
+
+	React.useLayoutEffect(() => {
+		if (!bounds) {
+			if (natural) setNatural(undefined);
+			return;
+		}
+		if (natural) return;
+		const anchor = anchorRef.current;
+		const frame =
+			anchor?.closest<HTMLElement>("[data-pdf-slide]") ||
+			anchor?.closest<HTMLElement>(".ss-editorial-slide");
+		if (!anchor || !frame) return;
+		const anchorRect = anchor.getBoundingClientRect();
+		const frameRect = frame.getBoundingClientRect();
+		if (!frameRect.width || !frameRect.height) return;
+		const scaleX = 1280 / frameRect.width;
+		const scaleY = 720 / frameRect.height;
+		const measured = {
+			x: (anchorRect.left - frameRect.left) * scaleX,
+			y: (anchorRect.top - frameRect.top) * scaleY,
+			width: anchorRect.width * scaleX,
+			height: anchorRect.height * scaleY,
+		};
+		setNatural(measured);
+	}, [bounds, natural]);
+
+	const positioned = bounds && natural;
+	return (
+		<div
+			ref={anchorRef}
+			className="ss-content-object-anchor"
+			style={
+				positioned
+					? { position: "relative", width: natural.width, height: natural.height }
+					: undefined
+			}
+		>
+			<div
+				className="ss-content-object"
+				data-content-object-id={objectId}
+				style={
+					positioned
+						? {
+								position: "absolute",
+								left: bounds.x - natural.x,
+								top: bounds.y - natural.y,
+								width: bounds.width,
+								height: bounds.height,
+								zIndex: 20,
+								overflow: "hidden",
+							}
+						: undefined
+				}
+			>
+				{children}
+			</div>
+		</div>
+	);
 }
 
 function safeImageUrl(value: string): string | undefined {
@@ -95,6 +168,7 @@ function BlockRenderer({
 				rows={rows}
 				onChange={(event) => onEdit?.(update(event.target.value))}
 				className="ss-inplace-text"
+				onClick={(event) => event.stopPropagation()}
 			/>
 		) : null;
 
@@ -326,26 +400,27 @@ function Region({
 			{label && <p className="ss-editorial-region-label">{label}</p>}
 			<div className="ss-editorial-region-content">
 				{keyed(blocks, (block) => block.id || JSON.stringify(block)).map(({ item, key }, index) => (
-					<div
-						key={key}
-						data-edit-block-id={item.id}
-						data-block-kind={item.type}
-						data-emphasis={item.emphasis || "standard"}
-						data-treatment={item.treatment || "plain"}
-						data-block-index={index}
-						{...interactionProps(item)}
-						className={`ss-editorial-block${onSelectBlock ? " ss-editable-object" : ""}`}
-					>
-						<BlockRenderer
-							block={item}
-							styles={styles}
-							isActive={isActive}
-							editing={editingTarget === item.id}
-							onEdit={onEditBlock}
-							widthMode={widthMode}
-							media={media}
-						/>
-					</div>
+					<ContentObjectFrame key={key} objectId={item.id || key} bounds={item.bounds}>
+						<div
+							data-edit-block-id={item.id}
+							data-block-kind={item.type}
+							data-emphasis={item.emphasis || "standard"}
+							data-treatment={item.treatment || "plain"}
+							data-block-index={index}
+							{...interactionProps(item)}
+							className={`ss-editorial-block${onSelectBlock ? " ss-editable-object" : ""}`}
+						>
+							<BlockRenderer
+								block={item}
+								styles={styles}
+								isActive={isActive}
+								editing={editingTarget === item.id}
+								onEdit={onEditBlock}
+								widthMode={widthMode}
+								media={media}
+							/>
+						</div>
+					</ContentObjectFrame>
 				))}
 			</div>
 		</section>
@@ -357,8 +432,8 @@ interface EditorialContentProps {
 	styles: TemplateStyles;
 	isActive: boolean;
 	onSelectBlock?: (block: SlideBlock, element: HTMLElement) => void;
-	onSelectTitle?: () => void;
-	onSelectSubtitle?: () => void;
+	onSelectTitle?: (element: HTMLElement) => void;
+	onSelectSubtitle?: (element: HTMLElement) => void;
 	onEditTitle?: (title: string) => void;
 	onEditSubtitle?: (subtitle: string) => void;
 	onEditBlock?: (block: SlideBlock) => void;
@@ -386,62 +461,68 @@ function EditorialHeader({
 	return (
 		<header className="ss-editorial-header">
 			{slide.eyebrow && <p className="ss-editorial-eyebrow">{slide.eyebrow}</p>}
-			{editingTarget === "title" ? (
-				<input
-					value={slide.title}
-					onChange={(event) => onEditTitle?.(event.target.value)}
-					className="ss-inplace-input ss-editorial-title"
-					style={{ ...styles.slideTitle }}
-				/>
-			) : (
-				<h1
-					role={onSelectTitle ? "button" : undefined}
-					tabIndex={onSelectTitle ? 0 : undefined}
-					onKeyDown={(event) => {
-						if (onSelectTitle && (event.key === "Enter" || event.key === " ")) {
-							onSelectTitle();
-						}
-					}}
-					onClick={(event) => {
-						if (!onSelectTitle) return;
-						event.stopPropagation();
-						onSelectTitle();
-					}}
-					className={`ss-editorial-title${onSelectTitle ? " ss-editable-object" : ""}`}
-					style={{ ...styles.slideTitle }}
-				>
-					{slide.title}
-				</h1>
-			)}
-			{editingTarget === "subtitle" ? (
-				<input
-					value={slide.subtitle}
-					onChange={(event) => onEditSubtitle?.(event.target.value)}
-					className="ss-inplace-input ss-editorial-subtitle"
-					style={{ ...styles.slideSubtitle }}
-					placeholder="Add subtitle"
-				/>
-			) : (
-				slide.subtitle && (
-					<p
-						role={onSelectSubtitle ? "button" : undefined}
-						tabIndex={onSelectSubtitle ? 0 : undefined}
+			<ContentObjectFrame objectId="title" bounds={slide.titleBounds}>
+				{editingTarget === "title" ? (
+					<input
+						value={slide.title}
+						onChange={(event) => onEditTitle?.(event.target.value)}
+						className="ss-inplace-input ss-editorial-title"
+						onClick={(event) => event.stopPropagation()}
+						style={{ ...styles.slideTitle }}
+					/>
+				) : (
+					<h1
+						role={onSelectTitle ? "button" : undefined}
+						tabIndex={onSelectTitle ? 0 : undefined}
 						onKeyDown={(event) => {
-							if (onSelectSubtitle && (event.key === "Enter" || event.key === " ")) {
-								onSelectSubtitle();
+							if (onSelectTitle && (event.key === "Enter" || event.key === " ")) {
+								onSelectTitle(event.currentTarget);
 							}
 						}}
 						onClick={(event) => {
-							if (!onSelectSubtitle) return;
+							if (!onSelectTitle) return;
 							event.stopPropagation();
-							onSelectSubtitle();
+							onSelectTitle(event.currentTarget);
 						}}
-						className={`ss-editorial-subtitle${onSelectSubtitle ? " ss-editable-object" : ""}`}
-						style={{ ...styles.slideSubtitle }}
+						className={`ss-editorial-title${onSelectTitle ? " ss-editable-object" : ""}`}
+						style={{ ...styles.slideTitle }}
 					>
-						{slide.subtitle}
-					</p>
-				)
+						{slide.title}
+					</h1>
+				)}
+			</ContentObjectFrame>
+			{slide.subtitle && (
+				<ContentObjectFrame objectId="subtitle" bounds={slide.subtitleBounds}>
+					{editingTarget === "subtitle" ? (
+						<input
+							value={slide.subtitle}
+							onChange={(event) => onEditSubtitle?.(event.target.value)}
+							className="ss-inplace-input ss-editorial-subtitle"
+							style={{ ...styles.slideSubtitle }}
+							placeholder="Add subtitle"
+							onClick={(event) => event.stopPropagation()}
+						/>
+					) : (
+						<p
+							role={onSelectSubtitle ? "button" : undefined}
+							tabIndex={onSelectSubtitle ? 0 : undefined}
+							onKeyDown={(event) => {
+								if (onSelectSubtitle && (event.key === "Enter" || event.key === " ")) {
+									onSelectSubtitle(event.currentTarget);
+								}
+							}}
+							onClick={(event) => {
+								if (!onSelectSubtitle) return;
+								event.stopPropagation();
+								onSelectSubtitle(event.currentTarget);
+							}}
+							className={`ss-editorial-subtitle${onSelectSubtitle ? " ss-editable-object" : ""}`}
+							style={{ ...styles.slideSubtitle }}
+						>
+							{slide.subtitle}
+						</p>
+					)}
+				</ContentObjectFrame>
 			)}
 		</header>
 	);
@@ -449,7 +530,12 @@ function EditorialHeader({
 
 function EditorialContent(props: EditorialContentProps) {
 	const { slide, styles, isActive } = props;
-	const byRegion = (region: SlideRegion) => slide.blocks.filter((block) => block.region === region);
+	const supportVisual = slide.backgroundImage ? undefined : resolveSlideSupportVisual(slide);
+	const foregroundBlocks = supportVisual
+		? slide.blocks.filter((block) => block !== supportVisual.block)
+		: slide.blocks;
+	const byRegion = (region: SlideRegion) =>
+		foregroundBlocks.filter((block) => block.region === region);
 	const main = byRegion("main");
 	const primary = byRegion("primary");
 	const secondary = byRegion("secondary");
@@ -465,7 +551,7 @@ function EditorialContent(props: EditorialContentProps) {
 		editingTarget: props.editingTarget,
 		widthMode: region === "main" ? "full" : "column",
 	});
-	const all = slide.blocks;
+	const all = foregroundBlocks;
 	const hasAuthoredPair = primary.length > 0 && secondary.length > 0;
 	const pairedPrimary = hasAuthoredPair ? primary : all.filter((_, index) => index % 2 === 0);
 	const pairedSecondary = hasAuthoredPair ? secondary : all.filter((_, index) => index % 2 === 1);
@@ -529,7 +615,11 @@ function EditorialContent(props: EditorialContentProps) {
 			composition = (
 				<div className={`ss-composition ss-composition--${slide.layout}`}>
 					{header}
-					<Region {...regionProps("media", visual)} media={true} />
+					{supportVisual ? (
+						<section className="ss-editorial-region" data-region="media" aria-hidden="true" />
+					) : (
+						<Region {...regionProps("media", visual)} media={true} />
+					)}
 					<Region {...regionProps("primary", content)} />
 					{support.length > 0 && (
 						<Region {...regionProps("secondary", support)} className="ss-media-support" />
@@ -577,6 +667,14 @@ function EditorialContent(props: EditorialContentProps) {
 	}
 
 	const backgroundUrl = slide.backgroundImage ? safeImageUrl(slide.backgroundImage.url) : undefined;
+	const supportUrl =
+		supportVisual?.block.type === "image" ? safeImageUrl(supportVisual.block.url) : undefined;
+	const backgroundAlt = slide.backgroundImage?.alt || supportVisual?.block.alt || "";
+	const backgroundPlacement = supportVisual?.placement || "full";
+	const backgroundOverlay = slide.backgroundImage?.overlay || supportVisual?.overlay || "none";
+	const backgroundPosition =
+		slide.backgroundImage?.focalPoint || supportVisual?.focalPoint || "center";
+	const hasBackground = Boolean(backgroundUrl || supportVisual);
 	return (
 		<div
 			className={`ss-editorial-slide ss-tone-${slide.tone || "default"} ss-density-${
@@ -584,17 +682,28 @@ function EditorialContent(props: EditorialContentProps) {
 			} ss-pattern-${slide.pattern || "none"}`}
 			data-layout={slide.layout}
 		>
-			{backgroundUrl && (
+			{hasBackground && (
 				<div
-					className="ss-editorial-background"
+					className={`ss-editorial-background${backgroundUrl || supportUrl ? "" : " ss-editorial-background--placeholder"}`}
 					role="img"
-					aria-label={slide.backgroundImage?.alt || ""}
-					data-overlay={slide.backgroundImage?.overlay || "none"}
+					aria-label={backgroundAlt}
+					data-overlay={backgroundOverlay}
+					data-placement={backgroundPlacement}
 					style={{
-						backgroundImage: `url(${JSON.stringify(backgroundUrl)})`,
-						backgroundPosition: slide.backgroundImage?.focalPoint || "center",
+						backgroundImage:
+							backgroundUrl || supportUrl
+								? `url(${JSON.stringify(backgroundUrl || supportUrl)})`
+								: undefined,
+						backgroundPosition,
 					}}
-				/>
+				>
+					{!backgroundUrl && !supportUrl && (
+						<span className="ss-editorial-background-placeholder-label">
+							<ImageIcon aria-hidden="true" />
+							{backgroundAlt}
+						</span>
+					)}
+				</div>
 			)}
 			<div className="ss-editorial-pattern" aria-hidden="true" />
 			{composition}
@@ -619,15 +728,22 @@ export const SlideRenderer = React.memo(
 		currentTemplate: string;
 		isActive: boolean;
 		onSelectBlock?: (block: SlideBlock, element: HTMLElement) => void;
-		onSelectTitle?: () => void;
-		onSelectSubtitle?: () => void;
+		onSelectTitle?: (element: HTMLElement) => void;
+		onSelectSubtitle?: (element: HTMLElement) => void;
 		onEditTitle?: (title: string) => void;
 		onEditSubtitle?: (subtitle: string) => void;
 		onEditBlock?: (block: SlideBlock) => void;
 		editingTarget?: string;
 	}) => {
 		if (isSceneSlide(slide)) {
-			return <SceneRenderer slide={slide} currentTemplate={currentTemplate} isActive={isActive} />;
+			return (
+				<SceneRenderer
+					slide={slide}
+					currentTemplate={currentTemplate}
+					isActive={isActive}
+					profile="wide"
+				/>
+			);
 		}
 		const template =
 			AVAILABLE_TEMPLATES.find((item) => item.id === currentTemplate) ||

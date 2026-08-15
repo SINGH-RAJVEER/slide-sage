@@ -7,7 +7,6 @@ export * from "./components/dialog";
 export * from "./components/dropdown-menu";
 export * from "./components/form";
 export * from "./components/Generate";
-export * from "./components/GenerationStatusIndicator";
 export * from "./components/Header";
 export * from "./components/input";
 export * from "./components/label";
@@ -16,7 +15,6 @@ export type { MarketplaceCardItem } from "./components/Marketplace/MarketplaceCa
 export { default as MarketplaceCard } from "./components/Marketplace/MarketplaceCard";
 export * from "./components/Presentations";
 export * from "./components/Settings/AISettings";
-export { default as GenerationStatusIndicator } from "./components/StatusIndicator/GenerationStatusIndicator";
 export * from "./components/select";
 export * from "./components/separator";
 export * from "./components/spinner";

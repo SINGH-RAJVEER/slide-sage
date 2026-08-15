@@ -182,7 +182,7 @@ export default function PresentationViewerPage() {
 
 	const [showIterateModal, setShowIterateModal] = useState(false);
 	const [savingEdit, setSavingEdit] = useState(false);
-	const [pendingSlides, setPendingSlides] = useState<Record<string, SceneSlide>>({});
+	const [pendingSlides, setPendingSlides] = useState<Record<string, ContentSlide | SceneSlide>>({});
 	const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
 
 	const handleIteratePresentation = async (
@@ -259,7 +259,7 @@ export default function PresentationViewerPage() {
 			return;
 		}
 		const { exportPresentationPdf } = await import("@slidesage/ui/lib/pdf-export");
-		await exportPresentationPdf(presentationToExport.title);
+		await exportPresentationPdf(presentationToExport, currentTemplate);
 	};
 
 	if (isLoading) {
@@ -273,17 +273,15 @@ export default function PresentationViewerPage() {
 	const baseViewerPresentation =
 		presentation ||
 		({
-			title: streamingState.prompt || "Generating presentation",
+			title: streamingState.prompt || "Untitled presentation",
 			theme: streamingState.theme || currentTemplate,
 			slides: [],
 			totalSlides: 0,
 		} satisfies PresentationData);
-	const viewerPresentation = {
-		...baseViewerPresentation,
-		slides: baseViewerPresentation.slides.map((slide) => pendingSlides[slide.id] || slide),
-	};
+	const viewerPresentation = baseViewerPresentation;
 	const hasSlides = viewerPresentation.slides.length > 0;
 	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
+	const activeDraftSlide = activeSlide ? pendingSlides[activeSlide.id] : undefined;
 	const activeContentSlide =
 		activeSlide && isContentSlide(activeSlide)
 			? activeSlide
@@ -382,7 +380,7 @@ export default function PresentationViewerPage() {
 				className={
 					isFullscreenMode
 						? "flex h-dvh w-screen flex-col"
-						: "presentation-viewer__shell mx-auto flex h-full min-w-0 flex-1 flex-col pt-3"
+						: "presentation-viewer__shell mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
 				}
 			>
 				{showControls && !isFullscreenMode && (
@@ -420,6 +418,7 @@ export default function PresentationViewerPage() {
 						onSlideChange={(slide) =>
 							setPendingSlides((current) => ({ ...current, [slide.id]: slide }))
 						}
+						draftSlide={activeDraftSlide}
 					/>
 				)}
 

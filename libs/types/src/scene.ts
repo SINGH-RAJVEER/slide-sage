@@ -1,5 +1,6 @@
 import type {
 	ChartConfig,
+	DeckPlan,
 	PresentationDimensions,
 	PresentationOutline,
 	SlideEffect,
@@ -209,6 +210,7 @@ export interface ScenePresentationDocument {
 	slides: SceneSlide[];
 	totalSlides: number;
 	outline?: PresentationOutline;
+	deckPlan?: DeckPlan;
 	sources?: Source[];
 	status?: "ready" | "failed";
 	tokens_used?: number;

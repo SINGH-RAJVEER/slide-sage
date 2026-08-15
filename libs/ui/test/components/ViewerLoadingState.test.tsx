@@ -58,7 +58,7 @@ it("keeps empty-presentation controls visible and disabled", () => {
 	expect(onSave).toHaveBeenCalledTimes(1);
 });
 
-it("converts a content slide to the movable scene editor", () => {
+it("keeps content slides on their canonical renderer while editing", () => {
 	const slide: ContentSlide = {
 		id: "content-1",
 		type: "content",
@@ -89,16 +89,8 @@ it("converts a content slide to the movable scene editor", () => {
 		/>,
 	);
 
-	expect(
-		view
-			.getByText("Editable title")
-			.closest("[data-scene-node-id]")
-			?.getAttribute("data-scene-node-id"),
-	).toBe("content-1-title");
-	expect(
-		view
-			.getByText("Editable paragraph")
-			.closest("[data-scene-node-id]")
-			?.getAttribute("data-scene-node-id"),
-	).toBe("content-1-block-1");
+	expect(view.container.querySelector('[data-layout="body"]')).toBeInTheDocument();
+	expect(view.container.querySelector("[data-scene-node-id]")).toBeNull();
+	expect(view.getByText("Editable title")).toBeInTheDocument();
+	expect(view.getByText("Editable paragraph")).toBeInTheDocument();
 });

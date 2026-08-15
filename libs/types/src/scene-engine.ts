@@ -15,7 +15,6 @@ import type {
 	SlideBlock,
 } from "./index";
 import { isSceneSlide } from "./index";
-import { SCENE_GRID_SIZE } from "./scene";
 
 const MAX_SCENE_DEPTH = 12;
 const MAX_SCENE_NODES = 240;
@@ -42,19 +41,6 @@ function normalizeRect(value: SceneRect | undefined, fallback: SceneRect): Scene
 		y: finite(value?.y, fallback.y),
 		width: Math.max(0, finite(value?.width, fallback.width)),
 		height: Math.max(0, finite(value?.height, fallback.height)),
-	};
-}
-
-function gridValue(value: number): number {
-	return Math.round(value / SCENE_GRID_SIZE) * SCENE_GRID_SIZE;
-}
-
-function gridRect(rect: SceneRect): SceneRect {
-	return {
-		x: gridValue(rect.x),
-		y: gridValue(rect.y),
-		width: Math.max(SCENE_GRID_SIZE, gridValue(rect.width)),
-		height: Math.max(SCENE_GRID_SIZE, gridValue(rect.height)),
 	};
 }
 
@@ -159,7 +145,7 @@ function constrainedRect(node: SceneNode, rect: SceneRect): SceneRect {
 		finite(size?.minHeight, 0),
 		finite(size?.maxHeight, Number.MAX_SAFE_INTEGER),
 	);
-	return gridRect({ ...rect, width, height });
+	return { ...rect, width, height };
 }
 
 function estimatedLineCount(text: string, width: number, fontSize: number): number {

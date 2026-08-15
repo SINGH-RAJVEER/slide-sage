@@ -13,7 +13,8 @@ const isLayoutGeneratedPlaceholder = (block: SlideBlock): block is LayoutGenerat
 	block.layoutGenerated === true;
 
 function withRegion(block: SlideBlock, region: SlideRegion): SlideBlock {
-	return { ...block, region };
+	const { bounds: _bounds, ...content } = block;
+	return { ...content, region } as SlideBlock;
 }
 
 function distributePaired(blocks: SlideBlock[]): SlideBlock[] {
@@ -24,6 +25,7 @@ function distributePaired(blocks: SlideBlock[]): SlideBlock[] {
 }
 
 export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): ContentSlide {
+	const resetSlide = { ...slide, titleBounds: undefined, subtitleBounds: undefined };
 	const authoredBlocks = slide.blocks.filter((block) => !isLayoutGeneratedPlaceholder(block));
 
 	if (layout === "media-left" || layout === "media-right") {
@@ -42,11 +44,11 @@ export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): Cont
 			};
 			media.push(placeholder);
 		}
-		return { ...slide, layout, blocks: [...content, ...media] };
+		return { ...resetSlide, layout, blocks: [...content, ...media] };
 	}
 
 	if (layout === "split" || layout === "comparison") {
-		return { ...slide, layout, blocks: distributePaired(authoredBlocks) };
+		return { ...resetSlide, layout, blocks: distributePaired(authoredBlocks) };
 	}
 
 	if (layout === "sidebar") {
@@ -58,7 +60,7 @@ export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): Cont
 			: authoredBlocks.map((block, index) =>
 					withRegion(block, index > 0 && index % 3 === 0 ? "secondary" : "primary"),
 				);
-		return { ...slide, layout, blocks };
+		return { ...resetSlide, layout, blocks };
 	}
 
 	if (layout === "spotlight") {
@@ -67,7 +69,7 @@ export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): Cont
 			authoredBlocks.findIndex((block) => block.emphasis === "hero"),
 		);
 		return {
-			...slide,
+			...resetSlide,
 			layout,
 			blocks: authoredBlocks.map((block, index) =>
 				withRegion(block, index === heroIndex ? "primary" : "secondary"),
@@ -76,7 +78,7 @@ export function applySlideLayout(slide: ContentSlide, layout: SlideLayout): Cont
 	}
 
 	return {
-		...slide,
+		...resetSlide,
 		layout,
 		blocks: authoredBlocks.map((block) => withRegion(block, "main")),
 	};

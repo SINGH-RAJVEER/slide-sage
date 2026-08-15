@@ -268,6 +268,7 @@ export function EditableSceneCanvas({
 				slide={draft}
 				currentTemplate={currentTemplate}
 				isActive
+				profile="wide"
 				editingTarget={editingTarget}
 				onSelectText={(nodeId) => {
 					if (selectedObject?.node.id === nodeId) setEditingTarget(nodeId);
