@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
+import type { ContentSlide } from "@slidesage/types";
 import { applySlideLayout } from "@/lib/slide-layout";
-import type { ContentSlide } from "@/modules/types/presentation";
 
 const slide: ContentSlide = {
 	id: "slide-1",

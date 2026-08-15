@@ -28,4 +28,3 @@
 - Generation indicator on hover too small
 - The indicator for a generating ppt shows as retry instead of generating in the viewer page
 - Figure out what a better auth session token is doing being assigned during login
-- Remove unused type files from the types lib

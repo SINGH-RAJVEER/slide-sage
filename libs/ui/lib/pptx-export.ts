@@ -12,7 +12,7 @@ import {
 	type SceneSlide,
 	type SlideBlock,
 	type SlideRegion,
-	type WidgetBlockLike,
+	type WidgetBlock,
 } from "@slidesage/types";
 import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
@@ -406,7 +406,7 @@ const renderSceneNode = (
 				region: { x, y, w, h },
 				cursorY: y,
 			},
-			values as unknown as WidgetBlockLike,
+			values as unknown as WidgetBlock,
 		);
 		return;
 	}
@@ -960,7 +960,7 @@ const addStructuredStats = (
 	context.cursorY += height + 0.15;
 };
 
-const addStructuredWidget = (context: RenderContext, block: WidgetBlockLike) => {
+const addStructuredWidget = (context: RenderContext, block: WidgetBlock) => {
 	const widthMode = context.region.w < 7 ? "column" : "full";
 	const scene = compileWidgetScene(block, widthMode);
 	const availableHeight = context.region.y + context.region.h - context.cursorY;

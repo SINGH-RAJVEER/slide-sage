@@ -799,6 +799,5 @@ export interface BillingVerifyResponse {
 	new_balance: number;
 }
 
-export type { WidgetBlockLike, WidgetSpecV1 } from "./presentation";
 export type { SlideSupportVisual, SlideSupportVisualPlacement } from "./slide-background";
 export { resolveSlideSupportVisual } from "./slide-background";

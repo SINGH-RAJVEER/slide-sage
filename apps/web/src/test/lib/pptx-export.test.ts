@@ -1,12 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import type { ContentSlide, PresentationData, SlideBlock, SlideLayout } from "@slidesage/types";
 import JSZip from "jszip";
 import { buildEditablePptx } from "@/lib/pptx-export";
-import type {
-	ContentSlide,
-	PresentationData,
-	SlideBlock,
-	SlideLayout,
-} from "@/modules/types/presentation";
 
 const contentSlide = (
 	layout: SlideLayout,
