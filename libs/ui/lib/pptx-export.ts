@@ -230,14 +230,8 @@ const addBackgroundImage = async (
 	pptx: PptxGenJS,
 	background: NonNullable<ContentSlide["backgroundImage"]>,
 	theme: PptxTheme,
-	placement: "full" | "left" | "right" = "full",
 ) => {
-	const region =
-		placement === "left"
-			? { x: 0, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
-			: placement === "right"
-				? { x: SLIDE_WIDTH * 0.58, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
-				: { x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT };
+	const region = { x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT };
 	try {
 		const response = await fetch(background.url);
 		if (!response.ok) return;
@@ -268,39 +262,6 @@ const addBackgroundImage = async (
 	} catch {
 		// The slide remains fully editable and uses its tone background if remote media is unavailable.
 	}
-};
-
-const addSupportBackgroundPlaceholder = (
-	slide: PptxGenJS.Slide,
-	pptx: PptxGenJS,
-	alt: string,
-	theme: PptxTheme,
-	placement: "full" | "left" | "right",
-) => {
-	const region =
-		placement === "left"
-			? { x: 0, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
-			: placement === "right"
-				? { x: SLIDE_WIDTH * 0.58, y: 0, w: SLIDE_WIDTH * 0.42, h: SLIDE_HEIGHT }
-				: { x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT };
-	slide.addShape(pptx.ShapeType.rect, {
-		...region,
-		fill: { color: theme.surface, transparency: placement === "full" ? 28 : 8 },
-		line: { color: theme.muted, transparency: 70, dashType: "dash" },
-		objectName: "Background visual placeholder",
-	});
-	slide.addText(alt || "Supporting visual", {
-		...region,
-		margin: 0.3,
-		fontFace: theme.bodyFont,
-		fontSize: 13,
-		color: theme.muted,
-		transparency: 22,
-		align: "center",
-		valign: "middle",
-		fit: "shrink",
-		objectName: "Background visual description",
-	});
 };
 
 const prepareSlide = (slide: PptxGenJS.Slide, theme: PptxTheme) => {
@@ -1364,15 +1325,6 @@ const renderStructuredSlide = async (
 				overlay: supportVisual.overlay,
 			},
 			slideTheme,
-			supportVisual.placement,
-		);
-	} else if (supportVisual) {
-		addSupportBackgroundPlaceholder(
-			slide,
-			pptx,
-			supportVisual.block.alt,
-			slideTheme,
-			supportVisual.placement,
 		);
 	}
 	addPattern(slide, pptx, slideTheme, slideData.pattern || "none");

@@ -528,6 +528,29 @@ function EditorialHeader({
 	);
 }
 
+function EditorialBackground({ slide }: { slide: ContentSlide }) {
+	const backgroundUrl = slide.backgroundImage ? safeImageUrl(slide.backgroundImage.url) : undefined;
+	const supportVisual = slide.backgroundImage ? undefined : resolveSlideSupportVisual(slide);
+	const supportUrl =
+		supportVisual?.block.type === "image" ? safeImageUrl(supportVisual.block.url) : undefined;
+	const imageUrl = backgroundUrl || supportUrl;
+	if (!imageUrl) return null;
+
+	return (
+		<div
+			className="ss-editorial-background"
+			role="img"
+			aria-label={slide.backgroundImage?.alt || supportVisual?.block.alt || ""}
+			data-overlay={slide.backgroundImage?.overlay || supportVisual?.overlay || "none"}
+			style={{
+				backgroundImage: `url(${JSON.stringify(imageUrl)})`,
+				backgroundPosition:
+					slide.backgroundImage?.focalPoint || supportVisual?.focalPoint || "center",
+			}}
+		/>
+	);
+}
+
 function EditorialContent(props: EditorialContentProps) {
 	const { slide, styles, isActive } = props;
 	const supportVisual = slide.backgroundImage ? undefined : resolveSlideSupportVisual(slide);
@@ -666,15 +689,6 @@ function EditorialContent(props: EditorialContentProps) {
 			break;
 	}
 
-	const backgroundUrl = slide.backgroundImage ? safeImageUrl(slide.backgroundImage.url) : undefined;
-	const supportUrl =
-		supportVisual?.block.type === "image" ? safeImageUrl(supportVisual.block.url) : undefined;
-	const backgroundAlt = slide.backgroundImage?.alt || supportVisual?.block.alt || "";
-	const backgroundPlacement = supportVisual?.placement || "full";
-	const backgroundOverlay = slide.backgroundImage?.overlay || supportVisual?.overlay || "none";
-	const backgroundPosition =
-		slide.backgroundImage?.focalPoint || supportVisual?.focalPoint || "center";
-	const hasBackground = Boolean(backgroundUrl || supportVisual);
 	return (
 		<div
 			className={`ss-editorial-slide ss-tone-${slide.tone || "default"} ss-density-${
@@ -682,29 +696,6 @@ function EditorialContent(props: EditorialContentProps) {
 			} ss-pattern-${slide.pattern || "none"}`}
 			data-layout={slide.layout}
 		>
-			{hasBackground && (
-				<div
-					className={`ss-editorial-background${backgroundUrl || supportUrl ? "" : " ss-editorial-background--placeholder"}`}
-					role="img"
-					aria-label={backgroundAlt}
-					data-overlay={backgroundOverlay}
-					data-placement={backgroundPlacement}
-					style={{
-						backgroundImage:
-							backgroundUrl || supportUrl
-								? `url(${JSON.stringify(backgroundUrl || supportUrl)})`
-								: undefined,
-						backgroundPosition,
-					}}
-				>
-					{!backgroundUrl && !supportUrl && (
-						<span className="ss-editorial-background-placeholder-label">
-							<ImageIcon aria-hidden="true" />
-							{backgroundAlt}
-						</span>
-					)}
-				</div>
-			)}
 			<div className="ss-editorial-pattern" aria-hidden="true" />
 			{composition}
 		</div>
@@ -767,7 +758,8 @@ export const SlideRenderer = React.memo(
 
 		const contentSlide = isLegacyHtmlSlide(slide) ? adaptLegacyHtmlSlide(slide) : slide;
 		return (
-			<TemplateApplier templateId={currentTemplate} className="w-full h-full">
+			<TemplateApplier templateId={currentTemplate} className="w-full h-full ss-editorial-frame">
+				<EditorialBackground slide={contentSlide} />
 				<EditorialContent
 					slide={contentSlide}
 					styles={template.styles}

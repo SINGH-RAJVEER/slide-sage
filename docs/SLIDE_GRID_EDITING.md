@@ -59,17 +59,19 @@ response.
 The renderer promotes one semantic support visual into the slide background for
 layouts that reserve an image plane:
 
-- Cover and section layouts use a full-slide visual with a strong fade for text
-  contrast.
-- Media-left and media-right layouts use an edge-to-edge split visual on the
-  corresponding side.
+- Cover, section, media-left, and media-right layouts use a corner-to-corner
+  full-slide visual.
+- Background images render at reduced opacity, with the layout overlay applied
+  above them for text contrast.
 - Other layouts keep image blocks in the foreground.
 
 The promoted block remains data in the content slide but is not rendered a
 second time as a foreground image. Clicking a title, text block, widget, or
 other occupied object edits that object. Clicking unoccupied slide space selects
-the background visual and opens controls for its HTTPS URL, description, and
-focal point. The background layer itself does not capture pointer events.
+the background visual and opens controls for its HTTPS URL and editor-only
+description. The description is not displayed while viewing or exporting the
+slide. If the block has no valid image URL, its background plane remains fully
+transparent. The background layer itself does not capture pointer events.
 
 ## Persistence
 

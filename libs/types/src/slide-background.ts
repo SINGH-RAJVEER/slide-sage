@@ -6,7 +6,7 @@ import type {
 	ImagePlaceholderBlock,
 } from "./index";
 
-export type SlideSupportVisualPlacement = "full" | "left" | "right";
+export type SlideSupportVisualPlacement = "full";
 
 export interface SlideSupportVisual {
 	block: ImageBlock | ImagePlaceholderBlock;
@@ -41,7 +41,7 @@ export function resolveSlideSupportVisual(slide: ContentSlide): SlideSupportVisu
 		if (!block) return undefined;
 		return {
 			block,
-			placement: slide.layout === "media-left" ? "left" : "right",
+			placement: "full",
 			overlay: "subtle",
 			focalPoint: block.focalPoint || "center",
 		};

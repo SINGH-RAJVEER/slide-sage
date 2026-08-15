@@ -145,9 +145,9 @@ describe("editable PPTX export", () => {
 		expect(xml[4]).toContain("Comparison primary surface");
 		expect(xml[4]).toContain("Comparison secondary surface");
 		expect(xml[5]).toContain("Sidebar rail");
-		expect(xml[6]).toContain("Background visual placeholder");
-		expect(xml[6]).toContain("media-left media");
-		expect(xml[7]).toContain("Background visual placeholder");
+		expect(xml[6]).not.toContain("Background visual placeholder");
+		expect(xml[6]).not.toContain("media-left media");
+		expect(xml[7]).not.toContain("Background visual placeholder");
 		expect(xml[7]).toContain("Media support divider");
 		expect(xml[8]).toContain("Quote divider");
 		expect(xml[9]).toContain("Spotlight hero surface");

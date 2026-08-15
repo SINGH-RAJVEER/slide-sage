@@ -1,14 +1,7 @@
-import type { BackgroundFocalPoint, ImageBlock, ImagePlaceholderBlock } from "@slidesage/types";
+import type { ImageBlock, ImagePlaceholderBlock } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { Input } from "@slidesage/ui/components/input";
 import { Label } from "@slidesage/ui/components/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@slidesage/ui/components/select";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -75,33 +68,12 @@ export function BackgroundImageEditor({ block, onChange, onClose }: BackgroundIm
 					{!validUrl && <p className="text-xs text-red-300">Use an HTTPS image URL.</p>}
 				</div>
 				<div className="grid gap-1.5">
-					<Label htmlFor={`background-alt-${block.id}`}>Description</Label>
+					<Label htmlFor={`background-alt-${block.id}`}>Description (editor only)</Label>
 					<Input
 						id={`background-alt-${block.id}`}
 						value={block.alt}
 						onChange={(event) => onChange({ ...block, alt: event.target.value })}
 					/>
-				</div>
-				<div className="grid gap-1.5">
-					<Label>Focal point</Label>
-					<Select
-						value={block.focalPoint || "center"}
-						onValueChange={(focalPoint) =>
-							onChange({ ...block, focalPoint: focalPoint as BackgroundFocalPoint })
-						}
-					>
-						<SelectTrigger>
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							{["center", "top", "bottom", "left", "right"].map((point) => (
-								<SelectItem key={point} value={point}>
-									{point[0]?.toUpperCase()}
-									{point.slice(1)}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
 				</div>
 			</div>
 		</div>

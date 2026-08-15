@@ -40,6 +40,8 @@ it("edits the background only after clicking unoccupied canonical slide space", 
 
 	fireEvent.click(view.container.querySelector('[data-layout="cover"]') as HTMLElement);
 	expect(view.getByText("Background visual")).toBeInTheDocument();
+	expect(view.queryByText("Focal point")).toBeNull();
+	expect(view.getByLabelText("Description (editor only)")).toBeInTheDocument();
 	fireEvent.change(view.getByLabelText("Image URL"), {
 		target: { value: "https://images.example.com/cover.jpg" },
 	});

@@ -37,9 +37,9 @@ describe("support visual backgrounds", () => {
 		}
 	});
 
-	it("uses the visual side for media layouts", () => {
-		expect(resolveSlideSupportVisual(slide("media-left"))?.placement).toBe("left");
-		expect(resolveSlideSupportVisual(slide("media-right"))?.placement).toBe("right");
+	it("uses a full-slide background for media layouts", () => {
+		expect(resolveSlideSupportVisual(slide("media-left"))?.placement).toBe("full");
+		expect(resolveSlideSupportVisual(slide("media-right"))?.placement).toBe("full");
 	});
 
 	it("leaves visuals as foreground content in other layouts", () => {
