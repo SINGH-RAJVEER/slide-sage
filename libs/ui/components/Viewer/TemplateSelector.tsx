@@ -10,7 +10,7 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
-import { AVAILABLE_TEMPLATES } from "../../lib/templates";
+import { AVAILABLE_TEMPLATES, getTemplate } from "../../lib/templates";
 
 export interface InstalledTemplateOption {
 	marketplaceId: string;
@@ -27,45 +27,12 @@ interface TemplateSelectorProps {
 }
 
 const getTemplatePreviewColors = (templateId: string) => {
-	const fallbackColors = {
-		primary: "bg-white",
-		secondary: "bg-blue-900",
-		accent: "bg-blue-600",
+	const { visual } = getTemplate(templateId);
+	return {
+		primary: visual.background,
+		secondary: visual.title,
+		accent: visual.accent,
 	};
-	const colorMap: Record<string, { primary: string; secondary: string; accent: string }> = {
-		"modern-dark": {
-			primary: "bg-slate-900",
-			secondary: "bg-cyan-400",
-			accent: "bg-indigo-500",
-		},
-		"corporate-blue": {
-			primary: "bg-white",
-			secondary: "bg-blue-900",
-			accent: "bg-blue-600",
-		},
-		minimalist: {
-			primary: "bg-stone-50",
-			secondary: "bg-stone-900",
-			accent: "bg-stone-400",
-		},
-		"creative-studio": {
-			primary: "bg-orange-500",
-			secondary: "bg-pink-500",
-			accent: "bg-purple-600",
-		},
-		"nature-green": {
-			primary: "bg-green-50",
-			secondary: "bg-green-700",
-			accent: "bg-emerald-500",
-		},
-		"elegant-serif": {
-			primary: "bg-stone-100",
-			secondary: "bg-stone-800",
-			accent: "bg-stone-500",
-		},
-	};
-
-	return colorMap[templateId] ?? fallbackColors;
 };
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({
@@ -91,7 +58,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 									{Object.values(getTemplatePreviewColors(currentTemplate.id)).map((color) => (
 										<div
 											key={`${currentTemplate.id}-${color}`}
-											className={`w-2 h-2 rounded-full ${color}`}
+											className="h-2 w-2 rounded-full"
+											style={{ backgroundColor: color }}
 										/>
 									))}
 								</div>
@@ -129,9 +97,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 									{/* Template preview */}
 									<div className="flex-shrink-0">
 										<div className="w-8 h-6 rounded border border-white/10 overflow-hidden flex shadow-sm">
-											<div className={`w-1/3 ${colors.primary}`} />
-											<div className={`w-1/3 ${colors.secondary}`} />
-											<div className={`w-1/3 ${colors.accent}`} />
+											<div className="w-1/3" style={{ backgroundColor: colors.primary }} />
+											<div className="w-1/3" style={{ backgroundColor: colors.secondary }} />
+											<div className="w-1/3" style={{ backgroundColor: colors.accent }} />
 										</div>
 									</div>
 
@@ -179,9 +147,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 									>
 										<div className="flex w-full items-center gap-3">
 											<div className="flex h-6 w-8 shrink-0 overflow-hidden rounded border border-white/10 shadow-sm">
-												<div className={`w-1/3 ${colors.primary}`} />
-												<div className={`w-1/3 ${colors.secondary}`} />
-												<div className={`w-1/3 ${colors.accent}`} />
+												<div className="w-1/3" style={{ backgroundColor: colors.primary }} />
+												<div className="w-1/3" style={{ backgroundColor: colors.secondary }} />
+												<div className="w-1/3" style={{ backgroundColor: colors.accent }} />
 											</div>
 											<div className="min-w-0 flex-1">
 												<div className="truncate text-sm font-medium text-white/80">

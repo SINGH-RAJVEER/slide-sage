@@ -260,7 +260,7 @@ describe("editable PPTX export", () => {
 		const theme = await archive.file("ppt/theme/theme1.xml")?.async("string");
 
 		expect(slide).toContain("EDITABLE QUARTERLY REVIEW");
-		expect(theme).toContain('typeface="Poppins"');
+		expect(theme).toContain('typeface="Arial"');
 	});
 
 	test("normalizes legacy HTML before composing native content", async () => {

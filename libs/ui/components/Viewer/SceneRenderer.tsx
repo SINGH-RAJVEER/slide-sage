@@ -6,49 +6,8 @@ import {
 } from "@slidesage/types";
 import { Image as ImageIcon } from "lucide-react";
 import React from "react";
+import { getTemplate } from "../../lib/templates";
 import { SceneWidget } from "./scene-widget-registry";
-
-const THEME_COLORS: Record<
-	string,
-	{ background: string; foreground: string; muted: string; accent: string }
-> = {
-	"corporate-blue": {
-		background: "#eef4ff",
-		foreground: "#102448",
-		muted: "#5f708f",
-		accent: "#2864dc",
-	},
-	"modern-dark": {
-		background: "#111827",
-		foreground: "#f2f5fb",
-		muted: "#9aa7bd",
-		accent: "#5dc7e8",
-	},
-	minimalist: {
-		background: "#f8f7f3",
-		foreground: "#24211d",
-		muted: "#746f67",
-		accent: "#b25635",
-	},
-	"creative-studio": {
-		background: "#fff2ed",
-		foreground: "#391827",
-		muted: "#8c6070",
-		accent: "#d24170",
-	},
-	"elegant-serif": {
-		background: "#f4f0e8",
-		foreground: "#2c2822",
-		muted: "#756d62",
-		accent: "#8b6847",
-	},
-	"nature-green": {
-		background: "#edf5eb",
-		foreground: "#183423",
-		muted: "#617567",
-		accent: "#2f7a4d",
-	},
-};
 
 function subscribeToViewport(callback: () => void) {
 	window.addEventListener("resize", callback);
@@ -94,6 +53,8 @@ function SceneNodeView({
 	foreground,
 	muted,
 	accent,
+	displayFont,
+	bodyFont,
 	isActive,
 	editingTarget,
 	onSelectText,
@@ -107,6 +68,8 @@ function SceneNodeView({
 	foreground: string;
 	muted: string;
 	accent: string;
+	displayFont: string;
+	bodyFont: string;
 	isActive: boolean;
 	editingTarget?: string;
 	onSelectText?: (nodeId: string) => void;
@@ -128,6 +91,8 @@ function SceneNodeView({
 						foreground={foreground}
 						muted={muted}
 						accent={accent}
+						displayFont={displayFont}
+						bodyFont={bodyFont}
 						isActive={isActive}
 						editingTarget={editingTarget}
 						onSelectText={onSelectText}
@@ -161,7 +126,7 @@ function SceneNodeView({
 				(node.role === "subtitle" || node.role === "caption" ? muted : foreground),
 			fontFamily:
 				node.style?.fontFamily ||
-				(node.role === "display" ? "Georgia, serif" : "Avenir Next, Segoe UI, sans-serif"),
+				(node.role === "display" || node.role === "title" ? displayFont : bodyFont),
 			fontSize: node.style?.fontSize || roleSize,
 			fontWeight:
 				node.style?.fontWeight || (node.role === "title" || node.role === "display" ? 650 : 400),
@@ -393,8 +358,7 @@ export function SceneRenderer({
 	);
 	const resolvedProfile = profile || viewportProfile;
 	const resolved = resolveScene(slide, dimensions, resolvedProfile);
-	const theme = THEME_COLORS[currentTemplate] || THEME_COLORS["corporate-blue"];
-	if (!theme) return null;
+	const theme = getTemplate(currentTemplate).visual;
 	const art = slide.artDirection;
 	const background = art?.background || theme.background;
 	const foreground = art?.foreground || theme.foreground;
@@ -414,6 +378,8 @@ export function SceneRenderer({
 					foreground={foreground}
 					muted={muted}
 					accent={accent}
+					displayFont={theme.displayFont}
+					bodyFont={theme.bodyFont}
 					isActive={isActive}
 					editingTarget={editingTarget}
 					onSelectText={onSelectText}

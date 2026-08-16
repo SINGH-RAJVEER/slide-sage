@@ -34,6 +34,9 @@ interface ChartRendererProps {
 	chartConfig: ChartConfig;
 	className?: string;
 	textColor?: string;
+	gridColor?: string;
+	palette?: readonly string[];
+	fontFamily?: string;
 	isActive?: boolean;
 }
 
@@ -41,8 +44,22 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 	chartConfig,
 	className = "",
 	textColor = "white",
+	gridColor = "rgba(255, 255, 255, 0.1)",
+	palette = [],
+	fontFamily,
 	isActive = true,
 }) => {
+	const data = {
+		...chartConfig.data,
+		datasets: chartConfig.data.datasets.map((dataset, index) => {
+			const color = palette.length > 0 ? palette[index % palette.length] : undefined;
+			return {
+				...dataset,
+				backgroundColor: dataset.backgroundColor || color,
+				borderColor: dataset.borderColor || color,
+			};
+		}),
+	};
 	const defaultOptions = {
 		responsive: true,
 		maintainAspectRatio: false,
@@ -59,6 +76,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 					color: textColor,
 					font: {
 						size: 14,
+						family: fontFamily,
 					},
 				},
 			},
@@ -69,6 +87,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 				font: {
 					size: 18,
 					weight: "bold" as const,
+					family: fontFamily,
 				},
 			},
 			tooltip: {
@@ -89,7 +108,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 								color: textColor,
 							},
 							grid: {
-								color: "rgba(255, 255, 255, 0.1)",
+								color: gridColor,
 							},
 						},
 						y: {
@@ -97,7 +116,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 								color: textColor,
 							},
 							grid: {
-								color: "rgba(255, 255, 255, 0.1)",
+								color: gridColor,
 							},
 						},
 					}
@@ -111,7 +130,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 
 	const renderChart = () => {
 		const commonProps = {
-			data: chartConfig.data,
+			data,
 			options: mergedOptions,
 		};
 

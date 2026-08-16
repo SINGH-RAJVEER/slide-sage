@@ -1,5 +1,5 @@
 import type React from "react";
-import { AVAILABLE_TEMPLATES } from "../../lib/templates";
+import { getTemplate } from "../../lib/templates";
 
 interface TemplateApplierProps {
 	templateId: string;
@@ -12,17 +12,31 @@ const TemplateApplier: React.FC<TemplateApplierProps> = ({
 	children,
 	className = "",
 }) => {
-	const template =
-		AVAILABLE_TEMPLATES.find((item) => item.id === templateId) ||
-		AVAILABLE_TEMPLATES.find((item) => item.id === "corporate-blue");
-	const styles = template?.styles.slideContent;
+	const template = getTemplate(templateId);
+	const styles = template.styles.slideContent;
+	const { visual } = template;
+	const themeVariables = {
+		"--ss-accent": visual.accent,
+		"--ss-accent-alt": visual.accentAlt,
+		"--ss-chart-grid": visual.chartGrid,
+		"--ss-foreground": visual.foreground,
+		"--ss-line": visual.line,
+		"--ss-muted": visual.muted,
+		"--ss-surface": visual.surface,
+		"--ss-title": visual.title,
+		"--ss-display-font": visual.displayFont,
+		"--ss-body-font": visual.bodyFont,
+	} as React.CSSProperties;
 
 	return (
 		<div
 			data-pdf-slide
-			className={`template-applier w-full h-full ${template?.backgroundClass || ""} ${className}`}
+			data-theme={template.id}
+			data-theme-layout={visual.layout}
+			className={`template-applier w-full h-full ${template.backgroundClass || ""} ${className}`}
 			style={{
 				...styles,
+				...themeVariables,
 				width: "100%",
 				height: "100%",
 				boxSizing: "border-box",

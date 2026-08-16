@@ -203,6 +203,31 @@ func TestNormalizeDeckPlanCompilesSemanticLayouts(t *testing.T) {
 	}
 }
 
+func TestNormalizeDeckPlanUsesNarrativeLayoutsForDefaultContent(t *testing.T) {
+	plan, err := NormalizeDeckPlan(map[string]any{
+		"title": "Narrative layouts", "style": "consultant",
+		"slides": []any{
+			map[string]any{"id": "context", "purpose": "context", "title": "Context", "message": "Set the context", "visualIntent": map[string]any{"kind": "none"}},
+			map[string]any{"id": "problem", "purpose": "problem", "title": "Problem", "message": "Frame the problem", "visualIntent": map[string]any{"kind": "none"}},
+			map[string]any{"id": "insight", "purpose": "insight", "title": "Insight", "message": "Name the insight", "visualIntent": map[string]any{"kind": "none"}},
+			map[string]any{"id": "solution", "purpose": "solution", "title": "Solution", "message": "Describe the solution", "visualIntent": map[string]any{"kind": "none"}},
+			map[string]any{"id": "evidence", "purpose": "evidence", "title": "Evidence", "message": "Show the evidence", "visualIntent": map[string]any{"kind": "none"}},
+			map[string]any{"id": "recommendation", "purpose": "recommendation", "title": "Recommendation", "message": "Make the recommendation", "visualIntent": map[string]any{"kind": "none"}},
+		},
+	}, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	slides := plan["slides"].([]any)
+	layouts := []string{"sidebar", "split", "spotlight", "split", "sidebar", "sidebar"}
+	for index, expected := range layouts {
+		if layout := slides[index].(map[string]any)["layout"]; layout != expected {
+			t.Fatalf("slide %d layout = %v, want %s", index+1, layout, expected)
+		}
+	}
+}
+
 func TestNormalizeDeckPlanRejectsIncompleteSemanticData(t *testing.T) {
 	_, err := NormalizeDeckPlan(map[string]any{
 		"title": "Example", "style": "minimal", "slides": []any{

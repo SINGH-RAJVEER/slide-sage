@@ -324,6 +324,12 @@ func layoutForPlan(purpose string, intent map[string]any) string {
 		return "comparison"
 	case "process":
 		return "canvas"
+	case "context", "evidence", "recommendation":
+		return "sidebar"
+	case "problem", "solution":
+		return "split"
+	case "insight":
+		return "spotlight"
 	case "closing":
 		return "spotlight"
 	default:

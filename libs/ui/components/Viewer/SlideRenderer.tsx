@@ -13,7 +13,7 @@ import { Image as ImageIcon } from "lucide-react";
 import React from "react";
 import { adaptLegacyHtmlSlide } from "../../lib/legacy-slide-adapter";
 import { tweenNumber } from "../../lib/presentation-motion";
-import { AVAILABLE_TEMPLATES, type TemplateStyles } from "../../lib/templates";
+import { getTemplate, type TemplateStyles } from "../../lib/templates";
 import { isWidgetBlock, type WidgetWidth } from "../../lib/widget-scene";
 import ChartRenderer from "../Charts/ChartRenderer";
 import { SceneRenderer } from "./SceneRenderer";
@@ -736,10 +736,7 @@ export const SlideRenderer = React.memo(
 				/>
 			);
 		}
-		const template =
-			AVAILABLE_TEMPLATES.find((item) => item.id === currentTemplate) ||
-			AVAILABLE_TEMPLATES.find((item) => item.id === "corporate-blue");
-		if (!template) return null;
+		const template = getTemplate(currentTemplate);
 
 		if (isChartSlide(slide)) {
 			return (
@@ -749,6 +746,9 @@ export const SlideRenderer = React.memo(
 							chartConfig={slide.chartConfig}
 							className="w-full h-full"
 							textColor={String(template.styles.slideContent.color || "white")}
+							gridColor={template.visual.chartGrid}
+							palette={template.visual.chartColors}
+							fontFamily={template.visual.bodyFont}
 							isActive={isActive}
 						/>
 					</div>
