@@ -153,7 +153,7 @@ limits, PostgreSQL connections, and job duration, then change the instance count
 manually. Total potential job concurrency is the worker instance count multiplied
 by `WORKER_CONCURRENCY`; size the database pool and provider limits accordingly.
 
-`docker/Dockerfile.api` exposes three targets from the same source:
+`docker/Dockerfile` exposes three targets from the same source:
 
 | Target | Entrypoint | Use |
 | --- | --- | --- |

@@ -100,7 +100,7 @@ The wrapper intentionally accepts only no arguments or `up`; application and
 River migration histories must be advanced together.
 
 Apply migrations before starting or deploying the API and worker. Production
-images use the `migrate` target in `docker/Dockerfile.api` as a one-off migration
+images use the `migrate` target in `docker/Dockerfile` as a one-off migration
 job; runtime startup does not apply schema changes.
 
 ## Local URLs
