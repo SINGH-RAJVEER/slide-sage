@@ -9,7 +9,6 @@
 			"@slidesage/ui": ["./index.ts"],
 			"@slidesage/ui/components": ["./components"],
 			"@slidesage/ui/components/*": ["./components/*"],
-			"@slidesage/ui/hooks": ["./hooks"],
 			"@slidesage/ui/hooks/*": ["./hooks/*"],
 			"@slidesage/ui/lib": ["./lib"],
 			"@slidesage/ui/lib/*": ["./lib/*"]

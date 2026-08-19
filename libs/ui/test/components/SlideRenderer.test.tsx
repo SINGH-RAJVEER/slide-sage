@@ -201,6 +201,49 @@ describe("SlideRenderer", () => {
 		expect(background?.style.backgroundImage).toContain("https://images.example.com/cover.jpg");
 	});
 
+	it("promotes cover support visuals into a faded full-slide background", () => {
+		const { container } = renderSlide(
+			contentSlide("cover", [
+				{ id: "copy", type: "paragraph", region: "main", text: "Cover note" },
+				{
+					id: "support-visual",
+					type: "image",
+					region: "media",
+					url: "https://images.example.com/support.jpg",
+					alt: "Supporting landscape",
+					caption: "",
+					focalPoint: "top",
+				},
+			]),
+		);
+		const background = container.querySelector<HTMLElement>(".ss-editorial-background");
+		expect(background).toHaveAttribute("data-overlay", "strong");
+		expect(background?.style.backgroundPosition).toBe("center top");
+		expect(background?.parentElement).toHaveClass("ss-editorial-frame");
+		expect(container.querySelector('[data-edit-block-id="support-visual"]')).toBeNull();
+	});
+
+	it("keeps missing media backgrounds transparent without showing their descriptions", () => {
+		for (const layout of ["media-left", "media-right"] as const) {
+			const view = renderSlide(
+				contentSlide(layout, [
+					{ id: "copy", type: "paragraph", region: "primary", text: "Split copy" },
+					{
+						id: "support-visual",
+						type: "image-placeholder",
+						region: "media",
+						alt: "Split support",
+						caption: "",
+					},
+				]),
+			);
+			expect(view.container.querySelector(".ss-editorial-background")).toBeNull();
+			expect(view.queryByText("Split support")).toBeNull();
+			expect(view.container.querySelector('[data-region="media"]')).toBeEmptyDOMElement();
+			view.unmount();
+		}
+	});
+
 	it("renders final statistic values in inactive previews", () => {
 		const { getByText } = renderSlide(
 			contentSlide("spotlight", [

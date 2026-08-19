@@ -1,12 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import type { ContentSlide, PresentationData, SlideBlock, SlideLayout } from "@slidesage/types";
 import JSZip from "jszip";
 import { buildEditablePptx } from "@/lib/pptx-export";
-import type {
-	ContentSlide,
-	PresentationData,
-	SlideBlock,
-	SlideLayout,
-} from "@/modules/types/presentation";
 
 const contentSlide = (
 	layout: SlideLayout,
@@ -145,13 +140,35 @@ describe("editable PPTX export", () => {
 		expect(xml[4]).toContain("Comparison primary surface");
 		expect(xml[4]).toContain("Comparison secondary surface");
 		expect(xml[5]).toContain("Sidebar rail");
-		expect(xml[6]).toContain("Media surface");
-		expect(xml[6]).toContain("media-left media");
+		expect(xml[6]).not.toContain("Background visual placeholder");
+		expect(xml[6]).not.toContain("media-left media");
+		expect(xml[7]).not.toContain("Background visual placeholder");
 		expect(xml[7]).toContain("Media support divider");
 		expect(xml[8]).toContain("Quote divider");
 		expect(xml[9]).toContain("Spotlight hero surface");
 		expect(xml[9]).toContain("Spotlight support divider");
 		expect(xml[10]).toContain("Canvas cell 1");
+	});
+
+	test("maps canonical content object bounds to editable PowerPoint geometry", async () => {
+		const bounded = contentSlide(
+			"body",
+			[
+				{
+					...paragraph("main", "Positioned block"),
+					bounds: { x: 80, y: 400, width: 400, height: 120 },
+				},
+			],
+			{
+				titleBounds: { x: 640, y: 360, width: 320, height: 160 },
+			},
+		);
+		const archive = await archiveFor([bounded]);
+		const xml = await archive.file("ppt/slides/slide1.xml")?.async("string");
+
+		expect(xml).toContain('<a:off x="6095848" y="3429000"/>');
+		expect(xml).toContain('<a:off x="761981" y="3810000"/>');
+		expect(xml).toContain("Positioned block");
 	});
 
 	test("exports composition metadata through editable text and shape styling", async () => {
@@ -243,7 +260,7 @@ describe("editable PPTX export", () => {
 		const theme = await archive.file("ppt/theme/theme1.xml")?.async("string");
 
 		expect(slide).toContain("EDITABLE QUARTERLY REVIEW");
-		expect(theme).toContain('typeface="Poppins"');
+		expect(theme).toContain('typeface="Arial"');
 	});
 
 	test("normalizes legacy HTML before composing native content", async () => {

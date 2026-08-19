@@ -19,7 +19,9 @@ it("renders a single accessible form only while open", () => {
 	const closedView = render(
 		<IterateModal open={false} onOpenChange={mock()} onIterate={mock()} isStreaming={false} />,
 	);
-	expect(closedView.queryByLabelText("Iterate on presentation")).toBeNull();
+	const closedPanel = closedView.getByLabelText("Iterate on presentation");
+	expect(closedPanel).toHaveClass("viewer-iterate-panel--closed");
+	expect(closedPanel).toHaveAttribute("aria-hidden", "true");
 });
 
 it("submits the selected generation settings and clamps a custom slide count", () => {

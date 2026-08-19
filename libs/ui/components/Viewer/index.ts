@@ -6,8 +6,6 @@ export { EditableSlideCanvas } from "./EditableSlideCanvas";
 export { default as IterateModal } from "./IterateModal";
 export { ScaledSlide } from "./ScaledSlide";
 export { SceneRenderer } from "./SceneRenderer";
-export { SlideBlockEditor } from "./SlideBlockEditor";
-export { SlideIntervalSelector } from "./SlideIntervalSelector";
 export { SlideLayoutSelector } from "./SlideLayoutSelector";
 export { SlideRenderer } from "./SlideRenderer";
 export { default as TemplateApplier } from "./TemplateApplier";

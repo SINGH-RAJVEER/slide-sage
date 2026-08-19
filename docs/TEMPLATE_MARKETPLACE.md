@@ -6,8 +6,8 @@ navy application shell.
 
 ## Current Scope
 
-- Browse six curated themes authored by SlideSage, including the bright Citrus Brief
-  and monochrome Paper Grid systems.
+- Browse six complete SlideSage offerings rather than placeholder catalog entries: Citrus Brief,
+  Paper Grid, Midnight Signal, Field Notes, Founder Letter, and Boardroom Clear.
 - Preview every item through the production `SlideRenderer` using supported themes.
 - Open a dedicated, URL-addressable theme preview by selecting a theme card.
 - Search theme and creator metadata and sort the catalog.
@@ -20,6 +20,32 @@ navy application shell.
   to the left and right edges of the toolbar.
 - Scale marketplace previews from the canonical 1280x720 canvas to each card's measured size,
   preserving all slide element positions and proportions without cropping.
+
+## Theme Systems
+
+The six default renderer themes are complete visual systems, not palette swaps. Each owns a
+different typography pairing, color system, information density, shape grammar, image treatment,
+chart palette, and default composition treatment:
+
+| Default system | Renderer ID | Design language | Marketplace offering |
+| --- | --- | --- | --- |
+| Midnight Terminal | `modern-dark` | Dark cinematic space, terminal metadata, luminous proof points | Midnight Signal |
+| Signal Grid | `corporate-blue` | Strict analytical grid, slim blue rail, precise data hierarchy | Boardroom Clear |
+| Monochrome Grid | `minimalist` | Quiet serif headlines, paper grid, reading-first layouts | Paper Grid |
+| Kinetic Blocks | `creative-studio` | Poster-like typography, hard edges, fixed diagonal accents | Citrus Brief |
+| Editorial Ledger | `elegant-serif` | Warm paper, folios, magazine columns, editorial serif voice | Founder Letter |
+| Field Report | `nature-green` | Organic contours, human-scale spacing, restrained natural palette | Field Notes |
+
+Marketplace offerings are authored SlideSage sample decks. Every offering now has its own cover,
+showcase composition, narrative slide, data colors, and close rather than a shared placeholder
+story. Marketplace installation still resolves to the supported renderer ID; this keeps saved
+presentations, generation, export, and API validation compatible while the marketplace remains
+frontend-only.
+
+Theme token definitions live in `libs/ui/lib/templates.ts`. The renderer publishes those values as
+CSS custom properties for editorial content and uses the same colors and font families for scene
+slides and chart rendering. The PowerPoint exporter maintains matching palette and typography
+tokens for its native output.
 
 The first implementation is intentionally frontend-only. Installed marketplace themes and the active
 user's upvotes persist in browser local storage, while catalog metadata, usage counts, and aggregate
@@ -49,17 +75,24 @@ its entrance animation against the final presentation dimensions instead of a ze
 
 Schema-v5 content slides use code-owned editorial compositions rather than theme-authored HTML. The
 renderer supports `cover`, `section`, `body`, `split`, `comparison`, `sidebar`, `media-left`,
-`media-right`, `quote`, `spotlight`, and `canvas`. Themes continue to provide the color and font
-foundation, while renderer overrides establish consistent type scale, spacing, image cropping, and
-asymmetric geometry. Pattern rendering uses CSS gradients only. Image and background-image URLs are
-restricted to HTTPS; invalid content images become descriptive placeholders and invalid backgrounds
-are omitted.
+`media-right`, `quote`, `spotlight`, and `canvas`. Themes establish both the visual foundation and
+the composition treatment: for example, Signal Grid adds a data rail and a measured grid, Paper
+Grid removes panels in favor of reading columns, Kinetic Blocks uses hard-edged poster geometry, and
+Field Report uses rounded organic frames. Pattern rendering uses CSS gradients only. Image and
+background-image URLs are restricted to HTTPS; invalid content images become descriptive
+placeholders and invalid backgrounds are omitted.
 
 Blocks retain their semantic kind inside every composition. Their `emphasis` (`standard`, `strong`,
 `hero`, or `supporting`) and `treatment` (`plain`, `card`, `outline`, or `accent`) values create visible
 hierarchy without changing content. Layout changes migrate blocks among the canonical `main`,
 `primary`, `secondary`, and `media` regions. Media layouts may add a temporary visual placeholder;
 that placeholder is removed when leaving a media layout without removing authored placeholders.
+
+The semantic deck-plan compiler also selects varied default content layouts before a slide reaches
+the renderer. Context, evidence, and recommendation slides use a sidebar; problem and solution
+slides use a split composition; insights use spotlight. Visual intents still take precedence, so
+comparisons, image heroes, timelines, processes, metrics, and charts retain their appropriate
+specialized layouts.
 
 Theme cards route to `/marketplace/:marketplaceId/preview`. This read-only page uses the same viewer
 header, carousel, navigation, thumbnails, scaled fullscreen stage, playback, and fullscreen controls

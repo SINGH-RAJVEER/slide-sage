@@ -232,7 +232,11 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	if riverJob.Attempt > 1 {
 		_ = h.appendEvent(ctx, record.ID, "retry", map[string]any{"attempt": riverJob.Attempt, "max_attempts": riverJob.MaxAttempts, "delay_ms": 0, "reason": "Retrying after a temporary provider failure"})
 	}
-	_ = h.updateStage(ctx, record.ID, "planning", "Preparing presentation", 1, 3)
+	stageTotal := 3
+	if job.kind == "generation" {
+		stageTotal = 4
+	}
+	_ = h.updateStage(ctx, record.ID, "planning", "Planning presentation", 1, stageTotal)
 
 	selection, credential, err := h.connections.CredentialForGeneration(ctx, record.UserID, job.selection)
 	if err != nil {
@@ -243,13 +247,31 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	}
 	job.selection, job.credential = selection, credential
 
-	document, tokens, err := h.generateDocument(ctx, job)
+	var plan map[string]any
+	tokens := 0
+	if job.kind == "generation" {
+		var planTokens int
+		plan, planTokens, err = h.generatePlan(ctx, job)
+		if err != nil {
+			if retryableProviderError(err) && riverJob.Attempt < riverJob.MaxAttempts {
+				return h.scheduleRetry(ctx, record, riverJob, err)
+			}
+			return h.finalizeQueuedFailure(ctx, record, riverJob, job, "planning_failure", err.Error())
+		}
+		tokens += planTokens
+		_ = h.appendEvent(ctx, record.ID, "plan", plan)
+		_ = h.appendEvent(ctx, record.ID, "outline", presentation.OutlineFromDeckPlan(plan))
+		_ = h.updateStage(ctx, record.ID, "drafting", "Writing planned slide content", 2, 4)
+	}
+
+	document, draftTokens, err := h.generateDocument(ctx, job, plan)
 	if err != nil {
 		if retryableProviderError(err) && riverJob.Attempt < riverJob.MaxAttempts {
 			return h.scheduleRetry(ctx, record, riverJob, err)
 		}
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "provider_failure", err.Error())
 	}
+	tokens += draftTokens
 	if cancelled, err := h.cancelRequested(ctx, record.ID); err != nil {
 		return err
 	} else if cancelled {
@@ -264,6 +286,9 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	document["theme"] = text(document["theme"], job.theme)
 	document["status"] = "ready"
 	document["tokens_used"] = tokens
+	if plan != nil {
+		document = presentation.ApplyDeckPlan(document, plan)
+	}
 	rawSlides, ok := document["slides"].([]any)
 	if !ok || len(rawSlides) < job.slideCount {
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "incomplete_document", "The provider returned fewer slides than requested")
@@ -281,10 +306,15 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	}
 
 	title := text(document["title"], "Untitled Presentation")
-	_ = h.appendEvent(ctx, record.ID, "outline", outline(title, slides))
-	_ = h.updateStage(ctx, record.ID, "drafting", "Writing slide content", 2, 3)
+	if plan == nil {
+		_ = h.appendEvent(ctx, record.ID, "outline", outline(title, slides))
+		_ = h.updateStage(ctx, record.ID, "drafting", "Writing slide content", 2, 3)
+	}
 	for index, slide := range slides {
 		_ = h.appendEvent(ctx, record.ID, "slide", map[string]any{"index": index, "slide": slide, "title": title})
+	}
+	if plan != nil {
+		_ = h.updateStage(ctx, record.ID, "designing", "Compiling semantic layouts", 3, 4)
 	}
 	completed, _ := json.Marshal(document)
 	charged := actualCharge(tokens, job.quote)
@@ -460,13 +490,17 @@ func (h *handler) completeQueuedJob(ctx context.Context, riverJob *river.Job[Job
 	if err != nil {
 		return err
 	}
-	if _, err := tx.ExecContext(ctx, `UPDATE generation_jobs SET status = 'succeeded', stage = 'finalizing', progress_completed = 3, progress_total = 3, completed_at = NOW(), updated_at = NOW() WHERE id = $1`, record.ID); err != nil {
+	total := 3
+	if job.kind == "generation" {
+		total = 4
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE generation_jobs SET status = 'succeeded', stage = 'finalizing', progress_completed = $1, progress_total = $1, completed_at = NOW(), updated_at = NOW() WHERE id = $2`, total, record.ID); err != nil {
 		return err
 	}
 	if err := appendEventTx(ctx, tx, record.ID, "complete", document); err != nil {
 		return err
 	}
-	if err := appendEventTx(ctx, tx, record.ID, "stage", map[string]any{"stage": "finalizing", "message": "Saving presentation", "completed": 3, "total": 3}); err != nil {
+	if err := appendEventTx(ctx, tx, record.ID, "stage", map[string]any{"stage": "finalizing", "message": "Saving presentation", "completed": total, "total": total}); err != nil {
 		return err
 	}
 	if err := appendEventTx(ctx, tx, record.ID, "saved", map[string]any{"presentation_id": record.PresentationID, "success": true, "slide_tokens_remaining": points(balance), "slide_tokens_charged": points(charged)}); err != nil {

@@ -8,10 +8,11 @@ import {
 	type PresentationDimensions,
 	type ResolvedSceneNode,
 	resolveScene,
+	resolveSlideSupportVisual,
 	type SceneSlide,
 	type SlideBlock,
 	type SlideRegion,
-	type WidgetBlockLike,
+	type WidgetBlock,
 } from "@slidesage/types";
 import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
@@ -44,6 +45,13 @@ interface ContentRegion {
 	h: number;
 }
 
+const boundsRegion = (bounds: NonNullable<SlideBlock["bounds"]>): ContentRegion => ({
+	x: (bounds.x * SLIDE_WIDTH) / 1280,
+	y: (bounds.y * SLIDE_HEIGHT) / 720,
+	w: (bounds.width * SLIDE_WIDTH) / 1280,
+	h: (bounds.height * SLIDE_HEIGHT) / 720,
+});
+
 interface RenderContext {
 	slide: PptxGenJS.Slide;
 	pptx: PptxGenJS;
@@ -61,63 +69,63 @@ interface HeaderOptions {
 
 const THEMES: Record<string, PptxTheme> = {
 	"modern-dark": {
-		background: "0F172A",
-		text: "F8FAFC",
-		title: "F8FAFC",
-		muted: "94A3B8",
-		accent: "38BDF8",
-		accentAlt: "818CF8",
-		surface: "1E293B",
+		background: "090B12",
+		text: "F3F5F7",
+		title: "F3F5F7",
+		muted: "A8B2C6",
+		accent: "9B8CFF",
+		accentAlt: "2FE1A3",
+		surface: "151927",
 		headingFont: "Inter",
 		bodyFont: "Inter",
 		contentInset: 1.1,
 	},
 	"corporate-blue": {
-		background: "FFFFFF",
-		text: "0F172A",
-		title: "1E40AF",
-		muted: "475569",
-		accent: "2563EB",
-		accentAlt: "0EA5E9",
-		surface: "EFF6FF",
+		background: "F7F7F2",
+		text: "172033",
+		title: "172F61",
+		muted: "5E6D83",
+		accent: "216CE7",
+		accentAlt: "12A594",
+		surface: "FFFFFF",
 		headingFont: "Inter",
 		bodyFont: "Inter",
 		contentInset: 1.27,
 	},
 	minimalist: {
-		background: "FAFAF9",
-		text: "1C1917",
-		title: "1C1917",
-		muted: "78716C",
-		accent: "57534E",
-		accentAlt: "A8A29E",
-		surface: "E7E5E4",
-		headingFont: "Inter",
+		background: "FCFAF5",
+		text: "292824",
+		title: "171714",
+		muted: "756F66",
+		accent: "282722",
+		accentAlt: "A49D91",
+		surface: "F1EDE5",
+		headingFont: "Georgia",
 		bodyFont: "Inter",
 		contentInset: 1.27,
 		titleBold: false,
 	},
 	"creative-studio": {
-		background: "FECFEF",
-		text: "2D3748",
-		title: "2D3748",
-		muted: "4A5568",
-		accent: "DB2777",
-		accentAlt: "C084FC",
-		surface: "FEF3C7",
-		headingFont: "Poppins",
-		bodyFont: "Poppins",
+		background: "FFF9EF",
+		text: "161616",
+		title: "161616",
+		muted: "514D47",
+		accent: "F04428",
+		accentAlt: "2457D6",
+		surface: "FFD438",
+		headingFont: "Arial",
+		bodyFont: "Inter",
 		contentInset: 1.1,
 		titleUppercase: true,
 	},
 	"elegant-serif": {
-		background: "F5F5F4",
-		text: "44403C",
-		title: "292524",
-		muted: "78716C",
-		accent: "78716C",
-		accentAlt: "A8A29E",
-		surface: "E7E5E4",
+		background: "F5F0E8",
+		text: "273031",
+		title: "1D2424",
+		muted: "756C61",
+		accent: "8D3427",
+		accentAlt: "3159A8",
+		surface: "EBE3D6",
 		headingFont: "Georgia",
 		bodyFont: "Inter",
 		contentInset: 1.27,
@@ -125,14 +133,14 @@ const THEMES: Record<string, PptxTheme> = {
 		titleItalic: true,
 	},
 	"nature-green": {
-		background: "DCFCE7",
-		text: "14532D",
-		title: "15803D",
-		muted: "166534",
-		accent: "22C55E",
-		accentAlt: "84CC16",
-		surface: "DCFCE7",
-		headingFont: "Inter",
+		background: "FBF7EE",
+		text: "244D3D",
+		title: "244D3D",
+		muted: "617568",
+		accent: "4F7C5E",
+		accentAlt: "C76F50",
+		surface: "E8EFDF",
+		headingFont: "Georgia",
 		bodyFont: "Inter",
 		contentInset: 1.1,
 	},
@@ -223,17 +231,15 @@ const addBackgroundImage = async (
 	background: NonNullable<ContentSlide["backgroundImage"]>,
 	theme: PptxTheme,
 ) => {
+	const region = { x: 0, y: 0, w: SLIDE_WIDTH, h: SLIDE_HEIGHT };
 	try {
 		const response = await fetch(background.url);
 		if (!response.ok) return;
 		const data = await blobToDataUri(await response.blob());
 		slide.addImage({
 			data,
-			x: 0,
-			y: 0,
-			w: SLIDE_WIDTH,
-			h: SLIDE_HEIGHT,
-			sizing: { type: "cover", w: SLIDE_WIDTH, h: SLIDE_HEIGHT },
+			...region,
+			sizing: { type: "cover", w: region.w, h: region.h },
 			altText: background.alt,
 			objectName: "Slide background image",
 		});
@@ -247,10 +253,7 @@ const addBackgroundImage = async (
 						: undefined;
 		if (transparency !== undefined) {
 			slide.addShape(pptx.ShapeType.rect, {
-				x: 0,
-				y: 0,
-				w: SLIDE_WIDTH,
-				h: SLIDE_HEIGHT,
+				...region,
 				line: { transparency: 100 },
 				fill: { color: theme.background, transparency },
 				objectName: "Background image overlay",
@@ -403,7 +406,7 @@ const renderSceneNode = (
 				region: { x, y, w, h },
 				cursorY: y,
 			},
-			values as unknown as WidgetBlockLike,
+			values as unknown as WidgetBlock,
 		);
 		return;
 	}
@@ -552,12 +555,13 @@ const addHeader = (
 	}
 	const titleSize = options.titleSize || 40;
 	const titleHeight = Math.min(1.55, estimateTextHeight(slideData.title, region.w, titleSize));
+	const positionedTitle = slideData.titleBounds ? boundsRegion(slideData.titleBounds) : undefined;
 	const title = cleanText(slideData.title);
 	slide.addText(theme.titleUppercase ? title.toUpperCase() : title, {
-		x: region.x,
-		y,
-		w: region.w,
-		h: titleHeight,
+		x: positionedTitle?.x ?? region.x,
+		y: positionedTitle?.y ?? y,
+		w: positionedTitle?.w ?? region.w,
+		h: positionedTitle?.h ?? titleHeight,
 		fontFace: theme.headingFont,
 		fontSize: titleSize,
 		bold: theme.titleBold ?? true,
@@ -572,11 +576,14 @@ const addHeader = (
 	y += titleHeight;
 	if (slideData.subtitle) {
 		const subtitleHeight = Math.min(0.7, estimateTextHeight(slideData.subtitle, region.w, 16));
+		const positionedSubtitle = slideData.subtitleBounds
+			? boundsRegion(slideData.subtitleBounds)
+			: undefined;
 		slide.addText(cleanText(slideData.subtitle), {
-			x: region.x,
-			y: y + 0.1,
-			w: region.w,
-			h: subtitleHeight,
+			x: positionedSubtitle?.x ?? region.x,
+			y: positionedSubtitle?.y ?? y + 0.1,
+			w: positionedSubtitle?.w ?? region.w,
+			h: positionedSubtitle?.h ?? subtitleHeight,
 			fontFace: theme.bodyFont,
 			fontSize: 16,
 			color: theme.muted,
@@ -953,7 +960,7 @@ const addStructuredStats = (
 	context.cursorY += height + 0.15;
 };
 
-const addStructuredWidget = (context: RenderContext, block: WidgetBlockLike) => {
+const addStructuredWidget = (context: RenderContext, block: WidgetBlock) => {
 	const widthMode = context.region.w < 7 ? "column" : "full";
 	const scene = compileWidgetScene(block, widthMode);
 	const availableHeight = context.region.y + context.region.h - context.cursorY;
@@ -1277,7 +1284,21 @@ const renderStructuredRegion = async (
 		cursorY,
 		fillMedia: options.fillMedia,
 	};
-	for (const block of blocks) await renderStructuredBlock(context, block);
+	for (const block of blocks) {
+		if (!block.bounds) {
+			await renderStructuredBlock(context, block);
+			continue;
+		}
+		const semanticCursor = context.cursorY;
+		const positioned = boundsRegion(block.bounds);
+		const positionedContext: RenderContext = {
+			...context,
+			region: positioned,
+			cursorY: positioned.y,
+		};
+		await renderStructuredBlock(positionedContext, { ...block, bounds: undefined });
+		context.cursorY = semanticCursor + estimateBlockHeight(block, context.region.w);
+	}
 };
 
 const renderStructuredSlide = async (
@@ -1288,19 +1309,37 @@ const renderStructuredSlide = async (
 	const slide = pptx.addSlide();
 	const slideTheme = themeForTone(theme, slideData.tone || "default");
 	slide.background = { color: slideTheme.background };
+	const supportVisual = slideData.backgroundImage
+		? undefined
+		: resolveSlideSupportVisual(slideData);
 	if (slideData.backgroundImage) {
 		await addBackgroundImage(slide, pptx, slideData.backgroundImage, slideTheme);
+	} else if (supportVisual?.block.type === "image") {
+		await addBackgroundImage(
+			slide,
+			pptx,
+			{
+				url: supportVisual.block.url,
+				alt: supportVisual.block.alt,
+				focalPoint: supportVisual.focalPoint,
+				overlay: supportVisual.overlay,
+			},
+			slideTheme,
+		);
 	}
 	addPattern(slide, pptx, slideTheme, slideData.pattern || "none");
 	prepareSlide(slide, slideTheme);
 
+	const foregroundBlocks = supportVisual
+		? slideData.blocks.filter((block) => block !== supportVisual.block)
+		: slideData.blocks;
 	const blocksFor = (region: SlideRegion) =>
-		slideData.blocks.filter((block) => block.region === region);
+		foregroundBlocks.filter((block) => block.region === region);
 	const main = blocksFor("main");
 	const primary = blocksFor("primary");
 	const secondary = blocksFor("secondary");
 	const media = blocksFor("media");
-	const all = slideData.blocks;
+	const all = foregroundBlocks;
 	const hasAuthoredPair = primary.length > 0 && secondary.length > 0;
 	const pairedPrimary = hasAuthoredPair ? primary : all.filter((_, index) => index % 2 === 0);
 	const pairedSecondary = hasAuthoredPair ? secondary : all.filter((_, index) => index % 2 === 1);
@@ -1440,20 +1479,22 @@ const renderStructuredSlide = async (
 				w: mediaWidth,
 				h: bottom - topMargin,
 			};
-			surface(mediaRegion, "Media surface", true);
-			await renderStructuredRegion(
-				slide,
-				pptx,
-				slideTheme,
-				visual,
-				{
-					x: mediaX + 0.08,
-					y: topMargin + 0.08,
-					w: mediaWidth - 0.16,
-					h: bottom - topMargin - 0.16,
-				},
-				regionOptions("media", true),
-			);
+			if (!supportVisual) {
+				surface(mediaRegion, "Media surface", true);
+				await renderStructuredRegion(
+					slide,
+					pptx,
+					slideTheme,
+					visual,
+					{
+						x: mediaX + 0.08,
+						y: topMargin + 0.08,
+						w: mediaWidth - 0.16,
+						h: bottom - topMargin - 0.16,
+					},
+					regionOptions("media", true),
+				);
+			}
 			const headerBottom = addHeader(
 				slide,
 				slideTheme,

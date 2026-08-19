@@ -454,7 +454,7 @@ function contentSlideToScene(slide: ContentSlide): SceneSlide {
 						order: 0,
 						layout: "stack",
 						direction: "vertical",
-						gap: 22,
+						gap: 24,
 						grid: { column: 0, row: 0 },
 						children: body,
 					},
@@ -467,7 +467,7 @@ function contentSlideToScene(slide: ContentSlide): SceneSlide {
 				order: 2,
 				layout: "stack",
 				direction: "vertical",
-				gap: 22,
+				gap: 24,
 				children: body,
 			};
 	return {
@@ -480,8 +480,8 @@ function contentSlideToScene(slide: ContentSlide): SceneSlide {
 			order: 0,
 			layout: "stack",
 			direction: "vertical",
-			gap: 28,
-			padding: { top: 68, right: 76, bottom: 62, left: 76 },
+			gap: 32,
+			padding: { top: 72, right: 80, bottom: 64, left: 80 },
 			children: [title, ...subtitle, { ...composition, size: { grow: 1 } }],
 		},
 		variants: visual

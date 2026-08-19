@@ -6,6 +6,7 @@ import type {
 	SlideLayout,
 	ThemeId,
 } from "@slidesage/types";
+import { getTemplate } from "./templates";
 
 export interface MarketplaceItem {
 	id: string;
@@ -29,6 +30,9 @@ function previewSlide(
 	subtitle: string,
 	layout: SlideLayout,
 	blocks: ContentSlide["blocks"],
+	overrides: Partial<
+		Pick<ContentSlide, "density" | "eyebrow" | "pattern" | "regionLabels" | "tone">
+	> = {},
 ): ContentSlide {
 	return {
 		id,
@@ -40,6 +44,7 @@ function previewSlide(
 		density: "standard",
 		pattern: "none",
 		blocks,
+		...overrides,
 	};
 }
 
@@ -47,7 +52,7 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 	{
 		id: "citrus-brief",
 		name: "Citrus Brief",
-		description: "A crisp, optimistic system for campaigns, workshops, and growth narratives.",
+		description: "SlideSage's high-voltage poster system for campaigns, workshops, and launches.",
 		author: "SlideSage",
 		authorInitials: "SS",
 		votes: 389,
@@ -77,12 +82,13 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 					items: [{ value: "86%", label: "Team alignment" }],
 				},
 			],
+			{ eyebrow: "SlideSage original", pattern: "diagonal" },
 		),
 	},
 	{
 		id: "paper-grid",
 		name: "Paper Grid",
-		description: "A precise monochrome theme for operating plans, teaching, and documentation.",
+		description: "SlideSage's quiet monochrome system for plans, teaching, and complex work.",
 		author: "SlideSage",
 		authorInitials: "SS",
 		votes: 326,
@@ -106,12 +112,13 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 					items: ["Define the constraint", "Name the owner", "Measure the outcome"],
 				},
 			],
+			{ eyebrow: "SlideSage original", density: "airy", pattern: "grid" },
 		),
 	},
 	{
 		id: "midnight-signal",
 		name: "Midnight Signal",
-		description: "A high-contrast dark system for product launches and technical narratives.",
+		description: "SlideSage's cinematic dark system for technical launches and product proof.",
 		author: "SlideSage",
 		authorInitials: "SS",
 		votes: 842,
@@ -136,12 +143,13 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 					],
 				},
 			],
+			{ eyebrow: "Build 01", tone: "inverse", pattern: "grid" },
 		),
 	},
 	{
 		id: "field-notes",
 		name: "Field Notes",
-		description: "A grounded editorial palette for research, climate, and impact reporting.",
+		description: "SlideSage's grounded field-report system for impact, research, and communities.",
 		author: "SlideSage",
 		authorInitials: "SS",
 		votes: 614,
@@ -170,12 +178,14 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 					region: "secondary",
 				},
 			],
+			{ eyebrow: "Field report", density: "airy", pattern: "dots" },
 		),
 	},
 	{
 		id: "founder-letter",
 		name: "Founder Letter",
-		description: "Restrained serif typography for strategy, annual reviews, and investor updates.",
+		description:
+			"SlideSage's warm editorial system for strategy, annual reviews, and investor letters.",
 		author: "SlideSage",
 		authorInitials: "SS",
 		votes: 497,
@@ -197,12 +207,14 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 					attribution: "2026 outlook",
 				},
 			],
+			{ eyebrow: "A note from the founder", density: "airy" },
 		),
 	},
 	{
 		id: "boardroom-clear",
 		name: "Boardroom Clear",
-		description: "A structured business theme designed for decision-heavy executive sessions.",
+		description:
+			"SlideSage's structured data system for executive decisions and operating reviews.",
 		author: "SlideSage",
 		authorInitials: "SS",
 		votes: 731,
@@ -224,11 +236,164 @@ export const MARKETPLACE_ITEMS: MarketplaceItem[] = [
 					items: ["Demand is durable", "Margins are expanding", "Execution risk is contained"],
 				},
 			],
+			{ eyebrow: "Executive brief", pattern: "grid" },
 		),
 	},
 ];
 
+function createPreviewStory(item: MarketplaceItem): ContentSlide {
+	switch (item.id) {
+		case "citrus-brief":
+			return previewSlide(
+				`${item.id}-preview-story`,
+				"Turn the plan into a moment",
+				"A campaign structure built for participation, not passive attention",
+				"comparison",
+				[
+					{
+						id: `${item.id}-before`,
+						type: "callout",
+						region: "primary",
+						heading: "Before launch",
+						text: "A clear promise, a recognizable visual, and one action worth taking.",
+						treatment: "accent",
+					},
+					{
+						id: `${item.id}-during`,
+						type: "bullets",
+						region: "secondary",
+						ordered: true,
+						items: ["Reveal the signal", "Invite a response", "Repeat the proof"],
+					},
+				],
+				{ eyebrow: "Campaign rhythm", pattern: "diagonal" },
+			);
+		case "paper-grid":
+			return previewSlide(
+				`${item.id}-preview-story`,
+				"Make the operating rhythm visible",
+				"A spare system that gives each owner and decision its place",
+				"sidebar",
+				[
+					{
+						id: `${item.id}-sequence`,
+						type: "bullets",
+						region: "primary",
+						ordered: true,
+						items: ["Frame the question", "Name the decision", "Close the loop"],
+					},
+					{
+						id: `${item.id}-rule`,
+						type: "callout",
+						region: "secondary",
+						heading: "Working rule",
+						text: "If it cannot fit on one page, it is not ready to decide.",
+					},
+				],
+				{ eyebrow: "Operating system", density: "airy", pattern: "grid" },
+			);
+		case "midnight-signal":
+			return previewSlide(
+				`${item.id}-preview-story`,
+				"The signal is already in the system",
+				"A technical story built from one observable change and its proof",
+				"spotlight",
+				[
+					{
+						id: `${item.id}-proof`,
+						type: "stats",
+						region: "primary",
+						emphasis: "hero",
+						items: [
+							{ value: "99.98%", label: "Pipeline availability" },
+							{ value: "43 ms", label: "Median response" },
+						],
+					},
+					{
+						id: `${item.id}-readout`,
+						type: "paragraph",
+						region: "secondary",
+						text: "The technical narrative stays focused: show the system, show the signal, show what changes next.",
+						emphasis: "supporting",
+					},
+				],
+				{ eyebrow: "Telemetry / 2026.08", tone: "inverse", pattern: "grid" },
+			);
+		case "field-notes":
+			return previewSlide(
+				`${item.id}-preview-story`,
+				"Listen before you measure",
+				"A human-scale report makes room for evidence, place, and progress",
+				"split",
+				[
+					{
+						id: `${item.id}-finding`,
+						type: "quote",
+						region: "primary",
+						text: "The restoration plan became real when the community could see itself in it.",
+						attribution: "Community workshop participant",
+					},
+					{
+						id: `${item.id}-evidence`,
+						type: "stats",
+						region: "secondary",
+						items: [
+							{ value: "18", label: "Local partners" },
+							{ value: "64 ha", label: "Restored habitat" },
+						],
+					},
+				],
+				{ eyebrow: "Community-led evidence", density: "airy", pattern: "dots" },
+			);
+		case "founder-letter":
+			return previewSlide(
+				`${item.id}-preview-story`,
+				"A decision deserves a point of view",
+				"Long-form conviction, shaped into a deck that still reads with calm authority",
+				"quote",
+				[
+					{
+						id: `${item.id}-conviction`,
+						type: "quote",
+						region: "main",
+						text: "The best strategy is legible enough to guide a thousand small decisions.",
+						attribution: "SlideSage editorial principle",
+					},
+				],
+				{ eyebrow: "Editorial principle", density: "airy" },
+			);
+		default:
+			return previewSlide(
+				`${item.id}-preview-story`,
+				"Make the decision trail explicit",
+				"A board-ready structure separates signals, risk, and the next move",
+				"sidebar",
+				[
+					{
+						id: `${item.id}-signals`,
+						type: "stats",
+						region: "primary",
+						items: [
+							{ value: "+18%", label: "Qualified demand" },
+							{ value: "3.2x", label: "Coverage ratio" },
+						],
+					},
+					{
+						id: `${item.id}-decision`,
+						type: "callout",
+						region: "secondary",
+						heading: "Decision requested",
+						text: "Fund the expansion milestone while holding the risk gate through Q3.",
+						treatment: "accent",
+					},
+				],
+				{ eyebrow: "Decision brief", pattern: "grid" },
+			);
+	}
+}
+
 export function createMarketplacePreviewPresentation(item: MarketplaceItem): PresentationData {
+	const theme = getTemplate(item.themeId).visual;
 	const chartSlides: ChartSlide[] = [
 		{
 			id: `${item.id}-preview-growth-chart`,
@@ -243,8 +408,8 @@ export function createMarketplacePreviewPresentation(item: MarketplaceItem): Pre
 						{
 							label: "Adoption",
 							data: [24, 41, 67, 89],
-							borderColor: "#60a5fa",
-							backgroundColor: "rgba(96, 165, 250, 0.18)",
+							borderColor: theme.chartColors[0],
+							backgroundColor: `${theme.chartColors[0]}2E`,
 							borderWidth: 3,
 							fill: true,
 						},
@@ -264,8 +429,8 @@ export function createMarketplacePreviewPresentation(item: MarketplaceItem): Pre
 					datasets: [
 						{
 							data: [42, 34, 24],
-							backgroundColor: ["#60a5fa", "#34d399", "#f59e0b"],
-							borderColor: ["#bfdbfe", "#a7f3d0", "#fde68a"],
+							backgroundColor: theme.chartColors.slice(0, 3),
+							borderColor: theme.chartColors.slice(0, 3),
 							borderWidth: 2,
 						},
 					],
@@ -281,31 +446,10 @@ export function createMarketplacePreviewPresentation(item: MarketplaceItem): Pre
 			blocks: [],
 		},
 		{
-			id: `${item.id}-preview-story`,
-			type: "content",
-			layout: "split",
-			title: "A system for clear stories",
-			subtitle: "Built to carry one visual voice across every idea",
-			tone: "default",
-			density: "standard",
-			pattern: "none",
-			blocks: [
-				{
-					id: `${item.id}-preview-principle`,
-					type: "callout",
-					region: "primary",
-					heading: "One principle",
-					text: "Make the hierarchy obvious before adding decoration.",
-				},
-				{
-					id: `${item.id}-preview-details`,
-					type: "bullets",
-					region: "secondary",
-					ordered: false,
-					items: ["Purposeful typography", "Consistent color", "Calm composition"],
-				},
-			],
+			...item.previewSlide,
+			id: `${item.id}-preview-showcase`,
 		},
+		createPreviewStory(item),
 		...chartSlides,
 		{
 			id: `${item.id}-preview-impact`,

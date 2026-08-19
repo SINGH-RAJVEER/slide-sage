@@ -1,5 +1,6 @@
 import type {
 	AIModelSelection,
+	DeckPlan,
 	PresentationData,
 	PresentationGenerationStage,
 	PresentationOutline,
@@ -107,6 +108,7 @@ export interface StreamingState {
 	generationMessage?: string;
 	generationProgress?: { completed: number; total: number };
 	outline?: PresentationOutline;
+	deckPlan?: DeckPlan;
 	completedDocument?: PresentationData;
 }
 
@@ -409,6 +411,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		if (streamingState.slides.length === 0) return null;
 		return {
 			...streamingState.completedDocument,
+			deckPlan: streamingState.deckPlan ?? streamingState.completedDocument?.deckPlan,
 			title: streamingState.title,
 			theme: streamingState.theme,
 			slides: streamingState.slides,
@@ -659,6 +662,14 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 												setStreamingState((prev) => ({
 													...prev,
 													outline: data,
+													title: data.title || prev.title,
+												}));
+												break;
+
+											case "plan":
+												setStreamingState((prev) => ({
+													...prev,
+													deckPlan: data,
 													title: data.title || prev.title,
 												}));
 												break;
@@ -1143,6 +1154,14 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 												}));
 												break;
 
+											case "plan":
+												setStreamingState((prev) => ({
+													...prev,
+													deckPlan: data,
+													title: data.title || prev.title,
+												}));
+												break;
+
 											case "theme":
 												setStreamingState((prev) => ({
 													...prev,
@@ -1530,6 +1549,13 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 									setStreamingState((previous) => ({
 										...previous,
 										outline: data,
+										title: data.title || previous.title,
+									}));
+									break;
+								case "plan":
+									setStreamingState((previous) => ({
+										...previous,
+										deckPlan: data,
 										title: data.title || previous.title,
 									}));
 									break;

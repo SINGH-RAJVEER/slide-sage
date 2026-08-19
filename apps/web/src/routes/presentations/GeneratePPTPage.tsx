@@ -1,7 +1,6 @@
 import type { PresentationRetryOptions, ThemeId } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
-import { fetchAIConfiguration } from "@slidesage/ui/lib/ai-connections";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useState } from "react";
@@ -32,15 +31,8 @@ export default function GeneratePPTPage() {
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
 	const [theme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
-	const [generationMode, setGenerationMode] = useState<"openrouter" | "byok">("openrouter");
 	const navigate = useNavigate();
 	const { streamingState, startStreaming } = useStreaming();
-
-	useEffect(() => {
-		void fetchAIConfiguration()
-			.then((config) => setGenerationMode(config.generation.mode))
-			.catch(() => undefined);
-	}, []);
 
 	useEffect(() => {
 		if (streamingState.error) {
@@ -150,14 +142,6 @@ export default function GeneratePPTPage() {
 					onSlideCountChange={setSlideCount}
 					onCustomSlideCountChange={setCustomSlideCount}
 				/>
-				{prompt.trim() && generationMode === "byok" && (
-					<p
-						data-generation-estimate
-						className="absolute top-full mt-4 text-center text-lg font-medium text-white/80"
-					>
-						{`Model usage is billed by your provider${useWebResearch ? ". Research costs 1 point on success." : "."}`}
-					</p>
-				)}
 			</div>
 
 			<main className="flex w-full flex-1 items-center justify-center overflow-y-auto px-4 py-12 md:px-8">

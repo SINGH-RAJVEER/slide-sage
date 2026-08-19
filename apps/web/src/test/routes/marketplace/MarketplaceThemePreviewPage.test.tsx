@@ -45,7 +45,7 @@ mock.module("@/hooks/useFullscreenMode", () => ({
 }));
 
 describe("MarketplaceThemePreviewPage", () => {
-	it("renders the selected placeholder slide without viewer editing controls", async () => {
+	it("renders the selected SlideSage offering without viewer editing controls", async () => {
 		const { default: MarketplaceThemePreviewPage } = await import(
 			"@/routes/marketplace/MarketplaceThemePreviewPage"
 		);
@@ -60,7 +60,7 @@ describe("MarketplaceThemePreviewPage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("6 preview slides")).toBeInTheDocument();
+		expect(view.getByText("7 preview slides")).toBeInTheDocument();
 		expect(view.getByText("Viewer navigation")).toBeInTheDocument();
 		expect(view.getByText("Viewer thumbnails")).toBeInTheDocument();
 		expect(view.getByText("Midnight Signal")).toBeInTheDocument();

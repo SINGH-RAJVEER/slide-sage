@@ -1,10 +1,10 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import type { PresentationData } from "@slidesage/types";
+import type { ContentSlide, PresentationData } from "@slidesage/types";
 import { ViewerNavigationControls } from "@slidesage/ui/components/Viewer/ViewerNavigationControls";
 import { ViewerSlideCarousel } from "@slidesage/ui/components/Viewer/ViewerSlideCarousel";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { createRef } from "react";
 
 const emptyPresentation: PresentationData = {
@@ -34,6 +34,7 @@ it("renders a blank loading slide before the first streamed slide", () => {
 });
 
 it("keeps empty-presentation controls visible and disabled", () => {
+	const onSave = mock();
 	const view = render(
 		<ViewerNavigationControls
 			presentation={emptyPresentation}
@@ -45,6 +46,7 @@ it("keeps empty-presentation controls visible and disabled", () => {
 			onLast={mock()}
 			onDelete={mock()}
 			deleteDisabled={true}
+			onSave={onSave}
 		/>,
 	);
 
@@ -52,4 +54,43 @@ it("keeps empty-presentation controls visible and disabled", () => {
 	expect(view.getByRole("button", { name: "Previous slide" })).toBeDisabled();
 	expect(view.getByRole("button", { name: "Next slide" })).toBeDisabled();
 	expect(view.getByRole("button", { name: "Delete" })).toBeDisabled();
+	fireEvent.click(view.getByRole("button", { name: "Save" }));
+	expect(onSave).toHaveBeenCalledTimes(1);
+});
+
+it("keeps content slides on their canonical renderer while editing", () => {
+	const slide: ContentSlide = {
+		id: "content-1",
+		type: "content",
+		layout: "body",
+		title: "Editable title",
+		subtitle: "",
+		tone: "default",
+		density: "standard",
+		pattern: "none",
+		blocks: [
+			{
+				id: "content-1-block-1",
+				type: "paragraph",
+				region: "main",
+				text: "Editable paragraph",
+			},
+		],
+	};
+	const view = render(
+		<ViewerSlideCarousel
+			slides={[slide]}
+			currentSlide={0}
+			visibleSlide={0}
+			currentTemplate="corporate-blue"
+			containerRef={createRef<HTMLDivElement>()}
+			onSelectSlide={mock()}
+			onSlideChange={mock()}
+		/>,
+	);
+
+	expect(view.container.querySelector('[data-layout="body"]')).toBeInTheDocument();
+	expect(view.container.querySelector("[data-scene-node-id]")).toBeNull();
+	expect(view.getByText("Editable title")).toBeInTheDocument();
+	expect(view.getByText("Editable paragraph")).toBeInTheDocument();
 });

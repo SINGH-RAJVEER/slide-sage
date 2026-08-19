@@ -41,13 +41,13 @@ test-ui:
     bun run test:ui
 
 lint:
-    bun run biome check .
+    bun run lint
 
 lint-fix:
-    bun run biome check --write .
+    bunx biome check --write .
 
 format:
-    bun run biome format --write .
+    bun run format
 
 docker-build:
 	docker build --target api --file docker/Dockerfile.api --tag slidesage-api .

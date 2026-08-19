@@ -182,6 +182,7 @@ export default function PresentationViewerPage() {
 
 	const [showIterateModal, setShowIterateModal] = useState(false);
 	const [savingEdit, setSavingEdit] = useState(false);
+	const [pendingSlides, setPendingSlides] = useState<Record<string, ContentSlide | SceneSlide>>({});
 	const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
 
 	const handleIteratePresentation = async (
@@ -213,6 +214,7 @@ export default function PresentationViewerPage() {
 
 		const slideToDelete = presentation.slides[navigation.currentSlide];
 		const slideId = slideToDelete?.id;
+		if (!slideId) return;
 
 		const newSlides = presentation.slides.filter((_, idx) => idx !== navigation.currentSlide);
 
@@ -222,6 +224,10 @@ export default function PresentationViewerPage() {
 			...presentation,
 			slides: newSlides,
 			totalSlides: newSlides.length,
+		});
+		setPendingSlides((current) => {
+			const { [slideId]: _, ...remaining } = current;
+			return remaining;
 		});
 
 		navigation.scrollToSlide(newCurrent, "auto");
@@ -253,7 +259,7 @@ export default function PresentationViewerPage() {
 			return;
 		}
 		const { exportPresentationPdf } = await import("@slidesage/ui/lib/pdf-export");
-		await exportPresentationPdf(presentationToExport.title);
+		await exportPresentationPdf(presentationToExport, currentTemplate);
 	};
 
 	if (isLoading) {
@@ -264,16 +270,18 @@ export default function PresentationViewerPage() {
 		return null;
 	}
 
-	const viewerPresentation =
+	const baseViewerPresentation =
 		presentation ||
 		({
-			title: streamingState.prompt || "Generating presentation",
+			title: streamingState.prompt || "Untitled presentation",
 			theme: streamingState.theme || currentTemplate,
 			slides: [],
 			totalSlides: 0,
 		} satisfies PresentationData);
+	const viewerPresentation = baseViewerPresentation;
 	const hasSlides = viewerPresentation.slides.length > 0;
 	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
+	const activeDraftSlide = activeSlide ? pendingSlides[activeSlide.id] : undefined;
 	const activeContentSlide =
 		activeSlide && isContentSlide(activeSlide)
 			? activeSlide
@@ -353,6 +361,19 @@ export default function PresentationViewerPage() {
 		}
 	};
 
+	const savePendingSlide = async () => {
+		const active = presentation?.slides[navigation.currentSlide];
+		if (!active) return;
+		const pending = pendingSlides[active.id];
+		if (!pending) return;
+		await saveCanvasEdit(pending);
+		setPendingSlides((current) => {
+			if (current[pending.id] !== pending) return current;
+			const { [pending.id]: _, ...remaining } = current;
+			return remaining;
+		});
+	};
+
 	return (
 		<div className="presentation-viewer flex h-dvh min-h-dvh max-h-dvh bg-transparent p-0">
 			<div
@@ -394,9 +415,10 @@ export default function PresentationViewerPage() {
 								navigation.scrollToSlide(idx, "smooth");
 							}
 						}}
-						savingEdit={savingEdit}
-						onSaveEdit={saveCanvasEdit}
-						onCancelEdit={() => undefined}
+						onSlideChange={(slide) =>
+							setPendingSlides((current) => ({ ...current, [slide.id]: slide }))
+						}
+						draftSlide={activeDraftSlide}
 					/>
 				)}
 
@@ -423,6 +445,8 @@ export default function PresentationViewerPage() {
 						}}
 						onDelete={deleteCurrentSlide}
 						deleteDisabled={viewerPresentation.slides.length <= 1}
+						onSave={pendingSlides[activeSlide?.id || ""] ? savePendingSlide : undefined}
+						saveDisabled={savingEdit}
 						onExport={exportPresentation}
 					/>
 				)}

@@ -60,11 +60,23 @@ func TestGenerationPromptDefinesExactBlockFields(t *testing.T) {
 	for _, contract := range []string{
 		`{"type":"paragraph","region":"main","text":"Concise presentation copy"}`,
 		`{"type":"bullets","region":"main","items":["Specific point"],"ordered":false}`,
+		`"focalPoint":"center"`,
 		"Every slide must contain at least one substantive text block",
 	} {
 		if !strings.Contains(generationSystemPrompt, contract) {
 			t.Fatalf("generation prompt is missing %q", contract)
 		}
+	}
+}
+
+func TestPlanningPromptDefinesBoundedVisualIntents(t *testing.T) {
+	for _, contract := range []string{"DeckPlan", `"kind":"timeline"`, `"kind":"comparison"`, `"kind":"chart"`} {
+		if !strings.Contains(planningSystemPrompt, contract) {
+			t.Fatalf("planning prompt is missing %q", contract)
+		}
+	}
+	if maxPlanOutputTokens(40) > 4000 || maxPlanOutputTokens(1) < 600 {
+		t.Fatalf("unexpected planning output bound")
 	}
 }
 

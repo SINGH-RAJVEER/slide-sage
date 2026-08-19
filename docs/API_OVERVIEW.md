@@ -118,7 +118,10 @@ retry compatibility but ignored for billing; point charges are server-owned.
 Server-generated and rendered presentation image URLs remain
 HTTPS-only even though cited research links may use HTTP.
 
-Generated presentation documents use bounded block schema version 5. The API
+Generated presentation documents use bounded block schema version 5. New deck
+generation first creates and validates a persisted `deckPlan`, then drafts the
+deck against it. The stream emits a `plan` event before its derived `outline`
+and slide events. See [DECK_PLANNING.md](DECK_PLANNING.md). The API
 also loads earlier stored document shapes, mapping `title`
 to `cover`, `content` to `body`, `two-column` to `split`, and `image-right` to
 `media-right`. Older `left` and `right` regions become semantic `primary`,
@@ -129,9 +132,11 @@ to `cover`, `content` to `body`, `two-column` to `split`, and `image-right` to
 Schema-v5 slides expose only bounded visual intent: tone, density, pattern, and
 an optional HTTPS background image with alt text, a named focal point, and a
 named overlay strength. Blocks similarly use allowlisted emphasis and treatment
-values. Content slides may include an eyebrow and semantic region labels. No
-arbitrary CSS, colors, coordinates, dimensions, or positioning values are part
-of the composition contract.
+values. Content slides may include an eyebrow and semantic region labels.
+Optional title, subtitle, and block bounds use the canonical 1280 by 720 slide
+space, are snapped to an 8 pixel grid, and are clamped to slide boundaries. No
+arbitrary CSS, colors, or unbounded positioning values are part of the
+composition contract.
 
 Content slides support bounded, data-only semantic widgets for timelines, flows,
 architecture diagrams, and comparisons. Widget nodes use allowlisted roles and
@@ -228,7 +233,7 @@ request handler.
 
 The stream begins with `created`, forwards generation events such as `stage`,
 `retry`, `outline`, theme, and slide updates, and ends with `saved`. Worker stages
-are `planning`, `drafting`, and `finalizing`; each stage includes a display
+are `planning`, `drafting`, `designing`, and `finalizing`; each stage includes a display
 message and bounded progress counts. The outline
 contains the presentation title and one entry per generated slide. Generated
 slides are normalized into safe schema-v5 content slides with allowlisted layouts,

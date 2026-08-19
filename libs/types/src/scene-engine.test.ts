@@ -137,4 +137,31 @@ describe("scene engine", () => {
 		expect(body?.style?.fontSize).toBeGreaterThanOrEqual(16);
 		expect((body?.bounds.y || 0) + (body?.bounds.height || 0)).toBeLessThanOrEqual(660);
 	});
+
+	it("preserves authored object rectangles during normal rendering", () => {
+		const resolved = resolveScene(
+			{
+				id: "grid-aligned",
+				type: "scene",
+				root: {
+					id: "root",
+					type: "group",
+					order: 0,
+					layout: "absolute",
+					children: [
+						{
+							id: "object",
+							type: "shape",
+							order: 0,
+							shape: "rectangle",
+							bounds: { x: 101, y: 83, width: 203, height: 119 },
+						},
+					],
+				},
+			},
+			{ width: 1280, height: 720 },
+		);
+		const bounds = resolved.root.children?.[0]?.bounds;
+		expect(bounds).toEqual({ x: 101, y: 83, width: 203, height: 119 });
+	});
 });

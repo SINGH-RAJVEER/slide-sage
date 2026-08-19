@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
+import type { ContentSlide } from "@slidesage/types";
 import { applySlideLayout } from "@/lib/slide-layout";
-import type { ContentSlide } from "@/modules/types/presentation";
 
 const slide: ContentSlide = {
 	id: "slide-1",
@@ -91,5 +91,21 @@ describe("applySlideLayout", () => {
 			"primary",
 			"secondary",
 		]);
+	});
+
+	it("clears object bounds when changing the semantic layout", () => {
+		const positioned: ContentSlide = {
+			...slide,
+			titleBounds: { x: 80, y: 80, width: 480, height: 120 },
+			subtitleBounds: { x: 80, y: 216, width: 480, height: 64 },
+			blocks: slide.blocks.map((block, index) =>
+				index === 0 ? { ...block, bounds: { x: 80, y: 320, width: 520, height: 160 } } : block,
+			),
+		};
+		const updated = applySlideLayout(positioned, "comparison");
+
+		expect(updated.titleBounds).toBeUndefined();
+		expect(updated.subtitleBounds).toBeUndefined();
+		expect(updated.blocks.every((block) => block.bounds === undefined)).toBe(true);
 	});
 });
