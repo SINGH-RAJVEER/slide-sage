@@ -107,7 +107,7 @@ not the source of truth for user-visible job status or events.
 
 ## Deployment
 
-`docker/Dockerfile.api` has `api`, `worker`, and `migrate` targets. Production is
+`docker/Dockerfile` has `api`, `worker`, and `migrate` targets. Production is
 intended to run the API as a Cloud Run service and the worker as a Cloud Run
 Worker Pool. Worker Pools have fixed/manual scaling rather than request-driven
 autoscaling; deploy one worker instance initially and increase it deliberately.

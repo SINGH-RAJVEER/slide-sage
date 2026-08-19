@@ -4,7 +4,7 @@ The repository deploys its Go API and generation worker to Google Cloud Run. Eve
 
 ## Flow
 
-1. GitHub Actions builds three image targets from `docker/Dockerfile.api` using Docker BuildKit:
+1. GitHub Actions builds three image targets from `docker/Dockerfile` using Docker BuildKit. The Dockerfile also provides Linux/amd64 defaults for `BUILDPLATFORM`, `TARGETOS`, and `TARGETARCH`, so plain Docker builds (including Google Cloud Build's Docker builder) do not expand the platform to an empty value:
    - `api` (web server, port 8000) -> Cloud Run **service** `api`
    - `worker` (River queue consumer with a health server, port 8080) -> Cloud Run **service** `worker`
    - `migrate` (Goose + River migrations, one-shot) -> Cloud Run **job** `slidesage-migrate`
@@ -164,7 +164,7 @@ or atomically in the console: Cloud Run -> service -> Revisions -> select revisi
 ```bash
 gcloud auth configure-docker asia-south1-docker.pkg.dev
 
-docker build --target api --file docker/Dockerfile.api --tag asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev .
+docker build --target api --file docker/Dockerfile --tag asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev .
 docker push asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev
 ```
 

@@ -1,8 +1,9 @@
 # build
+arg BUILDPLATFORM=linux/amd64
 from --platform=$BUILDPLATFORM golang:1.26-alpine as build
 
-arg TARGETOS
-arg TARGETARCH
+arg TARGETOS=linux
+arg TARGETARCH=amd64
 
 workdir /src/apps/api
 
