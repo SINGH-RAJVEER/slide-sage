@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestGenerationRequestReadsTopicAndDisabledResearch(t *testing.T) {
@@ -139,5 +141,69 @@ func TestDecodeGeneratedDocumentRecoversFencedJSON(t *testing.T) {
 	}
 	if document["title"] != "Example" {
 		t.Fatalf("document: %#v", document)
+	}
+}
+
+func TestStreamLimiterEnforcesGlobalAndPerUserLimits(t *testing.T) {
+	limiter := newStreamLimiter(2, 1)
+	if !limiter.acquire("user-1") {
+		t.Fatal("first stream was rejected")
+	}
+	if limiter.acquire("user-1") {
+		t.Fatal("per-user stream limit was not enforced")
+	}
+	if !limiter.acquire("user-2") {
+		t.Fatal("second user's stream was rejected")
+	}
+	if limiter.acquire("user-3") {
+		t.Fatal("global stream limit was not enforced")
+	}
+	limiter.release("user-1")
+	if !limiter.acquire("user-3") {
+		t.Fatal("released stream capacity was not reused")
+	}
+}
+
+func TestRunBoundedLimitsConcurrentWork(t *testing.T) {
+	items := []int{1, 2, 3, 4, 5}
+	release := make(chan struct{})
+	started := make(chan struct{}, len(items))
+	var active atomic.Int32
+	var maximum atomic.Int32
+	done := make(chan error, 1)
+	go func() {
+		done <- runBounded(context.Background(), 2, items, func(context.Context, int) error {
+			current := active.Add(1)
+			for {
+				observed := maximum.Load()
+				if current <= observed || maximum.CompareAndSwap(observed, current) {
+					break
+				}
+			}
+			started <- struct{}{}
+			<-release
+			active.Add(-1)
+			return nil
+		})
+	}()
+
+	for range 2 {
+		select {
+		case <-started:
+		case <-time.After(time.Second):
+			t.Fatal("bounded work did not start")
+		}
+	}
+	select {
+	case <-started:
+		t.Fatal("more than two tasks started before capacity was released")
+	case <-time.After(25 * time.Millisecond):
+	}
+	close(release)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	if maximum.Load() != 2 {
+		t.Fatalf("maximum concurrency = %d", maximum.Load())
 	}
 }

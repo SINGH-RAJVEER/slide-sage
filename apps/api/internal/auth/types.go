@@ -1,6 +1,9 @@
 package auth
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type User struct {
 	ID            string    `json:"id"`
@@ -29,5 +32,5 @@ type Verification struct {
 }
 
 type EmailSender interface {
-	SendOTP(email, code, purpose, name string) error
+	SendOTP(ctx context.Context, email, code, purpose, name string) error
 }

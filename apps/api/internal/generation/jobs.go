@@ -111,8 +111,8 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 	})
 	return river.NewClient(riverdatabasesql.New(database), &river.Config{
 		FetchPollInterval:    time.Second,
-		JobTimeout:           4 * time.Minute,
-		RescueStuckJobsAfter: 5 * time.Minute,
+		JobTimeout:           7 * time.Minute,
+		RescueStuckJobsAfter: 8 * time.Minute,
 		SoftStopTimeout:      6 * time.Second,
 		Queues: map[string]river.QueueConfig{
 			generationQueue: {MaxWorkers: maxWorkers},
@@ -124,11 +124,10 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 // RecoverTerminatedQueueJobs refunds domain jobs that River permanently
 // discarded or cancelled outside the normal processor finalization path.
 func RecoverTerminatedQueueJobs(ctx context.Context, database *sql.DB) error {
-	rows, err := database.QueryContext(ctx, `SELECT job.id FROM generation_jobs job JOIN river_job queue_job ON queue_job.id = job.river_job_id WHERE job.status IN ('queued', 'running', 'retrying') AND queue_job.state IN ('cancelled', 'discarded')`)
+	rows, err := database.QueryContext(ctx, `SELECT job.id FROM generation_jobs job JOIN river_job queue_job ON queue_job.id = job.river_job_id WHERE job.status IN ('queued', 'running', 'retrying') AND queue_job.state IN ('cancelled', 'discarded') ORDER BY job.updated_at LIMIT 100`)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 	jobIDs := []string{}
 	for rows.Next() {
 		var jobID string
@@ -138,15 +137,18 @@ func RecoverTerminatedQueueJobs(ctx context.Context, database *sql.DB) error {
 		jobIDs = append(jobIDs, jobID)
 	}
 	if err := rows.Err(); err != nil {
+		_ = rows.Close()
 		return err
 	}
-	recoveryErrors := []error{}
-	for _, jobID := range jobIDs {
-		if err := recoverTerminatedQueueJob(ctx, database, jobID); err != nil {
-			recoveryErrors = append(recoveryErrors, fmt.Errorf("recover generation job %s: %w", jobID, err))
-		}
+	if err := rows.Close(); err != nil {
+		return err
 	}
-	return errors.Join(recoveryErrors...)
+	return runBounded(ctx, 2, jobIDs, func(ctx context.Context, jobID string) error {
+		if err := recoverTerminatedQueueJob(ctx, database, jobID); err != nil {
+			return fmt.Errorf("recover generation job %s: %w", jobID, err)
+		}
+		return nil
+	})
 }
 
 func recoverTerminatedQueueJob(ctx context.Context, database *sql.DB, jobID string) error {
@@ -674,8 +676,21 @@ func eventCursor(request *http.Request) int64 {
 }
 
 func (h *handler) streamEvents(writer http.ResponseWriter, request *http.Request, jobID, userID string, cursor int64) {
+	if !h.streams.acquire(userID) {
+		writeError(writer, http.StatusTooManyRequests, "Too many active generation streams")
+		return
+	}
+	defer h.streams.release(userID)
+
+	ctx, cancel := context.WithCancel(request.Context())
+	if h.streamContext != nil {
+		stopShutdown := context.AfterFunc(h.streamContext, cancel)
+		defer stopShutdown()
+	}
+	defer cancel()
+
 	var presentationID string
-	err := h.database.QueryRowContext(request.Context(), `SELECT presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, jobID, userID).Scan(&presentationID)
+	err := h.database.QueryRowContext(ctx, `SELECT presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, jobID, userID).Scan(&presentationID)
 	if errors.Is(err, sql.ErrNoRows) {
 		writeError(writer, http.StatusNotFound, "Generation job not found")
 		return
@@ -699,21 +714,21 @@ func (h *handler) streamEvents(writer http.ResponseWriter, request *http.Request
 	defer poll.Stop()
 	defer keepalive.Stop()
 	for {
-		terminal, next, err := h.writePendingEvents(request.Context(), writer, flusher, jobID, cursor)
+		terminal, next, err := h.writePendingEvents(ctx, writer, flusher, jobID, cursor)
 		if err != nil || terminal {
 			return
 		}
 		cursor = next
-		if finalized, err := h.generationJobTerminal(request.Context(), jobID); err != nil {
+		if finalized, err := h.generationJobTerminal(ctx, jobID); err != nil {
 			return
 		} else if finalized {
 			// Finalization may commit between the first event query and status
 			// check. Query once more so that race cannot hide the terminal event.
-			_, _, _ = h.writePendingEvents(request.Context(), writer, flusher, jobID, cursor)
+			_, _, _ = h.writePendingEvents(ctx, writer, flusher, jobID, cursor)
 			return
 		}
 		select {
-		case <-request.Context().Done():
+		case <-ctx.Done():
 			return
 		case <-poll.C:
 		case <-keepalive.C:
@@ -734,24 +749,41 @@ func (h *handler) writePendingEvents(ctx context.Context, writer http.ResponseWr
 	if err != nil {
 		return false, cursor, err
 	}
-	defer rows.Close()
-	terminal := false
+	type pendingEvent struct {
+		id        int64
+		eventType string
+		payload   json.RawMessage
+	}
+	events := make([]pendingEvent, 0, 16)
 	for rows.Next() {
-		var id int64
-		var eventType string
-		var payload json.RawMessage
-		if err := rows.Scan(&id, &eventType, &payload); err != nil {
+		var event pendingEvent
+		if err := rows.Scan(&event.id, &event.eventType, &event.payload); err != nil {
+			_ = rows.Close()
 			return false, cursor, err
 		}
-		_, _ = fmt.Fprintf(writer, "id: %d\nevent: %s\ndata: %s\n\n", id, eventType, payload)
-		flusher.Flush()
-		cursor = id
-		terminal = eventType == "saved" || eventType == "error"
-		if terminal {
+		event.payload = append(json.RawMessage(nil), event.payload...)
+		events = append(events, event)
+		if event.eventType == "saved" || event.eventType == "error" {
 			break
 		}
 	}
-	return terminal, cursor, rows.Err()
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return false, cursor, err
+	}
+	if err := rows.Close(); err != nil {
+		return false, cursor, err
+	}
+	terminal := false
+	for _, event := range events {
+		if _, err := fmt.Fprintf(writer, "id: %d\nevent: %s\ndata: %s\n\n", event.id, event.eventType, event.payload); err != nil {
+			return false, cursor, err
+		}
+		flusher.Flush()
+		cursor = event.id
+		terminal = event.eventType == "saved" || event.eventType == "error"
+	}
+	return terminal, cursor, nil
 }
 
 func (h *handler) cancelJob(writer http.ResponseWriter, request *http.Request) {

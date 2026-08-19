@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -109,8 +110,24 @@ func requestEmail(request *http.Request) string {
 
 func consume(ctx context.Context, database *sql.DB, scope, keyHash string, windowStart, expiresAt time.Time) (int, error) {
 	var count int
-	err := database.QueryRowContext(ctx, `WITH expired AS (DELETE FROM api_rate_limits WHERE expires_at < NOW()) INSERT INTO api_rate_limits (scope, key_hash, window_start, request_count, expires_at) VALUES ($1, $2, $3, 1, $4) ON CONFLICT (scope, key_hash, window_start) DO UPDATE SET request_count = api_rate_limits.request_count + 1, expires_at = EXCLUDED.expires_at RETURNING request_count`, scope, keyHash, windowStart, expiresAt).Scan(&count)
+	err := database.QueryRowContext(ctx, `INSERT INTO api_rate_limits (scope, key_hash, window_start, request_count, expires_at) VALUES ($1, $2, $3, 1, $4) ON CONFLICT (scope, key_hash, window_start) DO UPDATE SET request_count = api_rate_limits.request_count + 1, expires_at = EXCLUDED.expires_at RETURNING request_count`, scope, keyHash, windowStart, expiresAt).Scan(&count)
 	return count, err
+}
+
+// CleanupExpired deletes at most limit expired counters without adding cleanup
+// work to request transactions.
+func CleanupExpired(ctx context.Context, database *sql.DB, limit int) (int64, error) {
+	if database == nil {
+		return 0, errors.New("rate-limit database is required")
+	}
+	if limit < 1 {
+		limit = 500
+	}
+	result, err := database.ExecContext(ctx, `DELETE FROM api_rate_limits WHERE ctid IN (SELECT ctid FROM api_rate_limits WHERE expires_at < NOW() ORDER BY expires_at LIMIT $1 FOR UPDATE SKIP LOCKED)`, limit)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 func policyFor(method, path string) (ratePolicy, bool) {

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -35,7 +36,7 @@ type ResendEmailSender struct {
 	HTTPClient *http.Client
 }
 
-func (sender ResendEmailSender) SendOTP(email, code, purpose, name string) error {
+func (sender ResendEmailSender) SendOTP(ctx context.Context, email, code, purpose, name string) error {
 	if strings.TrimSpace(sender.APIKey) == "" {
 		return fmt.Errorf("%w: email service is not configured", ErrEmailDelivery)
 	}
@@ -64,7 +65,7 @@ func (sender ResendEmailSender) SendOTP(email, code, purpose, name string) error
 	if err != nil {
 		return err
 	}
-	request, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(payload))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}

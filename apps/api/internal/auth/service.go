@@ -176,7 +176,7 @@ func (service *Service) SendVerificationOTP(ctx context.Context, email string) e
 		return err
 	}
 	if service.config.EmailSender != nil {
-		if err = service.config.EmailSender.SendOTP(email, code, "email-verification", user.Name); err != nil {
+		if err = service.config.EmailSender.SendOTP(ctx, email, code, "email-verification", user.Name); err != nil {
 			_ = service.repository.DeleteVerification(ctx, verification.ID)
 			return err
 		}
@@ -211,7 +211,7 @@ func (service *Service) SendPasswordResetOTP(ctx context.Context, email string) 
 		return err
 	}
 	if service.config.EmailSender != nil {
-		if err = service.config.EmailSender.SendOTP(email, code, "forget-password", user.Name); err != nil {
+		if err = service.config.EmailSender.SendOTP(ctx, email, code, "forget-password", user.Name); err != nil {
 			_ = service.repository.DeleteVerification(ctx, verification.ID)
 			return err
 		}
@@ -321,7 +321,7 @@ func (service *Service) StartEmailChange(ctx context.Context, userID, password, 
 		return User{}, err
 	}
 	if service.config.EmailSender != nil {
-		if err = service.config.EmailSender.SendOTP(email, code, "email-verification", user.Name); err != nil {
+		if err = service.config.EmailSender.SendOTP(ctx, email, code, "email-verification", user.Name); err != nil {
 			_ = service.repository.DeleteVerification(ctx, verification.ID)
 			return User{}, err
 		}

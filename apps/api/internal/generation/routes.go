@@ -15,7 +15,9 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
@@ -47,16 +49,40 @@ Block region must be main, primary, secondary, or media. Do not rename text or i
 
 type Identity func(context.Context, *http.Request) (string, error)
 
+// RouteConfig controls long-lived generation event streams.
+type RouteConfig struct {
+	StreamContext     context.Context
+	MaxStreams        int
+	MaxStreamsPerUser int
+}
+
 // RegisterRoutes installs durable generation submission and event endpoints.
-func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, connections ai.ConnectionService) {
+func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, connections ai.ConnectionService, config RouteConfig) {
 	if mux == nil || database == nil || identity == nil {
 		panic("generation routes require mux, database, and identity callback")
+	}
+	if config.StreamContext == nil {
+		config.StreamContext = context.Background()
+	}
+	if config.MaxStreams < 1 {
+		config.MaxStreams = positiveEnvInt("GENERATION_STREAM_LIMIT", 40)
+	}
+	if config.MaxStreamsPerUser < 1 {
+		config.MaxStreamsPerUser = positiveEnvInt("GENERATION_STREAM_LIMIT_PER_USER", 3)
 	}
 	queue, err := newInsertClient(database)
 	if err != nil {
 		panic(fmt.Sprintf("create generation queue client: %v", err))
 	}
-	handler := &handler{database: database, identity: identity, connections: connections, client: &http.Client{Timeout: 3 * time.Minute}, queue: queue}
+	handler := &handler{
+		database:      database,
+		identity:      identity,
+		connections:   connections,
+		client:        &http.Client{Timeout: 3 * time.Minute},
+		queue:         queue,
+		streamContext: config.StreamContext,
+		streams:       newStreamLimiter(config.MaxStreams, config.MaxStreamsPerUser),
+	}
 	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
 	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
 	mux.HandleFunc("GET /generation-jobs/{id}", handler.jobStatus)
@@ -68,29 +94,90 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 // RecoverExpired finalizes abandoned authorizations even when their user does
 // not submit another request. It is safe to call concurrently from API nodes.
 func RecoverExpired(ctx context.Context, database *sql.DB) error {
-	rows, err := database.QueryContext(ctx, `SELECT DISTINCT operation.user_id FROM generation_point_operations operation WHERE operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying'))`)
+	rows, err := database.QueryContext(ctx, `SELECT operation.user_id FROM generation_point_operations operation WHERE operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) GROUP BY operation.user_id ORDER BY MIN(operation.expires_at) LIMIT 100`)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	userIDs := []string{}
 	for rows.Next() {
 		var userID string
 		if err := rows.Scan(&userID); err != nil {
+			_ = rows.Close()
 			return err
 		}
-		if err := (&handler{database: database}).recoverExpired(ctx, userID); err != nil {
-			return err
-		}
+		userIDs = append(userIDs, userID)
 	}
-	return rows.Err()
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	recoveryHandler := &handler{database: database}
+	return runBounded(ctx, 2, userIDs, func(ctx context.Context, userID string) error {
+		return recoveryHandler.recoverExpired(ctx, userID)
+	})
 }
 
 type handler struct {
-	database    *sql.DB
-	identity    Identity
-	client      *http.Client
-	connections ai.ConnectionService
-	queue       *queueClient
+	database      *sql.DB
+	identity      Identity
+	client        *http.Client
+	connections   ai.ConnectionService
+	queue         *queueClient
+	streamContext context.Context
+	streams       *streamLimiter
+}
+
+type streamLimiter struct {
+	mu         sync.Mutex
+	total      int
+	maxTotal   int
+	maxPerUser int
+	byUser     map[string]int
+}
+
+func newStreamLimiter(maxTotal, maxPerUser int) *streamLimiter {
+	return &streamLimiter{maxTotal: maxTotal, maxPerUser: maxPerUser, byUser: map[string]int{}}
+}
+
+func (limiter *streamLimiter) acquire(userID string) bool {
+	if limiter == nil {
+		return true
+	}
+	limiter.mu.Lock()
+	defer limiter.mu.Unlock()
+	if limiter.total >= limiter.maxTotal || limiter.byUser[userID] >= limiter.maxPerUser {
+		return false
+	}
+	limiter.total++
+	limiter.byUser[userID]++
+	return true
+}
+
+func (limiter *streamLimiter) release(userID string) {
+	if limiter == nil {
+		return
+	}
+	limiter.mu.Lock()
+	defer limiter.mu.Unlock()
+	if limiter.byUser[userID] == 0 {
+		return
+	}
+	limiter.total--
+	limiter.byUser[userID]--
+	if limiter.byUser[userID] == 0 {
+		delete(limiter.byUser, userID)
+	}
+}
+
+func positiveEnvInt(name string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(name)))
+	if err != nil || value < 1 {
+		return fallback
+	}
+	return value
 }
 
 type generationInput struct {
@@ -905,7 +992,7 @@ func (h *handler) recoverExpired(ctx context.Context, userID string) error {
 		return err
 	}
 	defer tx.Rollback()
-	rows, err := tx.QueryContext(ctx, `SELECT operation.id, operation.quoted_millis, operation.presentation_id, operation.kind FROM generation_point_operations operation WHERE operation.user_id = $1 AND operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) FOR UPDATE OF operation SKIP LOCKED`, userID)
+	rows, err := tx.QueryContext(ctx, `SELECT operation.id, operation.quoted_millis, operation.presentation_id, operation.kind FROM generation_point_operations operation WHERE operation.user_id = $1 AND operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) ORDER BY operation.expires_at LIMIT 100 FOR UPDATE OF operation SKIP LOCKED`, userID)
 	if err != nil {
 		return err
 	}

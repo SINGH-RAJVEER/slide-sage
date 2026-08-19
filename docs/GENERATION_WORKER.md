@@ -62,10 +62,12 @@ these states:
 | `cancelled` | A cancellation request was observed and finalized |
 
 River permits up to three attempts for the generation job. Each attempt has a
-four-minute timeout, exceeding the provider client's three-minute timeout, and
-River rescues jobs left running for five minutes. Shutdown first drains active
-jobs, then cancels their contexts after a six-second River soft-stop timeout so
-queue state can finalize within the Cloud Run termination window. The worker retries
+seven-minute timeout for the sequential planning and drafting calls, whose HTTP
+client timeout is three minutes per call. River rescues jobs left running for
+eight minutes. On shutdown the worker marks itself unready, cancels maintenance,
+and asks River to drain active jobs. River cancels remaining work after its
+six-second soft-stop timeout so queue state can finalize within the Cloud Run
+termination window. The worker retries
 network errors, provider `429` responses, and provider `5xx` responses. Events
 such as `created`, `theme`, `stage`, `retry`, `plan`, `outline`, `slide`, `complete`,
 `saved`, and `error` are stored before the API delivers them. `saved` and `error`
@@ -98,6 +100,13 @@ The event endpoint can be consumed through `fetch` stream parsing. Browser
 `EventSource` is not suitable when application authentication or custom resume
 headers require request options unavailable to `EventSource`; the `after` query
 parameter is available for clients that cannot set `Last-Event-ID`.
+
+One API instance accepts at most 40 generation event streams and at most three
+streams per user by default. Event rows are copied from PostgreSQL and the query
+is closed before bytes are written to the client, so a slow client does not hold
+a database connection. The API cancels active streams before graceful server
+shutdown. Configure the limits with `GENERATION_STREAM_LIMIT` and
+`GENERATION_STREAM_LIMIT_PER_USER`.
 
 Cancellation returns `202` with `{"status":"cancellation_requested"}` when the
 request is recorded. It returns `409` when the job is already terminal or is not
@@ -137,12 +146,25 @@ as the API, plus worker-specific controls:
 | `WORKER_HEALTH_PORT` | `8080` | Port for worker health probes |
 
 `GET /live` returns `204` while the health server is running. `GET /ready`
-returns `204` when PostgreSQL responds to a one-second ping, otherwise `503`.
+returns `204` only while the worker accepts work and PostgreSQL responds to a
+one-second ping. It returns `503` as soon as shutdown starts.
+
+The worker runs generation recovery every minute. It processes at most 100
+terminated jobs and 100 affected users per sweep, with at most two recovery
+transactions running concurrently. Hourly maintenance deletes bounded batches
+of expired rate-limit counters and unverified accounts. Maintenance stops before
+River drains.
+
+The API discovers model catalogs for independent BYOK connections concurrently,
+with at most three catalog requests per configuration response and one active
+catalog request per provider in each API process.
 
 ## Deployment
 
 The intended production topology is a Cloud Run service for the API and a Cloud
-Run Worker Pool for `cmd/worker`. API-to-worker coordination uses PostgreSQL
+Run Worker Pool for `cmd/worker`. The current service-based deployment must use
+instance-based billing through `--no-cpu-throttling`; a minimum instance alone
+does not allocate CPU between requests. API-to-worker coordination uses PostgreSQL
 only; there is no HTTP or RPC call from the API to a worker instance. The worker
 still makes its required outbound calls to PostgreSQL and the selected AI
 provider.

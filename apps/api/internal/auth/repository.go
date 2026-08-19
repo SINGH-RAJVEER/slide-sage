@@ -82,6 +82,9 @@ func (repository *Repository) DeleteExpiredUnverifiedUsers(ctx context.Context, 
 				SELECT 1 FROM accounts AS a
 				WHERE a.user_id = u.id AND a.provider_id NOT IN ('credential', 'email')
 			)
+			ORDER BY u.created_at
+			LIMIT 100
+			FOR UPDATE OF u SKIP LOCKED
 		), deleted_verifications AS (
 			DELETE FROM verifications AS v
 			USING expired_users AS expired

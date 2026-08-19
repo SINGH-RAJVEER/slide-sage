@@ -145,6 +145,7 @@ jobs:
             --port=8080 \
             --cpu=1 \
             --memory=1Gi \
+            --no-cpu-throttling \
             --min-instances=1 \
             --max-instances=1 \
             --concurrency=1 \

@@ -1,14 +1,23 @@
 package ai
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 )
 
 const aiBodyLimit int64 = 16 * 1024
+
+var providerCatalogSlots = map[Provider]chan struct{}{
+	OpenAI:    make(chan struct{}, 1),
+	Google:    make(chan struct{}, 1),
+	Anthropic: make(chan struct{}, 1),
+}
 
 // Identity resolves the current authenticated user for AI connection routes.
 type Identity func(*http.Request) (string, error)
@@ -18,7 +27,13 @@ func RegisterRoutes(mux *http.ServeMux, connections ConnectionService, identity 
 	if mux == nil {
 		panic("AI mux is required")
 	}
-	router := aiRouter{connections: connections, identity: identity}
+	router := aiRouter{
+		connections: connections,
+		identity:    identity,
+		validateProvider: func(ctx context.Context, provider Provider, key string) ([]ModelDescriptor, error) {
+			return ValidateProviderKey(ctx, provider, key, nil)
+		},
+	}
 	mux.HandleFunc("GET /ai/config", router.config)
 	mux.HandleFunc("POST /ai/connections", router.createConnection)
 	mux.HandleFunc("PUT /ai/connections/{provider}", router.updateConnection)
@@ -27,8 +42,17 @@ func RegisterRoutes(mux *http.ServeMux, connections ConnectionService, identity 
 }
 
 type aiRouter struct {
-	connections ConnectionService
-	identity    Identity
+	connections      ConnectionService
+	identity         Identity
+	validateProvider func(context.Context, Provider, string) ([]ModelDescriptor, error)
+}
+
+type providerCatalogResult struct {
+	connection Connection
+	models     []ModelDescriptor
+	status     string
+	errorText  string
+	invalid    bool
 }
 
 func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
@@ -41,40 +65,25 @@ func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
 		r.errorResponse(w, err)
 		return
 	}
+	results := r.discoverProviderCatalogs(request.Context(), userID, connections)
 	models := []ModelDescriptor{}
 	summaries := make([]map[string]any, 0, len(connections))
 	validProviders := map[Provider]bool{}
 	catalogErrors := map[string]string{}
-	for _, connection := range connections {
+	for _, result := range results {
+		connection := result.connection
 		provider := Provider(connection.Provider)
-		status := connection.Status
-		if status == "valid" {
+		if result.status == "valid" {
 			validProviders[provider] = true
-			credential := EncryptedCredential{connection.EncryptedAPIKey, connection.EncryptionIV, connection.EncryptionKeyVersion, connection.KeyLastFour}
-			key, decryptErr := DecryptAPIKey(userID, provider, credential)
-			if decryptErr != nil {
-				catalogErrors[string(provider)] = "The provider model list is temporarily unavailable."
-			} else {
-				discovered, validationErr := ValidateProviderKey(request.Context(), provider, key, nil)
-				if validationErr != nil {
-					validation, known := validationErr.(*ValidationError)
-					if known && (validation.Rejected || validation.Incompatible) {
-						_ = r.connections.MarkInvalid(request.Context(), userID, provider)
-						status = "invalid"
-						if validation.Rejected {
-							catalogErrors[string(provider)] = "The provider rejected this API key. Replace it to refresh models."
-						} else {
-							catalogErrors[string(provider)] = "The provider no longer lists a compatible generation model."
-						}
-					} else {
-						catalogErrors[string(provider)] = "The provider model list is temporarily unavailable."
-					}
-				} else {
-					models = append(models, discovered...)
-				}
-			}
 		}
-		summary := map[string]any{"provider": connection.Provider, "status": status, "keyHint": "...." + connection.KeyLastFour, "validatedAt": connection.ValidatedAt.UTC().Format("2006-01-02T15:04:05.000Z")}
+		if result.invalid {
+			_ = r.connections.MarkInvalid(request.Context(), userID, provider)
+		}
+		if result.errorText != "" {
+			catalogErrors[string(provider)] = result.errorText
+		}
+		models = append(models, result.models...)
+		summary := map[string]any{"provider": connection.Provider, "status": result.status, "keyHint": "...." + connection.KeyLastFour, "validatedAt": connection.ValidatedAt.UTC().Format("2006-01-02T15:04:05.000Z")}
 		if connection.LastUsedAt != nil {
 			summary["lastUsedAt"] = connection.LastUsedAt.UTC().Format("2006-01-02T15:04:05.000Z")
 		}
@@ -117,6 +126,67 @@ func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
 		response["modelCatalogErrors"] = catalogErrors
 	}
 	writeAIJSON(w, http.StatusOK, response)
+}
+
+func (r aiRouter) discoverProviderCatalogs(ctx context.Context, userID string, connections []Connection) []providerCatalogResult {
+	results := make([]providerCatalogResult, len(connections))
+	group, groupContext := errgroup.WithContext(ctx)
+	group.SetLimit(3)
+	for index, connection := range connections {
+		index, connection := index, connection
+		group.Go(func() error {
+			results[index] = r.discoverProviderCatalog(groupContext, userID, connection)
+			return nil
+		})
+	}
+	_ = group.Wait()
+	return results
+}
+
+func (r aiRouter) discoverProviderCatalog(ctx context.Context, userID string, connection Connection) providerCatalogResult {
+	result := providerCatalogResult{connection: connection, status: connection.Status}
+	if connection.Status != "valid" {
+		return result
+	}
+	provider := Provider(connection.Provider)
+	credential := EncryptedCredential{connection.EncryptedAPIKey, connection.EncryptionIV, connection.EncryptionKeyVersion, connection.KeyLastFour}
+	key, err := DecryptAPIKey(userID, provider, credential)
+	if err != nil {
+		result.errorText = "The provider model list is temporarily unavailable."
+		return result
+	}
+	validator := r.validateProvider
+	if validator == nil {
+		validator = func(ctx context.Context, provider Provider, key string) ([]ModelDescriptor, error) {
+			return ValidateProviderKey(ctx, provider, key, nil)
+		}
+	}
+	slot := providerCatalogSlots[provider]
+	select {
+	case slot <- struct{}{}:
+		defer func() { <-slot }()
+	case <-ctx.Done():
+		result.errorText = "The provider model list is temporarily unavailable."
+		return result
+	}
+	result.models, err = validator(ctx, provider, key)
+	if err == nil {
+		return result
+	}
+	result.models = nil
+	validation, known := err.(*ValidationError)
+	if !known || !validation.Rejected && !validation.Incompatible {
+		result.errorText = "The provider model list is temporarily unavailable."
+		return result
+	}
+	result.status = "invalid"
+	result.invalid = true
+	if validation.Rejected {
+		result.errorText = "The provider rejected this API key. Replace it to refresh models."
+	} else {
+		result.errorText = "The provider no longer lists a compatible generation model."
+	}
+	return result
 }
 
 func (r aiRouter) createConnection(w http.ResponseWriter, request *http.Request) {

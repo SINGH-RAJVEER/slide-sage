@@ -37,6 +37,11 @@ reload `.env`, preventing its development command from reverting to the default 
 The Go API uses one bounded `database/sql` pool configured by
 `DATABASE_POOL_MAX`, `DATABASE_CONNECT_TIMEOUT`, and `DATABASE_IDLE_TIMEOUT`.
 
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `GENERATION_STREAM_LIMIT` | No | `40` | Maximum concurrent generation SSE streams in one API process |
+| `GENERATION_STREAM_LIMIT_PER_USER` | No | `3` | Maximum concurrent generation SSE streams for one user in one API process |
+
 Set `RATE_LIMIT_HASH_SECRET` to a separate random deployment secret. Falling back
 to `AUTH_SECRET` is supported, but an independent value avoids coupling rate-limit
 identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md).
@@ -56,7 +61,8 @@ generation provider and BYOK encryption configuration as the API because provide
 execution occurs in `cmd/worker`, not in the submission request.
 
 `GET /live` returns `204` while the worker health server is running. `GET /ready`
-returns `204` only when PostgreSQL is reachable. The health server is for platform
+returns `204` only when the worker accepts work and PostgreSQL is reachable. It
+returns `503` during draining. The health server is for platform
 probes; application coordination between the API and worker occurs through
 PostgreSQL.
 
@@ -64,6 +70,9 @@ For Cloud Run Worker Pools, start with one instance and change the fixed/manual
 instance count deliberately. Account for both the instance count and
 `WORKER_CONCURRENCY` when sizing PostgreSQL connection limits and provider
 capacity. See [GENERATION_WORKER.md](GENERATION_WORKER.md).
+When deployed as a Cloud Run service rather than a Worker Pool, the worker must
+use instance-based billing with CPU throttling disabled so River and maintenance
+continue between HTTP requests.
 
 ## AI and research
 

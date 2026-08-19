@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type UserIdentity func(context.Context, *http.Request) (string, error)
@@ -170,12 +171,16 @@ func (h *presentationHandler) researchPresentation(writer http.ResponseWriter, r
 	}
 	sources, err := h.research.Search(request.Context(), input.Topic, input.Research)
 	if err != nil {
-		_ = h.refundResearch(context.WithoutCancel(request.Context()), operationID, userID, "Research provider failed")
+		refundContext, cancelRefund := context.WithTimeout(context.WithoutCancel(request.Context()), 5*time.Second)
+		_ = h.refundResearch(refundContext, operationID, userID, "Research provider failed")
+		cancelRefund()
 		writeError(writer, http.StatusBadGateway, "Research service is unavailable")
 		return
 	}
 	if err := h.settleResearch(request.Context(), operationID, userID, balance); err != nil {
-		_ = h.refundResearch(context.WithoutCancel(request.Context()), operationID, userID, "Research settlement failed")
+		refundContext, cancelRefund := context.WithTimeout(context.WithoutCancel(request.Context()), 5*time.Second)
+		_ = h.refundResearch(refundContext, operationID, userID, "Research settlement failed")
+		cancelRefund()
 		writeError(writer, http.StatusInternalServerError, "Unable to settle research points")
 		return
 	}

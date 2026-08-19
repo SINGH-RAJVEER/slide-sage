@@ -61,6 +61,10 @@ queued work.
 The worker resolves the server OpenRouter model or encrypted user provider
 connection, calls the provider, and normalizes output to a bounded schema-v5
 presentation document. Output without substantive content is rejected.
+River bounds generation concurrency. Recovery uses a separate two-task limit,
+and the API validates independent BYOK provider catalogs concurrently with a
+limit of three requests. A process-wide one-request slot per provider prevents
+simultaneous configuration requests from flooding the same provider catalog.
 Successful generation settles the point reservation and persists the final
 document transactionally. Provider, validation, cancellation, and save failures
 finalize the operation and refund its active reservation transactionally.
@@ -104,6 +108,12 @@ prevent concurrent generation from overwriting a presentation.
 Migration `00015_add_generation_jobs.sql` adds the application job and event
 tables. River owns separate queue tables managed by `cmd/migrate`; queue rows are
 not the source of truth for user-visible job status or events.
+
+Generation SSE handlers copy event rows and close the query before writing to a
+client. Per-process and per-user stream limits bound handler and polling load.
+Expired rate-limit rows, expired generation reservations, terminated queue jobs,
+and unverified accounts are maintained by the worker rather than API request
+goroutines.
 
 ## Deployment
 
