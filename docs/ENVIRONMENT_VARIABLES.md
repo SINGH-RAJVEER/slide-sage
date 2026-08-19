@@ -1,4 +1,4 @@
-# Environment Variables
+# Environment variables
 
 Copy `.env.example` to `.env`. Devenv loads it for the Go API, generation worker,
 and Bun workspace processes.
@@ -7,7 +7,7 @@ and Bun workspace processes.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `AUTH_SECRET` | Production | Local-only development secret | Signs Better Auth state; HTTPS deployments require at least 32 characters |
+| `AUTH_SECRET` | Production | Local-only development secret | Signs JWTs; HTTPS deployments require at least 32 characters |
 | `BASE_URL` | No | `http://localhost:8000` | Public API and auth callback origin |
 | `PORT` | No | `8000` | API listen port |
 | `HOST` | No | `0.0.0.0` | API listen host |
@@ -41,7 +41,7 @@ Set `RATE_LIMIT_HASH_SECRET` to a separate random deployment secret. Falling bac
 to `AUTH_SECRET` is supported, but an independent value avoids coupling rate-limit
 identity hashes to auth-secret rotation. See [RATE_LIMITING.md](RATE_LIMITING.md).
 
-## Generation Worker
+## Generation worker
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
@@ -65,7 +65,7 @@ instance count deliberately. Account for both the instance count and
 `WORKER_CONCURRENCY` when sizing PostgreSQL connection limits and provider
 capacity. See [GENERATION_WORKER.md](GENERATION_WORKER.md).
 
-## AI and Research
+## AI and research
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
@@ -78,12 +78,6 @@ capacity. See [GENERATION_WORKER.md](GENERATION_WORKER.md).
 | `EMBEDDING_REQUEST_TIMEOUT_MS` | No | `15000` | Maximum embedding request duration; caller cancellation can stop it earlier |
 | `EXA_API_KEY` | For web research | None | Exa search authentication |
 | `EXA_REQUEST_TIMEOUT_MS` | No | `10000` | Maximum Exa request duration; caller cancellation can stop it earlier |
-| `SEMANTIC_CACHE_MODE` | No | `serve` | Semantic cache behavior: `serve`, `shadow`, or `off` |
-| `SEARCH_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared search results |
-| `OUTLINE_CACHE_SIMILARITY_THRESHOLD` | No | `0.94` | Minimum cosine similarity for shared presentation outlines |
-| `SEARCH_CACHE_TTL_SECONDS` | No | Freshness-dependent | Override search-result cache lifetime |
-| `OUTLINE_CACHE_TTL_SECONDS` | No | `604800` | Shared outline cache lifetime |
-
 Presentation requests without a valid user provider connection use OpenRouter
 strict JSON Schema output and consume SlideSage points. OpenRouter provider
 fallback remains enabled so transient outages can route to another compatible
@@ -92,7 +86,7 @@ endpoint. The default model incurs OpenRouter usage charges; set
 required. Valid BYOK connections replace this generation path but do not replace
 the server embedding configuration.
 
-## Authentication and Email
+## Authentication and email
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
@@ -134,7 +128,7 @@ same-origin routes instead.
 The API refuses to initialize authentication on an HTTPS base URL without a
 sufficiently strong `AUTH_SECRET`.
 
-## BYOK Credential Encryption
+## BYOK credential encryption
 
 | Variable | Required | Description |
 | --- | --- | --- |

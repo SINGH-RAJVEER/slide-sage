@@ -44,10 +44,10 @@ func main() {
 
 	baseURL := env("BASE_URL", "http://localhost:8000")
 	secureCookies := strings.HasPrefix(baseURL, "https://")
-	cookieName := "better-auth.session_token"
+	cookieName := "slidesage_token"
 	sameSite := http.SameSiteLaxMode
 	if secureCookies {
-		cookieName, sameSite = "__Secure-better-auth.session_token", http.SameSiteNoneMode
+		cookieName, sameSite = "__Secure-slidesage_token", http.SameSiteNoneMode
 	}
 	service, err := auth.NewService(auth.Config{
 		Database:       database,

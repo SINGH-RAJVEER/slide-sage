@@ -83,12 +83,12 @@ func (service *Service) socialCallbackHandler(writer http.ResponseWriter, reques
 		writeError(writer, http.StatusInternalServerError, "Social sign-in could not be completed")
 		return
 	}
-	session, err := service.createSession(request.Context(), user.ID, request.UserAgent(), requestIP(request))
+	session, err := service.issueJWT(request.Context(), user.ID)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "Unable to create session")
 		return
 	}
-	service.setSessionCookie(writer, session)
+	service.setJWTCookie(writer, session)
 	http.Redirect(writer, request, state.CallbackURL, http.StatusFound)
 }
 

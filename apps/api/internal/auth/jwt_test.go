@@ -10,7 +10,7 @@ func TestJWTGenerationAndVerification(t *testing.T) {
 	config := Config{
 		Database:   &sql.DB{},
 		AuthSecret: "test-secret-key-that-is-at-least-32-bytes-long",
-		SessionTTL: 1 * time.Hour,
+		JWTTTL:     1 * time.Hour,
 		Now:        time.Now,
 	}.normalized()
 
@@ -39,7 +39,7 @@ func TestJWTExpiration(t *testing.T) {
 	config := Config{
 		Database:   &sql.DB{},
 		AuthSecret: "test-secret-key-that-is-at-least-32-bytes-long",
-		SessionTTL: -1 * time.Hour, // already expired
+		JWTTTL:     -1 * time.Hour, // already expired
 		Now:        func() time.Time { return now },
 	}.normalized()
 

@@ -173,9 +173,3 @@ docker push asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev
 - `403` pushing to Artifact Registry: re-run `gcloud auth configure-docker asia-south1-docker.pkg.dev` and confirm the service account has `roles/artifactregistry.writer`.
 - `Permission 'iam.serviceAccounts.actAs' denied` during deploy: re-apply the `roles/iam.serviceAccountUser` binding.
 - WIF auth step fails: confirm `GCP_WIF_PROVIDER`/`GCP_SERVICE_ACCOUNT` match the pool that was created and that the binding uses the same `REPO_URL` casing as the repository.
-
-## Possible extensions
-
-- Run `bun run lint` and `bun run test` in a `test` job that `build` depends on.
-- Trigger on `v*` tags to additionally tag images with the semantic version.
-- Publish the `apps/web` bundle and deploy the frontend to Cloud Run or Cloudflare Pages.

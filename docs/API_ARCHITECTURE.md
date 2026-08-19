@@ -12,8 +12,8 @@ libs/types Shared API and presentation contracts
 libs/ui    Shared React UI primitives and slide renderer
 ```
 
-The Go API is the only application HTTP API. It owns authentication, sessions,
-presentations, research submission, generation submission and event delivery,
+The Go API is the only application HTTP API. It owns authentication and JWT
+tokens, presentations, research submission, generation submission and event delivery,
 billing, BYOK connections, rate limiting, and PostgreSQL persistence. The
 generation worker owns queued AI provider execution.
 
@@ -77,7 +77,7 @@ persisted with the presentation for attribution.
 
 Authentication is implemented in `apps/api/internal/auth`. The API supports
 email/password accounts, email verification OTPs, password reset OTPs, Google and
-GitHub OAuth, signed HTTP-only session cookies, sign-out, and authenticated
+GitHub OAuth, HTTP-only JWT cookies, sign-out, and authenticated
 profile security changes.
 
 ## Presentation Documents

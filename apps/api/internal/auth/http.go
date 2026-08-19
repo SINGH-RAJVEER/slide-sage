@@ -1,16 +1,11 @@
 package auth
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"crypto/subtle"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -59,12 +54,12 @@ func (service *Service) verifyAccountEmailHandler(writer http.ResponseWriter, re
 		writeServiceError(writer, err)
 		return
 	}
-	session, err := service.createSession(request.Context(), user.ID, request.UserAgent(), requestIP(request))
+	session, err := service.issueJWT(request.Context(), user.ID)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "Unable to create session")
 		return
 	}
-	service.setSessionCookie(writer, session)
+	service.setJWTCookie(writer, session)
 	writeJSON(writer, http.StatusOK, map[string]any{"status": true, "token": session.Token, "user": user})
 }
 
@@ -139,7 +134,7 @@ func (service *Service) signInHandler(writer http.ResponseWriter, request *http.
 	if !decodeJSON(writer, request, &body) {
 		return
 	}
-	session, user, err := service.SignIn(request.Context(), body.Email, body.Password, request.UserAgent(), requestIP(request))
+	session, user, err := service.SignIn(request.Context(), body.Email, body.Password)
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ErrEmailUnverified) {
 		code := "INVALID_EMAIL_OR_PASSWORD"
 		if errors.Is(err, ErrEmailUnverified) {
@@ -153,18 +148,17 @@ func (service *Service) signInHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 	persistent := body.RememberMe == nil || *body.RememberMe
-	service.setSessionCookieWithPersistence(writer, session, persistent)
+	service.setJWTCookieWithPersistence(writer, session, persistent)
 	writeJSON(writer, http.StatusOK, map[string]any{"redirect": false, "token": session.Token, "url": nil, "user": user})
 }
 
 func (service *Service) signOutHandler(writer http.ResponseWriter, request *http.Request) {
-	_ = service.SignOut(request.Context(), service.sessionToken(request))
 	http.SetCookie(writer, &http.Cookie{Name: service.config.CookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, Secure: service.config.SecureCookies, SameSite: service.config.SameSite})
 	writeJSON(writer, http.StatusOK, map[string]bool{"success": true})
 }
 
 func (service *Service) getSessionHandler(writer http.ResponseWriter, request *http.Request) {
-	session, user, err := service.Session(request.Context(), service.sessionToken(request))
+	session, user, err := service.AuthenticateJWT(request.Context(), service.sessionToken(request))
 	if err != nil {
 		writeJSON(writer, http.StatusOK, nil)
 		return
@@ -173,7 +167,7 @@ func (service *Service) getSessionHandler(writer http.ResponseWriter, request *h
 }
 
 func (service *Service) profileHandler(writer http.ResponseWriter, request *http.Request) {
-	_, user, ok := service.requireSession(writer, request)
+	_, user, ok := service.requireJWT(writer, request)
 	if !ok {
 		return
 	}
@@ -181,7 +175,7 @@ func (service *Service) profileHandler(writer http.ResponseWriter, request *http
 }
 
 func (service *Service) updateProfileHandler(writer http.ResponseWriter, request *http.Request) {
-	session, user, ok := service.requireSession(writer, request)
+	_, user, ok := service.requireJWT(writer, request)
 	if !ok {
 		return
 	}
@@ -203,7 +197,7 @@ func (service *Service) updateProfileHandler(writer http.ResponseWriter, request
 			writeError(writer, http.StatusBadRequest, "Current password and new password are required")
 			return
 		}
-		if err := service.ChangePassword(request.Context(), user.ID, session.Token, body.CurrentPassword, *body.NewPassword); err != nil {
+		if err := service.ChangePassword(request.Context(), user.ID, body.CurrentPassword, *body.NewPassword); err != nil {
 			writeError(writer, http.StatusBadRequest, "Current password is incorrect")
 			return
 		}
@@ -236,7 +230,7 @@ func (service *Service) updateProfileHandler(writer http.ResponseWriter, request
 }
 
 func (service *Service) avatarHandler(writer http.ResponseWriter, request *http.Request) {
-	_, user, ok := service.requireSession(writer, request)
+	_, user, ok := service.requireJWT(writer, request)
 	if !ok {
 		return
 	}
@@ -255,7 +249,7 @@ func (service *Service) avatarHandler(writer http.ResponseWriter, request *http.
 }
 
 func (service *Service) verifyEmailHandler(writer http.ResponseWriter, request *http.Request) {
-	_, user, ok := service.requireSession(writer, request)
+	_, user, ok := service.requireJWT(writer, request)
 	if !ok {
 		return
 	}
@@ -274,11 +268,11 @@ func (service *Service) verifyEmailHandler(writer http.ResponseWriter, request *
 	writeJSON(writer, http.StatusOK, map[string]any{"user": updated})
 }
 
-func (service *Service) requireSession(writer http.ResponseWriter, request *http.Request) (Session, User, bool) {
-	session, user, err := service.Session(request.Context(), service.sessionToken(request))
+func (service *Service) requireJWT(writer http.ResponseWriter, request *http.Request) (JWTAuth, User, bool) {
+	session, user, err := service.AuthenticateJWT(request.Context(), service.sessionToken(request))
 	if err != nil {
 		writeError(writer, http.StatusUnauthorized, "Unauthorized")
-		return Session{}, User{}, false
+		return JWTAuth{}, User{}, false
 	}
 	return session, user, true
 }
@@ -291,7 +285,7 @@ func (service *Service) AuthenticatedUserID(request *http.Request) (string, erro
 	if userID, err := service.VerifyJWT(token); err == nil {
 		return userID, nil
 	}
-	_, user, err := service.Session(request.Context(), token)
+	_, user, err := service.AuthenticateJWT(request.Context(), token)
 	if err != nil {
 		return "", err
 	}
@@ -303,14 +297,11 @@ func (service *Service) sessionToken(request *http.Request) string {
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		return strings.TrimPrefix(authHeader, "Bearer ")
 	}
-	names := []string{"token", "authorization", service.config.CookieName, "better-auth.session_token", "__Secure-better-auth.session_token"}
+	names := []string{service.config.CookieName}
 	for _, name := range names {
 		cookie, err := request.Cookie(name)
 		if err != nil {
 			continue
-		}
-		if token := service.verifyCookieValue(cookie.Value); token != "" {
-			return token
 		}
 		if cookie.Value != "" {
 			return cookie.Value
@@ -319,46 +310,16 @@ func (service *Service) sessionToken(request *http.Request) string {
 	return ""
 }
 
-func (service *Service) setSessionCookie(writer http.ResponseWriter, session Session) {
-	service.setSessionCookieWithPersistence(writer, session, true)
+func (service *Service) setJWTCookie(writer http.ResponseWriter, auth JWTAuth) {
+	service.setJWTCookieWithPersistence(writer, auth, true)
 }
 
-func (service *Service) setSessionCookieWithPersistence(writer http.ResponseWriter, session Session, persistent bool) {
-	cookie := &http.Cookie{Name: service.config.CookieName, Value: service.signCookieValue(session.Token), Path: "/", HttpOnly: true, Secure: service.config.SecureCookies, SameSite: service.config.SameSite}
+func (service *Service) setJWTCookieWithPersistence(writer http.ResponseWriter, auth JWTAuth, persistent bool) {
+	cookie := &http.Cookie{Name: service.config.CookieName, Value: auth.Token, Path: "/", HttpOnly: true, Secure: service.config.SecureCookies, SameSite: service.config.SameSite}
 	if persistent {
-		cookie.Expires = session.ExpiresAt
+		cookie.Expires = auth.ExpiresAt
 	}
 	http.SetCookie(writer, cookie)
-}
-
-func (service *Service) signCookieValue(value string) string {
-	mac := hmac.New(sha256.New, []byte(service.config.AuthSecret))
-	_, _ = mac.Write([]byte(value))
-	return url.QueryEscape(value + "." + base64.StdEncoding.EncodeToString(mac.Sum(nil)))
-}
-
-func (service *Service) verifyCookieValue(value string) string {
-	if decoded, err := url.QueryUnescape(value); err == nil {
-		value = decoded
-	}
-	separator := strings.LastIndexByte(value, '.')
-	if separator < 1 {
-		return value
-	}
-	token := value[:separator]
-	signature, err := base64.StdEncoding.DecodeString(value[separator+1:])
-	if err != nil {
-		signature, err = base64.RawURLEncoding.DecodeString(value[separator+1:])
-	}
-	if err != nil {
-		return ""
-	}
-	mac := hmac.New(sha256.New, []byte(service.config.AuthSecret))
-	_, _ = mac.Write([]byte(token))
-	if subtle.ConstantTimeCompare(signature, mac.Sum(nil)) != 1 {
-		return ""
-	}
-	return token
 }
 
 func decodeJSON(writer http.ResponseWriter, request *http.Request, target any) bool {

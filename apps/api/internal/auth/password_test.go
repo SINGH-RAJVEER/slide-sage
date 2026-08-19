@@ -28,14 +28,3 @@ func TestHashPasswordUsesBetterAuthFormat(t *testing.T) {
 		t.Fatal("generated hash did not verify")
 	}
 }
-
-func TestSignedCookieRoundTrip(t *testing.T) {
-	service := &Service{config: Config{AuthSecret: "test-secret-with-at-least-thirty-two-characters"}}
-	signed := service.signCookieValue("session-token")
-	if token := service.verifyCookieValue(signed); token != "session-token" {
-		t.Fatalf("got %q", token)
-	}
-	if token := service.verifyCookieValue(signed + "tampered"); token != "" {
-		t.Fatal("tampered cookie verified")
-	}
-}

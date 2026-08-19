@@ -18,7 +18,7 @@ type Config struct {
 	Database       *sql.DB
 	AuthSecret     string
 	CookieName     string
-	SessionTTL     time.Duration
+	JWTTTL         time.Duration
 	UnverifiedTTL  time.Duration
 	SecureCookies  bool
 	SameSite       http.SameSite
@@ -108,10 +108,10 @@ func (config Config) normalized() Config {
 		config.AuthSecret = developmentAuthSecret
 	}
 	if config.CookieName == "" {
-		config.CookieName = "better-auth.session_token"
+		config.CookieName = "slidesage_token"
 	}
-	if config.SessionTTL <= 0 {
-		config.SessionTTL = 7 * 24 * time.Hour
+	if config.JWTTTL <= 0 {
+		config.JWTTTL = 7 * 24 * time.Hour
 	}
 	if config.UnverifiedTTL <= 0 {
 		config.UnverifiedTTL = 24 * time.Hour

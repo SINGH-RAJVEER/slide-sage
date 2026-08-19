@@ -1,16 +1,16 @@
 # Authentication
 
-SlideSage exposes a custom JWT-authenticated browser contract at `/auth`. It supports email and password,
-six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth,
-session cookies, and sign-out.
+SlideSage exposes a JWT-backed browser contract at `/auth`. It supports email and
+password sign-in, six-digit email OTP verification, password reset, Google OAuth,
+GitHub OAuth, an HTTP-only JWT cookie, and sign-out.
 
 The implementation is owned by the Go API in `apps/api/internal/auth`.
 
-Sessions are short-lived HS256 JWTs generated and verified by the Go service
+Auth tokens are short-lived HS256 JWTs generated and verified by the Go service
 via `github.com/golang-jwt/jwt/v5` (`apps/api/internal/auth/jwt.go`) and stored
-as an HMAC-signed HTTP-only cookie. The JWT carries the user id as the `sub`
+as an HTTP-only cookie. The JWT carries the user id as the `sub`
 claim, the user email, and `exp`/`iat` registered claims. Sign-in, email
-verification, and OAuth callbacks all issue a JWT session.
+verification, and OAuth callbacks all issue a JWT.
 
 ## Configuration
 
@@ -45,7 +45,7 @@ the web build without a trailing `/api`; the client sends requests directly to e
 The API must allow the frontend in `CORS_ORIGINS` and in the trusted-origin list
 used to validate OAuth `callbackURL` values (configured via
 `BETTER_AUTH_TRUSTED_ORIGINS`, falling back to `CORS_ORIGINS`). Authentication
-fetches include credentials, and production session cookies use `Secure` and
+fetches include credentials, and production JWT cookies use `Secure` and
 `SameSite=None` for the cross-origin requests.
 The web build script also pins `NODE_ENV=production` so production bundles use
 React's production runtime and Bun's production environment flags even when the
@@ -54,36 +54,36 @@ calling shell defaults to development.
 Google and GitHub authentication buttons, along with the email sign-up and
 sign-in actions, provide immediate press feedback while respecting
 reduced-motion preferences.
-Email sign-in includes a Remember me checkbox. It is enabled by default for a
-persistent session; clearing it limits the session cookie to the current browser
-session.
+Email sign-in includes a Remember me checkbox. It is enabled by default and gives
+the JWT cookie an expiry. Clearing it makes the cookie last only for the current
+browser session. The server still authenticates only the JWT.
 
 For local development, `BASE_URL` defaults to `http://localhost:8000` and the
 trusted origin defaults to `http://localhost:5173`.
 
-Authentication cookies are HTTP-only. Local HTTP development uses `SameSite=Lax`;
+The JWT cookie is HTTP-only. Local HTTP development uses `SameSite=Lax`;
 HTTPS deployments use `Secure` and `SameSite=None` so configured cross-origin web
-deployments can send the session cookie. The Go service rejects HTTPS auth
+deployments can send the JWT cookie. The Go service rejects HTTPS auth
 initialization when `AUTH_SECRET` is missing or shorter than 32 characters,
 preventing deployment from silently using a development secret.
 
-The frontend retries transient session lookup failures before treating a user
+The frontend retries transient auth lookup failures before treating a user
 as signed out, preventing route-guard loops during brief API or database startup
 failures.
 
-The frontend checks the session once at startup. Returning focus to the app only
-revalidates a session when its last check is at least five minutes old, and
+The frontend checks the JWT once at startup. Returning focus to the app only
+revalidates the token when its last check is at least five minutes old, and
 overlapping background checks share one request. Authentication transitions
 bypass an older in-flight check so a pre-sign-in response cannot overwrite the
-new session. Point balance changes from generation and payment verification are
+new auth result. Point balance changes from generation and payment verification are
 applied from those operations' server responses instead of fetching the entire
-session again.
+user record again.
 
-Sign-out invalidates pending session refreshes before clearing the JWT
-session. This prevents an older session response from restoring the signed-out
+Sign-out invalidates pending auth refreshes before clearing the JWT
+cookie. This prevents an older auth response from restoring the signed-out
 user in the frontend.
 
-## Primary Endpoints
+## Primary endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -93,8 +93,8 @@ user in the frontend.
 | `POST` | `/auth/sign-in/email` | Sign in with email and password |
 | `POST` | `/auth/email-otp/request-password-reset` | Send or replace a reset OTP |
 | `POST` | `/auth/email-otp/reset-password` | Set a password using the OTP |
-| `GET` | `/auth/get-session` | Return the current session |
-| `POST` | `/auth/sign-out` | End the current session |
+| `GET` | `/auth/get-session` | Validate the JWT and return the current user |
+| `POST` | `/auth/sign-out` | Clear the JWT cookie |
 | `GET` | `/auth/callback/google` | Google callback |
 | `GET` | `/auth/callback/github` | GitHub callback |
 | `POST` | `/profile/email/verify` | Complete a pending authenticated email change |
@@ -105,15 +105,14 @@ client in `libs/ui/lib/auth-client.ts` for supported browser flows; it sends
 credentials with every request and throws an `AuthError` carrying the backend
 `code` (for example `EMAIL_NOT_VERIFIED` or `INVALID_EMAIL_OR_PASSWORD`).
 
-## Password and Email Changes
+## Password and email changes
 
-`PUT /profile` keeps account-security mutations behind an authenticated
-session and Better Auth verification:
+`PUT /profile` keeps account-security mutations behind a valid JWT
+and current-password verification:
 
 - A password-only request must include non-empty `currentPassword` and
   `newPassword`. The route verifies the current password, writes an
-  scrypt hash, and
-  revokes other sessions. Password changes cannot be combined with name or email
+  scrypt hash. Existing JWTs remain valid until they expire. Password changes cannot be combined with name or email
   changes in the same request.
 - Starting an email change must include `currentPassword`. The route calls the
   compatible password verifier, leaves the existing verified email unchanged, and
@@ -121,12 +120,12 @@ session and Better Auth verification:
   returns `pending_email` and `verification_required`. A successfully delivered
   replacement invalidates every older pending email-change code for that user.
 - `POST /profile/email/verify` accepts that pending `email` and `otp` from the
-  authenticated session. It atomically consumes the code, changes the email,
+  authenticated JWT. It atomically consumes the code, changes the email,
   keeps the account verified because the new address has just been proven, and
   invalidates sign-in, reset, and verification OTPs for the old and new address.
 - A user who cannot verify the current password must first complete the
   password-reset OTP flow. Reset verifies the emailed OTP before accepting a new
-  password and revokes existing sessions; the new password can then be used as
+  password. Existing JWTs remain valid until they expire. The new password can then be used as
   the current-password proof for an email change.
 
 For older accounts, the password verifier can read a 64-character
@@ -135,7 +134,7 @@ that hash with a new scrypt hash. It also converts the old `email` provider
 account record to the `credential` provider format when necessary. Failed
 password checks never trigger an upgrade.
 
-## OTP Delivery
+## OTP delivery
 
 OTP email addresses are trimmed and lowercased. Verification and password-reset
 codes contain six digits and expire after 15 minutes.
@@ -170,29 +169,30 @@ and deployment caveat.
 - Verification OTPs expire after 15 minutes.
 - Unverified credential-only accounts are retained for 24 hours. Cleanup runs at
   API startup and hourly, deleting expired accounts only when they have no active
-  verification code, active session, or linked OAuth provider. Associated email
+   verification code or linked OAuth provider. Associated email
   verification and password-reset records are removed with the account.
 - Resending a verification OTP disables the resend action during its cooldown;
   the cooldown text is the resend confirmation.
 - Successful verification signs the user in.
 - Development without `RESEND_API_KEY` logs only that delivery was skipped; it
   never logs the code.
-- The session user includes the server-owned `slideTokens` field.
-- API authorization uses the session cookie or an `Authorization: Bearer <jwt>`
+- The authenticated user includes the server-owned `slideTokens` field.
+- API authorization uses the JWT cookie or an `Authorization: Bearer <jwt>`
   header; both resolve to the same user identity.
-- Password-reset completion revokes existing sessions.
+- Password-reset completion changes the password but cannot revoke already-issued
+  JWTs. Those tokens remain valid until they expire.
 - The sign-in wrapper upgrades older email credential records only when the
   supplied password matches their old hash.
 
 Browser requests must send credentials.
 
-## JWT Sessions
+## JWT tokens
 
-Sessions are HS256 JWTs from `github.com/golang-jwt/jwt/v5`, signed with
+Auth tokens are HS256 JWTs from `github.com/golang-jwt/jwt/v5`, signed with
 `AUTH_SECRET`, carrying the user id as the `sub` claim, the user email, and
 `exp`/`iat` registered claims. Verification enforces the HS256 signing method
 and requires a present, unexpired `exp`. The same
-`AUTH_SECRET` signs the HTTP-only session cookie with HMAC-SHA256 so the cookie
-value cannot be forged without the secret. `GET /auth/get-session` accepts the
-cookie (or bearer token) and returns the current user. Sign-out clears the
-cookie and removes the stored session row.
+The HTTP-only `slidesage_token` cookie contains the JWT itself. `GET
+/auth/get-session` validates that JWT from the cookie or bearer header and returns
+the current user. Sign-out clears the cookie. A bearer token remains usable until
+its `exp` claim expires because the API has no server-side session store.
