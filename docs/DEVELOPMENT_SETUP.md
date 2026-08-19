@@ -33,7 +33,10 @@ to port `8000` on the same loopback hostname.
 
 The web entry stylesheet is `apps/web/styles.css`. It imports the shared UI
 stylesheet, which is split into global styles in `libs/ui/styles/base.css` and
-viewer styles in `libs/ui/styles/viewer.css`.
+viewer styles in `libs/ui/styles/viewer.css`. The web workspace declares both
+`tailwindcss` and `@tailwindcss/vite`; both are required because the shared
+stylesheet imports Tailwind's CSS entrypoint and Vite's plugin resolves it at
+build time.
 
 Stop the foreground process with `Ctrl+C`. Devenv stops managed services with the
 development stack.
