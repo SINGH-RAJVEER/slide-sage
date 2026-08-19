@@ -9,8 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -82,14 +80,14 @@ func (service *Service) CleanupExpiredUnverifiedUsers(ctx context.Context) (int6
 	return service.repository.DeleteExpiredUnverifiedUsers(ctx, now.Add(-service.config.UnverifiedTTL), now)
 }
 
-func (service *Service) SignIn(ctx context.Context, email, password, userAgent, ipAddress string) (Session, User, error) {
+func (service *Service) SignIn(ctx context.Context, email, password string) (JWTAuth, User, error) {
 	user, err := service.repository.UserByEmail(ctx, normalizeEmail(email))
 	if err != nil {
-		return Session{}, User{}, ErrInvalidCredentials
+		return JWTAuth{}, User{}, ErrInvalidCredentials
 	}
 	accountID, hash, err := service.repository.CredentialByUserID(ctx, user.ID)
 	if err != nil || !verifyPassword(hash, password) {
-		return Session{}, User{}, ErrInvalidCredentials
+		return JWTAuth{}, User{}, ErrInvalidCredentials
 	}
 	if needsPasswordUpgrade(hash) {
 		upgradedHash, upgradeErr := hashPassword(password)
@@ -98,60 +96,45 @@ func (service *Service) SignIn(ctx context.Context, email, password, userAgent, 
 		}
 	}
 	if !user.EmailVerified {
-		return Session{}, User{}, ErrEmailUnverified
+		return JWTAuth{}, User{}, ErrEmailUnverified
 	}
-	session, err := service.createSession(ctx, user.ID, userAgent, ipAddress)
+	session, err := service.issueJWT(ctx, user.ID)
 	if err != nil {
-		return Session{}, User{}, err
+		return JWTAuth{}, User{}, err
 	}
 	return session, user, nil
 }
 
-func (service *Service) createSession(ctx context.Context, userID, userAgent, ipAddress string) (Session, error) {
-	id, err := randomID()
-	if err != nil {
-		return Session{}, err
-	}
+func (service *Service) issueJWT(ctx context.Context, userID string) (JWTAuth, error) {
 	user, err := service.repository.UserByID(ctx, userID)
-	email := ""
-	if err == nil {
-		email = user.Email
-	}
-	token, err := service.GenerateJWT(userID, email, service.config.SessionTTL)
 	if err != nil {
-		return Session{}, err
+		return JWTAuth{}, err
+	}
+	token, err := service.GenerateJWT(userID, user.Email, service.config.JWTTTL)
+	if err != nil {
+		return JWTAuth{}, err
 	}
 	now := service.config.Now().UTC()
-	session := Session{ID: id, Token: token, UserID: userID, ExpiresAt: now.Add(service.config.SessionTTL)}
-	if err := service.repository.CreateSession(ctx, session, userAgent, ipAddress); err != nil {
-		return Session{}, err
-	}
-	return session, nil
+	return JWTAuth{ID: userID, Token: token, UserID: userID, ExpiresAt: now.Add(service.config.JWTTTL)}, nil
 }
 
-func (service *Service) Session(ctx context.Context, token string) (Session, User, error) {
+func (service *Service) AuthenticateJWT(ctx context.Context, token string) (JWTAuth, User, error) {
 	if token == "" {
-		return Session{}, User{}, ErrNotFound
+		return JWTAuth{}, User{}, ErrNotFound
 	}
-	if userID, err := service.VerifyJWT(token); err == nil {
-		user, err := service.repository.UserByID(ctx, userID)
-		if err == nil {
-			now := service.config.Now().UTC()
-			session := Session{ID: userID, Token: token, UserID: userID, ExpiresAt: now.Add(service.config.SessionTTL)}
-			return session, user, nil
-		}
+	userID, err := service.VerifyJWT(token)
+	if err != nil {
+		return JWTAuth{}, User{}, ErrNotFound
 	}
-	return service.repository.SessionByToken(ctx, token, service.config.Now().UTC())
+	user, err := service.repository.UserByID(ctx, userID)
+	if err != nil {
+		return JWTAuth{}, User{}, ErrNotFound
+	}
+	now := service.config.Now().UTC()
+	return JWTAuth{ID: userID, Token: token, UserID: userID, ExpiresAt: now.Add(service.config.JWTTTL)}, user, nil
 }
 
-func (service *Service) SignOut(ctx context.Context, token string) error {
-	if token == "" {
-		return nil
-	}
-	return service.repository.DeleteSession(ctx, token)
-}
-
-func (service *Service) ChangePassword(ctx context.Context, userID, token, currentPassword, newPassword string) error {
+func (service *Service) ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error {
 	if len(newPassword) < 8 {
 		return errors.New("new password must be at least 8 characters")
 	}
@@ -166,7 +149,7 @@ func (service *Service) ChangePassword(ctx context.Context, userID, token, curre
 	if err = service.repository.UpdateCredentialPassword(ctx, accountID, replacement); err != nil {
 		return err
 	}
-	return service.repository.DeleteOtherSessions(ctx, userID, token)
+	return nil
 }
 
 func (service *Service) SendVerificationOTP(ctx context.Context, email string) error {
@@ -406,12 +389,4 @@ func randomOTP() (string, error) {
 	}
 	value := uint32(bytes[0])<<24 | uint32(bytes[1])<<16 | uint32(bytes[2])<<8 | uint32(bytes[3])
 	return fmt.Sprintf("%06d", value%1000000), nil
-}
-
-func requestIP(request *http.Request) string {
-	host, _, err := net.SplitHostPort(request.RemoteAddr)
-	if err == nil {
-		return host
-	}
-	return request.RemoteAddr
 }

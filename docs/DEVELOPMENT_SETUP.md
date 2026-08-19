@@ -99,6 +99,10 @@ supported baseline before running the migration command.
 The wrapper intentionally accepts only no arguments or `up`; application and
 River migration histories must be advanced together.
 
+Migration `00016_remove_database_sessions.sql` removes the old database-backed
+session table. Authentication now uses only signed JWTs, carried in the
+`slidesage_token` HTTP-only cookie or an `Authorization: Bearer` header.
+
 Apply migrations before starting or deploying the API and worker. Production
 images use the `migrate` target in `docker/Dockerfile` as a one-off migration
 job; runtime startup does not apply schema changes.

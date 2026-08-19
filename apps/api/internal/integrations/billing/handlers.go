@@ -14,7 +14,7 @@ const (
 	webhookBodyLimit int64 = 256 * 1024
 )
 
-// Identity resolves the authenticated user ID for routes that require a session.
+// Identity resolves the authenticated user ID for routes that require JWT auth.
 // It should return an error for missing, expired, or invalid credentials.
 type Identity func(*http.Request) (string, error)
 

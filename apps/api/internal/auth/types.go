@@ -13,7 +13,7 @@ type User struct {
 	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
-type Session struct {
+type JWTAuth struct {
 	ID        string
 	Token     string
 	UserID    string

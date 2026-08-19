@@ -1,6 +1,6 @@
 # SlideSage
 
-SlideSage is an AI-assisted presentation builder. It generates, researches, revises, stores, previews, and exports slide decks from a React web application.
+SlideSage is a presentation builder with AI-assisted research and generation. The React app lets users create, revise, preview, store, and export slide decks.
 
 ---
 
@@ -8,7 +8,7 @@ SlideSage is an AI-assisted presentation builder. It generates, researches, revi
 
 - Streaming presentation generation and revision
 - Web research with cited sources
-- Semantic memory for slide, deck, style, feedback, and source context
+- Reviewed web sources attached to generated decks
 - PPTX and PDF export
 
 ## Repository
@@ -33,5 +33,5 @@ Justfile        Common development commands
 - [Architecture](docs/API_ARCHITECTURE.md)
 - [API reference](docs/API_OVERVIEW.md)
 - [Authentication](docs/AUTH_API.md)
-- [RAG and semantic memory](docs/RAG_IMPLEMENTATION.md)
+- [Web research](docs/WEB_RESEARCH.md)
 - [Deck planning](docs/DECK_PLANNING.md)

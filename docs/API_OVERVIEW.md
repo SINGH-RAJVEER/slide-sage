@@ -1,4 +1,4 @@
-# API Reference
+# API reference
 
 The local API origin is `http://localhost:8000`. JSON errors use:
 
@@ -6,8 +6,9 @@ The local API origin is `http://localhost:8000`. JSON errors use:
 { "error": { "message": "Description" } }
 ```
 
-Authenticated requests use the Better Auth session cookie and must include
-credentials from the browser.
+Authenticated browser requests use the HTTP-only JWT cookie and must include
+credentials. The API also accepts the same JWT in an `Authorization: Bearer`
+header.
 
 Rate-limited requests return `429`, include `Retry-After`, and use the
 `RATE_LIMITED` error code. See [RATE_LIMITING.md](RATE_LIMITING.md).
@@ -20,23 +21,22 @@ Rate-limited requests return `429`, include `Retry-After`, and use the
 
 ## Authentication
 
-The Go API exposes the Better Auth-compatible routes used by the web application,
-including email/password registration, email OTP, password reset, session,
-sign-out, social sign-in, and OAuth callbacks. It reads Better Auth scrypt hashes
-and signed session cookies so existing accounts and sessions remain valid. See
-[AUTH_API.md](AUTH_API.md).
+The Go API owns the auth routes used by the web application. They cover
+email/password registration, email OTP, password reset, JWT tokens, sign-out,
+social sign-in, and OAuth callbacks. The API can read older credential hash
+formats used by existing accounts. See [AUTH_API.md](AUTH_API.md).
 
 ## Profile
 
 | Method | Path | Body | Description |
 | --- | --- | --- | --- |
 | `GET` | `/profile` | None | Get the signed-in user's profile |
-| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or perform a password-only Better Auth change |
+| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or change the password |
 | `POST` | `/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
 
 All profile routes require authentication. Password changes require both the
-current and new password, are delegated to Better Auth, and revoke other
-sessions. They cannot be combined with name or email updates. Email changes
+current and new password. Existing JWTs remain valid until they expire. The change cannot be combined with
+name or email updates. Email changes
 require current-password verification, normalize the new address, mark it
 unverified, and invalidate old/new address OTPs. A user who has forgotten the
 current password must complete the verified password-reset OTP flow first.
@@ -88,7 +88,7 @@ API accepts a small set of compatibility field aliases during normalization, but
 rejects generated slides without substantive text instead of persisting synthetic
 placeholder content as a successful presentation.
 
-### Input Limits
+### Input limits
 
 Presentation routes read and measure the body before parsing JSON. Generation
 bodies are limited to 256 KiB, research and iteration bodies to 32 KiB each, and
@@ -254,7 +254,7 @@ Provider errors that happen before slide streaming, including account rate limit
 are preserved in the failed presentation so the retry screen can show an
 actionable cause instead of a generic generation message.
 
-### Durable Job Status and Replay
+### Durable job status and replay
 
 `GET /generation-jobs/{id}` returns the authenticated owner's durable job state.
 The response includes `id`, `presentation_id`, `kind`, `status`, `progress`,
@@ -331,7 +331,7 @@ and `Last-Event-ID`. Browser event replay can also use `?after=` without adding 
 custom header. Submission responses expose `X-Generation-Job-ID` and
 `X-Presentation-ID` to browser clients.
 
-## AI Provider Connections
+## AI provider connections
 
 Authenticated users with more than 50 points can manage encrypted BYOK
 connections under `/ai`:

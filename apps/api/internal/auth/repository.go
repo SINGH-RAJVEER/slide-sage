@@ -79,10 +79,6 @@ func (repository *Repository) DeleteExpiredUnverifiedUsers(ctx context.Context, 
 					AND v.expires_at > $2
 			)
 			AND NOT EXISTS (
-				SELECT 1 FROM sessions AS s
-				WHERE s.user_id = u.id AND s.expires_at > $2
-			)
-			AND NOT EXISTS (
 				SELECT 1 FROM accounts AS a
 				WHERE a.user_id = u.id AND a.provider_id NOT IN ('credential', 'email')
 			)
@@ -115,31 +111,6 @@ func (repository *Repository) CredentialByUserID(ctx context.Context, userID str
 
 func (repository *Repository) UpdateCredentialPassword(ctx context.Context, id, password string) error {
 	_, err := repository.database.ExecContext(ctx, `UPDATE accounts SET password = $2, updated_at = NOW() WHERE id = $1`, id, password)
-	return err
-}
-
-func (repository *Repository) CreateSession(ctx context.Context, session Session, userAgent, ipAddress string) error {
-	_, err := repository.database.ExecContext(ctx, `INSERT INTO sessions (id, token, user_id, user_agent, ip_address, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`, session.ID, session.Token, session.UserID, userAgent, ipAddress, session.ExpiresAt)
-	return err
-}
-
-func (repository *Repository) SessionByToken(ctx context.Context, token string, now time.Time) (Session, User, error) {
-	var session Session
-	var user User
-	err := repository.database.QueryRowContext(ctx, `SELECT s.id, s.token, s.user_id, s.expires_at, u.id, u.name, u.email, u.email_verified, u.image, u.balance_millis::double precision / 1000, u.created_at, u.updated_at FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = $1 AND s.expires_at > $2`, token, now).Scan(&session.ID, &session.Token, &session.UserID, &session.ExpiresAt, &user.ID, &user.Name, &user.Email, &user.EmailVerified, &user.Image, &user.SlideTokens, &user.CreatedAt, &user.UpdatedAt)
-	if errors.Is(err, sql.ErrNoRows) {
-		return Session{}, User{}, ErrNotFound
-	}
-	return session, user, err
-}
-
-func (repository *Repository) DeleteSession(ctx context.Context, token string) error {
-	_, err := repository.database.ExecContext(ctx, `DELETE FROM sessions WHERE token = $1`, token)
-	return err
-}
-
-func (repository *Repository) DeleteOtherSessions(ctx context.Context, userID, currentToken string) error {
-	_, err := repository.database.ExecContext(ctx, `DELETE FROM sessions WHERE user_id = $1 AND token <> $2`, userID, currentToken)
 	return err
 }
 
@@ -266,9 +237,6 @@ func (repository *Repository) ResetPassword(ctx context.Context, userID, account
 		return ErrNotFound
 	}
 	if _, err = transaction.ExecContext(ctx, `UPDATE accounts SET password = $2, updated_at = NOW() WHERE id = $1 AND user_id = $3`, accountID, password, userID); err != nil {
-		return err
-	}
-	if _, err = transaction.ExecContext(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID); err != nil {
 		return err
 	}
 	return transaction.Commit()
