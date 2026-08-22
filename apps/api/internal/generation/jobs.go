@@ -57,6 +57,7 @@ type jobPayload struct {
 	Current          json.RawMessage               `json:"current,omitempty"`
 	ExpectedRevision int                           `json:"expected_revision"`
 	QuotedMillis     int64                         `json:"quoted_millis"`
+	RequestHash      string                        `json:"request_hash,omitempty"`
 }
 
 func payloadFromJob(job streamJob) jobPayload {
@@ -66,6 +67,7 @@ func payloadFromJob(job streamJob) jobPayload {
 		DetailLevel: job.detailLevel, Tonality: job.tonality, Theme: job.theme,
 		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection,
 		Current: job.current, ExpectedRevision: job.expectedRevision, QuotedMillis: job.quote,
+		RequestHash: job.requestHash,
 	}
 }
 
@@ -76,7 +78,7 @@ func (payload jobPayload) streamJob() streamJob {
 		prompt: payload.Prompt, slideCount: payload.SlideCount, detailLevel: payload.DetailLevel,
 		tonality: payload.Tonality, theme: payload.Theme, research: payload.Research,
 		researchPayload: payload.ResearchPayload, selection: payload.Selection, current: payload.Current,
-		kind: payload.Kind,
+		kind: payload.Kind, requestHash: payload.RequestHash,
 	}
 }
 

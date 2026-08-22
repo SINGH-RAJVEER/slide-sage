@@ -352,7 +352,7 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	balance, _, err := h.enqueue(request.Context(), job, jobID, requestHashValue, create, input.Topic, placeholder)
+	balance, _, err := h.enqueue(request.Context(), job, requestHashValue, create, input.Topic, placeholder)
 	if err != nil {
 		var duplicate duplicateOperation
 		if errors.As(err, &duplicate) && duplicate.jobID != "" {
@@ -439,7 +439,7 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 		var document map[string]any
 		_ = json.Unmarshal(existing.Data, &document)
 		if document["status"] != "failed" {
-			duplicate, err := h.existingOperation(ctx, userID, "generation", jobID, hash)
+			duplicate, err := h.existingSubmission(ctx, userID, jobID, hash)
 			if err == nil && duplicate.jobID != "" {
 				return streamJob{}, nil, duplicateSubmit{jobID: duplicate.jobID, presentationID: duplicate.presentationID}
 			}
@@ -517,6 +517,7 @@ type streamJob struct {
 	selection                                  *ai.Selection
 	credential                                 string
 	current                                    json.RawMessage
+	requestHash                                string
 }
 
 func generationUserPrompt(job streamJob) string {
@@ -918,13 +919,17 @@ func (h *handler) ownedPresentation(ctx context.Context, id, userID string) (per
 	return item, err
 }
 
-func (h *handler) existingOperation(ctx context.Context, userID, kind, idempotencyKey, requestHash string) (duplicateOperation, error) {
+// existingSubmission resolves a reused job ID against the committed job row:
+// resubmitting the same body attaches to the existing job, a different body
+// conflicts. The job row carries its own request hash.
+func (h *handler) existingSubmission(ctx context.Context, userID, jobID, requestHash string) (duplicateOperation, error) {
 	var existingHash string
 	var duplicate duplicateOperation
-	err := h.database.QueryRowContext(ctx, `SELECT operation.request_hash, COALESCE(job.id, ''), operation.presentation_id FROM generation_point_operations operation LEFT JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3`, userID, kind, idempotencyKey).Scan(&existingHash, &duplicate.jobID, &duplicate.presentationID)
+	err := h.database.QueryRowContext(ctx, `SELECT COALESCE(payload->>'request_hash', ''), presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, jobID, userID).Scan(&existingHash, &duplicate.presentationID)
 	if err != nil {
 		return duplicateOperation{}, err
 	}
+	duplicate.jobID = jobID
 	if existingHash != requestHash {
 		return duplicateOperation{}, idempotencyConflict{}
 	}
@@ -932,8 +937,10 @@ func (h *handler) existingOperation(ctx context.Context, userID, kind, idempoten
 }
 
 // enqueue atomically creates the authorization, placeholder, durable domain job,
-// and River queue record.
-func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
+// and River queue record. The job ID is the idempotency token: submissions of
+// one user serialize on their balance row, so a repeated job ID attaches to the
+// committed job instead of reserving points twice.
+func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
 	if h.queue == nil {
 		return 0, 0, errors.New("generation queue is unavailable")
 	}
@@ -945,22 +952,21 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, re
 		return 0, 0, err
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, job.userID+":"+job.kind+":"+idempotencyKey); err != nil {
+	// Serializing same-user submissions on this row makes the duplicate check
+	// below safe without a separate advisory-lock protocol.
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
 		return 0, 0, err
 	}
-	var existingHash, existingJobID, existingPresentationID string
-	err = tx.QueryRowContext(ctx, `SELECT operation.request_hash, COALESCE(job.id, ''), COALESCE(operation.presentation_id, '') FROM generation_point_operations operation LEFT JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3 FOR UPDATE OF operation`, job.userID, job.kind, idempotencyKey).Scan(&existingHash, &existingJobID, &existingPresentationID)
+	var existingHash, existingPresentationID string
+	err = tx.QueryRowContext(ctx, `SELECT COALESCE(payload->>'request_hash', ''), presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, job.jobID, job.userID).Scan(&existingHash, &existingPresentationID)
 	if err == nil {
 		if existingHash == requestHash {
-			return 0, 0, duplicateOperation{jobID: existingJobID, presentationID: existingPresentationID}
+			return 0, 0, duplicateOperation{jobID: job.jobID, presentationID: existingPresentationID}
 		}
 		return 0, 0, idempotencyConflict{}
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
-		return 0, 0, err
-	}
-	var balance int64
-	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
 		return 0, 0, err
 	}
 	if balance < job.quote {
@@ -987,11 +993,12 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, re
 		}
 	}
 	job.expectedRevision = revision
+	job.requestHash = requestHash
 	payload, err := json.Marshal(payloadFromJob(job))
 	if err != nil {
 		return 0, 0, err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, job.operationID, job.userID, job.presentationID, job.kind, idempotencyKey, requestHash, job.quote)
+	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, job.operationID, job.userID, job.presentationID, job.kind, job.jobID, requestHash, job.quote)
 	if err != nil {
 		return 0, 0, err
 	}
