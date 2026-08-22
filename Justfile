@@ -12,9 +12,9 @@ dev:
 db-shell:
     psql -h 127.0.0.1 -p "${PGPORT:-${POSTGRES_PORT:-5432}}" -U "${POSTGRES_USER:-slidesage}" -d "${POSTGRES_DB:-slidesage}"
 
-# Apply Go API migrations with Goose
+# Apply Go API migrations
 migrate:
-    bash apps/api/scripts/migrate.sh
+    CGO_ENABLED=0 go -C apps/api run ./cmd/migrate
 
 # Create a new Goose SQL migration
 db-generate name:
