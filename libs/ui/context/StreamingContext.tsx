@@ -180,7 +180,7 @@ const initialResearchPreviewState: ResearchPreviewState = {
 	estimatedTokens: null,
 };
 
-const StreamingContext = createContext<StreamingContextValue | null>(null);
+export const StreamingContext = createContext<StreamingContextValue | null>(null);
 
 function getResearchPreviewKey(request: ResearchPreviewRequest) {
 	return [request.prompt.trim(), request.slideCount, request.detailLevel, request.tonality].join(
