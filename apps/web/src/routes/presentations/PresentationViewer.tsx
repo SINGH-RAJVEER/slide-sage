@@ -74,19 +74,23 @@ export default function PresentationViewerPage() {
 		getPresentation,
 	});
 
-	// Sync the AI-chosen theme into the template selector. We only apply it when the theme
-	// value itself changes (tracked via ref) so that a manual template selection isn't
-	// overridden on every re-render, and we ignore unknown values so a stray theme string
-	// from the model can't blank out the styling.
+	// Sync the theme recorded on the presentation document into the template selector.
+	// The streaming state starts out with a default theme string, so it must not lead here;
+	// deferring to the document is what keeps a deck in the theme it was last viewed and
+	// saved with instead of snapping back to that default on reopen. While a deck streams,
+	// usePresentationData mirrors the streamed theme onto the document after each slide,
+	// so this effect picks it up without extra wiring. We only apply the value when it
+	// changes (tracked via ref) so a manual template selection isn't overridden, and we
+	// ignore unknown values so a stray theme string can't blank out the styling.
 	const appliedThemeRef = useRef<string | null>(null);
 	const templateSaveSequenceRef = useRef(0);
 	useEffect(() => {
-		const theme = streamingState.theme || presentation?.theme;
+		const theme = presentation?.theme;
 		if (!theme || theme === appliedThemeRef.current) return;
 		if (!AVAILABLE_TEMPLATES.some((t) => t.id === theme)) return;
 		appliedThemeRef.current = theme;
 		changeTemplate(theme);
-	}, [streamingState.theme, presentation?.theme, changeTemplate]);
+	}, [presentation?.theme, changeTemplate]);
 
 	const slideContainerRef = useRef<HTMLDivElement | null>(null);
 	const navigation = useSlideNavigation({
