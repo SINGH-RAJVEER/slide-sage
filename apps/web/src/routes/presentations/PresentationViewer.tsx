@@ -34,7 +34,7 @@ import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
 import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
-import { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
+import { findTemplate } from "@slidesage/ui/lib/templates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
@@ -85,7 +85,7 @@ export default function PresentationViewerPage() {
 	useEffect(() => {
 		const theme = presentation?.theme;
 		if (!theme || theme === appliedThemeRef.current) return;
-		if (!AVAILABLE_TEMPLATES.some((t) => t.id === theme)) return;
+		if (!findTemplate(theme)) return;
 		appliedThemeRef.current = theme;
 		changeTemplate(theme);
 	}, [presentation?.theme, changeTemplate]);

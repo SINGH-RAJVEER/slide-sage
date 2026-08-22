@@ -71,8 +71,8 @@ Marketplace previews render through their own `ThemeId` values, listed in `MARKE
 in `libs/types`. Marketplace item IDs match their renderer ID so a deck saved from an installed
 marketplace theme normalizes cleanly; the API's `validThemes` allowlist includes the marketplace
 IDs so persistence and generation validation stay intact. Adding further serialized themes requires
-the same four-way update: web renderer tokens, API validation, generation schema, and PowerPoint
-export.
+the same four-way update: web renderer tokens, API validation, the presentation document contract,
+and PowerPoint export.
 
 Preview rendering is noninteractive. Content blocks use plain containers unless the viewer supplies
 an editing callback, preventing editor controls from being nested inside the marketplace preview
