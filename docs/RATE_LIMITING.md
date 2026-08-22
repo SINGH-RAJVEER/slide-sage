@@ -20,9 +20,7 @@ migration `00013_repair_schema_and_revisions.sql` also ensures they exist.
 | `POST /profile/email/verify` | Authenticated user | 10 | 15 minutes |
 | `POST /ai/connections`, `PUT /ai/connections/:provider` | Authenticated user | 6 shared | 10 minutes |
 | `DELETE /ai/connections/:provider`, `PUT /ai/selection` | Authenticated user | 20 shared | 10 minutes |
-| `POST /generate-presentation-stream` | Authenticated user | 6 | 1 minute |
-| `POST /iterate-presentation-stream` | Authenticated user | 12 | 1 minute |
-| `POST /research-presentation` | Authenticated user | 20 | 1 minute |
+| `POST /presentation-jobs` | Authenticated user | 15 | 1 minute |
 | `POST /billing/checkout` | Authenticated user | 10 | 10 minutes |
 | `POST /billing/verify` | Authenticated user | 20 | 15 minutes |
 | `POST /billing/webhook` | Client IP | 120 | 1 minute |

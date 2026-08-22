@@ -18,7 +18,7 @@ export interface SSEEvent {
  */
 export async function consumeSSEStream(
 	reader: ReadableStreamDefaultReader<Uint8Array>,
-	onEvent: (message: SSEEvent) => boolean | void | Promise<boolean | void>,
+	onEvent: (message: SSEEvent) => unknown,
 ): Promise<void> {
 	const decoder = new TextDecoder();
 	let buffer = "";

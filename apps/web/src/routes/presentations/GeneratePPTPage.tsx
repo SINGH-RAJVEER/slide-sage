@@ -32,7 +32,7 @@ export default function GeneratePPTPage() {
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
 	const [theme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
 	const navigate = useNavigate();
-	const { streamingState, startStreaming } = useStreaming();
+	const { streamingState, generate } = useStreaming();
 
 	useEffect(() => {
 		if (streamingState.error) {
@@ -87,17 +87,15 @@ export default function GeneratePPTPage() {
 			return;
 		}
 
-		const streamingRequest = startStreaming(
-			normalizedPrompt,
-			count,
+		const streamingRequest = generate({
+			prompt: normalizedPrompt,
+			slideCount: count,
 			detailLevel,
 			tonality,
-			false,
-			undefined,
 			retryPresentationId,
 			theme,
-			retry?.ai,
-		);
+			ai: retry?.ai,
+		});
 		navigate(ROUTES.presentation, {
 			state: { isStreaming: true },
 		});

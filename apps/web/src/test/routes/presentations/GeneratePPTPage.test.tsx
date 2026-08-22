@@ -111,14 +111,12 @@ it("opens the viewer immediately while generation waits for the stream", async (
 
 		await waitFor(() =>
 			expect(
-				fetchMock.mock.calls.some(([input]) =>
-					String(input).includes("/generate-presentation-stream"),
-				),
+				fetchMock.mock.calls.some(([input]) => String(input).includes("/presentation-jobs")),
 			).toBe(true),
 		);
 		expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
 		const generationRequest = fetchMock.mock.calls.find(([input]) =>
-			String(input).includes("/generate-presentation-stream"),
+			String(input).includes("/presentation-jobs"),
 		);
 		const requestBody = JSON.parse(
 			String((generationRequest?.[1] as RequestInit | undefined)?.body),

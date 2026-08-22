@@ -48,9 +48,7 @@ embedded credentials or control characters are rejected.
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/generate-presentation-stream` | Generate and persist a deck over SSE |
-| `POST` | `/research-presentation` | Find sources before generation |
-| `POST` | `/iterate-presentation-stream` | Revise an existing deck over SSE |
+| `POST` | `/presentation-jobs` | Submit generation, iteration, retry, or research preview as a durable job; returns job identity as JSON |
 | `GET` | `/generation-jobs/{id}` | Get an owned durable generation job |
 | `GET` | `/generation-jobs/{id}/events` | Stream persisted events for an owned generation job |
 | `POST` | `/generation-jobs/{id}/cancel` | Request cancellation of an active generation job |
@@ -172,10 +170,12 @@ one point is 1,000 milli-points and one provider token is one milli-point. Befor
 the job is enqueued, the API reserves a bounded authorization covering the
 serialized prompt plus the explicit output-token ceiling. The reservation,
 ledger entry, placeholder when applicable, application job, initial events, and
-River `InsertTx` are one transaction. All chargeable requests must include an
-`Idempotency-Key` containing 16-128 URL-safe characters. Reusing the key with the
-same request tails the existing job and prevents another reservation; reusing it
-with a different request returns `409`.
+River `InsertTx` are one transaction. The client supplies the job ID in the
+`job_id` field; it doubles as the idempotency key and must contain 16-128
+URL-safe characters when provided (the server generates one otherwise).
+Resubmitting the same job ID with the same request attaches to the existing job
+and prevents another reservation; reusing it with a different request returns
+`409`.
 
 Successful generation settles against the provider's authoritative aggregate token
 usage and releases the unused authorization. Missing provider usage is a failure:
@@ -268,13 +268,14 @@ from `generation_job_events`. Send the last received ID in `Last-Event-ID` or as
 only events after that cursor. Browser clients that cannot set the resume header
 can use the query parameter.
 
-Submission SSE responses expose `X-Generation-Job-ID` and `X-Presentation-ID`
-as soon as response headers are available. If the connection fails before those
-headers arrive, an authenticated client can recover the committed job with
-`GET /generation-jobs/idempotency/{key}/job?kind=generation|iteration` and then
-open its event stream. Clients should persist the idempotency key before sending
-the submission to avoid creating duplicate charged work after an ambiguous
-network failure.
+`POST /presentation-jobs` returns `202 Accepted` with
+`{"job_id","presentation_id","status":"queued"}` as JSON; resubmitting an
+already-committed job ID returns `200` with `"status":"existing"`. The client
+chooses the job ID before sending, so if the connection fails before the
+response arrives it can poll `GET /generation-jobs/{id}` to learn whether the
+submission committed, then open `/generation-jobs/{id}/events`. A `preview:
+true` body runs research only and responds synchronously with `sources`,
+`estimated_tokens`, and `slide_tokens_remaining` instead of creating a job.
 
 `POST /generation-jobs/{id}/cancel` transactionally finalizes cancellation for a
 `queued`, `running`, or `retrying` job and returns `202` with
@@ -326,10 +327,9 @@ The API permits credentialed requests from `CORS_ORIGINS` or `CORS_ORIGIN`.
 Local defaults are `http://localhost:5173` and `http://127.0.0.1:5173`.
 Allowed methods are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `OPTIONS`, so
 browser presentation mutations can complete a credentialed `PATCH` preflight.
-Allowed request headers are `Content-Type`, `Authorization`, `Idempotency-Key`,
+Allowed request headers are `Content-Type`, `Authorization`,
 and `Last-Event-ID`. Browser event replay can also use `?after=` without adding a
-custom header. Submission responses expose `X-Generation-Job-ID` and
-`X-Presentation-ID` to browser clients.
+custom header.
 
 ## AI provider connections
 

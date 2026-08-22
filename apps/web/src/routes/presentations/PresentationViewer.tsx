@@ -45,7 +45,7 @@ export default function PresentationViewerPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const params = useParams();
-	const { streamingState, getPresentation, startIterating } = useStreaming();
+	const { streamingState, getPresentation, generate } = useStreaming();
 	const { currentTemplate, changeTemplate } = useTemplate();
 	const installedThemes = useInstalledMarketplaceThemes();
 
@@ -195,14 +195,14 @@ export default function PresentationViewerPage() {
 		if (!prompt.trim() || !presentationId) return;
 		requestGenerationNotificationPermission();
 
-		const success = await startIterating(
+		const success = await generate({
 			prompt,
-			presentationId,
-			slideCountArg,
+			slideCount: slideCountArg,
 			detailLevel,
 			tonality,
-			useWebResearch,
-		);
+			researchEnabled: useWebResearch,
+			parentPresentationId: presentationId,
+		});
 
 		if (success) {
 			setShowIterateModal(false);

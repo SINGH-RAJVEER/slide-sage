@@ -23,29 +23,27 @@ reference.
 
 ## Submission Transaction
 
-`POST /generate-presentation-stream` and
-`POST /iterate-presentation-stream` perform the durable handoff before opening
-their event stream. In one PostgreSQL transaction, the API:
+`POST /presentation-jobs` performs the durable handoff and returns the job
+identity as JSON (`202` with `job_id`, `presentation_id`, and `status`). In one
+PostgreSQL transaction, the API:
 
 1. Locks and validates the idempotent point operation.
 2. Reserves SlideSage points and records the ledger entry when the server model is used.
 3. Creates the generating presentation placeholder for a new deck, or captures the expected revision for iteration or retry.
 4. Creates the `generation_jobs` row and initial `generation_job_events` rows.
 5. Calls River `InsertTx`, storing the River queue record in the same transaction.
-6. Commits, then tails `generation_job_events` for the returned application job.
 
 The transaction is all-or-nothing. A committed point reservation cannot exist
 without its application job and River queue record, and an enqueue failure does
-not leave a placeholder or reserved balance behind. Reusing an
-`Idempotency-Key` with the same request attaches to the existing job event stream;
-reusing it with different input returns `409`. Submission responses expose the
-job and presentation IDs in `X-Generation-Job-ID` and `X-Presentation-ID`. If a
-connection fails before those headers arrive, the client can recover the job via
-`GET /generation-jobs/idempotency/{key}/job?kind=generation|iteration`.
+not leave a placeholder or reserved balance behind. The client chooses the job
+ID, which doubles as the idempotency key: resubmitting it with the same request
+attaches to the existing job event stream; reusing it with different input
+returns `409`. Submission responses expose the job and presentation IDs in the
+JSON body. If a connection fails before the response arrives, the client polls
+`GET /generation-jobs/{id}` to discover whether submission committed.
 
-The POST response remains an SSE response for compatibility, but provider work
-is not performed by the API process. Closing that response only stops that
-client's event tail. It does not cancel the job.
+A `preview: true` body runs research synchronously with its own reservation
+accounting and responds with sources without creating a job.
 
 ## Worker Lifecycle
 
@@ -86,7 +84,6 @@ All job endpoints require the authenticated owner of the job.
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/generation-jobs/{id}` | Return status, stage, progress, timestamps, presentation ID, kind, and any terminal error |
-| `GET` | `/generation-jobs/idempotency/{key}/job?kind=...` | Recover a committed job after an ambiguous submission connection failure |
 | `GET` | `/generation-jobs/{id}/events` | Stream persisted events and continue tailing until a terminal event |
 | `POST` | `/generation-jobs/{id}/cancel` | Request cooperative cancellation of a queued, running, or retrying job |
 

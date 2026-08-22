@@ -32,9 +32,7 @@ The API entry point is `apps/api/cmd/api/main.go`. It exposes:
 - `/profile`
 - `/ai`
 - `/presentations`
-- `/research-presentation`
-- `/generate-presentation-stream`
-- `/iterate-presentation-stream`
+- `/presentation-jobs`
 - `/generation-jobs/{id}`
 - `/generation-jobs/{id}/events`
 - `/generation-jobs/{id}/cancel`
