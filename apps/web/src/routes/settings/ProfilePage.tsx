@@ -286,14 +286,8 @@ export default function ProfilePage() {
 						</div>
 					) : null}
 
-					{/* Profile Header */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
-						<h1 className="mb-1 text-2xl font-semibold text-white">My profile</h1>
-						<p className="text-white/65">Manage your account details and security</p>
-					</div>
-
 					{/* Avatar Section */}
-					<div className="space-y-4 rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="space-y-4 pb-8">
 						<h2 className="text-lg font-semibold text-white">Profile Picture</h2>
 
 						{profile.image ? (
@@ -340,7 +334,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Name Section */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
 							<h2 className="text-lg font-semibold text-white">Full name</h2>
 							{!editingName ? (
@@ -393,7 +387,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Email Section */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
 							<div>
 								<h2 className="text-lg font-semibold text-white">Email</h2>
@@ -463,7 +457,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Password Section */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
 							<h2 className="text-lg font-semibold text-white">Password</h2>
 							{!editingPassword ? (
@@ -557,7 +551,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Account Info */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<h2 className="mb-4 text-lg font-semibold text-white">Account Information</h2>
 
 						<div className="space-y-3">
