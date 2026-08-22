@@ -573,7 +573,13 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					jobId,
 					presentationId: attachedPresentationId || prev.presentationId,
 				}));
-				await consumeJobEvents(jobId, attachedPresentationId || targetPresentationId, controller);
+				// Release the stream slot no matter how consumption ends, so later
+				// generations are not blocked by a finished or failed stream.
+				await consumeJobEvents(
+					jobId,
+					attachedPresentationId || targetPresentationId,
+					controller,
+				).finally(() => releaseActiveStream(controller));
 			};
 
 			try {

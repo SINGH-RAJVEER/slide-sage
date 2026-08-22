@@ -365,3 +365,65 @@ it("recovers an ambiguous submission through the client-chosen job id", async ()
 		globalThis.fetch = originalFetch;
 	}
 });
+
+it("starts a second generation after the first completes", async () => {
+	const originalFetch = globalThis.fetch;
+	let submitCount = 0;
+
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		const url = String(input);
+		if (url.endsWith("/presentation-jobs")) {
+			submitCount += 1;
+			return Response.json(
+				{ job_id: `job_${submitCount}`, presentation_id: `pres_${submitCount}` },
+				{ status: 202 },
+			);
+		}
+		return sse(
+			'id: 1\nevent: complete\ndata: {"title":"Deck","slides":[],"totalSlides":0}\n\n' +
+				'id: 2\nevent: saved\ndata: {"presentation_id":"x"}\n\n',
+		);
+	}) as unknown as typeof fetch;
+
+	try {
+		function DoubleStarter() {
+			const { generate, streamingState } = useStreaming();
+			const [runs, setRuns] = useState(0);
+			return (
+				<div>
+					<span data-testid="done">{streamingState.isComplete ? "complete" : "pending"}</span>
+					<button
+						type="button"
+						onClick={() => {
+							void generate({
+								prompt: `deck number ${runs + 1}`,
+								slideCount: 1,
+								detailLevel: "brief",
+								tonality: "professional",
+							}).then((ok) => {
+								if (ok) setRuns((value) => value + 1);
+							});
+						}}
+					>
+						Start
+					</button>
+					<output data-testid="runs">{runs}</output>
+				</div>
+			);
+		}
+
+		const view = render(
+			<StreamingProvider>
+				<DoubleStarter />
+			</StreamingProvider>,
+		);
+
+		fireEvent.click(view.getByRole("button", { name: "Start" }));
+		await waitFor(() => expect(view.getByTestId("done")).toHaveTextContent("complete"));
+		fireEvent.click(view.getByRole("button", { name: "Start" }));
+		await waitFor(() => expect(view.getByTestId("runs")).toHaveTextContent("2"));
+		expect(submitCount).toBe(2);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
