@@ -1,6 +1,6 @@
 import type { Slide } from "@slidesage/types";
 import { cn } from "@slidesage/ui/lib/utils";
-import { ArrowUp, Palette, Plus, Trash2 } from "lucide-react";
+import { ArrowUp, Plus, Trash2 } from "lucide-react";
 import { ScaledSlide } from "../Viewer/ScaledSlide";
 import { SlideRenderer } from "../Viewer/SlideRenderer";
 
@@ -52,10 +52,6 @@ export default function MarketplaceCard({
 					</div>
 				</ScaledSlide>
 				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#111827]/70 via-transparent to-transparent opacity-60" />
-				<span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-white/15 bg-[#111827]/75 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
-					<Palette className="h-3 w-3" />
-					Theme
-				</span>
 				{item.isNew && (
 					<span className="absolute right-3 top-3 rounded-full border border-amber-200/30 bg-amber-200/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-100 backdrop-blur-md">
 						New
