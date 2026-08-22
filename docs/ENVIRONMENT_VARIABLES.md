@@ -141,12 +141,13 @@ sufficiently strong `AUTH_SECRET`.
 | Variable | Required | Description |
 | --- | --- | --- |
 | `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` | For BYOK | Active encryption key version, normally `1` initially |
-| `BYOK_ENCRYPTION_KEY_V1` | For BYOK | Base64-encoded 32-byte AES-GCM key |
+| `BYOK_ENCRYPTION_KEY` | For BYOK | Base64-encoded 32-byte AES-GCM key (active version `1`) |
 
 Provider API keys are supplied by users and encrypted with these deployment
 secrets. They are used only for presentation generation. OpenRouter remains the
 exclusive embedding provider.
 
-`BYOK_ENCRYPTION_KEY_CURRENT_VERSION` is a non-secret version selector. Every
-referenced `BYOK_ENCRYPTION_KEY_V<n>` is secret and must remain available while
-stored credentials still use that version.
+`BYOK_ENCRYPTION_KEY_CURRENT_VERSION` is a non-secret version selector. The
+active version `1` key is read from `BYOK_ENCRYPTION_KEY`; rotated-out versions
+`n > 1` stay in `BYOK_ENCRYPTION_KEY_V<n>`. Every referenced key is secret and
+must remain available while stored credentials still use that version.

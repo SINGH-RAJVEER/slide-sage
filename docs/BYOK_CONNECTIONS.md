@@ -61,14 +61,14 @@ Configure a base64-encoded 32-byte key:
 
 ```text
 BYOK_ENCRYPTION_KEY_CURRENT_VERSION=1
-BYOK_ENCRYPTION_KEY_V1=<base64 key>
+BYOK_ENCRYPTION_KEY=<base64 key>
 ```
 
 Keep old versioned keys available while rotating stored credentials.
 `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` is a non-secret selector. The
-`BYOK_ENCRYPTION_KEY_V<n>` values are secrets; `secretspec.toml` includes the
-initial `BYOK_ENCRYPTION_KEY_V1` entry without treating the version selector as a
-secret.
+`BYOK_ENCRYPTION_KEY` value (and any rotated `BYOK_ENCRYPTION_KEY_V<n>` values)
+are secrets; `secretspec.toml` includes the initial `BYOK_ENCRYPTION_KEY` entry
+without treating the version selector as a secret.
 
 ## Routing
 

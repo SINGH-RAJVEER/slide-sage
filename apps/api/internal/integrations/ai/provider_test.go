@@ -28,7 +28,7 @@ func TestUniqueModelsIncludesProviderInIdentity(t *testing.T) {
 
 func TestProviderCatalogDiscoveryRunsAtMostThreeRequestsAtOnce(t *testing.T) {
 	t.Setenv("BYOK_ENCRYPTION_KEY_CURRENT_VERSION", "1")
-	t.Setenv("BYOK_ENCRYPTION_KEY_V1", base64.StdEncoding.EncodeToString(make([]byte, 32)))
+	t.Setenv("BYOK_ENCRYPTION_KEY", base64.StdEncoding.EncodeToString(make([]byte, 32)))
 	providers := []Provider{OpenAI, Google, Anthropic, OpenAI, Google}
 	connections := make([]Connection, 0, len(providers))
 	for _, provider := range providers {
