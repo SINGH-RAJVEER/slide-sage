@@ -6,8 +6,8 @@ navy application shell.
 
 ## Current Scope
 
-- Browse six complete SlideSage offerings rather than placeholder catalog entries: Citrus Brief,
-  Paper Grid, Midnight Signal, Field Notes, Founder Letter, and Boardroom Clear.
+- Browse six complete third-party-style offerings rather than placeholder catalog entries: Neon
+  District, Draft Board, Velvet Marquee, Bubblegum Pop, Concrete Brutal, and Terra Mesa.
 - Preview every item through the production `SlideRenderer` using supported themes.
 - Open a dedicated, URL-addressable theme preview by selecting a theme card.
 - Search theme and creator metadata and sort the catalog.
@@ -25,46 +25,63 @@ navy application shell.
 
 The six default renderer themes are complete visual systems, not palette swaps. Each owns a
 different typography pairing, color system, information density, shape grammar, image treatment,
-chart palette, and default composition treatment:
+chart palette, and default composition treatment. They stay installed with every workspace:
 
-| Default system | Renderer ID | Design language | Marketplace offering |
+| Default system | Renderer ID | Design language |
+| --- | --- | --- |
+| Midnight Terminal | `modern-dark` | Dark cinematic space, terminal metadata, luminous proof points |
+| Signal Grid | `corporate-blue` | Strict analytical grid, slim blue rail, precise data hierarchy |
+| Monochrome Grid | `minimalist` | Quiet serif headlines, paper grid, reading-first layouts |
+| Kinetic Blocks | `creative-studio` | Poster-like typography, hard edges, fixed diagonal accents |
+| Editorial Ledger | `elegant-serif` | Warm paper, folios, magazine columns, editorial serif voice |
+| Field Report | `nature-green` | Organic contours, human-scale spacing, restrained natural palette |
+
+Marketplace offerings are a separate shelf of visual systems. None of them reuses a default theme
+ID, palette, typography pairing, or layout language. Each is authored as its own studio identity,
+so installing one swaps in a different design language instead of recoloring a built-in theme:
+
+| Marketplace offering | Renderer ID | Design language | Catalog author |
 | --- | --- | --- | --- |
-| Midnight Terminal | `modern-dark` | Dark cinematic space, terminal metadata, luminous proof points | Midnight Signal |
-| Signal Grid | `corporate-blue` | Strict analytical grid, slim blue rail, precise data hierarchy | Boardroom Clear |
-| Monochrome Grid | `minimalist` | Quiet serif headlines, paper grid, reading-first layouts | Paper Grid |
-| Kinetic Blocks | `creative-studio` | Poster-like typography, hard edges, fixed diagonal accents | Citrus Brief |
-| Editorial Ledger | `elegant-serif` | Warm paper, folios, magazine columns, editorial serif voice | Founder Letter |
-| Field Report | `nature-green` | Organic contours, human-scale spacing, restrained natural palette | Field Notes |
+| Neon District | `neon-district` | Violet-black synthwave, magenta/cyan neon, monospaced display type | Vera Kato |
+| Draft Board | `draft-board` | Blueprint blue linework, orange markups, drafting-caps lettering | Ines Okafor |
+| Velvet Marquee | `velvet-marquee` | Theater-black glamour, champagne gold and burgundy, didone serif | Maison Lune |
+| Bubblegum Pop | `bubblegum-pop` | Y2K candy pastels, hot pink and sky accents, rounded chunky type | Pip Sundae |
+| Concrete Brutal | `concrete-brutal` | Raw concrete gray, safety-orange signage, heavy grotesque caps | R. Castellanos |
+| Terra Mesa | `terra-mesa` | Adobe sand craft, burnt sienna and turquoise, slab-serif voice | Ada Reyes |
 
-Marketplace offerings are authored SlideSage sample decks. Every offering now has its own cover,
-showcase composition, narrative slide, data colors, and close rather than a shared placeholder
-story. Marketplace installation still resolves to the supported renderer ID; this keeps saved
-presentations, generation, export, and API validation compatible while the marketplace remains
-frontend-only.
+Every offering has its own cover, showcase composition, narrative slide, data colors, and close.
+Installation now selects the marketplace's own renderer system: the viewer dropdown lists it under
+"From Marketplace", saved presentations persist the marketplace theme ID, generation can target it,
+and both PDF and PowerPoint exports carry matching palette and typography tokens.
 
-Theme token definitions live in `libs/ui/lib/templates.ts`. The renderer publishes those values as
-CSS custom properties for editorial content and uses the same colors and font families for scene
-slides and chart rendering. The PowerPoint exporter maintains matching palette and typography
-tokens for its native output.
+Theme token definitions for defaults live in `AVAILABLE_TEMPLATES` in `libs/ui/lib/templates.ts`;
+marketplace systems live in `MARKETPLACE_TEMPLATES` in the same module. The renderer publishes
+those values as CSS custom properties for editorial content and uses the same colors and font
+families for scene slides and chart rendering. The PowerPoint exporter maintains matching palette
+and typography tokens for its native output.
 
-The first implementation is intentionally frontend-only. Installed marketplace themes and the active
-user's upvotes persist in browser local storage, while catalog metadata, usage counts, and aggregate
-votes are seeded data. All current catalog entries identify SlideSage as their author. A persistent
-community backend still needs to replace these browser-local records.
+The first implementation is still frontend-only. Installed marketplace themes and the active user's
+upvotes persist in browser local storage, while catalog metadata, usage counts, and aggregate votes
+are seeded data. Catalog authors are fictional seed identities; a persistent community backend must
+replace these browser-local records with real creator profiles.
 
 ## Renderer Constraints
 
-Marketplace previews map to the six existing `ThemeId` values. Marketplace item IDs are separate
-from renderer IDs so future catalog records cannot bypass presentation validation. New serialized
-themes require a format shared by the web renderer, API validation, document contract, and
-PowerPoint export.
+Marketplace previews render through their own `ThemeId` values, listed in `MARKETPLACE_THEME_IDS`
+in `libs/types`. Marketplace item IDs match their renderer ID so a deck saved from an installed
+marketplace theme normalizes cleanly; the API's `validThemes` allowlist includes the marketplace
+IDs so persistence and generation validation stay intact. Adding further serialized themes requires
+the same four-way update: web renderer tokens, API validation, generation schema, and PowerPoint
+export.
 
 Preview rendering is noninteractive. Content blocks use plain containers unless the viewer supplies
 an editing callback, preventing editor controls from being nested inside the marketplace preview
 button while retaining the same visual renderer.
 
-Installed marketplace themes remain named entries in the dropdown but resolve to their supported
-base `ThemeId` when selected. This keeps generation, persistence, and export validation intact.
+Installed marketplace themes appear as named entries under "From Marketplace" in the theme dropdown
+and select their own visual system when chosen. Defaults and marketplace systems are resolved
+through the same `getTemplate` contract, so generation, persistence, and export validation remain
+intact.
 
 The viewer and marketplace render slides at canonical 1280x720 coordinates. Display surfaces use a
 shared measured scaling frame that applies one uniform scale to the complete slide. Marketplace cards
@@ -73,7 +90,7 @@ and use the maximum size allowed by its 16:9 aspect ratio.
 Fullscreen chart slides activate only after that frame has a measured size, ensuring Chart.js runs
 its entrance animation against the final presentation dimensions instead of a zero-sized canvas.
 
-Content slides use code-owned editorial compositions rather than theme-authored HTML. The
+Schema-v5 content slides use code-owned editorial compositions rather than theme-authored HTML. The
 renderer supports `cover`, `section`, `body`, `split`, `comparison`, `sidebar`, `media-left`,
 `media-right`, `quote`, `spotlight`, and `canvas`. Themes establish both the visual foundation and
 the composition treatment: for example, Signal Grid adds a data rail and a measured grid, Paper

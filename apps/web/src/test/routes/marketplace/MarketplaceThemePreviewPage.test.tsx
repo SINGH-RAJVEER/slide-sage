@@ -50,7 +50,7 @@ describe("MarketplaceThemePreviewPage", () => {
 			"@/routes/marketplace/MarketplaceThemePreviewPage"
 		);
 		const view = render(
-			<MemoryRouter initialEntries={["/marketplace/midnight-signal/preview"]}>
+			<MemoryRouter initialEntries={["/marketplace/neon-district/preview"]}>
 				<Routes>
 					<Route
 						path="/marketplace/:marketplaceId/preview"
@@ -63,7 +63,7 @@ describe("MarketplaceThemePreviewPage", () => {
 		expect(view.getByText("7 preview slides")).toBeInTheDocument();
 		expect(view.getByText("Viewer navigation")).toBeInTheDocument();
 		expect(view.getByText("Viewer thumbnails")).toBeInTheDocument();
-		expect(view.getByText("Midnight Signal")).toBeInTheDocument();
+		expect(view.getByText("Neon District")).toBeInTheDocument();
 		expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
 		expect(view.queryByRole("combobox")).toBeNull();
 		expect(view.getByRole("button", { name: "Present slideshow" })).toBeInTheDocument();

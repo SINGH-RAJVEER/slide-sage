@@ -30,7 +30,7 @@ describe("MarketplacePage", () => {
 			</MemoryRouter>,
 		);
 
-		fireEvent.click(getByRole("button", { name: "Preview Midnight Signal theme" }));
+		fireEvent.click(getByRole("button", { name: "Preview Neon District theme" }));
 
 		expect(getByText("Dedicated theme preview")).toBeInTheDocument();
 	});
@@ -69,16 +69,16 @@ describe("MarketplacePage", () => {
 			</MemoryRouter>,
 		);
 
-		fireEvent.click(getByRole("button", { name: "Add theme Midnight Signal" }));
+		fireEvent.click(getByRole("button", { name: "Add theme Neon District" }));
 
-		expect(getByRole("button", { name: "Remove Midnight Signal" })).toBeEnabled();
+		expect(getByRole("button", { name: "Remove Neon District" })).toBeEnabled();
 		expect(localStorage.getItem("slidesage-installed-marketplace-themes")).toContain(
-			"midnight-signal",
+			"neon-district",
 		);
 	});
 
 	it("removes a marketplace theme from the installed collection", async () => {
-		localStorage.setItem("slidesage-installed-marketplace-themes", '["midnight-signal"]');
+		localStorage.setItem("slidesage-installed-marketplace-themes", '["neon-district"]');
 		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
 		const { getByRole } = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
@@ -86,9 +86,9 @@ describe("MarketplacePage", () => {
 			</MemoryRouter>,
 		);
 
-		fireEvent.click(getByRole("button", { name: "Remove Midnight Signal" }));
+		fireEvent.click(getByRole("button", { name: "Remove Neon District" }));
 
-		expect(getByRole("button", { name: "Add theme Midnight Signal" })).toBeInTheDocument();
+		expect(getByRole("button", { name: "Add theme Neon District" })).toBeInTheDocument();
 		expect(localStorage.getItem("slidesage-installed-marketplace-themes")).toBe("[]");
 	});
 
@@ -101,17 +101,16 @@ describe("MarketplacePage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(queryByText("Midnight Signal", { selector: "h2" })).toBeInTheDocument();
-		expect(queryByText("Split Decision", { selector: "h2" })).toBeNull();
+		expect(queryByText("Neon District", { selector: "h2" })).toBeInTheDocument();
 
-		const voteButton = getByRole("button", { name: "Upvote Midnight Signal" });
+		const voteButton = getByRole("button", { name: "Upvote Neon District" });
 		expect(voteButton).not.toHaveClass("bg-blue-500/20");
 		fireEvent.click(voteButton);
-		expect(getByRole("button", { name: "Remove upvote from Midnight Signal" })).toHaveAttribute(
+		expect(getByRole("button", { name: "Remove upvote from Neon District" })).toHaveAttribute(
 			"aria-pressed",
 			"true",
 		);
-		expect(getByRole("button", { name: "Remove upvote from Midnight Signal" })).toHaveClass(
+		expect(getByRole("button", { name: "Remove upvote from Neon District" })).toHaveClass(
 			"bg-blue-500/20",
 		);
 	});
@@ -125,14 +124,14 @@ describe("MarketplacePage", () => {
 		);
 
 		fireEvent.input(getByRole("searchbox", { name: "Search marketplace" }), {
-			target: { value: "Serif" },
+			target: { value: "Gold" },
 		});
 
-		expect(queryByText("Founder Letter", { selector: "h2" })).toBeInTheDocument();
-		expect(queryByText("Boardroom Clear", { selector: "h2" })).toBeNull();
+		expect(queryByText("Velvet Marquee", { selector: "h2" })).toBeInTheDocument();
+		expect(queryByText("Concrete Brutal", { selector: "h2" })).toBeNull();
 	});
 
-	it("lists every marketplace theme as authored by SlideSage", async () => {
+	it("lists every marketplace offering with its own creator identity", async () => {
 		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
 		const { getAllByText, getByText } = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
@@ -140,8 +139,12 @@ describe("MarketplacePage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(getByText("Citrus Brief", { selector: "h2" })).toBeInTheDocument();
-		expect(getByText("Paper Grid", { selector: "h2" })).toBeInTheDocument();
-		expect(getAllByText("by SlideSage")).toHaveLength(6);
+		expect(getByText("Neon District", { selector: "h2" })).toBeInTheDocument();
+		expect(getByText("Draft Board", { selector: "h2" })).toBeInTheDocument();
+		expect(getByText("Velvet Marquee", { selector: "h2" })).toBeInTheDocument();
+		expect(getByText("Bubblegum Pop", { selector: "h2" })).toBeInTheDocument();
+		expect(getByText("Concrete Brutal", { selector: "h2" })).toBeInTheDocument();
+		expect(getByText("Terra Mesa", { selector: "h2" })).toBeInTheDocument();
+		expect(getAllByText(/^by .+$/)).toHaveLength(6);
 	});
 });
