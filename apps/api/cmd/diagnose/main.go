@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 )
 
@@ -106,14 +108,16 @@ func main() {
 		_ = json.Unmarshal(body.Bytes(), &envelope)
 		text := ""
 		parts := 0
+		finish := "NO_CANDIDATES"
 		if len(envelope.Candidates) > 0 {
+			finish = envelope.Candidates[0].FinishReason
 			parts = len(envelope.Candidates[0].Content.Parts)
 			if parts > 0 {
 				text = envelope.Candidates[0].Content.Parts[0].Text
 			}
 		}
 		fmt.Printf("[%s] status=%d finish=%q block=%q parts=%d textLen=%d usage={prompt:%d cand:%d thoughts:%d total:%d} took=%s\n",
-			label, response.StatusCode, candidateFinish(envelope.Candidates), envelope.PromptFeedback.BlockReason,
+			label, response.StatusCode, finish, envelope.PromptFeedback.BlockReason,
 			parts, len(text), envelope.UsageMetadata.PromptTokenCount, envelope.UsageMetadata.CandidatesTokenCount,
 			envelope.UsageMetadata.ThoughtsTokenCount, envelope.UsageMetadata.TotalTokenCount, time.Since(started).Round(time.Millisecond))
 		fmt.Printf("[%s] text head: %.200q\n", label, strings.TrimSpace(text))
@@ -121,13 +125,4 @@ func main() {
 
 	run("as-shipped (maxOutputTokens=1800)", nil)
 	run("thinkingBudget=0", map[string]any{"thinkingConfig": map[string]any{"thinkingBudget": 0}})
-}
-
-func candidateFinish(candidates []struct {
-	FinishReason string `json:"finishReason"`
-}) string {
-	if len(candidates) == 0 {
-		return "NO_CANDIDATES"
-	}
-	return candidates[0].FinishReason
 }
