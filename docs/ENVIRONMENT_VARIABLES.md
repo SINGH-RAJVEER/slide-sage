@@ -129,8 +129,7 @@ Do not commit `.env`. Keep secrets in the deployment platform's secret store in
 production.
 
 Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production
-build. The client sends requests directly to each endpoint; a legacy trailing
-`/api` in the configured value is removed. As a deployment safeguard, production builds
+build. The client sends requests directly to each endpoint. As a deployment safeguard, production builds
 ignore loopback values such as `localhost` and `127.0.0.1` and fall back to
 same-origin routes instead.
 

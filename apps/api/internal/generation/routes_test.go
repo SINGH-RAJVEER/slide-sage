@@ -2,33 +2,35 @@ package generation
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
+	"encoding/json"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 )
 
-func TestGenerationRequestReadsTopicAndDisabledResearch(t *testing.T) {
-	handler := handler{identity: func(context.Context, *http.Request) (string, error) {
-		return "user-1", nil
-	}}
-	request := httptest.NewRequest(http.MethodPost, "/generate-presentation-stream", strings.NewReader(`{
+func decodeSubmitBody(t *testing.T, raw string) map[string]any {
+	t.Helper()
+	decoder := json.NewDecoder(strings.NewReader(raw))
+	decoder.UseNumber()
+	var body map[string]any
+	if err := decoder.Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	return body
+}
+
+func TestSubmitInputReadsTopicAndDisabledResearch(t *testing.T) {
+	body := decodeSubmitBody(t, `{
 		"topic":" Grid storage ",
 		"slide_count":5,
 		"detail_level":"balanced",
 		"tonality":"professional",
 		"research":{"enabled":false}
-	}`))
-	response := httptest.NewRecorder()
-
-	userID, input, ok := handler.generationRequest(response, request)
-	if !ok {
-		t.Fatalf("request rejected with status %d: %s", response.Code, response.Body.String())
-	}
-	if userID != "user-1" {
-		t.Fatalf("user ID = %q", userID)
+	}`)
+	input, err := parseSubmitInput(body)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if input.Topic != "Grid storage" {
 		t.Fatalf("topic = %q", input.Topic)
@@ -36,25 +38,35 @@ func TestGenerationRequestReadsTopicAndDisabledResearch(t *testing.T) {
 	if input.Research != nil {
 		t.Fatalf("disabled research = %#v", input.Research)
 	}
+	if input.ParentID != "" || input.RetryID != "" {
+		t.Fatalf("unexpected presentation targeting: %q %q", input.ParentID, input.RetryID)
+	}
 }
 
-func TestGenerationRequestKeepsEnabledResearch(t *testing.T) {
-	handler := handler{identity: func(context.Context, *http.Request) (string, error) {
-		return "user-1", nil
-	}}
-	request := httptest.NewRequest(http.MethodPost, "/generate-presentation-stream", strings.NewReader(`{
+func TestSubmitInputKeepsEnabledResearch(t *testing.T) {
+	body := decodeSubmitBody(t, `{
 		"topic":"Grid storage",
 		"slide_count":5,
 		"research":{"enabled":true}
-	}`))
-	response := httptest.NewRecorder()
-
-	_, input, ok := handler.generationRequest(response, request)
-	if !ok {
-		t.Fatalf("request rejected with status %d: %s", response.Code, response.Body.String())
+	}`)
+	input, err := parseSubmitInput(body)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if input.Research == nil {
 		t.Fatal("enabled research was discarded")
+	}
+}
+
+func TestSubmitInputRejectsParentAndRetryTogether(t *testing.T) {
+	body := decodeSubmitBody(t, `{
+		"topic":"Grid storage",
+		"slide_count":5,
+		"parent_presentation_id":"pres-1",
+		"retry_presentation_id":"pres-2"
+	}`)
+	if _, err := parseSubmitInput(body); err == nil {
+		t.Fatal("parent and retry targeting were both accepted")
 	}
 }
 
@@ -123,13 +135,10 @@ func TestPointAccountingUsesMilliPoints(t *testing.T) {
 }
 
 func TestIdempotencyKeyValidation(t *testing.T) {
-	request := httptest.NewRequest(http.MethodPost, "/generate-presentation-stream", nil)
-	request.Header.Set("Idempotency-Key", "operation-123456789")
-	if key, err := idempotencyKey(request); err != nil || key != "operation-123456789" {
+	if key, err := validateIdempotencyKey("operation-123456789"); err != nil || key != "operation-123456789" {
 		t.Fatalf("idempotency key = %q, %v", key, err)
 	}
-	request.Header.Set("Idempotency-Key", "invalid key")
-	if _, err := idempotencyKey(request); err == nil {
+	if _, err := validateIdempotencyKey("invalid key"); err == nil {
 		t.Fatal("invalid idempotency key was accepted")
 	}
 }

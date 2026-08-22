@@ -57,8 +57,8 @@ func TestGenerationJobQueueOptions(t *testing.T) {
 func TestGenerationJobRoutePatternsDoNotConflict(t *testing.T) {
 	mux := http.NewServeMux()
 	handler := func(http.ResponseWriter, *http.Request) {}
+	mux.HandleFunc("POST /presentation-jobs", handler)
 	mux.HandleFunc("GET /generation-jobs/{id}", handler)
-	mux.HandleFunc("GET /generation-jobs/idempotency/{key}/job", handler)
 	mux.HandleFunc("GET /generation-jobs/{id}/events", handler)
 	mux.HandleFunc("POST /generation-jobs/{id}/cancel", handler)
 }

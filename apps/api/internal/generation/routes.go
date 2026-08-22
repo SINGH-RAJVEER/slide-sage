@@ -83,10 +83,8 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 		streamContext: config.StreamContext,
 		streams:       newStreamLimiter(config.MaxStreams, config.MaxStreamsPerUser),
 	}
-	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
-	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
+	mux.HandleFunc("POST /presentation-jobs", handler.submit)
 	mux.HandleFunc("GET /generation-jobs/{id}", handler.jobStatus)
-	mux.HandleFunc("GET /generation-jobs/idempotency/{key}/job", handler.jobByIdempotency)
 	mux.HandleFunc("GET /generation-jobs/{id}/events", handler.jobEvents)
 	mux.HandleFunc("POST /generation-jobs/{id}/cancel", handler.cancelJob)
 }
@@ -180,8 +178,10 @@ func positiveEnvInt(name string, fallback int) int {
 	return value
 }
 
-type generationInput struct {
+type submitInput struct {
 	Topic           string
+	ParentID        string
+	RetryID         string
 	SlideCount      int
 	DetailLevel     string
 	Tonality        string
@@ -189,17 +189,6 @@ type generationInput struct {
 	Research        any
 	ResearchPayload *presentation.ResearchPayload
 	AI              *ai.Selection
-	RetryID         string
-}
-
-type iterationInput struct {
-	PresentationID string
-	Feedback       string
-	SlideCount     int
-	DetailLevel    string
-	Tonality       string
-	Research       any
-	AI             *ai.Selection
 }
 
 type persistedPresentation struct {
@@ -210,96 +199,183 @@ type persistedPresentation struct {
 	Revision int
 }
 
-func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
-	userID, input, ok := h.generationRequest(writer, request)
+// submit creates a durable presentation job and returns its identity as JSON.
+// The client supplies the job ID, which doubles as the idempotency key:
+// resubmitting the same job ID with the same body attaches to the existing
+// job, and with a different body conflicts. Progress is consumed separately
+// through GET /generation-jobs/{id}/events.
+func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
+	userID, body, ok := h.body(writer, request, maxBodyBytes)
 	if !ok {
 		return
 	}
-	idempotencyKey, err := idempotencyKey(request)
+	input, err := parseSubmitInput(body)
 	if err != nil {
 		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	requestHash := requestHash(input)
-	presentationID := input.RetryID
-	if presentationID != "" {
-		existing, err := h.ownedPresentation(request.Context(), presentationID, userID)
-		if err != nil {
-			writeError(writer, http.StatusNotFound, "Presentation not found")
-			return
-		}
-		var document map[string]any
-		_ = json.Unmarshal(existing.Data, &document)
-		if document["status"] != "failed" {
-			duplicate, err := h.existingOperation(request.Context(), userID, "generation", idempotencyKey, requestHash)
-			if err == nil && duplicate.jobID != "" {
-				setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
-				h.streamEvents(writer, request, duplicate.jobID, userID, 0)
-				return
-			}
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				h.reservationError(writer, err)
-				return
-			}
-			writeError(writer, http.StatusConflict, "Only failed presentations can be retried")
-			return
-		}
-	}
-	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
-	operationID, err := uuid()
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
-		return
-	}
-	if presentationID == "" {
-		presentationID, err = uuid()
+	jobID := text(first(body, "job_id", "jobId"), "")
+	if jobID == "" {
+		jobID, err = uuid()
 		if err != nil {
 			writeError(writer, http.StatusInternalServerError, "Unable to start generation")
 			return
 		}
-	}
-	jobID, err := uuid()
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
+	} else if _, idempotencyErr := validateIdempotencyKey(jobID); idempotencyErr != nil {
+		writeError(writer, http.StatusBadRequest, "job_id "+idempotencyErr.Error())
 		return
 	}
-	selection, _, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
+	requestHashValue := requestHash(input)
+
+	var job streamJob
+	var placeholder []byte
+	create := false
+	if input.ParentID != "" {
+		job, err = h.iterationJob(request.Context(), userID, input)
+	} else {
+		job, placeholder, err = h.generationJob(request.Context(), userID, input, jobID, requestHashValue)
+		create = input.RetryID == ""
+	}
 	if err != nil {
-		writeError(writer, http.StatusConflict, err.Error())
+		var duplicate duplicateSubmit
+		if errors.As(err, &duplicate) {
+			writeJSON(writer, http.StatusOK, map[string]any{"job_id": duplicate.jobID, "presentation_id": duplicate.presentationID, "status": "existing"})
+			return
+		}
+		var status writeStatusError
+		if errors.As(err, &status) {
+			writeError(writer, status.Status, status.Message)
+			return
+		}
+		h.reservationError(writer, err)
 		return
 	}
-	if selection != nil {
-		quote = 0
-	}
-	initial := map[string]any{"schemaVersion": presentation.PresentationSchemaVersion, "title": "Generating...", "theme": input.Theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "theme": input.Theme, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
-	initialJSON, _ := json.Marshal(initial)
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: input.Theme, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
-	balance, revision, err := h.enqueue(request.Context(), job, idempotencyKey, requestHash, input.RetryID == "", input.Topic, initialJSON)
+
+	balance, _, err := h.enqueue(request.Context(), job, jobID, requestHashValue, create, input.Topic, placeholder)
 	if err != nil {
 		var duplicate duplicateOperation
 		if errors.As(err, &duplicate) && duplicate.jobID != "" {
-			setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
-			h.streamEvents(writer, request, duplicate.jobID, userID, 0)
+			writeJSON(writer, http.StatusOK, map[string]any{"job_id": duplicate.jobID, "presentation_id": duplicate.presentationID, "status": "existing"})
 			return
 		}
 		h.reservationError(writer, err)
 		return
 	}
 	_ = balance
-	_ = revision
-	setGenerationHeaders(writer, jobID, presentationID)
-	h.streamEvents(writer, request, jobID, userID, 0)
+	writeJSON(writer, http.StatusAccepted, map[string]any{"job_id": job.jobID, "presentation_id": job.presentationID, "status": "queued"})
 }
 
-func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
-	userID, input, ok := h.iterationRequest(writer, request)
-	if !ok {
-		return
-	}
-	base, err := h.ownedPresentation(request.Context(), input.PresentationID, userID)
+// duplicateSubmit reports that a submission already exists for the supplied
+// job ID, carrying its committed identity.
+type duplicateSubmit struct {
+	jobID, presentationID string
+}
+
+func (duplicateSubmit) Error() string { return "duplicate submission" }
+
+type writeStatusError struct {
+	Status  int
+	Message string
+}
+
+func (e writeStatusError) Error() string { return e.Message }
+
+// parseSubmitInput validates the unified submission body. A parent_presentation_id
+// marks an iteration of an existing deck; retry_presentation_id resubmits a
+// failed generation; neither means a fresh generation.
+func parseSubmitInput(body map[string]any) (submitInput, error) {
+	topic, err := required(first(body, "topic", "feedback", "prompt"), "topic")
 	if err != nil {
-		writeError(writer, http.StatusNotFound, "Presentation not found")
-		return
+		return submitInput{}, err
+	}
+	input := submitInput{Topic: topic}
+	input.ParentID = text(first(body, "parent_presentation_id", "parentPresentationId"), "")
+	input.RetryID = text(first(body, "retry_presentation_id", "retryPresentationId"), "")
+	if len(input.ParentID) > 200 || len(input.RetryID) > 200 {
+		return submitInput{}, errors.New("presentation id must contain at most 200 characters")
+	}
+	if input.ParentID != "" && input.RetryID != "" {
+		return submitInput{}, errors.New("parent_presentation_id and retry_presentation_id are mutually exclusive")
+	}
+	slides, err := slideCount(body, input.ParentID == "")
+	if err != nil {
+		return submitInput{}, err
+	}
+	input.SlideCount = slides
+	research, err := parseResearch(body["research"])
+	if err != nil {
+		return submitInput{}, err
+	}
+	input.Research = research
+	input.DetailLevel = choice(body["detail_level"], body["detailLevel"], "balanced", "brief", "concise", "balanced", "detailed", "comprehensive")
+	input.Tonality = choice(body["tonality"], nil, "professional", "casual", "professional", "enthusiastic", "persuasive")
+	input.Theme = text(body["theme"], "corporate-blue")
+	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) || len(input.Theme) > 100 {
+		return submitInput{}, errors.New("Invalid generation options")
+	}
+	if value := first(body, "research_payload", "researchPayload"); value != nil {
+		payload, err := presentation.ParseResearchPayload(value)
+		if err != nil {
+			return submitInput{}, err
+		}
+		input.ResearchPayload = &payload
+	}
+	selection, err := parseAISelection(body["ai"])
+	if err != nil {
+		return submitInput{}, err
+	}
+	input.AI = selection
+	return input, nil
+}
+
+func (h *handler) generationJob(ctx context.Context, userID string, input submitInput, jobID, hash string) (streamJob, []byte, error) {
+	presentationID := input.RetryID
+	if presentationID != "" {
+		existing, err := h.ownedPresentation(ctx, presentationID, userID)
+		if err != nil {
+			return streamJob{}, nil, writeStatusError{http.StatusNotFound, "Presentation not found"}
+		}
+		var document map[string]any
+		_ = json.Unmarshal(existing.Data, &document)
+		if document["status"] != "failed" {
+			duplicate, err := h.existingOperation(ctx, userID, "generation", jobID, hash)
+			if err == nil && duplicate.jobID != "" {
+				return streamJob{}, nil, duplicateSubmit{jobID: duplicate.jobID, presentationID: duplicate.presentationID}
+			}
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return streamJob{}, nil, err
+			}
+			return streamJob{}, nil, writeStatusError{http.StatusConflict, "Only failed presentations can be retried"}
+		}
+	}
+	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
+	operationID, err := uuid()
+	if err != nil {
+		return streamJob{}, nil, err
+	}
+	if presentationID == "" {
+		presentationID, err = uuid()
+		if err != nil {
+			return streamJob{}, nil, err
+		}
+	}
+	selection, _, err := h.connections.CredentialForGeneration(ctx, userID, input.AI)
+	if err != nil {
+		return streamJob{}, nil, writeStatusError{http.StatusConflict, err.Error()}
+	}
+	if selection != nil {
+		quote = 0
+	}
+	initial := map[string]any{"schemaVersion": presentation.PresentationSchemaVersion, "title": "Generating...", "theme": input.Theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "theme": input.Theme, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
+	placeholder, _ := json.Marshal(initial)
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: input.Theme, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
+	return job, placeholder, nil
+}
+
+func (h *handler) iterationJob(ctx context.Context, userID string, input submitInput) (streamJob, error) {
+	base, err := h.ownedPresentation(ctx, input.ParentID, userID)
+	if err != nil {
+		return streamJob{}, writeStatusError{http.StatusNotFound, "Presentation not found"}
 	}
 	count := input.SlideCount
 	if count == 0 {
@@ -314,48 +390,18 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 	}
 	operationID, err := uuid()
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start iteration")
-		return
+		return streamJob{}, err
 	}
-	quote := authorizationMillis(count, input.Feedback, base.Data, input.Research, nil, 0)
-	selection, _, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
+	quote := authorizationMillis(count, input.Topic, base.Data, input.Research, nil, 0)
+	selection, _, err := h.connections.CredentialForGeneration(ctx, userID, input.AI)
 	if err != nil {
-		writeError(writer, http.StatusConflict, err.Error())
-		return
+		return streamJob{}, writeStatusError{http.StatusConflict, err.Error()}
 	}
 	if selection != nil {
 		quote = 0
 	}
-	idempotencyKey, err := idempotencyKey(request)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	jobID, err := uuid()
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start iteration")
-		return
-	}
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Feedback, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: documentTheme(base.Data), research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
-	balance, _, err := h.enqueue(request.Context(), job, idempotencyKey, requestHash(input), false, "", nil)
-	if err != nil {
-		var duplicate duplicateOperation
-		if errors.As(err, &duplicate) && duplicate.jobID != "" {
-			setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
-			h.streamEvents(writer, request, duplicate.jobID, userID, 0)
-			return
-		}
-		h.reservationError(writer, err)
-		return
-	}
-	_ = balance
-	setGenerationHeaders(writer, jobID, base.ID)
-	h.streamEvents(writer, request, jobID, userID, 0)
-}
-
-func setGenerationHeaders(writer http.ResponseWriter, jobID, presentationID string) {
-	writer.Header().Set("X-Generation-Job-ID", jobID)
-	writer.Header().Set("X-Presentation-ID", presentationID)
+	job := streamJob{userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: documentTheme(base.Data), research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
+	return job, nil
 }
 
 type streamJob struct {
@@ -647,91 +693,6 @@ func hasSubstantiveGeneratedContent(slides []any) bool {
 		}
 	}
 	return len(slides) > 0
-}
-
-func (h *handler) generationRequest(writer http.ResponseWriter, request *http.Request) (string, generationInput, bool) {
-	userID, body, ok := h.body(writer, request, maxBodyBytes)
-	if !ok {
-		return "", generationInput{}, false
-	}
-	topic, err := required(body["topic"], "topic")
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	slides, err := slideCount(body, true)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	research, err := parseResearch(body["research"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	input := generationInput{Topic: topic, SlideCount: slides, DetailLevel: choice(body["detail_level"], body["detailLevel"], "balanced", "brief", "concise", "balanced", "detailed", "comprehensive"), Tonality: choice(body["tonality"], nil, "professional", "casual", "professional", "enthusiastic", "persuasive"), Theme: text(body["theme"], "corporate-blue"), Research: research}
-	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) || len(input.Theme) > 100 {
-		writeError(writer, http.StatusBadRequest, "Invalid generation options")
-		return "", generationInput{}, false
-	}
-	input.RetryID = text(first(body, "retry_presentation_id", "retryPresentationId"), "")
-	if len(input.RetryID) > 200 {
-		writeError(writer, http.StatusBadRequest, "retry_presentation_id must be a non-empty string")
-		return "", generationInput{}, false
-	}
-	if value := first(body, "research_payload", "researchPayload"); value != nil {
-		payload, err := presentation.ParseResearchPayload(value)
-		if err != nil {
-			writeError(writer, http.StatusBadRequest, err.Error())
-			return "", generationInput{}, false
-		}
-		input.ResearchPayload = &payload
-	}
-	selection, err := parseAISelection(body["ai"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	input.AI = selection
-	return userID, input, true
-}
-
-func (h *handler) iterationRequest(writer http.ResponseWriter, request *http.Request) (string, iterationInput, bool) {
-	userID, body, ok := h.body(writer, request, 32*1024)
-	if !ok {
-		return "", iterationInput{}, false
-	}
-	id := text(first(body, "parent_presentation_id", "presentation_id", "parentPresentationId", "presentationId"), "")
-	feedback, err := required(first(body, "feedback", "topic", "prompt"), "feedback")
-	if id == "" || len(id) > 200 {
-		writeError(writer, http.StatusBadRequest, "presentation_id must be a non-empty string")
-		return "", iterationInput{}, false
-	}
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	count, err := slideCount(body, false)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	research, err := parseResearch(body["research"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	input := iterationInput{PresentationID: id, Feedback: feedback, SlideCount: count, DetailLevel: choice(body["detail_level"], body["detailLevel"], "balanced", "brief", "concise", "balanced", "detailed", "comprehensive"), Tonality: choice(body["tonality"], nil, "professional", "casual", "professional", "enthusiastic", "persuasive"), Research: research}
-	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) {
-		writeError(writer, http.StatusBadRequest, "Invalid iteration options")
-		return "", iterationInput{}, false
-	}
-	input.AI, err = parseAISelection(body["ai"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	return userID, input, true
 }
 
 func (h *handler) body(writer http.ResponseWriter, request *http.Request, maximum int64) (string, map[string]any, bool) {
@@ -1065,10 +1026,6 @@ func (duplicateOperation) Error() string { return "duplicate operation" }
 type idempotencyConflict struct{}
 
 func (idempotencyConflict) Error() string { return "idempotency conflict" }
-
-func idempotencyKey(request *http.Request) (string, error) {
-	return validateIdempotencyKey(request.Header.Get("Idempotency-Key"))
-}
 
 func validateIdempotencyKey(value string) (string, error) {
 	key := strings.TrimSpace(value)

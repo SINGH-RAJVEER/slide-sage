@@ -625,35 +625,6 @@ func (h *handler) jobStatus(writer http.ResponseWriter, request *http.Request) {
 	writeJSON(writer, http.StatusOK, result)
 }
 
-func (h *handler) jobByIdempotency(writer http.ResponseWriter, request *http.Request) {
-	userID, err := h.identity(request.Context(), request)
-	if err != nil || strings.TrimSpace(userID) == "" {
-		writeError(writer, http.StatusUnauthorized, "Authentication required")
-		return
-	}
-	key, err := validateIdempotencyKey(request.PathValue("key"))
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	kind := strings.TrimSpace(request.URL.Query().Get("kind"))
-	if kind != "generation" && kind != "iteration" {
-		writeError(writer, http.StatusBadRequest, "kind must be generation or iteration")
-		return
-	}
-	var jobID, presentationID string
-	err = h.database.QueryRowContext(request.Context(), `SELECT job.id, job.presentation_id FROM generation_point_operations operation JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3`, userID, kind, key).Scan(&jobID, &presentationID)
-	if errors.Is(err, sql.ErrNoRows) {
-		writeError(writer, http.StatusNotFound, "Generation job not found")
-		return
-	}
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to load generation job")
-		return
-	}
-	writeJSON(writer, http.StatusOK, map[string]any{"id": jobID, "presentation_id": presentationID, "kind": kind})
-}
-
 func (h *handler) jobEvents(writer http.ResponseWriter, request *http.Request) {
 	userID, err := h.identity(request.Context(), request)
 	if err != nil || strings.TrimSpace(userID) == "" {

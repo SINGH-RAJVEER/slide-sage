@@ -7,8 +7,8 @@ import (
 )
 
 func TestPolicyForGeneration(t *testing.T) {
-	policy, ok := policyFor(http.MethodPost, "/generate-presentation-stream")
-	if !ok || policy.limit != 6 || policy.window != time.Minute || !policy.authenticated {
+	policy, ok := policyFor(http.MethodPost, "/presentation-jobs")
+	if !ok || policy.limit != 15 || policy.window != time.Minute || !policy.authenticated {
 		t.Fatalf("policy: %#v", policy)
 	}
 	if _, ok := policyFor(http.MethodGet, "/health"); ok {
