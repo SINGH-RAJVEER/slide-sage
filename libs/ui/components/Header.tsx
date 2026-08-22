@@ -41,7 +41,6 @@ interface HeaderProps {
 	sticky?: boolean;
 	onNavigate: (path: string) => void;
 	onSignOut: () => Promise<void>;
-	activeGeneration?: ReactNode;
 }
 
 export function Header({
@@ -52,7 +51,6 @@ export function Header({
 	sticky = false,
 	onNavigate,
 	onSignOut,
-	activeGeneration,
 }: HeaderProps) {
 	const [signingOut, setSigningOut] = useState(false);
 
@@ -132,7 +130,6 @@ export function Header({
 				)}
 
 				<div className="flex items-center justify-end gap-2 md:w-full md:gap-4">
-					{activeGeneration}
 					{user && (
 						<>
 							<button

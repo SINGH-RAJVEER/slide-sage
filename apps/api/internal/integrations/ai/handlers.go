@@ -40,6 +40,7 @@ func RegisterRoutes(mux *http.ServeMux, connections ConnectionService, identity 
 	mux.HandleFunc("PUT /ai/connections/{provider}", router.updateConnection)
 	mux.HandleFunc("DELETE /ai/connections/{provider}", router.deleteConnection)
 	mux.HandleFunc("PUT /ai/selection", router.selection)
+	mux.HandleFunc("PUT /ai/mode", router.mode)
 }
 
 type aiRouter struct {
@@ -90,12 +91,14 @@ func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
 		}
 		summaries = append(summaries, summary)
 	}
-	selection, err := r.connections.GetSelection(request.Context(), userID)
+	preference, err := r.connections.GetPreference(request.Context(), userID)
 	if err != nil {
 		r.errorResponse(w, err)
 		return
 	}
+	selection := preference.Selection
 	validSelection := selection != nil && validProviders[selection.Provider] && modelAvailable(models, *selection)
+	storedSelection := selection
 	if !validSelection && selection == nil {
 		selection = defaultSelection(models)
 	}
@@ -109,18 +112,7 @@ func (r aiRouter) config(w http.ResponseWriter, request *http.Request) {
 		r.errorResponse(w, err)
 		return
 	}
-	generation := map[string]any{"mode": "openrouter", "model": envOr("OPEN_ROUTER_MODEL", "google/gemma-4-26b-a4b-it"), "billing": "points"}
-	selectionBody := any(nil)
-	if len(validProviders) > 0 {
-		generation["mode"] = "byok"
-		generation["billing"] = "provider"
-		if selection != nil {
-			generation["model"] = selection.Model
-			selectionBody = map[string]string{"provider": string(selection.Provider), "model": selection.Model}
-		} else {
-			generation["model"] = nil
-		}
-	}
+	generation, selectionBody := generationState(preference.UseByok, len(validProviders), selection, storedSelection, envOr("OPEN_ROUTER_MODEL", "google/gemma-4-26b-a4b-it"))
 	balance := float64(balanceMillis) / 1000
 	response := map[string]any{"generation": generation, "eligibility": map[string]any{"eligible": balanceMillis > 50000, "slideTokens": balance, "minimumPointsExclusive": 50}, "connections": summaries, "models": models, "selection": selectionBody}
 	if len(catalogErrors) > 0 {
@@ -268,6 +260,27 @@ func (r aiRouter) selection(w http.ResponseWriter, request *http.Request) {
 	writeAIJSON(w, http.StatusOK, map[string]any{"selection": input})
 }
 
+// mode persists the generation-runtime toggle. Saved keys and the selected
+// model are kept, so switching back on restores direct provider generation.
+func (r aiRouter) mode(w http.ResponseWriter, request *http.Request) {
+	userID, ok := r.userID(w, request)
+	if !ok {
+		return
+	}
+	var input struct {
+		UseByok bool `json:"useByok"`
+	}
+	if err := decodeAIJSON(request, &input); err != nil {
+		aiJSONError(w, err)
+		return
+	}
+	if err := r.connections.SetByokEnabled(request.Context(), userID, input.UseByok); err != nil {
+		r.errorResponse(w, err)
+		return
+	}
+	writeAIJSON(w, http.StatusOK, map[string]any{"useByok": input.UseByok})
+}
+
 func (r aiRouter) userID(w http.ResponseWriter, request *http.Request) (string, bool) {
 	if r.identity == nil {
 		aiError(w, http.StatusUnauthorized, "Unauthorized", "")
@@ -308,6 +321,28 @@ func defaultSelection(models []ModelDescriptor) *Selection {
 		return &Selection{models[0].Provider, models[0].Model}
 	}
 	return nil
+}
+
+// generationState builds the config response's generation block and selection
+// echo. Direct provider mode requires both valid connections and the toggle;
+// with the toggle off, the stored selection is still reported so the settings
+// page can show the model that resumes when it is switched back on.
+func generationState(useByok bool, validProviders int, selection, stored *Selection, openRouterModel string) (map[string]any, any) {
+	generation := map[string]any{"mode": "openrouter", "model": openRouterModel, "billing": "points"}
+	var selectionBody any
+	if validProviders > 0 && useByok {
+		generation["mode"] = "byok"
+		generation["billing"] = "provider"
+		if selection != nil {
+			generation["model"] = selection.Model
+			selectionBody = map[string]string{"provider": string(selection.Provider), "model": selection.Model}
+		} else {
+			generation["model"] = nil
+		}
+	} else if stored != nil {
+		selectionBody = map[string]string{"provider": string(stored.Provider), "model": stored.Model}
+	}
+	return generation, selectionBody
 }
 func modelAvailable(models []ModelDescriptor, selection Selection) bool {
 	for _, model := range models {

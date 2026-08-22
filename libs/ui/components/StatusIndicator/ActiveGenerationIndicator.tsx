@@ -10,13 +10,13 @@ interface ActiveGenerationIndicatorProps {
 	onOpen: (presentationId: string | undefined) => void;
 }
 
+const HEADER_CLEARANCE = "top-[4.5rem] md:top-[5.75rem]";
+
 /**
- * Persistent pill shown while a presentation generates in the background, so a
- * user who navigated away from the generation view can find their way back.
- * Survives reloads because StreamingProvider resumes the durable job.
- *
- * Renders nothing when no provider is mounted or no generation is running, so
- * hosts can mount it unconditionally.
+ * Floating circular loader pinned below the header's top-right corner while a
+ * presentation generates in the background. Clicking it returns to the
+ * generating deck. Survives reloads because StreamingProvider resumes the
+ * durable job; renders nothing when idle or provider-less.
  */
 export function ActiveGenerationIndicator({
 	hidden = false,
@@ -25,20 +25,16 @@ export function ActiveGenerationIndicator({
 	const context = useContext(StreamingContext);
 	if (hidden || !context?.streamingState.isStreaming) return null;
 
-	const label =
-		context.streamingState.prompt?.trim() || context.streamingState.title || "your presentation";
-
 	return (
 		<button
 			type="button"
 			onClick={() => onOpen(context.streamingState.presentationId)}
-			aria-label={`Generation in progress: ${label}. Open it`}
-			className="flex h-9 min-w-0 items-center gap-2 rounded-full border border-blue-400/25 bg-blue-500/10 px-3 text-sm text-blue-200 transition-colors hover:border-blue-300/40 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+			aria-label="A presentation is generating. Open it"
+			title="Presentation generating — click to open"
+			className={`fixed ${HEADER_CLEARANCE} right-4 z-40 flex size-12 items-center justify-center rounded-full border border-blue-400/30 bg-[hsl(222,27%,12%)]/95 text-blue-200 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-md transition-colors hover:border-blue-300/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-400/40 md:right-6`}
 		>
-			<Spinner className="size-3.5 shrink-0" />
-			<span className="hidden font-medium sm:inline">Generating</span>
-			<span className="max-w-24 truncate md:max-w-44">{label}</span>
-			<ChevronRight className="size-3.5 shrink-0 opacity-60" />
+			<Spinner className="size-5" />
+			<ChevronRight className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full bg-[hsl(222,27%,12%)] text-blue-200/80" />
 		</button>
 	);
 }

@@ -20,6 +20,15 @@ type Selection struct {
 	Provider Provider `json:"provider"`
 	Model    string   `json:"model"`
 }
+
+// Preference holds the persisted generation-runtime choice. UseByok keeps
+// direct provider billing selectable while Selection stores the last chosen
+// provider model, even while the toggle routes generation through SlideSage.
+type Preference struct {
+	UseByok   bool
+	Selection *Selection
+}
+
 type ConnectionService struct{ DB *sql.DB }
 
 // Connect validates first, then stores an authenticated AES-GCM encrypted key in ai_provider_connections.
@@ -79,19 +88,44 @@ func (s ConnectionService) List(ctx context.Context, userID string) ([]Connectio
 	return result, rows.Err()
 }
 
-func (s ConnectionService) GetSelection(ctx context.Context, userID string) (*Selection, error) {
+// GetPreference loads the stored generation-runtime preference. Users without
+// a preferences row default to BYOK with no selection.
+func (s ConnectionService) GetPreference(ctx context.Context, userID string) (Preference, error) {
 	if s.DB == nil {
-		return nil, errors.New("database is required")
+		return Preference{}, errors.New("database is required")
 	}
-	var selection Selection
-	err := s.DB.QueryRowContext(ctx, `SELECT selected_provider, selected_model FROM user_ai_preferences WHERE user_id = $1`, userID).Scan(&selection.Provider, &selection.Model)
+	var useByok sql.NullBool
+	var provider, model sql.NullString
+	err := s.DB.QueryRowContext(ctx, `SELECT use_byok, selected_provider, selected_model FROM user_ai_preferences WHERE user_id = $1`, userID).Scan(&useByok, &provider, &model)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+		return Preference{UseByok: true}, nil
 	}
+	if err != nil {
+		return Preference{}, err
+	}
+	preference := Preference{UseByok: !useByok.Valid || useByok.Bool}
+	if provider.Valid && model.Valid {
+		preference.Selection = &Selection{Provider(provider.String), model.String}
+	}
+	return preference, nil
+}
+
+func (s ConnectionService) GetSelection(ctx context.Context, userID string) (*Selection, error) {
+	preference, err := s.GetPreference(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	return &selection, nil
+	return preference.Selection, nil
+}
+
+// SetByokEnabled persists the generation-runtime toggle without touching the
+// saved selection or any stored provider key.
+func (s ConnectionService) SetByokEnabled(ctx context.Context, userID string, enabled bool) error {
+	if s.DB == nil {
+		return errors.New("database is required")
+	}
+	_, err := s.DB.ExecContext(ctx, `INSERT INTO user_ai_preferences (user_id, selected_provider, selected_model, use_byok) VALUES ($1, NULL, NULL, $2) ON CONFLICT (user_id) DO UPDATE SET use_byok = EXCLUDED.use_byok, updated_at = NOW()`, userID, enabled)
+	return err
 }
 
 func (s ConnectionService) SetSelection(ctx context.Context, userID string, selection Selection) error {
@@ -190,14 +224,19 @@ func (s ConnectionService) ResolveSelection(ctx context.Context, userID string, 
 
 // CredentialForGeneration resolves a previously validated provider selection
 // without performing slow model-catalog discovery on every generation request.
+// When the user toggled BYOK off, it reports no credential so generation falls
+// back to point-funded SlideSage OpenRouter while keys remain stored.
 func (s ConnectionService) CredentialForGeneration(ctx context.Context, userID string, requested *Selection) (*Selection, string, error) {
+	preference, err := s.GetPreference(ctx, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	if !preference.UseByok {
+		return nil, "", nil
+	}
 	selected := requested
 	if selected == nil {
-		var err error
-		selected, err = s.GetSelection(ctx, userID)
-		if err != nil {
-			return nil, "", err
-		}
+		selected = preference.Selection
 	}
 	if selected == nil {
 		return nil, "", nil

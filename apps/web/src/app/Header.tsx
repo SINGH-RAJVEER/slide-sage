@@ -1,6 +1,5 @@
 import { useAuth } from "@slidesage/ui";
 import { type HeaderRoutes, Header as HeaderView } from "@slidesage/ui/components/Header";
-import { ActiveGenerationIndicator } from "@slidesage/ui/components/StatusIndicator/ActiveGenerationIndicator";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
 
@@ -30,20 +29,6 @@ export default function Header({ sticky = false }: { sticky?: boolean }) {
 			sticky={sticky}
 			onNavigate={navigate}
 			onSignOut={signOut}
-			activeGeneration={
-				<ActiveGenerationIndicator
-					hidden={
-						location.pathname === ROUTES.presentation ||
-						Boolean(
-							location.pathname.startsWith(`${ROUTES.presentations}/`) &&
-								location.pathname !== ROUTES.presentations,
-						)
-					}
-					onOpen={(presentationId) =>
-						navigate(presentationId ? ROUTES.presentationById(presentationId) : ROUTES.presentation)
-					}
-				/>
-			}
 		/>
 	);
 }

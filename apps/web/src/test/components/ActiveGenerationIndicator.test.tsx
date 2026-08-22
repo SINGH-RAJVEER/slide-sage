@@ -73,10 +73,9 @@ it("shows a running generation and opens it, even after navigating away", async 
 		fireEvent.click(view.getByRole("button", { name: "Start" }));
 
 		await waitFor(() => {
-			expect(view.getByRole("button", { name: /Generation in progress/ })).toBeInTheDocument();
+			expect(view.getByRole("button", { name: /A presentation is generating/ })).toBeInTheDocument();
 		});
-		const pill = view.getByRole("button", { name: /Generation in progress/ });
-		expect(pill).toHaveTextContent("solar policy deck");
+		const pill = view.getByRole("button", { name: /A presentation is generating/ });
 		fireEvent.click(pill);
 		expect(onOpen).toHaveBeenCalledWith("pres_9");
 	} finally {
