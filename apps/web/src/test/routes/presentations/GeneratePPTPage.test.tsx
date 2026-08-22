@@ -133,6 +133,103 @@ it("opens the viewer immediately while generation waits for the stream", async (
 	}
 });
 
+it("starts generation on Enter even when focus sits on an options-bar control", async () => {
+	const originalFetch = globalThis.fetch;
+	const fetchMock = mock(async (input: string | URL | Request, init?: RequestInit) => {
+		if (String(input).includes("/ai/config")) {
+			return Response.json({
+				generation: { mode: "openrouter", model: "openrouter/default", billing: "points" },
+				eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+				connections: [],
+				models: [],
+				selection: null,
+			});
+		}
+		if (String(input).includes("/presentation-jobs")) {
+			generationBody = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+			return Response.json(
+				{ job_id: "job_1", presentation_id: "pres_1", status: "queued" },
+				{ status: 202 },
+			);
+		}
+		return new Response('id: 1\nevent: saved\ndata: {"presentation_id":"pres_1"}\n\n', {
+			status: 200,
+			headers: { "Content-Type": "text/event-stream" },
+		});
+	});
+	globalThis.fetch = fetchMock as unknown as typeof fetch;
+	let generationBody: Record<string, unknown> | undefined;
+
+	try {
+		const view = render(
+			<MemoryRouter
+				initialEntries={[
+					{
+						pathname: "/generate",
+						state: {
+							retry: {
+								prompt: "Enter submits from anywhere",
+								slide_count: 5,
+								detail_level: "balanced",
+								tonality: "professional",
+								research_enabled: false,
+							},
+						},
+					},
+				]}
+			>
+				<StreamingProvider>
+					<Routes>
+						<Route path="/generate" element={<GeneratePPTPage />} />
+						<Route path="/presentation" element={<div>Viewer waiting for stream</div>} />
+					</Routes>
+				</StreamingProvider>
+			</MemoryRouter>,
+		);
+
+		// Focus a dropdown trigger as if the user had just picked an option.
+		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
+		fireEvent.click(view.getByRole("button", { name: /Length:/ }));
+		fireEvent.keyDown(view.getByRole("button", { name: /Length:/ }), { key: "Enter" });
+
+		await waitFor(() => expect(generationBody?.["topic"]).toBe("Enter submits from anywhere"));
+		expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("focuses the prompt box on Enter when the prompt is empty", async () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = mock(async () =>
+		Response.json({
+			generation: { mode: "openrouter", model: "openrouter/default", billing: "points" },
+			eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+			connections: [],
+			models: [],
+			selection: null,
+		}),
+	) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<MemoryRouter initialEntries={["/generate"]}>
+				<StreamingProvider>
+					<Routes>
+						<Route path="/generate" element={<GeneratePPTPage />} />
+					</Routes>
+				</StreamingProvider>
+			</MemoryRouter>,
+		);
+
+		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
+		fireEvent.keyDown(view.getByRole("button", { name: /Length:/ }), { key: "Enter" });
+		expect(document.getElementById("prompt")).toHaveFocus();
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
 it("preserves retry AI selection when routing through research", async () => {
 	const originalFetch = globalThis.fetch;
 	globalThis.fetch = mock(async () =>

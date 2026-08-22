@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -294,6 +295,7 @@ func (r aiRouter) errorResponse(w http.ResponseWriter, err error) {
 		writeAIJSON(w, http.StatusForbidden, map[string]any{"error": map[string]string{"message": err.Error(), "code": "BYOK_POINTS_REQUIRED"}, "minimum_points_exclusive": 50})
 		return
 	}
+	log.Printf("ai connection request failed: %v", err)
 	aiError(w, http.StatusBadRequest, "AI provider request failed", "")
 }
 func defaultSelection(models []ModelDescriptor) *Selection {
