@@ -61,7 +61,12 @@ these states:
 
 River permits up to three attempts for the generation job. Each attempt has a
 seven-minute timeout for the sequential planning and drafting calls, whose HTTP
-client timeout is three minutes per call. River rescues jobs left running for
+client timeout is three minutes per call. Within a single attempt, provider
+requests retry transient failures in process: `429` and `5xx` responses are
+retried up to four total attempts with exponential backoff starting at two
+seconds and capped at fifteen seconds, and the provider's `Retry-After` header
+overrides the computed delay when it is longer. Context cancellation stops the
+backoff immediately. River rescues jobs left running for
 eight minutes. On shutdown the worker marks itself unready, cancels maintenance,
 and asks River to drain active jobs. River cancels remaining work after its
 six-second soft-stop timeout so queue state can finalize within the Cloud Run

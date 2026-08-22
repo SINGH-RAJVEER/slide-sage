@@ -27,6 +27,9 @@ import (
 const (
 	maxBodyBytes         = 256 * 1024
 	defaultModel         = "google/gemma-4-26b-a4b-it"
+	providerMaxAttempts  = 4
+	providerInitialWait  = 2 * time.Second
+	providerMaximumWait  = 15 * time.Second
 	planningSystemPrompt = `Return exactly one JSON object and no Markdown. Create a DeckPlan with title, audience, thesis, style, and slides. style must be minimal, visual, classic, or consultant. Return exactly the requested number of slides. Each slide requires id, purpose, title, message, evidence, and visualIntent. purpose must be cover, section, context, problem, insight, solution, evidence, comparison, process, recommendation, or closing. visualIntent must be one of these data-only shapes:
 - {"kind":"none"}
 - {"kind":"image-hero","imagePrompt":"Specific visual direction","focalPoint":"center"}
@@ -130,6 +133,66 @@ type handler struct {
 	streamContext context.Context
 	streams       *streamLimiter
 	research      *presentation.ExaResearchService
+	sleep         func(context.Context, time.Duration) error
+}
+
+// doProviderRequest sends a provider request and retries transient failures
+// (429 and 5xx) with exponential backoff, honoring Retry-After when present.
+func (h *handler) doProviderRequest(ctx context.Context, send func() (*http.Response, error)) (*http.Response, error) {
+	for attempt := 0; ; attempt++ {
+		response, err := send()
+		if err != nil {
+			return nil, err
+		}
+		if !retryableStatus(response.StatusCode) || attempt == providerMaxAttempts-1 {
+			return response, nil
+		}
+		delay := backoffDelay(attempt)
+		if after := parseRetryAfter(response.Header.Get("Retry-After")); after > delay {
+			delay = min(after, providerMaximumWait)
+		}
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 16*1024))
+		response.Body.Close()
+		if err := h.wait(ctx, delay); err != nil {
+			return nil, err
+		}
+	}
+}
+
+func (h *handler) wait(ctx context.Context, delay time.Duration) error {
+	if h.sleep != nil {
+		return h.sleep(ctx, delay)
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+func retryableStatus(status int) bool {
+	return status == http.StatusTooManyRequests || status >= 500
+}
+
+func backoffDelay(attempt int) time.Duration {
+	delay := providerInitialWait << attempt
+	return min(delay, providerMaximumWait)
+}
+
+func parseRetryAfter(value string) time.Duration {
+	value = strings.TrimSpace(value)
+	if seconds, err := strconv.Atoi(value); err == nil && seconds > 0 {
+		return time.Duration(seconds) * time.Second
+	}
+	if when, err := http.ParseTime(value); err == nil {
+		if remaining := time.Until(when); remaining > 0 {
+			return remaining
+		}
+	}
+	return 0
 }
 
 type streamLimiter struct {
@@ -518,15 +581,18 @@ func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user 
 	if endpoint == "" {
 		endpoint = "https://openrouter.ai/api/v1/chat/completions"
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
-	if err != nil {
-		return nil, 0, err
+	send := func() (*http.Response, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+key)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("HTTP-Referer", strings.TrimSpace(os.Getenv("BASE_URL")))
+		req.Header.Set("X-OpenRouter-Title", "Slide Sage")
+		return h.client.Do(req)
 	}
-	req.Header.Set("Authorization", "Bearer "+key)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("HTTP-Referer", strings.TrimSpace(os.Getenv("BASE_URL")))
-	req.Header.Set("X-OpenRouter-Title", "Slide Sage")
-	response, err := h.client.Do(req)
+	response, err := h.doProviderRequest(ctx, send)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -612,14 +678,17 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	if err != nil {
 		return nil, 0, err
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
-	if err != nil {
-		return nil, 0, err
+	send := func() (*http.Response, error) {
+		request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
+		if err != nil {
+			return nil, err
+		}
+		for name, value := range headers {
+			request.Header.Set(name, value)
+		}
+		return h.client.Do(request)
 	}
-	for name, value := range headers {
-		request.Header.Set(name, value)
-	}
-	response, err := h.client.Do(request)
+	response, err := h.doProviderRequest(ctx, send)
 	if err != nil {
 		return nil, 0, err
 	}

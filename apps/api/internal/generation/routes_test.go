@@ -3,6 +3,8 @@ package generation
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -170,6 +172,115 @@ func TestStreamLimiterEnforcesGlobalAndPerUserLimits(t *testing.T) {
 	limiter.release("user-1")
 	if !limiter.acquire("user-3") {
 		t.Fatal("released stream capacity was not reused")
+	}
+}
+
+func TestDoProviderRequestRetriesTransientFailures(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		attempts++
+		if attempts < 3 {
+			writer.Header().Set("Retry-After", "10")
+			writer.WriteHeader(http.StatusTooManyRequests)
+			_, _ = writer.Write([]byte(`{"error":{"code":429}}`))
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"choices":[{"message":{"content":"{\"title\":\"Done\",\"slides\":[]}"}}],"usage":{"total_tokens":10}}`))
+	}))
+	defer server.Close()
+
+	var waits []time.Duration
+	handler := &handler{client: server.Client(), sleep: func(_ context.Context, delay time.Duration) error {
+		waits = append(waits, delay)
+		return nil
+	}}
+	send := func() (*http.Response, error) {
+		return handler.client.Post(server.URL, "application/json", strings.NewReader(`{}`))
+	}
+	response, err := handler.doProviderRequest(context.Background(), send)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d", response.StatusCode)
+	}
+	if attempts != 3 {
+		t.Fatalf("attempts = %d", attempts)
+	}
+	if len(waits) != 2 || waits[0] != 10*time.Second || waits[1] != 10*time.Second {
+		t.Fatalf("waits = %v, want Retry-After honored on every retry", waits)
+	}
+}
+
+func TestDoProviderRequestGivesUpAfterMaxAttempts(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		attempts++
+		writer.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+
+	handler := &handler{client: server.Client(), sleep: func(context.Context, time.Duration) error { return nil }}
+	send := func() (*http.Response, error) {
+		return handler.client.Post(server.URL, "application/json", strings.NewReader(`{}`))
+	}
+	response, err := handler.doProviderRequest(context.Background(), send)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if attempts != providerMaxAttempts {
+		t.Fatalf("attempts = %d, want %d", attempts, providerMaxAttempts)
+	}
+	if response.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("final status = %d", response.StatusCode)
+	}
+}
+
+func TestDoProviderRequestDoesNotRetryClientErrors(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		attempts++
+		writer.WriteHeader(http.StatusBadRequest)
+	}))
+	defer server.Close()
+
+	handler := &handler{client: server.Client(), sleep: func(context.Context, time.Duration) error {
+		t.Fatal("no request should wait on a non-retryable status")
+		return nil
+	}}
+	send := func() (*http.Response, error) {
+		return handler.client.Post(server.URL, "application/json", strings.NewReader(`{}`))
+	}
+	response, err := handler.doProviderRequest(context.Background(), send)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if attempts != 1 {
+		t.Fatalf("attempts = %d, want 1", attempts)
+	}
+}
+
+func TestParseRetryAfter(t *testing.T) {
+	if got := parseRetryAfter(""); got != 0 {
+		t.Fatalf("empty header = %v", got)
+	}
+	if got := parseRetryAfter("7"); got != 7*time.Second {
+		t.Fatalf("seconds header = %v", got)
+	}
+	if got := parseRetryAfter(time.Now().Add(30*time.Second).UTC().Format(http.TimeFormat)); got <= 0 || got > time.Minute {
+		t.Fatalf("date header = %v", got)
+	}
+}
+
+func TestBackoffDelayIsBoundedAndExponential(t *testing.T) {
+	for attempt, want := range []time.Duration{2 * time.Second, 4 * time.Second, 8 * time.Second, providerMaximumWait} {
+		if got := backoffDelay(attempt); got != want {
+			t.Fatalf("backoffDelay(%d) = %v, want %v", attempt, got, want)
+		}
 	}
 }
 
