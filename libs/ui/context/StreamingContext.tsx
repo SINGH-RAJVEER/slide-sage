@@ -14,6 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { API_URL, readJsonResponse } from "../lib/api";
 import { publishPointsBalance } from "../lib/points";
 import { publishPresentationUpdated } from "../lib/presentation-events";
+import { consumeSSEStream } from "../lib/sse-stream";
 
 const ACTIVE_GENERATION_KEY = "slidesage-active-generation";
 
@@ -113,6 +114,43 @@ export interface StreamingState {
 }
 
 type ResearchPreviewStatus = "idle" | "loading" | "ready" | "error";
+
+interface ResearchEventPayload {
+	status?: StreamingState["researchStatus"];
+	sources?: Source[];
+}
+
+interface StageEventPayload {
+	stage?: PresentationGenerationStage;
+	message?: string;
+	completed?: number;
+	total?: number;
+}
+
+interface SlideEventPayload {
+	index?: number;
+	slide: Slide;
+	title?: string;
+}
+
+interface CreatedEventPayload {
+	job_id?: string;
+	presentation_id: string;
+}
+
+interface SavedEventPayload {
+	presentation_id?: string;
+	slide_tokens_remaining?: number;
+}
+
+interface ErrorEventPayload {
+	error?: string;
+	presentation_id?: string;
+}
+
+interface ThemeEventPayload {
+	theme: string;
+}
 
 interface ResearchPreviewRequest {
 	prompt: string;
@@ -243,6 +281,92 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		},
 		[],
 	);
+
+	// Shared SSE event appliers used by the generation, iteration, and resume
+	// stream loops so every path updates state identically.
+	const applyStartEvent = () => {
+		setStreamingState((prev) => ({
+			...prev,
+			researchStatus:
+				prev.researchStatus && prev.researchStatus !== "idle" ? "generating" : prev.researchStatus,
+		}));
+	};
+
+	const applyResearchEvent = (data: ResearchEventPayload) => {
+		setStreamingState((prev) => ({
+			...prev,
+			researchStatus: data.status || prev.researchStatus,
+			researchSources: data.sources ?? prev.researchSources,
+		}));
+	};
+
+	const applyStageEvent = (data: StageEventPayload) => {
+		setStreamingState((prev) => ({
+			...prev,
+			generationStage: data.stage,
+			generationMessage: data.message,
+			generationProgress: { completed: data.completed ?? 0, total: data.total ?? 0 },
+		}));
+	};
+
+	const applyOutlineEvent = (data: PresentationOutline) => {
+		setStreamingState((prev) => ({ ...prev, outline: data, title: data.title || prev.title }));
+	};
+
+	const applyPlanEvent = (data: DeckPlan) => {
+		setStreamingState((prev) => ({ ...prev, deckPlan: data, title: data.title || prev.title }));
+	};
+
+	const applyThemeEvent = (data: ThemeEventPayload) => {
+		setStreamingState((prev) => ({ ...prev, theme: data.theme }));
+	};
+
+	const applyRetryEvent = (title: string) => {
+		setStreamingState((prev) => ({
+			...prev,
+			slides: [],
+			theme: "corporate-blue",
+			title,
+			totalSlides: 0,
+			isComplete: false,
+			error: undefined,
+		}));
+	};
+
+	const applySlideEvent = (data: SlideEventPayload) => {
+		setStreamingState((prev) => {
+			const slides = [...prev.slides];
+			const index = Number(data.index);
+			if (Number.isInteger(index) && index >= 0) {
+				slides[index] = data.slide;
+			} else {
+				const existingIndex = slides.findIndex((slide) => slide.id === data.slide.id);
+				if (existingIndex >= 0) {
+					slides[existingIndex] = data.slide;
+				} else {
+					slides.push(data.slide);
+				}
+			}
+			return {
+				...prev,
+				slides,
+				title: data.title || prev.title,
+				totalSlides: slides.length,
+			};
+		});
+	};
+
+	const applyCompleteEvent = (data: PresentationData) => {
+		setStreamingState((prev) => ({
+			...prev,
+			completedDocument: data,
+			theme: data.theme || prev.theme,
+			title: data.title || prev.title,
+			slides: data.slides || prev.slides,
+			totalSlides:
+				data.totalSlides || (data.slides ? data.slides.length : prev.slides.length),
+		}));
+	};
 
 	const releaseActiveStream = useCallback((owner?: AbortController) => {
 		if (owner && abortControllerRef.current !== owner) return;
@@ -596,272 +720,158 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				}
 
 				readerRef.current = reader;
-				const decoder = new TextDecoder();
-				let buffer = "";
-				let currentEvent = ""; // Persist across reads
-				let receivedComplete = false;
-				let receivedError = false;
-				let receivedSaved = false;
 				let streamedPresentationId = responsePresentationId;
 				let streamedJobId = responseJobId;
-				let currentEventId = 0;
+				let receivedComplete = false;
 				let completedData: PresentationData | null = null;
 
 				const processStream = async () => {
 					try {
-						while (true) {
-							const { done, value } = await reader.read();
-							if (done) break;
+						await consumeSSEStream(reader, ({ event, id, data }) => {
+							switch (event) {
+								case "start":
+									applyStartEvent();
+									break;
 
-							buffer += decoder.decode(value, { stream: true });
-							const lines = buffer.split("\n");
-							buffer = lines.pop() || "";
+								case "research":
+									applyResearchEvent(data as ResearchEventPayload);
+									break;
 
-							for (const line of lines) {
-								if (line.startsWith("id: ")) {
-									currentEventId = Number(line.slice(4).trim()) || currentEventId;
-								} else if (line.startsWith("event: ")) {
-									currentEvent = line.slice(7).trim();
-								} else if (line.startsWith("data: ") && currentEvent) {
-									const dataStr = line.slice(6);
-									try {
-										const data = JSON.parse(dataStr);
+								case "stage":
+									applyStageEvent(data as StageEventPayload);
+									break;
 
-										switch (currentEvent) {
-											case "start":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus:
-														prev.researchStatus && prev.researchStatus !== "idle"
-															? "generating"
-															: prev.researchStatus,
-												}));
-												break;
+								case "outline":
+									applyOutlineEvent(data as PresentationOutline);
+									break;
 
-											case "research":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus: data.status || prev.researchStatus,
-													researchSources: data.sources ?? prev.researchSources,
-												}));
-												break;
+								case "plan":
+									applyPlanEvent(data as DeckPlan);
+									break;
 
-											case "stage":
-												setStreamingState((prev) => ({
-													...prev,
-													generationStage: data.stage,
-													generationMessage: data.message,
-													generationProgress: {
-														completed: data.completed,
-														total: data.total,
-													},
-												}));
-												break;
-
-											case "outline":
-												setStreamingState((prev) => ({
-													...prev,
-													outline: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "plan":
-												setStreamingState((prev) => ({
-													...prev,
-													deckPlan: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "created":
-												streamedPresentationId = data.presentation_id;
-												streamedJobId = data.job_id;
-												if (streamedJobId) {
-													storeGeneration({
-														jobId: streamedJobId,
-														idempotencyKey: requestIdempotencyKey,
-														presentationId: data.presentation_id,
-														operation: "generation",
-														prompt,
-														requestedSlides: slideCount,
-														theme,
-														lastEventId: currentEventId,
-													});
-												}
-												// Presentation record created - store the ID immediately
-												setStreamingState((prev) => ({
-													...prev,
-													jobId: data.job_id,
-													presentationId: data.presentation_id,
-												}));
-												break;
-
-											case "theme":
-												setStreamingState((prev) => ({
-													...prev,
-													theme: data.theme,
-												}));
-												break;
-
-											case "retry":
-												setStreamingState((prev) => ({
-													...prev,
-													slides: [],
-													theme: "corporate-blue",
-													title: "Untitled Presentation",
-													totalSlides: 0,
-													isComplete: false,
-													error: undefined,
-												}));
-												break;
-
-											case "slide":
-												setStreamingState((prev) => {
-													const newSlides = [...prev.slides];
-													const index = Number(data.index);
-													if (Number.isInteger(index) && index >= 0) {
-														newSlides[index] = data.slide;
-													} else {
-														const existingIndex = newSlides.findIndex(
-															(slide) => slide.id === data.slide.id,
-														);
-														if (existingIndex >= 0) {
-															newSlides[existingIndex] = data.slide;
-														} else {
-															newSlides.push(data.slide);
-														}
-													}
-													console.log(
-														"Adding slide",
-														data.slide.id,
-														"Total slides:",
-														newSlides.length,
-													);
-													return {
-														...prev,
-														slides: newSlides,
-														title: data.title || prev.title,
-														totalSlides: newSlides.length,
-													};
-												});
-												break;
-
-											case "complete":
-												receivedComplete = true;
-												completedData = data as PresentationData;
-												setStreamingState((prev) => ({
-													...prev,
-													completedDocument: data,
-													isComplete: receivedSaved,
-													theme: data.theme || prev.theme,
-													title: data.title || prev.title,
-													slides: data.slides || prev.slides,
-													totalSlides:
-														data.totalSlides ||
-														(data.slides ? data.slides.length : prev.slides.length),
-												}));
-												break;
-
-											case "saved":
-												receivedSaved = true;
-												clearStoredGeneration(streamedJobId || "");
-												// Final save confirmation - update presentation ID if provided
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: true,
-													presentationId: data.presentation_id || prev.presentationId,
-													researchStatus:
-														prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
-												}));
-												console.log("Presentation saved:", data.presentation_id);
-												publishPresentationUpdated(data.presentation_id);
-												publishPointsBalance(data.slide_tokens_remaining);
-												return;
-
-											case "save_error":
-												console.error("Save error:", data.error);
-												// Don't set streaming to false, just log the error
-												break;
-
-											case "error":
-												receivedError = true;
-												clearStoredGeneration(streamedJobId || "");
-												if (data.presentation_id) {
-													publishPresentationUpdated(data.presentation_id);
-												}
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: false,
-													error: data.error,
-													researchStatus: "idle",
-												}));
-												return;
-										}
-
-										// Reset event after processing
-										currentEvent = "";
-									} catch (parseErr) {
-										console.error("Failed to parse SSE data:", parseErr);
+								case "created": {
+									const payload = data as CreatedEventPayload;
+									streamedPresentationId = payload.presentation_id;
+									streamedJobId = payload.job_id;
+									if (streamedJobId) {
+										storeGeneration({
+											jobId: streamedJobId,
+											idempotencyKey: requestIdempotencyKey,
+											presentationId: payload.presentation_id,
+											operation: "generation",
+											prompt,
+											requestedSlides: slideCount,
+											theme,
+											lastEventId: id,
+										});
 									}
-								}
-							}
-						}
-
-						if (!receivedComplete || !receivedSaved || receivedError) {
-							if (!receivedError) {
-								if (streamedJobId) {
-									releaseActiveStream(controller);
-									setReconnectVersion((version) => version + 1);
-									return;
-								}
-								const persisted = streamedPresentationId
-									? await fetchPersistedPresentation(
-											streamedPresentationId,
-											controller.signal,
-										).catch(() => null)
-									: null;
-								if (controller.signal.aborted || abortControllerRef.current !== controller) return;
-								const persistedSlides = persisted?.slides ?? [];
-								const generatedSlides = completedData?.slides ?? [];
-								if (
-									persisted &&
-									(persisted as (PresentationData & { status?: string }) | null)?.status ===
-										"ready" &&
-									persistedSlides.length > 0 &&
-									JSON.stringify(persistedSlides) === JSON.stringify(generatedSlides)
-								) {
+									// Presentation record created - store the ID immediately
 									setStreamingState((prev) => ({
 										...prev,
-										...persisted,
-										completedDocument: persisted,
-										presentationId: streamedPresentationId,
-										slides: persistedSlides,
-										totalSlides: persistedSlides.length,
+										jobId: payload.job_id,
+										presentationId: payload.presentation_id,
+									}));
+									break;
+								}
+
+								case "theme":
+									applyThemeEvent(data as ThemeEventPayload);
+									break;
+
+								case "retry":
+									applyRetryEvent("Untitled Presentation");
+									break;
+
+								case "slide":
+									applySlideEvent(data as SlideEventPayload);
+									break;
+
+								case "complete":
+									receivedComplete = true;
+									completedData = data as PresentationData;
+									applyCompleteEvent(completedData);
+									break;
+
+								case "saved": {
+									const payload = data as SavedEventPayload;
+									clearStoredGeneration(streamedJobId || "");
+									// Final save confirmation - update presentation ID if provided
+									setStreamingState((prev) => ({
+										...prev,
 										isStreaming: false,
 										isComplete: true,
-										error: undefined,
+										presentationId: payload.presentation_id || prev.presentationId,
+										researchStatus:
+											prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
 									}));
-									publishPresentationUpdated(streamedPresentationId);
-									return;
+									publishPresentationUpdated(payload.presentation_id);
+									publishPointsBalance(payload.slide_tokens_remaining);
+									return false;
 								}
-								setStreamingState((prev) => ({
-									...prev,
-									isStreaming: false,
-									isComplete: false,
-									error: "Generation stream ended before the presentation was completed.",
-								}));
+
+								case "save_error":
+									console.error("Save error:", (data as ErrorEventPayload).error);
+									break;
+
+								case "error": {
+									const payload = data as ErrorEventPayload;
+									clearStoredGeneration(streamedJobId || "");
+									if (payload.presentation_id) {
+										publishPresentationUpdated(payload.presentation_id);
+									}
+									setStreamingState((prev) => ({
+										...prev,
+										isStreaming: false,
+										isComplete: false,
+										error: payload.error,
+										researchStatus: "idle",
+									}));
+									return false;
+								}
 							}
+						});
+
+						// The stream ended without a terminal saved/error event.
+						if (streamedJobId) {
+							releaseActiveStream(controller);
+							setReconnectVersion((version) => version + 1);
 							return;
 						}
 
+						const persisted = streamedPresentationId
+							? await fetchPersistedPresentation(streamedPresentationId, controller.signal).catch(
+									() => null,
+								)
+							: null;
+						if (controller.signal.aborted || abortControllerRef.current !== controller) return;
+						const persistedSlides = persisted?.slides ?? [];
+						const generatedSlides = completedData?.slides ?? [];
+						if (
+							receivedComplete &&
+							persisted &&
+							(persisted as (PresentationData & { status?: string }) | null)?.status === "ready" &&
+							persistedSlides.length > 0 &&
+							JSON.stringify(persistedSlides) === JSON.stringify(generatedSlides)
+						) {
+							setStreamingState((prev) => ({
+								...prev,
+								...persisted,
+								completedDocument: persisted,
+								presentationId: streamedPresentationId,
+								slides: persistedSlides,
+								totalSlides: persistedSlides.length,
+								isStreaming: false,
+								isComplete: true,
+								error: undefined,
+							}));
+							publishPresentationUpdated(streamedPresentationId);
+							return;
+						}
 						setStreamingState((prev) => ({
 							...prev,
 							isStreaming: false,
-							isComplete: true,
-							researchStatus: prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
+							isComplete: false,
+							error: "Generation stream ended before the presentation was completed.",
 						}));
 					} catch (streamErr: unknown) {
 						const isAbort = streamErr instanceof Error && streamErr.name === "AbortError";
@@ -1068,262 +1078,149 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				}
 
 				readerRef.current = reader;
-				const decoder = new TextDecoder();
-				let buffer = "";
-				let currentEvent = ""; // Persist across reads
-				let receivedComplete = false;
-				let receivedError = false;
-				let receivedSaved = false;
 				let streamedJobId = responseJobId;
-				let currentEventId = 0;
+				let receivedComplete = false;
 				let completedData: PresentationData | null = null;
 
 				const processStream = async () => {
 					try {
-						while (true) {
-							const { done, value } = await reader.read();
-							if (done) break;
-
-							buffer += decoder.decode(value, { stream: true });
-							const lines = buffer.split("\n");
-							buffer = lines.pop() || "";
-
-							for (const line of lines) {
-								if (line.startsWith("id: ")) {
-									currentEventId = Number(line.slice(4).trim()) || currentEventId;
-								} else if (line.startsWith("event: ")) {
-									currentEvent = line.slice(7).trim();
-								} else if (line.startsWith("data: ") && currentEvent) {
-									const dataStr = line.slice(6);
-									try {
-										const data = JSON.parse(dataStr);
-
-										switch (currentEvent) {
-											case "created":
-												streamedJobId = data.job_id;
-												if (streamedJobId) {
-													storeGeneration({
-														jobId: streamedJobId,
-														idempotencyKey: requestIdempotencyKey,
-														presentationId: data.presentation_id || parentPresentationId,
-														operation: "iteration",
-														prompt,
-														requestedSlides: slideCount,
-														theme: "corporate-blue",
-														lastEventId: currentEventId,
-													});
-												}
-												setStreamingState((prev) => ({ ...prev, jobId: data.job_id }));
-												break;
-
-											case "start":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus:
-														prev.researchStatus && prev.researchStatus !== "idle"
-															? "generating"
-															: prev.researchStatus,
-												}));
-												break;
-
-											case "research":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus: data.status || prev.researchStatus,
-													researchSources: data.sources ?? prev.researchSources,
-												}));
-												break;
-
-											case "stage":
-												setStreamingState((prev) => ({
-													...prev,
-													generationStage: data.stage,
-													generationMessage: data.message,
-													generationProgress: {
-														completed: data.completed,
-														total: data.total,
-													},
-												}));
-												break;
-
-											case "outline":
-												setStreamingState((prev) => ({
-													...prev,
-													outline: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "plan":
-												setStreamingState((prev) => ({
-													...prev,
-													deckPlan: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "theme":
-												setStreamingState((prev) => ({
-													...prev,
-													theme: data.theme,
-												}));
-												break;
-
-											case "retry":
-												setStreamingState((prev) => ({
-													...prev,
-													slides: [],
-													theme: "corporate-blue",
-													title: "Updated Presentation",
-													totalSlides: 0,
-													isComplete: false,
-													error: undefined,
-												}));
-												break;
-
-											case "slide":
-												setStreamingState((prev) => {
-													const newSlides = [...prev.slides];
-													const index = Number(data.index);
-													if (Number.isInteger(index) && index >= 0) {
-														newSlides[index] = data.slide;
-													} else {
-														const existingIndex = newSlides.findIndex(
-															(slide) => slide.id === data.slide.id,
-														);
-														if (existingIndex >= 0) {
-															newSlides[existingIndex] = data.slide;
-														} else {
-															newSlides.push(data.slide);
-														}
-													}
-													console.log(
-														"Adding slide",
-														data.slide.id,
-														"Total slides:",
-														newSlides.length,
-													);
-													return {
-														...prev,
-														slides: newSlides,
-														title: data.title || prev.title,
-														totalSlides: newSlides.length,
-													};
-												});
-												break;
-
-											case "complete":
-												receivedComplete = true;
-												completedData = data as PresentationData;
-												setStreamingState((prev) => ({
-													...prev,
-													completedDocument: data,
-													isComplete: receivedSaved,
-													theme: data.theme || prev.theme,
-													title: data.title || prev.title,
-													// Use complete slides data if available to ensure consistency
-													slides: data.slides || prev.slides,
-													totalSlides:
-														data.totalSlides ||
-														(data.slides ? data.slides.length : prev.slides.length),
-												}));
-												break;
-
-											case "saved":
-												receivedSaved = true;
-												clearStoredGeneration(streamedJobId || "");
-												// Iteration saved - presentation updated in place
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: true,
-													presentationId: data.presentation_id || prev.presentationId,
-													researchStatus:
-														prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
-												}));
-												console.log("Iteration saved to presentation:", data.presentation_id);
-												publishPresentationUpdated(data.presentation_id || parentPresentationId);
-												publishPointsBalance(data.slide_tokens_remaining);
-												return;
-
-											case "save_error":
-												console.error("Save error during iteration:", data.error);
-												break;
-
-											case "error":
-												receivedError = true;
-												clearStoredGeneration(streamedJobId || "");
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: false,
-													error: data.error,
-													researchStatus: "idle",
-												}));
-												return;
-										}
-
-										// Reset event after processing
-										currentEvent = "";
-									} catch (parseErr) {
-										console.error("Failed to parse SSE data:", parseErr);
+						await consumeSSEStream(reader, ({ event, id, data }) => {
+							switch (event) {
+								case "created": {
+									const payload = data as CreatedEventPayload;
+									streamedJobId = payload.job_id;
+									if (streamedJobId) {
+										storeGeneration({
+											jobId: streamedJobId,
+											idempotencyKey: requestIdempotencyKey,
+											presentationId: payload.presentation_id || parentPresentationId,
+											operation: "iteration",
+											prompt,
+											requestedSlides: slideCount,
+											theme: "corporate-blue",
+											lastEventId: id,
+										});
 									}
+									setStreamingState((prev) => ({ ...prev, jobId: payload.job_id }));
+									break;
 								}
-							}
-						}
 
-						if (!receivedComplete || !receivedSaved || receivedError) {
-							if (!receivedError) {
-								if (streamedJobId) {
-									releaseActiveStream(controller);
-									setReconnectVersion((version) => version + 1);
-									return;
-								}
-								const persisted = await fetchPersistedPresentation(
-									parentPresentationId,
-									controller.signal,
-								).catch(() => null);
-								if (controller.signal.aborted || abortControllerRef.current !== controller) return;
-								const persistedSlides = persisted?.slides ?? [];
-								const generatedSlides = completedData?.slides ?? [];
-								if (
-									persisted &&
-									(persisted as (PresentationData & { status?: string }) | null)?.status ===
-										"ready" &&
-									persistedSlides.length > 0 &&
-									JSON.stringify(persistedSlides) === JSON.stringify(generatedSlides)
-								) {
-									setStreamingState((prev) => ({
-										...prev,
-										...persisted,
-										completedDocument: persisted,
-										presentationId: parentPresentationId,
-										slides: persistedSlides,
-										totalSlides: persistedSlides.length,
-										isStreaming: false,
-										isComplete: true,
-										error: undefined,
-									}));
-									publishPresentationUpdated(parentPresentationId);
-									return;
-								}
+								case "start":
+									applyStartEvent();
+									break;
+
+							case "research":
+								applyResearchEvent(data as ResearchEventPayload);
+								break;
+
+							case "stage":
+								applyStageEvent(data as StageEventPayload);
+								break;
+
+							case "outline":
+								applyOutlineEvent(data as PresentationOutline);
+								break;
+
+							case "plan":
+								applyPlanEvent(data as DeckPlan);
+								break;
+
+							case "theme":
+								applyThemeEvent(data as ThemeEventPayload);
+								break;
+
+							case "retry":
+								applyRetryEvent("Updated Presentation");
+								break;
+
+							case "slide":
+								applySlideEvent(data as SlideEventPayload);
+								break;
+
+							case "complete":
+								receivedComplete = true;
+								completedData = data as PresentationData;
+								// Use complete slides data if available to ensure consistency
+								applyCompleteEvent(completedData);
+								break;
+
+							case "saved": {
+								const payload = data as SavedEventPayload;
+								clearStoredGeneration(streamedJobId || "");
+								// Iteration saved - presentation updated in place
+								setStreamingState((prev) => ({
+									...prev,
+									isStreaming: false,
+									isComplete: true,
+									presentationId: payload.presentation_id || prev.presentationId,
+									researchStatus:
+										prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
+								}));
+								publishPresentationUpdated(payload.presentation_id || parentPresentationId);
+								publishPointsBalance(payload.slide_tokens_remaining);
+								return false;
+							}
+
+							case "save_error":
+								console.error("Save error during iteration:", (data as ErrorEventPayload).error);
+								break;
+
+							case "error": {
+								const payload = data as ErrorEventPayload;
+								clearStoredGeneration(streamedJobId || "");
 								setStreamingState((prev) => ({
 									...prev,
 									isStreaming: false,
 									isComplete: false,
-									error: "Update stream ended before the presentation was completed.",
+									error: payload.error,
+									researchStatus: "idle",
 								}));
+								return false;
 							}
-							return;
 						}
+					});
 
+					// The stream ended without a terminal saved/error event.
+					if (streamedJobId) {
+						releaseActiveStream(controller);
+						setReconnectVersion((version) => version + 1);
+						return;
+					}
+
+					const persisted = await fetchPersistedPresentation(
+						parentPresentationId,
+						controller.signal,
+					).catch(() => null);
+					if (controller.signal.aborted || abortControllerRef.current !== controller) return;
+					const persistedSlides = persisted?.slides ?? [];
+					const generatedSlides = completedData?.slides ?? [];
+					if (
+						persisted &&
+						(persisted as (PresentationData & { status?: string }) | null)?.status === "ready" &&
+						persistedSlides.length > 0 &&
+						JSON.stringify(persistedSlides) === JSON.stringify(generatedSlides)
+					) {
 						setStreamingState((prev) => ({
 							...prev,
+							...persisted,
+							completedDocument: persisted,
+							presentationId: parentPresentationId,
+							slides: persistedSlides,
+							totalSlides: persistedSlides.length,
 							isStreaming: false,
 							isComplete: true,
-							researchStatus: prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
+							error: undefined,
 						}));
-					} catch (streamErr: unknown) {
+						publishPresentationUpdated(parentPresentationId);
+						return;
+					}
+					setStreamingState((prev) => ({
+						...prev,
+						isStreaming: false,
+						isComplete: false,
+						error: "Update stream ended before the presentation was completed.",
+					}));
+				} catch (streamErr: unknown) {
 						const isAbort = streamErr instanceof Error && streamErr.name === "AbortError";
 						if (!isAbort && streamedJobId) {
 							releaseActiveStream(controller);
