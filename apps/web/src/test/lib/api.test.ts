@@ -13,11 +13,6 @@ describe("normalizeApiUrl", () => {
 		expect(normalizeApiUrl("http://api.example.com/")).toBe("http://api.example.com");
 	});
 
-	it("normalizes a redundant API path suffix", () => {
-		expect(normalizeApiUrl("https://api.slidesage.app/api")).toBe("https://api.slidesage.app");
-		expect(normalizeApiUrl("api.slidesage.app/api")).toBe("https://api.slidesage.app");
-	});
-
 	it("uses HTTP for a bare local development address", () => {
 		expect(normalizeApiUrl("localhost:8000/")).toBe("http://localhost:8000");
 		expect(normalizeApiUrl("127.0.0.1:8000")).toBe("http://127.0.0.1:8000");

@@ -9,12 +9,12 @@ export async function readJsonResponse<T>(response: Response): Promise<T | null>
 export function normalizeApiUrl(value: string | undefined): string {
 	const trimmedValue = value?.trim().replace(/\/+$/, "") ?? "";
 	if (!trimmedValue || trimmedValue.startsWith("/")) return trimmedValue;
-	if (/^https?:\/\//i.test(trimmedValue)) return trimmedValue.replace(/\/api$/i, "");
+	if (/^https?:\/\//i.test(trimmedValue)) return trimmedValue;
 
 	const hostname = trimmedValue.split("/")[0]?.split(":")[0]?.toLowerCase();
 	const protocol = hostname === "localhost" || hostname === "127.0.0.1" ? "http" : "https";
 
-	return `${protocol}://${trimmedValue.replace(/\/api$/i, "")}`;
+	return `${protocol}://${trimmedValue}`;
 }
 
 const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
