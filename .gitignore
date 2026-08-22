@@ -21,6 +21,3 @@ apps/web/.eslintcache
 apps/web/.cache
 apps/web/*.tsbuildinfo
 apps/web/.DS_Store
-
-# Compiled binaries
-apps/api/diagnose
