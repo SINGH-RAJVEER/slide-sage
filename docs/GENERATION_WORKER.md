@@ -75,7 +75,7 @@ and asks River to drain active jobs. River cancels remaining work after its
 six-second soft-stop timeout so queue state can finalize within the Cloud Run
 termination window. The worker retries
 network errors, provider `429` responses, and provider `5xx` responses. Events
-such as `created`, `theme`, `stage`, `retry`, `plan`, `outline`, `slide`, `complete`,
+such as `created`, `stage`, `retry`, `plan`, `outline`, `slide`, `complete`,
 `saved`, and `error` are stored before the API delivers them. `saved` and `error`
 are terminal stream events.
 
@@ -105,6 +105,10 @@ The event endpoint can be consumed through `fetch` stream parsing. Browser
 `EventSource` is not suitable when application authentication or custom resume
 headers require request options unavailable to `EventSource`; the `after` query
 parameter is available for clients that cannot set `Last-Event-ID`.
+
+When generation continues outside the presentation viewer, the web client shows
+a loader below the header. Hovering or focusing it expands the indicator to show
+the submitted prompt. Selecting it returns to the running presentation.
 
 One API instance accepts at most 40 generation event streams and at most three
 streams per user by default. Event rows are copied from PostgreSQL and the query

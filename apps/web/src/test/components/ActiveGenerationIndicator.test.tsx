@@ -73,9 +73,15 @@ it("shows a running generation and opens it, even after navigating away", async 
 		fireEvent.click(view.getByRole("button", { name: "Start" }));
 
 		await waitFor(() => {
-			expect(view.getByRole("button", { name: /A presentation is generating/ })).toBeInTheDocument();
+			expect(
+				view.getByRole("button", { name: "solar policy deck is generating. Open it" }),
+			).toBeInTheDocument();
 		});
-		const pill = view.getByRole("button", { name: /A presentation is generating/ });
+		const pill = view.getByRole("button", {
+			name: "solar policy deck is generating. Open it",
+		});
+		expect(view.getByText("solar policy deck")).toBeInTheDocument();
+		expect(pill).toHaveClass("hover:w-72", "focus-visible:w-72");
 		fireEvent.click(pill);
 		expect(onOpen).toHaveBeenCalledWith("pres_9");
 	} finally {
