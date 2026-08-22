@@ -287,8 +287,9 @@ func TestBackoffDelayIsBoundedAndExponential(t *testing.T) {
 func TestGoogleGeneratePayloadSeparatesThinkingBudgetOnNewModels(t *testing.T) {
 	for _, model := range []string{"gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3-pro"} {
 		config := googleGeneratePayload(model, "system", "user", 1800)["generationConfig"].(map[string]any)
-		if config["thinkingBudget"] != reasoningBudget {
-			t.Fatalf("thinking budget missing for %s: %v", model, config["thinkingBudget"])
+		thinking, ok := config["thinkingConfig"].(map[string]any)
+		if !ok || thinking["thinkingBudget"] != reasoningBudget {
+			t.Fatalf("thinking config missing for %s: %v", model, config["thinkingConfig"])
 		}
 		if config["maxOutputTokens"] != 1800+reasoningBudget {
 			t.Fatalf("answer budget was not preserved for %s: %v", model, config["maxOutputTokens"])
@@ -296,7 +297,7 @@ func TestGoogleGeneratePayloadSeparatesThinkingBudgetOnNewModels(t *testing.T) {
 	}
 	for _, model := range []string{"gemini-1.5-flash", "gemini-2.0-flash"} {
 		config := googleGeneratePayload(model, "system", "user", 1800)["generationConfig"].(map[string]any)
-		if _, ok := config["thinkingBudget"]; ok {
+		if _, ok := config["thinkingConfig"]; ok {
 			t.Fatalf("thinkingConfig would be rejected by %s", model)
 		}
 		if config["maxOutputTokens"] != 1800 {

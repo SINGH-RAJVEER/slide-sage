@@ -605,7 +605,7 @@ func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user 
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(response.Body, 16*1024))
-		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("OpenRouter request failed: %s", strings.TrimSpace(string(body)))}
+		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("OpenRouter request failed: %s", summarizeProviderError(body))}
 	}
 	var content strings.Builder
 	tokens := 0
@@ -669,7 +669,9 @@ const reasoningBudget = 4096
 func googleGeneratePayload(model, system, user string, maxOutput int) map[string]any {
 	config := map[string]any{"responseMimeType": "application/json", "maxOutputTokens": maxOutput}
 	if googleSupportsThinkingControl(model) {
-		config["thinkingBudget"] = reasoningBudget
+		// Google nests thinking control under generationConfig.thinkingConfig;
+		// a bare thinkingBudget field is rejected with 400 INVALID_ARGUMENT.
+		config["thinkingConfig"] = map[string]any{"thinkingBudget": reasoningBudget}
 		config["maxOutputTokens"] = maxOutput + reasoningBudget
 	}
 	return map[string]any{
@@ -774,7 +776,11 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 		return nil, 0, errors.New("AI provider response is too large")
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("AI provider request failed with status %d", response.StatusCode)}
+		return nil, 0, &providerRequestError{
+			Status: response.StatusCode,
+			Message: fmt.Sprintf("AI provider request failed with status %d: %s",
+				response.StatusCode, summarizeProviderError(body)),
+		}
 	}
 	var envelope struct {
 		Choices []struct {
@@ -829,6 +835,17 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 		tokens = envelope.UsageMetadata.TotalTokens
 	}
 	return document, tokens, nil
+}
+
+// summarizeProviderError condenses an upstream error body into a bounded,
+// single-line snippet so failure surfaces carry the provider's actual reason
+// (invalid API keys, rejected parameters, quota text) instead of a bare status.
+func summarizeProviderError(body []byte) string {
+	snippet := strings.TrimSpace(string(body))
+	if idx := strings.IndexByte(snippet, '\n'); idx >= 0 {
+		snippet = snippet[:idx]
+	}
+	return truncate(snippet, 300)
 }
 
 func decodeGeneratedDocument(content string) (map[string]any, error) {
