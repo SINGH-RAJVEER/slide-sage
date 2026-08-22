@@ -69,9 +69,10 @@ func main() {
 	auth.RegisterAuthRoutes(mux, service)
 	auth.RegisterProfileRoutes(mux, service)
 	identity := service.AuthenticatedUserID
+	researchService := presentation.NewExaResearchService(os.Getenv("EXA_API_KEY"), nil)
 	presentation.RegisterRoutes(mux, presentation.NewService(presentation.NewRepository(database)), func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
-	}, presentation.NewExaResearchService(os.Getenv("EXA_API_KEY"), nil), database)
+	}, researchService, database)
 	ai.RegisterRoutes(mux, ai.ConnectionService{DB: database}, identity)
 	var razorpay *billing.RazorpayClient
 	if os.Getenv("RAZORPAY_KEY_ID") != "" && os.Getenv("RAZORPAY_KEY_SECRET") != "" {
@@ -85,7 +86,7 @@ func main() {
 	defer cancelStreams()
 	generation.RegisterRoutes(mux, database, func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
-	}, ai.ConnectionService{DB: database}, generation.RouteConfig{StreamContext: streamContext})
+	}, ai.ConnectionService{DB: database}, generation.RouteConfig{StreamContext: streamContext, Research: researchService})
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", notFoundHandler)
 

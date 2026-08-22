@@ -147,8 +147,6 @@ func policyFor(method, path string) (ratePolicy, bool) {
 		return ratePolicy{"ai-selection-write", 20, tenMinutes, true}, true
 	case method == http.MethodPost && path == "/presentation-jobs":
 		return ratePolicy{"presentation-generation", 15, minute, true}, true
-	case method == http.MethodPost && path == "/research-presentation":
-		return ratePolicy{"presentation-research", 20, minute, true}, true
 	case method == http.MethodPost && path == "/billing/checkout":
 		return ratePolicy{"billing-checkout", 10, tenMinutes, true}, true
 	case method == http.MethodPost && path == "/billing/verify":

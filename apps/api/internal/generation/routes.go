@@ -49,11 +49,13 @@ Block region must be main, primary, secondary, or media. Do not rename text or i
 
 type Identity func(context.Context, *http.Request) (string, error)
 
-// RouteConfig controls long-lived generation event streams.
+// RouteConfig controls long-lived generation event streams and synchronous
+// research previews.
 type RouteConfig struct {
 	StreamContext     context.Context
 	MaxStreams        int
 	MaxStreamsPerUser int
+	Research          *presentation.ExaResearchService
 }
 
 // RegisterRoutes installs durable generation submission and event endpoints.
@@ -82,6 +84,7 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 		queue:         queue,
 		streamContext: config.StreamContext,
 		streams:       newStreamLimiter(config.MaxStreams, config.MaxStreamsPerUser),
+		research:      config.Research,
 	}
 	mux.HandleFunc("POST /presentation-jobs", handler.submit)
 	mux.HandleFunc("GET /generation-jobs/{id}", handler.jobStatus)
@@ -126,6 +129,7 @@ type handler struct {
 	queue         *queueClient
 	streamContext context.Context
 	streams       *streamLimiter
+	research      *presentation.ExaResearchService
 }
 
 type streamLimiter struct {
@@ -226,6 +230,40 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	requestHashValue := requestHash(input)
+
+	// Preview mode runs research synchronously and stops before any planning
+	// or drafting work, so clients can show sources before committing points.
+	if preview, _ := body["preview"].(bool); preview {
+		if input.ParentID != "" || input.RetryID != "" {
+			writeError(writer, http.StatusBadRequest, "preview cannot target an existing presentation")
+			return
+		}
+		options, ok := input.Research.(presentation.ResearchOptions)
+		if !ok || !options.Enabled {
+			writeError(writer, http.StatusBadRequest, "preview requires enabled research")
+			return
+		}
+		if h.research == nil {
+			writeError(writer, http.StatusServiceUnavailable, "Research is unavailable")
+			return
+		}
+		result, err := presentation.RunResearchPreview(request.Context(), h.database, h.research, userID, jobID, requestHashValue, input.Topic, options, input.SlideCount, input.DetailLevel, input.Tonality)
+		if err != nil {
+			var previewErr *presentation.ResearchPreviewError
+			if errors.As(err, &previewErr) {
+				if previewErr.Insufficient {
+					writeJSON(writer, previewErr.Status, map[string]any{"error": map[string]string{"message": previewErr.Message, "code": "INSUFFICIENT_TOKENS"}, "slide_tokens_remaining": previewErr.RemainingPoints, "slide_tokens_required": previewErr.RequiredPoints})
+					return
+				}
+				writeError(writer, previewErr.Status, previewErr.Message)
+				return
+			}
+			writeError(writer, http.StatusInternalServerError, "Unable to start generation")
+			return
+		}
+		writeJSON(writer, http.StatusOK, map[string]any{"sources": result.Sources, "estimated_tokens": result.EstimatedTokens, "slide_tokens_remaining": result.RemainingPoints})
+		return
+	}
 
 	var job streamJob
 	var placeholder []byte
