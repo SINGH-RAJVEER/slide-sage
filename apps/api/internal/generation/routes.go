@@ -575,7 +575,12 @@ func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user 
 	if provider != "openrouter" {
 		return h.directProvider(ctx, provider, model, key, system, user, maxOutput)
 	}
-	payload := map[string]any{"model": model, "max_tokens": maxOutput, "stream": true, "stream_options": map[string]bool{"include_usage": true}, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+	// openRouterGeneratePayload always includes the reasoning parameter because
+	// OpenRouter normalizes it across providers and drops it for models that
+	// cannot reason. Reasoning tokens count toward the completion bound on
+	// reasoning models, and the same amount is added on top of the requested
+	// output bound to keep the full answer budget available.
+	payload := openRouterGeneratePayload(model, system, user, maxOutput)
 	encoded, _ := json.Marshal(payload)
 	endpoint := strings.TrimSpace(os.Getenv("OPEN_ROUTER_API_BASE"))
 	if endpoint == "" {
@@ -653,6 +658,73 @@ func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user 
 	return document, tokens, nil
 }
 
+// reasoningBudget is the per-call reasoning allowance reserved on top of the
+// requested answer bound for every provider whose thinking tokens compete with
+// output tokens. It fits every reasoning-capable family (the smallest
+// supported nonzero budgets are 128 for Gemini Pro, 512 for Gemini Flash Lite,
+// and 1024 for Anthropic extended thinking).
+const reasoningBudget = 4096
+
+func googleGeneratePayload(model, system, user string, maxOutput int) map[string]any {
+	config := map[string]any{"responseMimeType": "application/json", "maxOutputTokens": maxOutput}
+	if googleSupportsThinkingControl(model) {
+		config["thinkingBudget"] = reasoningBudget
+		config["maxOutputTokens"] = maxOutput + reasoningBudget
+	}
+	return map[string]any{
+		"systemInstruction": map[string]any{"parts": []map[string]string{{"text": system}}},
+		"contents":          []map[string]any{{"role": "user", "parts": []map[string]string{{"text": user}}}},
+		"generationConfig":  config,
+	}
+}
+
+func openRouterGeneratePayload(model, system, user string, maxOutput int) map[string]any {
+	return map[string]any{"model": model, "max_tokens": maxOutput + reasoningBudget, "reasoning": map[string]any{"max_tokens": reasoningBudget}, "stream": true, "stream_options": map[string]bool{"include_usage": true}, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+}
+
+func googleSupportsThinkingControl(model string) bool {
+	name := strings.ToLower(model)
+	return strings.HasPrefix(name, "gemini-2.5") || strings.HasPrefix(name, "gemini-3") || strings.HasPrefix(name, "gemini-4")
+}
+
+// openAIGeneratePayload switches reasoning models to max_completion_tokens,
+// which they require and which counts reasoning toward the completion bound.
+// Classic GPT models keep the legacy max_tokens parameter untouched.
+func openAIGeneratePayload(model string, system, user string, maxOutput int) map[string]any {
+	messages := []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}
+	if openAIReasoningModel(model) {
+		return map[string]any{"model": model, "max_completion_tokens": maxOutput + reasoningBudget, "response_format": map[string]string{"type": "json_object"}, "messages": messages}
+	}
+	return map[string]any{"model": model, "max_tokens": maxOutput, "response_format": map[string]string{"type": "json_object"}, "messages": messages}
+}
+
+func openAIReasoningModel(model string) bool {
+	base := strings.ToLower(strings.TrimPrefix(model, "ft:"))
+	if i := strings.IndexByte(base, ':'); i >= 0 {
+		base = base[:i]
+	}
+	oSeries := len(base) > 1 && base[0] == 'o' && base[1] >= '1' && base[1] <= '9'
+	return oSeries || strings.HasPrefix(base, "gpt-5")
+}
+
+// anthropicGeneratePayload enables extended thinking for Claude generations
+// that support it. Thinking tokens count against max_tokens, so the same
+// amount is added on top of the requested output bound. Anthropic requires
+// budget_tokens of at least 1024 and a max_tokens strictly greater than it.
+func anthropicGeneratePayload(model, system, user string, maxOutput int) map[string]any {
+	payload := map[string]any{"model": model, "max_tokens": maxOutput, "system": system, "messages": []map[string]string{{"role": "user", "content": user}}}
+	if anthropicSupportsThinking(model) {
+		payload["thinking"] = map[string]any{"type": "enabled", "budget_tokens": reasoningBudget}
+		payload["max_tokens"] = maxOutput + reasoningBudget
+	}
+	return payload
+}
+
+func anthropicSupportsThinking(model string) bool {
+	name := strings.ToLower(model)
+	return strings.Contains(name, "-3-7") || strings.Contains(name, "-4")
+}
+
 func (h *handler) directProvider(ctx context.Context, provider ai.Provider, model, key, system, user string, maxOutput int) (map[string]any, int, error) {
 	var endpoint string
 	var payload any
@@ -661,16 +733,16 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	case ai.OpenAI:
 		endpoint = "https://api.openai.com/v1/chat/completions"
 		headers["Authorization"] = "Bearer " + key
-		payload = map[string]any{"model": model, "max_tokens": maxOutput, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+		payload = openAIGeneratePayload(model, system, user, maxOutput)
 	case ai.Google:
 		endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
 		headers["x-goog-api-key"] = key
-		payload = map[string]any{"systemInstruction": map[string]any{"parts": []map[string]string{{"text": system}}}, "contents": []map[string]any{{"role": "user", "parts": []map[string]string{{"text": user}}}}, "generationConfig": map[string]any{"responseMimeType": "application/json", "maxOutputTokens": maxOutput}}
+		payload = googleGeneratePayload(model, system, user, maxOutput)
 	case ai.Anthropic:
 		endpoint = "https://api.anthropic.com/v1/messages"
 		headers["x-api-key"] = key
 		headers["anthropic-version"] = "2023-06-01"
-		payload = map[string]any{"model": model, "max_tokens": maxOutput, "system": system, "messages": []map[string]string{{"role": "user", "content": user}}}
+		payload = anthropicGeneratePayload(model, system, user, maxOutput)
 	default:
 		return nil, 0, errors.New("unsupported AI provider")
 	}
@@ -741,6 +813,9 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	if len(envelope.Content) > 0 {
 		content = envelope.Content[0].Text
 	}
+	if strings.TrimSpace(content) == "" {
+		return nil, 0, errors.New("AI provider returned no text content")
+	}
 	document, err := decodeGeneratedDocument(content)
 	if err != nil {
 		return nil, 0, err
@@ -757,6 +832,12 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 
 func decodeGeneratedDocument(content string) (map[string]any, error) {
 	content = strings.TrimSpace(content)
+	// Some models emit reasoning inline as <think> blocks before the answer.
+	if start := strings.Index(content, "<think>"); start >= 0 {
+		if end := strings.Index(content[start:], "</think>"); end >= 0 {
+			content = strings.TrimSpace(content[:start] + content[start+end+len("</think>"):])
+		}
+	}
 	start, end := strings.IndexByte(content, '{'), strings.LastIndexByte(content, '}')
 	if start < 0 || end < start {
 		return nil, errors.New("AI provider returned invalid presentation JSON")

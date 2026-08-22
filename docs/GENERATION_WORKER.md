@@ -61,7 +61,10 @@ these states:
 
 River permits up to three attempts for the generation job. Each attempt has a
 seven-minute timeout for the sequential planning and drafting calls, whose HTTP
-client timeout is three minutes per call. Within a single attempt, provider
+client timeout is three minutes per call. Provider calls reserve a fixed
+reasoning allowance on top of the requested output bound for reasoning-capable
+models, so internal thinking never truncates the structured JSON answer.
+Within a single attempt, provider
 requests retry transient failures in process: `429` and `5xx` responses are
 retried up to four total attempts with exponential backoff starting at two
 seconds and capped at fifteen seconds, and the provider's `Retry-After` header

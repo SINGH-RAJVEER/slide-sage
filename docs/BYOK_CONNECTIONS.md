@@ -42,6 +42,18 @@ saved selection is missing or no longer listed. A selection is checked against a
 fresh provider response before it is saved or used for generation.
 
 Catalog refresh failures are isolated per provider so the settings page remains
+responsive. Generation requests fund model reasoning separately from the answer
+on every provider: reasoning and thinking tokens count against each provider's
+output bound, so a fixed allowance (`reasoningBudget`) is reserved on top of the
+requested output limit whenever the selected model supports it. Google Gemini
+2.5+ receives `thinkingBudget`, Anthropic Claude 3.7/4 receives an extended
+`thinking` block, OpenAI o-series and GPT-5 switch from `max_tokens` to
+`max_completion_tokens` (which those models require), and the built-in
+OpenRouter route always sends the normalized `reasoning.max_tokens` parameter,
+which OpenRouter drops for models that cannot reason. Inline `<think>` blocks
+emitted inside answer text are stripped before the presentation JSON is parsed,
+and an empty provider response is reported as its own error instead of a generic
+JSON parse failure.
 usable for replacing or deleting a key. A definitive key rejection or loss of all
 compatible models marks that connection invalid and restores point-funded
 OpenRouter when no other valid connection remains. A transient provider failure

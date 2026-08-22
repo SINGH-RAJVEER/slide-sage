@@ -284,6 +284,100 @@ func TestBackoffDelayIsBoundedAndExponential(t *testing.T) {
 	}
 }
 
+func TestGoogleGeneratePayloadSeparatesThinkingBudgetOnNewModels(t *testing.T) {
+	for _, model := range []string{"gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3-pro"} {
+		config := googleGeneratePayload(model, "system", "user", 1800)["generationConfig"].(map[string]any)
+		if config["thinkingBudget"] != reasoningBudget {
+			t.Fatalf("thinking budget missing for %s: %v", model, config["thinkingBudget"])
+		}
+		if config["maxOutputTokens"] != 1800+reasoningBudget {
+			t.Fatalf("answer budget was not preserved for %s: %v", model, config["maxOutputTokens"])
+		}
+	}
+	for _, model := range []string{"gemini-1.5-flash", "gemini-2.0-flash"} {
+		config := googleGeneratePayload(model, "system", "user", 1800)["generationConfig"].(map[string]any)
+		if _, ok := config["thinkingBudget"]; ok {
+			t.Fatalf("thinkingConfig would be rejected by %s", model)
+		}
+		if config["maxOutputTokens"] != 1800 {
+			t.Fatalf("output bound changed for %s: %v", model, config["maxOutputTokens"])
+		}
+	}
+}
+
+func TestOpenAIGeneratePayloadFundsReasoningModels(t *testing.T) {
+	for _, model := range []string{"o3", "o4-mini", "gpt-5-mini", "ft:gpt-5:org::suffix"} {
+		payload := openAIGeneratePayload(model, "system", "user", 2000)
+		if payload["max_completion_tokens"] != 2000+reasoningBudget {
+			t.Fatalf("reasoning model %s did not get a padded completion bound: %v", model, payload["max_completion_tokens"])
+		}
+		if _, ok := payload["max_tokens"]; ok {
+			t.Fatalf("reasoning model %s must not use max_tokens", model)
+		}
+	}
+	for _, model := range []string{"gpt-4o", "gpt-4.1-mini"} {
+		payload := openAIGeneratePayload(model, "system", "user", 2000)
+		if payload["max_tokens"] != 2000 {
+			t.Fatalf("classic model %s output bound changed: %v", model, payload["max_tokens"])
+		}
+		if _, ok := payload["max_completion_tokens"]; ok {
+			t.Fatalf("classic model %s received completion bound", model)
+		}
+	}
+}
+
+func TestAnthropicGeneratePayloadEnablesExtendedThinking(t *testing.T) {
+	for _, model := range []string{"claude-sonnet-4-5", "claude-opus-4-1", "claude-haiku-4-5", "claude-3-7-sonnet-latest"} {
+		payload := anthropicGeneratePayload(model, "system", "user", 3000)
+		thinking, ok := payload["thinking"].(map[string]any)
+		if !ok || thinking["budget_tokens"] != reasoningBudget {
+			t.Fatalf("extended thinking missing for %s: %v", model, payload["thinking"])
+		}
+		if payload["max_tokens"] != 3000+reasoningBudget {
+			t.Fatalf("answer budget was not preserved for %s: %v", model, payload["max_tokens"])
+		}
+	}
+	for _, model := range []string{"claude-3-5-sonnet-latest", "claude-3-haiku-20240307"} {
+		payload := anthropicGeneratePayload(model, "system", "user", 3000)
+		if _, ok := payload["thinking"]; ok {
+			t.Fatalf("unsupported thinking block sent to %s", model)
+		}
+		if payload["max_tokens"] != 3000 {
+			t.Fatalf("output bound changed for %s: %v", model, payload["max_tokens"])
+		}
+	}
+}
+
+func TestOpenRouterPayloadReservesReasoningHeadroom(t *testing.T) {
+	payload := openRouterGeneratePayload("google/gemma-4-26b-a4b-it:free", "system", "user", 1500)
+	if payload["max_tokens"] != 1500+reasoningBudget {
+		t.Fatalf("completion bound was not padded: %v", payload["max_tokens"])
+	}
+	reasoning, ok := payload["reasoning"].(map[string]any)
+	if !ok || reasoning["max_tokens"] != reasoningBudget {
+		t.Fatalf("reasoning budget missing: %v", payload["reasoning"])
+	}
+	if payload["stream"] != true || payload["response_format"].(map[string]string)["type"] != "json_object" {
+		t.Fatalf("streaming contract changed: %#v", payload)
+	}
+}
+
+func TestDecodeGeneratedDocumentStripsThinkBlocks(t *testing.T) {
+	document, err := decodeGeneratedDocument("<think>The user wants slides about {braces}</think>\n{\"title\":\"Example\",\"slides\":[]}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if document["title"] != "Example" {
+		t.Fatalf("document: %#v", document)
+	}
+	if _, err := decodeGeneratedDocument("<think>unterminated reasoning</think>{\"title\":\"Example\"}"); err != nil {
+		t.Fatalf("unterminated think block before JSON: %v", err)
+	}
+	if _, err := decodeGeneratedDocument("<think>reasoning only, no json"); err == nil {
+		t.Fatal("content without JSON was accepted")
+	}
+}
+
 func TestRunBoundedLimitsConcurrentWork(t *testing.T) {
 	items := []int{1, 2, 3, 4, 5}
 	release := make(chan struct{})
