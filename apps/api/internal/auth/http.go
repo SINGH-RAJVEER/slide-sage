@@ -97,6 +97,8 @@ func RegisterProfileRoutes(mux *http.ServeMux, service *Service) {
 	mux.HandleFunc("GET /profile", service.profileHandler)
 	mux.HandleFunc("PUT /profile", service.updateProfileHandler)
 	mux.HandleFunc("POST /profile/avatar", service.avatarHandler)
+	mux.HandleFunc("POST /profile/avatar/upload", service.avatarUploadHandler)
+	mux.HandleFunc("GET /profile/avatar/image/{id}", service.avatarImageHandler)
 	mux.HandleFunc("POST /profile/email/verify", service.verifyEmailHandler)
 }
 

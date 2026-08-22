@@ -16,6 +16,15 @@ func TestPolicyForGeneration(t *testing.T) {
 	}
 }
 
+func TestPolicyForAvatarMutation(t *testing.T) {
+	for _, path := range []string{"/profile/avatar", "/profile/avatar/upload"} {
+		policy, ok := policyFor(http.MethodPost, path)
+		if !ok || policy.scope != "profile-mutation" || policy.limit != 10 || policy.window != 15*time.Minute || !policy.authenticated {
+			t.Fatalf("policy for %s: %#v", path, policy)
+		}
+	}
+}
+
 func TestHashKeyIsScopedAndStable(t *testing.T) {
 	first := hashKey("secret", "scope-a", "identity")
 	if len(first) != 64 || first != hashKey("secret", "scope-a", "identity") {

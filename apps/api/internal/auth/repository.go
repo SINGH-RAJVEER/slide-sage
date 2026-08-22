@@ -122,7 +122,58 @@ func (repository *Repository) UpdateName(ctx context.Context, userID, name strin
 }
 
 func (repository *Repository) UpdateImage(ctx context.Context, userID, image string) (User, error) {
-	return scanUser(repository.database.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, image))
+	transaction, err := repository.database.BeginTx(ctx, nil)
+	if err != nil {
+		return User{}, err
+	}
+	defer transaction.Rollback()
+	if _, err = transaction.ExecContext(ctx, `DELETE FROM avatar_images WHERE user_id = $1`, userID); err != nil {
+		return User{}, err
+	}
+	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, image))
+	if err != nil {
+		return User{}, err
+	}
+	return user, transaction.Commit()
+}
+
+type AvatarImage struct {
+	ID          string
+	ContentType string
+	Data        []byte
+}
+
+func (repository *Repository) ReplaceAvatarImage(ctx context.Context, userID, imageID, publicURL, contentType string, data []byte) (User, error) {
+	transaction, err := repository.database.BeginTx(ctx, nil)
+	if err != nil {
+		return User{}, err
+	}
+	defer transaction.Rollback()
+	if _, err = transaction.ExecContext(ctx, `
+		INSERT INTO avatar_images (id, user_id, content_type, data, created_at)
+		VALUES ($1, $2, $3, $4, NOW())
+		ON CONFLICT (user_id) DO UPDATE SET
+			id = EXCLUDED.id,
+			content_type = EXCLUDED.content_type,
+			data = EXCLUDED.data,
+			created_at = EXCLUDED.created_at
+	`, imageID, userID, contentType, data); err != nil {
+		return User{}, err
+	}
+	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, publicURL))
+	if err != nil {
+		return User{}, err
+	}
+	return user, transaction.Commit()
+}
+
+func (repository *Repository) AvatarImage(ctx context.Context, imageID string) (AvatarImage, error) {
+	var image AvatarImage
+	err := repository.database.QueryRowContext(ctx, `SELECT id, content_type, data FROM avatar_images WHERE id = $1`, imageID).Scan(&image.ID, &image.ContentType, &image.Data)
+	if errors.Is(err, sql.ErrNoRows) {
+		return AvatarImage{}, ErrNotFound
+	}
+	return image, err
 }
 
 func (repository *Repository) ReplaceVerification(ctx context.Context, verification Verification, prefix string) error {
