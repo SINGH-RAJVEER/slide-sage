@@ -136,9 +136,14 @@ export function usePresentationData({
 		consumesStreamingState,
 	]);
 
-	// If we learn the presentationId from the stream, capture it
+	// A new generation navigates to the viewer before the job submission response
+	// provides its presentation ID. Capture it once the streaming viewer learns it.
 	useEffect(() => {
-		if (consumesStreamingState && streamingState.presentationId && !presentationId) {
+		if (
+			consumesStreamingState &&
+			streamingState.presentationId &&
+			streamingState.presentationId !== presentationId
+		) {
 			setPresentationId(streamingState.presentationId);
 		}
 	}, [consumesStreamingState, streamingState.presentationId, presentationId]);

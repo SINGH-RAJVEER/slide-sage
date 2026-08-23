@@ -123,9 +123,11 @@ otherwise cancellable.
 
 In the presentation viewer, a new generation can be cancelled only before its
 first slide arrives. During that skeleton state, the disabled slide-delete
-control is replaced with **Cancel generation**. A successful cancellation stops
-the local event consumer, clears its resumable job record, and returns the user
-to the generation form.
+control is replaced with **Cancel generation**. The theme selector remains
+available in this state; changes apply immediately and persist after generation
+finishes so they do not conflict with the worker's optimistic persistence. A
+successful cancellation stops the local event consumer, clears its resumable job
+record, and returns the user to the generation form.
 
 ## Delivery and Accounting Guarantees
 
