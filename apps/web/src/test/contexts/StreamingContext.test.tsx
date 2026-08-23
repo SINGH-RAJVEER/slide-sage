@@ -146,8 +146,8 @@ it("submits a job and continues processing after the initiating page unmounts", 
 		await waitFor(() => expect(view.getByText("streaming")).toBeInTheDocument());
 		expect(JSON.parse(requestBody)).toMatchObject({
 			retry_presentation_id: "failed_presentation",
-			theme: "corporate-blue",
 		});
+		expect(JSON.parse(requestBody)).not.toHaveProperty("theme");
 		expect(typeof JSON.parse(requestBody).job_id).toBe("string");
 		fireEvent.click(view.getByRole("button", { name: "Navigate away" }));
 

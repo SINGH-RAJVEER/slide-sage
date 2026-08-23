@@ -40,7 +40,7 @@ const (
 - {"kind":"chart","chartType":"bar","dataSeries":[{"label":"Series","values":[1,2]}]}
 Use visual intents only when they clarify the slide message. Evidence must contain short source references from the supplied research, never invented citations. Never return HTML, Markdown, CSS, code, coordinates, colors, URLs, styles, or class names.`
 	generationSystemPrompt = `Return exactly one JSON object and no Markdown.
-The object must contain title, theme, and slides. Every slide must use type "content" and contain id, layout, title, subtitle, tone, density, pattern, and a top-level blocks array. Every slide must contain at least one substantive text block.
+The object must contain title and slides. Every slide must use type "content" and contain id, layout, title, subtitle, tone, density, pattern, and a top-level blocks array. Every slide must contain at least one substantive text block.
 Use only these exact block shapes:
 - {"type":"paragraph","region":"main","text":"Concise presentation copy"}
 - {"type":"bullets","region":"main","items":["Specific point"],"ordered":false}
@@ -252,7 +252,6 @@ type submitInput struct {
 	SlideCount      int
 	DetailLevel     string
 	Tonality        string
-	Theme           string
 	Research        any
 	ResearchPayload *presentation.ResearchPayload
 	AI              *ai.Selection
@@ -281,7 +280,7 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	jobID := text(first(body, "job_id", "jobId"), "")
+	jobID := text(body["job_id"], "")
 	if jobID == "" {
 		jobID, err = uuid()
 		if err != nil {
@@ -385,13 +384,13 @@ func (e writeStatusError) Error() string { return e.Message }
 // marks an iteration of an existing deck; retry_presentation_id resubmits a
 // failed generation; neither means a fresh generation.
 func parseSubmitInput(body map[string]any) (submitInput, error) {
-	topic, err := required(first(body, "topic", "feedback", "prompt"), "topic")
+	topic, err := required(body["topic"], "topic")
 	if err != nil {
 		return submitInput{}, err
 	}
 	input := submitInput{Topic: topic}
-	input.ParentID = text(first(body, "parent_presentation_id", "parentPresentationId"), "")
-	input.RetryID = text(first(body, "retry_presentation_id", "retryPresentationId"), "")
+	input.ParentID = text(body["parent_presentation_id"], "")
+	input.RetryID = text(body["retry_presentation_id"], "")
 	if len(input.ParentID) > 200 || len(input.RetryID) > 200 {
 		return submitInput{}, errors.New("presentation id must contain at most 200 characters")
 	}
@@ -408,13 +407,12 @@ func parseSubmitInput(body map[string]any) (submitInput, error) {
 		return submitInput{}, err
 	}
 	input.Research = research
-	input.DetailLevel = choice(body["detail_level"], body["detailLevel"], "balanced", "brief", "concise", "balanced", "detailed", "comprehensive")
-	input.Tonality = choice(body["tonality"], nil, "professional", "casual", "professional", "enthusiastic", "persuasive")
-	input.Theme = text(body["theme"], "corporate-blue")
-	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) || len(input.Theme) > 100 {
+	input.DetailLevel = choice(body["detail_level"], "balanced")
+	input.Tonality = choice(body["tonality"], "professional")
+	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) {
 		return submitInput{}, errors.New("Invalid generation options")
 	}
-	if value := first(body, "research_payload", "researchPayload"); value != nil {
+	if value := body["research_payload"]; value != nil {
 		payload, err := presentation.ParseResearchPayload(value)
 		if err != nil {
 			return submitInput{}, err
@@ -467,9 +465,9 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 	if selection != nil {
 		quote = 0
 	}
-	initial := map[string]any{"schemaVersion": presentation.PresentationSchemaVersion, "title": "Generating...", "theme": input.Theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "theme": input.Theme, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
+	initial := map[string]any{"title": "Generating...", "theme": "corporate-blue", "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
 	placeholder, _ := json.Marshal(initial)
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: input.Theme, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
 	return job, placeholder, nil
 }
 
@@ -501,7 +499,7 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 	if selection != nil {
 		quote = 0
 	}
-	job := streamJob{userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: documentTheme(base.Data), research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
+	job := streamJob{userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
 	return job, nil
 }
 
@@ -511,7 +509,7 @@ type streamJob struct {
 	quote                                      int64
 	prompt                                     string
 	slideCount                                 int
-	detailLevel, tonality, theme, kind         string
+	detailLevel, tonality, kind                string
 	research                                   any
 	researchPayload                            *presentation.ResearchPayload
 	selection                                  *ai.Selection
@@ -1046,7 +1044,11 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string
 			return 0, 0, err
 		}
 	}
-	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": job.theme}); err != nil {
+	theme := "corporate-blue"
+	if job.kind == "iteration" {
+		theme = documentTheme(job.current)
+	}
+	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": theme}); err != nil {
 		return 0, 0, err
 	}
 	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Preparing presentation", "completed": 1, "total": 3}); err != nil {
@@ -1108,11 +1110,10 @@ func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) erro
 
 	if job.kind == "generation" {
 		failed := map[string]any{
-			"schemaVersion": presentation.PresentationSchemaVersion,
-			"title":         "Generation failed",
-			"theme":         job.theme,
-			"slides":        []any{},
-			"status":        "failed",
+			"title":  "Generation failed",
+			"theme":  "corporate-blue",
+			"slides": []any{},
+			"status": "failed",
 			"failure": map[string]any{
 				"message": message,
 				"retry": map[string]any{
@@ -1120,7 +1121,6 @@ func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) erro
 					"slide_count":      job.slideCount,
 					"detail_level":     job.detailLevel,
 					"tonality":         job.tonality,
-					"theme":            job.theme,
 					"research_enabled": job.research != nil || job.researchPayload != nil,
 					"research_payload": job.researchPayload,
 					"ai":               job.selection,
@@ -1346,7 +1346,7 @@ func parseResearch(value any) (any, error) {
 	return options, nil
 }
 func slideCount(body map[string]any, mandatory bool) (int, error) {
-	value := first(body, "slide_count", "slideCount")
+	value := body["slide_count"]
 	if value == nil && !mandatory {
 		return 0, nil
 	}
@@ -1357,14 +1357,6 @@ func slideCount(body map[string]any, mandatory bool) (int, error) {
 	}
 	return int(parsed), nil
 }
-func first(body map[string]any, keys ...string) any {
-	for _, key := range keys {
-		if value, ok := body[key]; ok {
-			return value
-		}
-	}
-	return nil
-}
 func text(value any, fallback string) string {
 	result, ok := value.(string)
 	result = strings.TrimSpace(result)
@@ -1373,11 +1365,7 @@ func text(value any, fallback string) string {
 	}
 	return result
 }
-func choice(primary, secondary any, fallback string, allowed ...string) string {
-	value := primary
-	if value == nil {
-		value = secondary
-	}
+func choice(value any, fallback string) string {
 	if value == nil {
 		return fallback
 	}
@@ -1424,24 +1412,6 @@ func documentTheme(data []byte) string {
 	var document map[string]any
 	_ = json.Unmarshal(data, &document)
 	return text(document["theme"], "corporate-blue")
-}
-func outline(title string, slides []any) map[string]any {
-	cards := make([]map[string]any, 0, len(slides))
-	for index, slide := range slides {
-		object, _ := slide.(map[string]any)
-		cardTitle := text(object["title"], fmt.Sprintf("Slide %d", index+1))
-		cards = append(cards, map[string]any{"id": text(object["id"], fmt.Sprintf("slide-%d", index+1)), "title": cardTitle, "objective": cardTitle, "keyPoints": []any{}, "narrativeRole": narrativeRole(index, len(slides)), "visualIntent": "none", "sourceIds": []any{}})
-	}
-	return map[string]any{"title": title, "audience": "General audience", "thesis": title, "cards": cards}
-}
-func narrativeRole(index, total int) string {
-	if index == 0 {
-		return "opening"
-	}
-	if index == total-1 {
-		return "closing"
-	}
-	return "insight"
 }
 func truncate(value string, maximum int) string {
 	if len(value) > maximum {

@@ -1,4 +1,4 @@
-import type { AIModelSelection, ResearchPayload, ThemeId } from "@slidesage/types";
+import type { AIModelSelection, ResearchPayload } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { Spinner } from "@slidesage/ui/components/spinner";
@@ -14,7 +14,6 @@ interface ResearchRouteState {
 	slideCount: number;
 	detailLevel: string;
 	tonality: string;
-	theme: ThemeId;
 	researchPayload?: ResearchPayload;
 	retryPresentationId?: string;
 	ai?: AIModelSelection;
@@ -32,7 +31,6 @@ export default function GenerateResearchPage() {
 	const slideCount = routeState?.slideCount ?? 0;
 	const detailLevel = routeState?.detailLevel ?? "balanced";
 	const tonality = routeState?.tonality ?? "professional";
-	const theme = routeState?.theme ?? "corporate-blue";
 	const savedResearch = routeState?.researchPayload;
 	const retryPresentationId = routeState?.retryPresentationId;
 	const ai = routeState?.ai;
@@ -110,7 +108,6 @@ export default function GenerateResearchPage() {
 			researchEnabled: true,
 			researchPayload: payload,
 			retryPresentationId,
-			theme,
 			ai,
 		});
 		navigate(ROUTES.presentation, { state: { isStreaming: true } });
@@ -127,7 +124,6 @@ export default function GenerateResearchPage() {
 		prompt,
 		researchStatus,
 		retryPresentationId,
-		theme,
 		navigate,
 		slideCount,
 		sources,

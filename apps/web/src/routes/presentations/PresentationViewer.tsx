@@ -2,7 +2,6 @@ import type { SceneSlide } from "@slidesage/types";
 import {
 	type ContentSlide,
 	isContentSlide,
-	isLegacyHtmlSlide,
 	type PresentationData,
 	type SlideLayout,
 	type ThemeId,
@@ -33,7 +32,6 @@ import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
-import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
 import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
 import { AVAILABLE_TEMPLATES } from "@slidesage/ui/lib/templates";
@@ -286,12 +284,7 @@ export default function PresentationViewerPage() {
 	const hasSlides = viewerPresentation.slides.length > 0;
 	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
 	const activeDraftSlide = activeSlide ? pendingSlides[activeSlide.id] : undefined;
-	const activeContentSlide =
-		activeSlide && isContentSlide(activeSlide)
-			? activeSlide
-			: activeSlide && isLegacyHtmlSlide(activeSlide)
-				? adaptLegacyHtmlSlide(activeSlide)
-				: undefined;
+	const activeContentSlide = activeSlide && isContentSlide(activeSlide) ? activeSlide : undefined;
 
 	const handleTemplateChange = async (templateId: string) => {
 		const saveSequence = ++templateSaveSequenceRef.current;
@@ -317,8 +310,8 @@ export default function PresentationViewerPage() {
 	const handleLayoutChange = async (layout: SlideLayout) => {
 		if (!presentation) return;
 		const selected = presentation.slides[navigation.currentSlide];
-		if (!selected || (!isContentSlide(selected) && !isLegacyHtmlSlide(selected))) return;
-		const contentSlide = isLegacyHtmlSlide(selected) ? adaptLegacyHtmlSlide(selected) : selected;
+		if (!selected || !isContentSlide(selected)) return;
+		const contentSlide = selected;
 		const updatedSlide = applySlideLayout(contentSlide, layout);
 		const slides = [...presentation.slides];
 		slides[navigation.currentSlide] = updatedSlide;

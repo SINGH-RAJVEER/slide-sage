@@ -24,7 +24,6 @@ it("prefills a failed presentation prompt and generation options", () => {
 							detail_level: "comprehensive",
 							tonality: "casual",
 							research_enabled: true,
-							theme: "nature-green",
 						},
 					},
 				},
@@ -128,6 +127,7 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			provider: "anthropic",
 			model: "claude-sonnet-4-20250514",
 		});
+		expect(requestBody).not.toHaveProperty("theme");
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

@@ -11,8 +11,7 @@ request and reviewed research
 ```
 
 The plan is persisted in `slides_data.deckPlan` and delivered as a `plan` SSE
-event before slide events. The existing `outline` event is derived from the
-same plan for clients that render outline cards.
+event before slide events. Clients consume the plan directly.
 
 ## DeckPlan contract
 

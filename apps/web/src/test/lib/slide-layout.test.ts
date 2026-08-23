@@ -20,7 +20,7 @@ const slide: ContentSlide = {
 };
 
 describe("applySlideLayout", () => {
-	it("adds a media placeholder and assigns schema-v5 regions", () => {
+	it("adds a media placeholder and assigns content regions", () => {
 		const updated = applySlideLayout(slide, "media-right");
 
 		expect(updated.blocks.filter((block) => block.region === "primary")).toHaveLength(2);

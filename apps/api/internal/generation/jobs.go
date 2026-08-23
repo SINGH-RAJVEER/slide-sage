@@ -50,7 +50,6 @@ type jobPayload struct {
 	SlideCount       int                           `json:"slide_count"`
 	DetailLevel      string                        `json:"detail_level"`
 	Tonality         string                        `json:"tonality"`
-	Theme            string                        `json:"theme"`
 	Research         any                           `json:"research,omitempty"`
 	ResearchPayload  *presentation.ResearchPayload `json:"research_payload,omitempty"`
 	Selection        *ai.Selection                 `json:"ai,omitempty"`
@@ -64,7 +63,7 @@ func payloadFromJob(job streamJob) jobPayload {
 	return jobPayload{
 		UserID: job.userID, OperationID: job.operationID, PresentationID: job.presentationID,
 		Kind: job.kind, Prompt: job.prompt, SlideCount: job.slideCount,
-		DetailLevel: job.detailLevel, Tonality: job.tonality, Theme: job.theme,
+		DetailLevel: job.detailLevel, Tonality: job.tonality,
 		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection,
 		Current: job.current, ExpectedRevision: job.expectedRevision, QuotedMillis: job.quote,
 		RequestHash: job.requestHash,
@@ -76,7 +75,7 @@ func (payload jobPayload) streamJob() streamJob {
 		userID: payload.UserID, operationID: payload.OperationID, presentationID: payload.PresentationID,
 		expectedRevision: payload.ExpectedRevision, quote: payload.QuotedMillis,
 		prompt: payload.Prompt, slideCount: payload.SlideCount, detailLevel: payload.DetailLevel,
-		tonality: payload.Tonality, theme: payload.Theme, research: payload.Research,
+		tonality: payload.Tonality, research: payload.Research,
 		researchPayload: payload.ResearchPayload, selection: payload.Selection, current: payload.Current,
 		kind: payload.Kind, requestHash: payload.RequestHash,
 	}
@@ -264,7 +263,6 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		}
 		tokens += planTokens
 		_ = h.appendEvent(ctx, record.ID, "plan", plan)
-		_ = h.appendEvent(ctx, record.ID, "outline", presentation.OutlineFromDeckPlan(plan))
 		_ = h.updateStage(ctx, record.ID, "drafting", "Writing planned slide content", 2, 4)
 	}
 
@@ -285,9 +283,11 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "usage_unavailable", "Provider usage was unavailable")
 	}
 
-	document["schemaVersion"] = presentation.PresentationSchemaVersion
 	document["title"] = truncate(text(document["title"], "Untitled Presentation"), 255)
-	document["theme"] = text(document["theme"], job.theme)
+	document["theme"] = "corporate-blue"
+	if job.kind == "iteration" {
+		document["theme"] = documentTheme(job.current)
+	}
 	document["status"] = "ready"
 	document["tokens_used"] = tokens
 	if plan != nil {
@@ -311,7 +311,6 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 
 	title := text(document["title"], "Untitled Presentation")
 	if plan == nil {
-		_ = h.appendEvent(ctx, record.ID, "outline", outline(title, slides))
 		_ = h.updateStage(ctx, record.ID, "drafting", "Writing slide content", 2, 3)
 	}
 	for index, slide := range slides {

@@ -75,7 +75,7 @@ and asks River to drain active jobs. River cancels remaining work after its
 six-second soft-stop timeout so queue state can finalize within the Cloud Run
 termination window. The worker retries
 network errors, provider `429` responses, and provider `5xx` responses. Events
-such as `created`, `stage`, `retry`, `plan`, `outline`, `slide`, `complete`,
+such as `created`, `theme`, `stage`, `retry`, `plan`, `slide`, `complete`,
 `saved`, and `error` are stored before the API delivers them. `saved` and `error`
 are terminal stream events.
 

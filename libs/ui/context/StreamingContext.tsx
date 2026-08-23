@@ -3,11 +3,9 @@ import type {
 	DeckPlan,
 	PresentationData,
 	PresentationGenerationStage,
-	PresentationOutline,
 	ResearchPayload,
 	Slide,
 	Source,
-	ThemeId,
 } from "@slidesage/types";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -109,7 +107,6 @@ export interface StreamingState {
 	generationStage?: PresentationGenerationStage;
 	generationMessage?: string;
 	generationProgress?: { completed: number; total: number };
-	outline?: PresentationOutline;
 	deckPlan?: DeckPlan;
 	completedDocument?: PresentationData;
 }
@@ -123,7 +120,6 @@ export interface GenerateOptions {
 	researchPayload?: ResearchPayload;
 	parentPresentationId?: string;
 	retryPresentationId?: string;
-	theme?: ThemeId;
 	ai?: AIModelSelection;
 }
 
@@ -331,14 +327,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				break;
 			}
 
-			case "outline":
-				setStreamingState((prev) => ({
-					...prev,
-					outline: data as PresentationOutline,
-					title: (data as PresentationOutline).title || prev.title,
-				}));
-				break;
-
 			case "plan":
 				setStreamingState((prev) => ({
 					...prev,
@@ -349,6 +337,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
 			case "theme": {
 				const payload = data as ThemeEventPayload;
+				const stored = readStoredGeneration();
+				if (stored) storeGeneration({ ...stored, theme: payload.theme });
 				setStreamingState((prev) => ({ ...prev, theme: payload.theme }));
 				break;
 			}
@@ -538,15 +528,12 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			const operation = options.parentPresentationId ? "iteration" : "generation";
 			const targetPresentationId =
 				options.parentPresentationId ?? options.retryPresentationId ?? "";
-			const theme = options.theme ?? "corporate-blue";
-
 			setStreamingState({
 				...initialState,
 				isStreaming: true,
 				requestedSlides: options.slideCount,
 				operation,
 				prompt: options.prompt,
-				theme,
 				presentationId: targetPresentationId || undefined,
 				researchStatus: options.researchEnabled && !options.researchPayload ? "searching" : "idle",
 			});
@@ -556,7 +543,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				operation,
 				prompt: options.prompt,
 				requestedSlides: options.slideCount,
-				theme,
+				theme: "corporate-blue",
 				lastEventId: 0,
 			};
 			storeGeneration(stored);
@@ -597,7 +584,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						research_payload: options.researchPayload,
 						parent_presentation_id: options.parentPresentationId,
 						retry_presentation_id: options.retryPresentationId,
-						theme,
 						ai: options.ai,
 					}),
 					signal: controller.signal,

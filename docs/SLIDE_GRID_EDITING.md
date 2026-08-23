@@ -34,8 +34,8 @@ materializes that group as `absolute` and records the currently resolved bounds
 for all of its children. This keeps its visible composition intact before the
 selected object is moved.
 
-Native scene slides and schema-v5 content slides both use the movable 8 pixel
-grid editor. Content slides remain schema-v5 documents and render through the
+Native scene slides and content slides both use the movable 8 pixel grid editor.
+Content slides render through the
 same semantic layout, theme, regions, typography, and widget renderer used by
 thumbnails, fullscreen, PDF, and normal viewing. Title, subtitle, and block
 geometry is stored as optional canonical 1280 by 720 bounds; editing never

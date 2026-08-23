@@ -47,28 +47,6 @@ describe("SlideRenderer", () => {
 		expect(container.querySelector("script")).toBeNull();
 	});
 
-	it("converts legacy HTML into allowlisted schema-v5 content", () => {
-		const { container, getByText } = renderSlide({
-			id: "legacy-content",
-			type: "content",
-			html: `
-                <div id="slide-content">
-                    <h2 id="slide-title">Legacy deck</h2>
-                    <script>globalThis.compromised = true</script>
-                    <p onclick="globalThis.compromised = true">Retained text</p>
-                    <img src="javascript:alert(1)" alt="Unsafe image">
-                </div>
-            `,
-		});
-
-		expect(getByText("Legacy deck")).toBeInTheDocument();
-		expect(getByText("Retained text")).toBeInTheDocument();
-		expect(container.querySelector("script")).toBeNull();
-		expect(container.querySelector("[onclick]")).toBeNull();
-		expect(container.querySelector("img")).toBeNull();
-		expect(container.querySelector('[data-layout="body"]')).toBeInTheDocument();
-	});
-
 	it("renders all editorial compositions with their canonical regions", () => {
 		const layouts: SlideLayout[] = [
 			"cover",

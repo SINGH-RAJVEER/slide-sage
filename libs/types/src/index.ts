@@ -17,8 +17,6 @@ export interface ChartConfig {
 	[key: string]: unknown;
 }
 
-export const PRESENTATION_SCHEMA_VERSION = 5 as const;
-
 export type {
 	ResolvedScene,
 	ResolvedSceneNode,
@@ -50,7 +48,7 @@ export type {
 	SceneWidgetKind,
 	SceneWidgetNode,
 } from "./scene";
-export { SCENE_ENGINE_VERSION, SCENE_GRID_SIZE, SCENE_PRESENTATION_SCHEMA_VERSION } from "./scene";
+export { SCENE_ENGINE_VERSION, SCENE_GRID_SIZE } from "./scene";
 export type { SceneCommand } from "./scene-commands";
 export { applySceneCommand, findSceneNode, invertSceneCommand } from "./scene-commands";
 export { resolveScene, sceneForProfile, slideToScene, validateSceneSlide } from "./scene-engine";
@@ -85,32 +83,6 @@ export const THEME_IDS = [
 ] as const;
 
 export type ThemeId = (typeof THEME_IDS)[number];
-
-export const PRESENTATION_NARRATIVE_ROLES = [
-	"opening",
-	"context",
-	"problem",
-	"insight",
-	"solution",
-	"evidence",
-	"comparison",
-	"process",
-	"recommendation",
-	"closing",
-] as const;
-
-export type PresentationNarrativeRole = (typeof PRESENTATION_NARRATIVE_ROLES)[number];
-
-export const PRESENTATION_VISUAL_INTENTS = [
-	"none",
-	"image",
-	"chart",
-	"table",
-	"quote",
-	"stats",
-] as const;
-
-export type PresentationVisualIntent = (typeof PRESENTATION_VISUAL_INTENTS)[number];
 
 export const DECK_PLAN_PURPOSES = [
 	"cover",
@@ -165,23 +137,6 @@ export interface DeckPlan {
 	thesis: string;
 	style: "minimal" | "visual" | "classic" | "consultant";
 	slides: DeckPlanSlide[];
-}
-
-export interface PresentationOutlineCard {
-	id: string;
-	title: string;
-	objective: string;
-	keyPoints: string[];
-	narrativeRole: PresentationNarrativeRole;
-	visualIntent: PresentationVisualIntent;
-	sourceIds: string[];
-}
-
-export interface PresentationOutline {
-	title: string;
-	audience: string;
-	thesis: string;
-	cards: PresentationOutlineCard[];
 }
 
 export type PresentationGenerationStage =
@@ -387,36 +342,24 @@ export interface ContentSlide extends BaseSlide {
 	blocks: SlideBlock[];
 }
 
-export interface LegacyHtmlSlide {
-	id: string;
-	type: string;
-	html: string;
-	transition?: SlideTransition;
-	effects?: SlideEffect[];
-}
-
 export interface ChartSlide extends BaseSlide {
 	type: "chart";
 	chartConfig: ChartConfig;
 }
 
 export type StructuredSlide = ContentSlide | ChartSlide;
-export type Slide = StructuredSlide | LegacyHtmlSlide | import("./scene").SceneSlide;
+export type Slide = StructuredSlide | import("./scene").SceneSlide;
 
 export function isSceneSlide(slide: Slide): slide is import("./scene").SceneSlide {
 	return slide.type === "scene";
 }
 
-export function isLegacyHtmlSlide(slide: Slide): slide is LegacyHtmlSlide {
-	return slide.type !== "scene" && "html" in slide;
-}
-
 export function isChartSlide(slide: Slide): slide is ChartSlide {
-	return !isSceneSlide(slide) && !isLegacyHtmlSlide(slide) && slide.type === "chart";
+	return !isSceneSlide(slide) && slide.type === "chart";
 }
 
 export function isContentSlide(slide: Slide): slide is ContentSlide {
-	return !isSceneSlide(slide) && !isLegacyHtmlSlide(slide) && slide.type === "content";
+	return !isSceneSlide(slide) && slide.type === "content";
 }
 
 export interface Source {
@@ -497,7 +440,6 @@ export interface ResearchOptions {
 }
 
 export interface PresentationData {
-	schemaVersion?: number;
 	title: string;
 	theme: string;
 	dimensions?: PresentationDimensions;
@@ -506,7 +448,6 @@ export interface PresentationData {
 	sources?: Source[];
 	tokens_used?: number;
 	engineVersion?: string;
-	outline?: PresentationOutline;
 	deckPlan?: DeckPlan;
 	outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 }
@@ -519,7 +460,6 @@ export interface PresentationRetryOptions {
 	detail_level: string;
 	tonality: string;
 	research_enabled: boolean;
-	theme?: ThemeId;
 	research_payload?: ResearchPayload;
 	ai?: AIModelSelection;
 }
@@ -530,7 +470,6 @@ export interface PresentationFailure {
 }
 
 export interface PresentationJSON {
-	schemaVersion?: number;
 	title: string;
 	theme: string;
 	dimensions?: PresentationDimensions;
@@ -540,7 +479,6 @@ export interface PresentationJSON {
 	totalSlides?: number;
 	tokens_used?: number;
 	sources?: Source[];
-	outline?: PresentationOutline;
 	deckPlan?: DeckPlan;
 	outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 	[key: string]: unknown;
@@ -591,11 +529,6 @@ export interface GenerationJob {
 	updated_at: string;
 }
 
-export interface StreamThemeEvent {
-	event: "theme";
-	data: { theme: string };
-}
-
 export interface StreamResearchEvent {
 	event: "research";
 	data: {
@@ -614,9 +547,9 @@ export interface StreamStageEvent {
 	};
 }
 
-export interface StreamOutlineEvent {
-	event: "outline";
-	data: PresentationOutline;
+export interface StreamThemeEvent {
+	event: "theme";
+	data: { theme: string };
 }
 
 export interface StreamPlanEvent {
@@ -673,9 +606,8 @@ export type PresentationStreamEvent =
 	| StreamCreatedEvent
 	| StreamResearchEvent
 	| StreamStageEvent
-	| StreamOutlineEvent
-	| StreamPlanEvent
 	| StreamThemeEvent
+	| StreamPlanEvent
 	| StreamRetryEvent
 	| StreamSlideEvent
 	| StreamCompleteEvent

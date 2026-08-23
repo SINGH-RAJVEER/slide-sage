@@ -72,6 +72,16 @@ func TestSubmitInputRejectsParentAndRetryTogether(t *testing.T) {
 	}
 }
 
+func TestSubmitInputRejectsLegacyFieldNames(t *testing.T) {
+	body := decodeSubmitBody(t, `{
+		"prompt":"Grid storage",
+		"slideCount":5
+	}`)
+	if _, err := parseSubmitInput(body); err == nil {
+		t.Fatal("legacy generation fields were accepted")
+	}
+}
+
 func TestGenerationPromptDefinesExactBlockFields(t *testing.T) {
 	for _, contract := range []string{
 		`{"type":"paragraph","region":"main","text":"Concise presentation copy"}`,
@@ -271,7 +281,7 @@ func TestParseRetryAfter(t *testing.T) {
 	if got := parseRetryAfter("7"); got != 7*time.Second {
 		t.Fatalf("seconds header = %v", got)
 	}
-	if got := parseRetryAfter(time.Now().Add(30*time.Second).UTC().Format(http.TimeFormat)); got <= 0 || got > time.Minute {
+	if got := parseRetryAfter(time.Now().Add(30 * time.Second).UTC().Format(http.TimeFormat)); got <= 0 || got > time.Minute {
 		t.Fatalf("date header = %v", got)
 	}
 }

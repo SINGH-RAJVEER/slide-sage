@@ -20,7 +20,6 @@ export * from "./components/textarea";
 export * from "./components/Viewer";
 export * from "./context/AuthContext";
 export * from "./context/StreamingContext";
-export * from "./lib/legacy-slide-adapter";
 export * from "./lib/presentation-motion";
 export * from "./lib/templates";
 export { useTemplate } from "./lib/useTemplate";

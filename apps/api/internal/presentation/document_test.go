@@ -7,20 +7,19 @@ import (
 
 func TestNormalizeDocumentProducesRenderableSchema(t *testing.T) {
 	input := map[string]any{
-		"schemaVersion": json.Number("1"),
-		"title":         " Example ",
-		"theme":         "unknown",
+		"title": " Example ",
+		"theme": "unknown",
 		"slides": []any{
-			map[string]any{"id": "duplicate", "title": "Opening", "content": "A concise opening"},
-			map[string]any{"id": "duplicate", "title": "Details", "bullets": []any{"One", "Two"}},
+			map[string]any{"id": "duplicate", "type": "content", "title": "Opening", "blocks": []any{map[string]any{"type": "paragraph", "text": "A concise opening"}}},
+			map[string]any{"id": "duplicate", "type": "content", "title": "Details", "blocks": []any{map[string]any{"type": "bullets", "items": []any{"One", "Two"}}}},
 		},
 	}
 	document, err := NormalizeDocument(input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if document["schemaVersion"] != PresentationSchemaVersion {
-		t.Fatalf("schema: %#v", document["schemaVersion"])
+	if _, exists := document["schemaVersion"]; exists {
+		t.Fatal("schema version was retained")
 	}
 	if document["theme"] != "corporate-blue" {
 		t.Fatalf("theme: %#v", document["theme"])
@@ -54,7 +53,7 @@ func TestNormalizeDocumentPreservesSceneDocuments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if document["schemaVersion"] != 6 || document["engineVersion"] != "1.0.0" {
+	if document["engineVersion"] != "1.0.0" {
 		t.Fatalf("document: %#v", document)
 	}
 	slide := document["slides"].([]any)[0].(map[string]any)
@@ -63,9 +62,10 @@ func TestNormalizeDocumentPreservesSceneDocuments(t *testing.T) {
 	}
 }
 
-func TestNormalizeDocumentPreservesProviderBlockAliases(t *testing.T) {
+func TestNormalizeDocumentDoesNotAcceptLegacyProviderAliases(t *testing.T) {
 	document, err := NormalizeDocument(map[string]any{
 		"slides": []any{map[string]any{
+			"type":  "content",
 			"title": "Provider content",
 			"content": map[string]any{"blocks": []any{
 				map[string]any{"type": "text", "content": "A generated paragraph"},
@@ -77,22 +77,19 @@ func TestNormalizeDocumentPreservesProviderBlockAliases(t *testing.T) {
 		t.Fatal(err)
 	}
 	blocks := document["slides"].([]any)[0].(map[string]any)["blocks"].([]any)
-	if len(blocks) != 2 {
+	if len(blocks) != 1 {
 		t.Fatalf("blocks: %#v", blocks)
 	}
 	paragraph := blocks[0].(map[string]any)
-	if paragraph["type"] != "paragraph" || paragraph["text"] != "A generated paragraph" {
+	if paragraph["type"] != "paragraph" || paragraph["text"] != "Content to be developed." {
 		t.Fatalf("paragraph: %#v", paragraph)
-	}
-	bullets := blocks[1].(map[string]any)
-	if len(bullets["items"].([]any)) != 2 {
-		t.Fatalf("bullets: %#v", bullets)
 	}
 }
 
 func TestNormalizeDocumentPreservesSupportVisualsAndBackgrounds(t *testing.T) {
 	document, err := NormalizeDocument(map[string]any{
 		"slides": []any{map[string]any{
+			"type":  "content",
 			"title": "Visual slide",
 			"backgroundImage": map[string]any{
 				"url": "https://images.example.com/background.jpg", "alt": "Background", "focalPoint": "top", "overlay": "strong",
@@ -125,6 +122,7 @@ func TestNormalizeDocumentPreservesSupportVisualsAndBackgrounds(t *testing.T) {
 func TestNormalizeDocumentBoundsContentObjectsToCanonicalGrid(t *testing.T) {
 	document, err := NormalizeDocument(map[string]any{
 		"slides": []any{map[string]any{
+			"type":           "content",
 			"title":          "Movable content",
 			"titleBounds":    map[string]any{"x": json.Number("1277"), "y": json.Number("-9"), "width": json.Number("205"), "height": json.Number("119")},
 			"subtitleBounds": map[string]any{"x": "invalid", "y": json.Number("8"), "width": json.Number("80"), "height": json.Number("40")},
@@ -179,8 +177,8 @@ func TestNormalizeDeckPlanCompilesSemanticLayouts(t *testing.T) {
 
 	document, err := NormalizeDocument(map[string]any{
 		"title": "Provider title", "slides": []any{
-			map[string]any{"title": "Wrong title", "content": "Opening content"},
-			map[string]any{"title": "Wrong comparison", "content": "Comparison content"},
+			map[string]any{"type": "content", "title": "Wrong title", "blocks": []any{map[string]any{"type": "paragraph", "text": "Opening content"}}},
+			map[string]any{"type": "content", "title": "Wrong comparison", "blocks": []any{map[string]any{"type": "paragraph", "text": "Comparison content"}}},
 		}, "deckPlan": plan,
 	})
 	if err != nil {

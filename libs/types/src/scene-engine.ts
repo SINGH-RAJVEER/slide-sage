@@ -473,7 +473,7 @@ function contentSlideToScene(slide: ContentSlide): SceneSlide {
 	return {
 		id: slide.id,
 		type: "scene",
-		strategy: visual ? "legacy-media-split" : "legacy-editorial-stack",
+		strategy: visual ? "content-media-split" : "content-editorial-stack",
 		root: {
 			id: `${slide.id}-root`,
 			type: "group",
@@ -505,27 +505,11 @@ function contentSlideToScene(slide: ContentSlide): SceneSlide {
 
 export function slideToScene(slide: Slide): SceneSlide {
 	if (isSceneSlide(slide)) return slide;
-	if ("html" in slide) {
-		return {
-			id: slide.id,
-			type: "scene",
-			strategy: "legacy-fallback",
-			root: {
-				id: `${slide.id}-root`,
-				type: "group",
-				order: 0,
-				layout: "stack",
-				direction: "vertical",
-				padding: { top: 72, right: 80, bottom: 72, left: 80 },
-				children: [textNode(`${slide.id}-legacy`, 0, "body", "Legacy slide")],
-			},
-		};
-	}
 	if (slide.type === "chart") {
 		return {
 			id: slide.id,
 			type: "scene",
-			strategy: "legacy-chart",
+			strategy: "chart",
 			root: {
 				id: `${slide.id}-root`,
 				type: "group",

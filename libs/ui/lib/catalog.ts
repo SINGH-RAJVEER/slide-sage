@@ -496,7 +496,6 @@ export function createMarketplacePreviewPresentation(item: MarketplaceItem): Pre
 	];
 
 	return {
-		schemaVersion: 5,
 		title: `${item.name} theme preview`,
 		theme: item.themeId,
 		dimensions: { width: 1280, height: 720 },

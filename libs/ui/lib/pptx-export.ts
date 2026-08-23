@@ -2,7 +2,6 @@ import {
 	type ChartConfig,
 	type ContentSlide,
 	isChartSlide,
-	isLegacyHtmlSlide,
 	isSceneSlide,
 	type PresentationData,
 	type PresentationDimensions,
@@ -14,7 +13,6 @@ import {
 	type SlideRegion,
 	type WidgetBlock,
 } from "@slidesage/types";
-import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
 import PptxGenJS from "pptxgenjs";
 
@@ -1872,8 +1870,7 @@ export const buildEditablePptx = async (presentation: PresentationData) => {
 			continue;
 		}
 
-		const contentSlide = isLegacyHtmlSlide(slide) ? adaptLegacyHtmlSlide(slide) : slide;
-		await renderStructuredSlide(pptx, contentSlide, theme);
+		await renderStructuredSlide(pptx, slide, theme);
 	}
 
 	return pptx;

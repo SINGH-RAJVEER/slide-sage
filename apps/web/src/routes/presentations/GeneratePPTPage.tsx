@@ -1,4 +1,4 @@
-import type { PresentationRetryOptions, ThemeId } from "@slidesage/types";
+import type { PresentationRetryOptions } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
@@ -30,7 +30,6 @@ export default function GeneratePPTPage() {
 	const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
-	const [theme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
 	const navigate = useNavigate();
 	const { streamingState, generate } = useStreaming();
 
@@ -79,7 +78,6 @@ export default function GeneratePPTPage() {
 					slideCount: count,
 					detailLevel,
 					tonality,
-					theme,
 					retryPresentationId,
 					...(retry?.ai ? { ai: retry.ai } : {}),
 				},
@@ -93,7 +91,6 @@ export default function GeneratePPTPage() {
 			detailLevel,
 			tonality,
 			retryPresentationId,
-			theme,
 			ai: retry?.ai,
 		});
 		navigate(ROUTES.presentation, {

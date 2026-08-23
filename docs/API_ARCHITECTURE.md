@@ -57,7 +57,7 @@ then tails persisted events; a client or API stream disconnect does not stop the
 queued work.
 
 The worker resolves the server OpenRouter model or encrypted user provider
-connection, calls the provider, and normalizes output to a bounded schema-v5
+connection, calls the provider, and normalizes output to the bounded current
 presentation document. Output without substantive content is rejected.
 River bounds generation concurrency. Recovery uses a separate two-task limit,
 and the API validates independent BYOK provider catalogs concurrently with a

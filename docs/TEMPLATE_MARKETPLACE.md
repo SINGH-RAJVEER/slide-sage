@@ -56,7 +56,7 @@ community backend still needs to replace these browser-local records.
 
 Marketplace previews map to the six existing `ThemeId` values. Marketplace item IDs are separate
 from renderer IDs so future catalog records cannot bypass presentation validation. New serialized
-themes require a versioned format shared by the web renderer, API validation, generation schema, and
+themes require a format shared by the web renderer, API validation, document contract, and
 PowerPoint export.
 
 Preview rendering is noninteractive. Content blocks use plain containers unless the viewer supplies
@@ -73,7 +73,7 @@ and use the maximum size allowed by its 16:9 aspect ratio.
 Fullscreen chart slides activate only after that frame has a measured size, ensuring Chart.js runs
 its entrance animation against the final presentation dimensions instead of a zero-sized canvas.
 
-Schema-v5 content slides use code-owned editorial compositions rather than theme-authored HTML. The
+Content slides use code-owned editorial compositions rather than theme-authored HTML. The
 renderer supports `cover`, `section`, `body`, `split`, `comparison`, `sidebar`, `media-left`,
 `media-right`, `quote`, `spotlight`, and `canvas`. Themes establish both the visual foundation and
 the composition treatment: for example, Signal Grid adds a data rail and a measured grid, Paper
