@@ -91,7 +91,11 @@ func configuredKey(requestedVersion int) (int, []byte, error) {
 			return 0, nil, errors.New("invalid BYOK encryption version")
 		}
 	}
-	raw, err := base64.StdEncoding.DecodeString(os.Getenv("BYOK_ENCRYPTION_KEY_V" + strconv.Itoa(version)))
+	name := "BYOK_ENCRYPTION_KEY"
+	if version > 1 {
+		name += "_V" + strconv.Itoa(version)
+	}
+	raw, err := base64.StdEncoding.DecodeString(os.Getenv(name))
 	if err != nil || len(raw) != 32 {
 		return 0, nil, errors.New("BYOK encryption keys must contain exactly 32 base64-encoded bytes")
 	}

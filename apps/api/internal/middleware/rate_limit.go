@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -109,8 +110,24 @@ func requestEmail(request *http.Request) string {
 
 func consume(ctx context.Context, database *sql.DB, scope, keyHash string, windowStart, expiresAt time.Time) (int, error) {
 	var count int
-	err := database.QueryRowContext(ctx, `WITH expired AS (DELETE FROM api_rate_limits WHERE expires_at < NOW()) INSERT INTO api_rate_limits (scope, key_hash, window_start, request_count, expires_at) VALUES ($1, $2, $3, 1, $4) ON CONFLICT (scope, key_hash, window_start) DO UPDATE SET request_count = api_rate_limits.request_count + 1, expires_at = EXCLUDED.expires_at RETURNING request_count`, scope, keyHash, windowStart, expiresAt).Scan(&count)
+	err := database.QueryRowContext(ctx, `INSERT INTO api_rate_limits (scope, key_hash, window_start, request_count, expires_at) VALUES ($1, $2, $3, 1, $4) ON CONFLICT (scope, key_hash, window_start) DO UPDATE SET request_count = api_rate_limits.request_count + 1, expires_at = EXCLUDED.expires_at RETURNING request_count`, scope, keyHash, windowStart, expiresAt).Scan(&count)
 	return count, err
+}
+
+// CleanupExpired deletes at most limit expired counters without adding cleanup
+// work to request transactions.
+func CleanupExpired(ctx context.Context, database *sql.DB, limit int) (int64, error) {
+	if database == nil {
+		return 0, errors.New("rate-limit database is required")
+	}
+	if limit < 1 {
+		limit = 500
+	}
+	result, err := database.ExecContext(ctx, `DELETE FROM api_rate_limits WHERE ctid IN (SELECT ctid FROM api_rate_limits WHERE expires_at < NOW() ORDER BY expires_at LIMIT $1 FOR UPDATE SKIP LOCKED)`, limit)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 func policyFor(method, path string) (ratePolicy, bool) {
@@ -122,18 +139,15 @@ func policyFor(method, path string) (ratePolicy, bool) {
 		return ratePolicy{"auth-sign-in-ip", 30, fifteenMinutes, false}, true
 	case method == http.MethodPost && strings.HasPrefix(path, "/auth/sign-up/"):
 		return ratePolicy{"auth-sign-up-ip", 20, hour, false}, true
-	case method == http.MethodPut && path == "/profile" || method == http.MethodPost && path == "/profile/email/verify":
+	case method == http.MethodPut && path == "/profile" ||
+		method == http.MethodPost && (path == "/profile/email/verify" || path == "/profile/avatar" || path == "/profile/avatar/upload"):
 		return ratePolicy{"profile-mutation", 10, fifteenMinutes, true}, true
-	case method == http.MethodPost && path == "/ai/connections" || method == http.MethodPut && strings.HasPrefix(path, "/ai/connections/"):
+	case method == http.MethodPost && path == "/ai/connections" || method == http.MethodPut && strings.HasPrefix(path, "/ai/connections/") && !strings.HasSuffix(path, "/enabled"):
 		return ratePolicy{"ai-connection-write", 6, tenMinutes, true}, true
-	case (method == http.MethodDelete && strings.HasPrefix(path, "/ai/connections/")) || method == http.MethodPut && path == "/ai/selection":
+	case (method == http.MethodDelete && strings.HasPrefix(path, "/ai/connections/")) || method == http.MethodPut && (path == "/ai/selection" || strings.HasSuffix(path, "/enabled")):
 		return ratePolicy{"ai-selection-write", 20, tenMinutes, true}, true
-	case method == http.MethodPost && path == "/generate-presentation-stream":
-		return ratePolicy{"presentation-generation", 6, minute, true}, true
-	case method == http.MethodPost && path == "/iterate-presentation-stream":
-		return ratePolicy{"presentation-iteration", 12, minute, true}, true
-	case method == http.MethodPost && path == "/research-presentation":
-		return ratePolicy{"presentation-research", 20, minute, true}, true
+	case method == http.MethodPost && path == "/presentation-jobs":
+		return ratePolicy{"presentation-generation", 15, minute, true}, true
 	case method == http.MethodPost && path == "/billing/checkout":
 		return ratePolicy{"billing-checkout", 10, tenMinutes, true}, true
 	case method == http.MethodPost && path == "/billing/verify":

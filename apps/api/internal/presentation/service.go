@@ -34,12 +34,8 @@ func (s *Service) Detail(ctx context.Context, presentationID, userID string) (Pr
 	if presentation.UserID != userID {
 		return PresentationDetail{}, ErrUnauthorized
 	}
-	normalized, err := NormalizeDocumentJSON(presentation.SlidesData)
-	if err != nil {
-		return PresentationDetail{}, err
-	}
 	return PresentationDetail{ID: presentation.ID, Title: presentation.Title, Prompt: presentation.Prompt,
-		SlidesData: normalized, CreatedAt: presentation.CreatedAt, UpdatedAt: presentation.UpdatedAt}, nil
+		SlidesData: presentation.SlidesData, CreatedAt: presentation.CreatedAt, UpdatedAt: presentation.UpdatedAt}, nil
 }
 
 func (s *Service) Delete(ctx context.Context, presentationID, userID string) error {
@@ -57,11 +53,7 @@ func (s *Service) Update(ctx context.Context, presentationID, userID string, mut
 	if presentation.UserID != userID {
 		return PresentationDetail{}, ErrUnauthorized
 	}
-	normalized, err := NormalizeDocumentJSON(presentation.SlidesData)
-	if err != nil {
-		return PresentationDetail{}, err
-	}
-	document, err := ApplyMutations(normalized, mutations)
+	document, err := ApplyMutations(presentation.SlidesData, mutations)
 	if err != nil {
 		return PresentationDetail{}, err
 	}

@@ -16,6 +16,8 @@
 - Introduce a vim mode to navigate the entire application
 - Give each slide a proper gird for user assisted placement of things
 - The presentations page makes a db request everytime its switched off of, make it keep a local copy of metadata ready
+- Make sure the input tokens are counted towards tokens utilization specially when web search is used
+- User beyond a certain number of tokens can have multiple generations going at once
 
 ## Issues
 

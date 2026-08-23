@@ -58,6 +58,28 @@ it("keeps empty-presentation controls visible and disabled", () => {
 	expect(onSave).toHaveBeenCalledTimes(1);
 });
 
+it("replaces the disabled delete action with cancellation while generation is pending", () => {
+	const onCancelGeneration = mock();
+	const view = render(
+		<ViewerNavigationControls
+			presentation={emptyPresentation}
+			currentSlide={0}
+			totalSlides={0}
+			onFirst={mock()}
+			onPrev={mock()}
+			onNext={mock()}
+			onLast={mock()}
+			onDelete={mock()}
+			deleteDisabled={true}
+			onCancelGeneration={onCancelGeneration}
+		/>,
+	);
+
+	expect(view.queryByRole("button", { name: "Delete" })).toBeNull();
+	fireEvent.click(view.getByRole("button", { name: "Cancel generation" }));
+	expect(onCancelGeneration).toHaveBeenCalledTimes(1);
+});
+
 it("keeps content slides on their canonical renderer while editing", () => {
 	const slide: ContentSlide = {
 		id: "content-1",

@@ -33,24 +33,27 @@ formats used by existing accounts. See [AUTH_API.md](AUTH_API.md).
 | `GET` | `/profile` | None | Get the signed-in user's profile |
 | `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or change the password |
 | `POST` | `/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
+| `POST` | `/profile/avatar/upload` | Multipart `file` field | Upload and use a local image |
+| `GET` | `/profile/avatar/image/{id}` | None | Serve an uploaded avatar image |
 
-All profile routes require authentication. Password changes require both the
-current and new password. Existing JWTs remain valid until they expire. The change cannot be combined with
-name or email updates. Email changes
+Profile management routes require authentication. Uploaded avatar images are
+public because browsers load their URLs without API credentials. Password
+changes require both the current and new password. Existing JWTs remain valid
+until they expire. The change cannot be combined with name or email updates. Email changes
 require current-password verification, normalize the new address, mark it
 unverified, and invalidate old/new address OTPs. A user who has forgotten the
 current password must complete the verified password-reset OTP flow first.
 
 Avatar URLs must be valid HTTPS URLs no longer than 2,048 characters. URLs with
-embedded credentials or control characters are rejected.
+embedded credentials or control characters are rejected. Local uploads accept
+PNG, JPEG, WebP, and GIF files up to 800 KB. Uploads replace the previous stored
+avatar and return the same profile-avatar response as URL updates.
 
 ## Presentations
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/generate-presentation-stream` | Generate and persist a deck over SSE |
-| `POST` | `/research-presentation` | Find sources before generation |
-| `POST` | `/iterate-presentation-stream` | Revise an existing deck over SSE |
+| `POST` | `/presentation-jobs` | Submit generation, iteration, retry, or research preview as a durable job; returns job identity as JSON |
 | `GET` | `/generation-jobs/{id}` | Get an owned durable generation job |
 | `GET` | `/generation-jobs/{id}/events` | Stream persisted events for an owned generation job |
 | `POST` | `/generation-jobs/{id}/cancel` | Request cancellation of an active generation job |
@@ -61,16 +64,17 @@ embedded credentials or control characters are rejected.
 
 Generation requires `topic` and `slide_count`; the web client supports custom
 slide counts from 1 through 40. Generation also accepts `detail_level`,
-`tonality`, `theme`, `research`, and an optional `research_payload`. `theme`
-accepts a built-in theme ID. Research options can include `freshness`,
+`tonality`, `research`, and an optional `research_payload`. New presentations
+start with `corporate-blue`; users can change the saved theme in the viewer.
+Research options can include `freshness`,
 `maxResults`, included or excluded domains, publication date bounds, and
 `maxAgeHours`. The research endpoint and payload contain source records only. The
 web client presents those records in a compact source table with a dedicated
 outbound link for each result. The research review fills the available workspace
 and supports Enter as a shortcut to begin generation.
 
-Iteration requires a presentation ID and feedback. Snake-case and camelCase ID
-and slide-count fields are accepted for compatibility.
+Iteration uses `parent_presentation_id` and `topic`. Retry uses
+`retry_presentation_id`. Request fields use snake case only.
 
 Generation creates a `generating` presentation placeholder before work is
 available to the worker. Point reservation, placeholder creation, application job
@@ -82,10 +86,10 @@ the failed presentation ID and moves the record back to `generating`; malformed
 requests and failures before the submission transaction do not create a job or
 presentation record.
 
-Provider output must use the schema-v5 content block contract with explicit
+Provider output must use the current content block contract with explicit
 `text` fields for paragraphs, quotes, and callouts and `items` for bullets. The
-API accepts a small set of compatibility field aliases during normalization, but
-rejects generated slides without substantive text instead of persisting synthetic
+API does not translate older document shapes or block aliases. It rejects
+generated slides without substantive text instead of persisting synthetic
 placeholder content as a successful presentation.
 
 ### Input limits
@@ -99,8 +103,7 @@ Topics and iteration feedback contain 1 through 400 trimmed characters. Slide
 counts are integers from 1 through 40. Detail level is `brief`, `concise`,
 `balanced`, `detailed`, or `comprehensive`; tonality is `casual`, `professional`,
 `enthusiastic`, or `persuasive`. A direct-provider model identifier is limited
-to 200 characters. Invalid or omitted theme values deliberately fall back to
-`corporate-blue`.
+to 200 characters.
 
 When supplied, `research` must be an object with a boolean `enabled` field.
 `maxResults` is 1 through 8, each domain list contains at most 10 non-empty
@@ -118,18 +121,15 @@ retry compatibility but ignored for billing; point charges are server-owned.
 Server-generated and rendered presentation image URLs remain
 HTTPS-only even though cited research links may use HTTP.
 
-Generated presentation documents use bounded block schema version 5. New deck
+Generated presentation documents do not carry a schema-version field. New deck
 generation first creates and validates a persisted `deckPlan`, then drafts the
-deck against it. The stream emits a `plan` event before its derived `outline`
-and slide events. See [DECK_PLANNING.md](DECK_PLANNING.md). The API
-also loads earlier stored document shapes, mapping `title`
-to `cover`, `content` to `body`, `two-column` to `split`, and `image-right` to
-`media-right`. Older `left` and `right` regions become semantic `primary`,
-`secondary`, or `media` regions. Schema-v5 content layouts also include
+deck against it. The stream emits a `plan` event before slide events. See
+[DECK_PLANNING.md](DECK_PLANNING.md). The API
+does not load or translate earlier stored document shapes. Content layouts include
 `section`, `comparison`, `sidebar`, `media-left`, `quote`, `spotlight`, and
 `canvas`.
 
-Schema-v5 slides expose only bounded visual intent: tone, density, pattern, and
+Content slides expose only bounded visual intent: tone, density, pattern, and
 an optional HTTPS background image with alt text, a named focal point, and a
 named overlay strength. Blocks similarly use allowlisted emphasis and treatment
 values. Content slides may include an eyebrow and semantic region labels.
@@ -146,8 +146,8 @@ styles, class names, attributes, or URLs.
 The Web renderer compiles widgets into deterministic full-width or column-width
 SVG scenes and exports their nodes, text, and connectors as editable PowerPoint
 objects. Unsupported widget data is shown explicitly rather than silently omitted.
-The API normalizes older documents on read by assigning deterministic block IDs
-and defaults for dimensions, composition fields, transitions, and effects.
+The API returns stored documents without translating older slide formats.
+Presentation writes validate and normalize the current document contract.
 `PATCH /presentations/:id` accepts a non-empty
 `mutations` array containing at most 50 operations. Supported operations are
 `update-presentation`, `update-slide`, `delete-slide`, and `reorder-slides`.
@@ -172,10 +172,12 @@ one point is 1,000 milli-points and one provider token is one milli-point. Befor
 the job is enqueued, the API reserves a bounded authorization covering the
 serialized prompt plus the explicit output-token ceiling. The reservation,
 ledger entry, placeholder when applicable, application job, initial events, and
-River `InsertTx` are one transaction. All chargeable requests must include an
-`Idempotency-Key` containing 16-128 URL-safe characters. Reusing the key with the
-same request tails the existing job and prevents another reservation; reusing it
-with a different request returns `409`.
+River `InsertTx` are one transaction. The client supplies the job ID in the
+`job_id` field; it doubles as the idempotency key and must contain 16-128
+URL-safe characters when provided (the server generates one otherwise).
+Resubmitting the same job ID with the same request attaches to the existing job
+and prevents another reservation; reusing it with a different request returns
+`409`.
 
 Successful generation settles against the provider's authoritative aggregate token
 usage and releases the unused authorization. Missing provider usage is a failure:
@@ -209,7 +211,7 @@ Presentation summaries include `status` (`generating`, `ready`, or `failed`) and
 queued, running, or retrying. A terminally failed generation remains in the
 presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
-the original prompt, slide count, detail level, tonality, theme, research setting,
+the original prompt, slide count, detail level, tonality, research setting,
 error message, and any sources collected before the failure. Failed and cancelled
 jobs release their active authorization. Clients fetch the full presentation on
 click, then open the saved
@@ -231,15 +233,16 @@ persists its initial events, and inserts the River job. It then tails persisted
 `generation_job_events`; provider execution occurs in `cmd/worker`, not in the
 request handler.
 
-The stream begins with `created`, forwards generation events such as `stage`,
-`retry`, `outline`, theme, and slide updates, and ends with `saved`. Worker stages
+The stream begins with `created`, forwards generation events such as `theme`,
+`stage`, `retry`, `plan`, and slide updates, and ends with `saved`. The theme
+event reports the assigned default for generation or the saved theme for iteration.
+Worker stages
 are `planning`, `drafting`, `designing`, and `finalizing`; each stage includes a display
-message and bounded progress counts. The outline
-contains the presentation title and one entry per generated slide. Generated
-slides are normalized into safe schema-v5 content slides with allowlisted layouts,
+message and bounded progress counts. Generated slides are normalized into safe
+content slides with allowlisted layouts,
 blocks, themes, dimensions, and stable IDs before they are streamed or saved.
 Clients treat slide events as index-based upserts. Iteration uses the current deck
-as authoritative context and returns the same schema-v5 format. The API sends SSE
+as authoritative context and returns the same current format. The API sends SSE
 keepalive comments while no new persisted event is available. A `complete` event
 contains the normalized document after durable persistence and point settlement; `saved`
 immediately follows as the durable success acknowledgement. Failures
@@ -268,13 +271,14 @@ from `generation_job_events`. Send the last received ID in `Last-Event-ID` or as
 only events after that cursor. Browser clients that cannot set the resume header
 can use the query parameter.
 
-Submission SSE responses expose `X-Generation-Job-ID` and `X-Presentation-ID`
-as soon as response headers are available. If the connection fails before those
-headers arrive, an authenticated client can recover the committed job with
-`GET /generation-jobs/idempotency/{key}/job?kind=generation|iteration` and then
-open its event stream. Clients should persist the idempotency key before sending
-the submission to avoid creating duplicate charged work after an ambiguous
-network failure.
+`POST /presentation-jobs` returns `202 Accepted` with
+`{"job_id","presentation_id","status":"queued"}` as JSON; resubmitting an
+already-committed job ID returns `200` with `"status":"existing"`. The client
+chooses the job ID before sending, so if the connection fails before the
+response arrives it can poll `GET /generation-jobs/{id}` to learn whether the
+submission committed, then open `/generation-jobs/{id}/events`. A `preview:
+true` body runs research only and responds synchronously with `sources`,
+`estimated_tokens`, and `slide_tokens_remaining` instead of creating a job.
 
 `POST /generation-jobs/{id}/cancel` transactionally finalizes cancellation for a
 `queued`, `running`, or `retrying` job and returns `202` with
@@ -286,8 +290,8 @@ prevents a late success from settling after cancellation.
 See [GENERATION_WORKER.md](GENERATION_WORKER.md) for queue, delivery, accounting,
 worker operation, and deployment details.
 
-The API validates the requested theme before generation. Invalid or omitted
-values fall back to the `corporate-blue` theme. Layout and visual composition are
+Generation assigns `corporate-blue` without accepting a theme request field.
+Iteration preserves the saved presentation theme. Layout and visual composition are
 selected automatically from each slide's narrative role, visual intent, semantic
 blocks, and available assets. Generated image placeholders contain descriptive
 text but no URL; grounded image blocks require HTTPS URLs.
@@ -326,10 +330,9 @@ The API permits credentialed requests from `CORS_ORIGINS` or `CORS_ORIGIN`.
 Local defaults are `http://localhost:5173` and `http://127.0.0.1:5173`.
 Allowed methods are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `OPTIONS`, so
 browser presentation mutations can complete a credentialed `PATCH` preflight.
-Allowed request headers are `Content-Type`, `Authorization`, `Idempotency-Key`,
+Allowed request headers are `Content-Type`, `Authorization`,
 and `Last-Event-ID`. Browser event replay can also use `?after=` without adding a
-custom header. Submission responses expose `X-Generation-Job-ID` and
-`X-Presentation-ID` to browser clients.
+custom header.
 
 ## AI provider connections
 
@@ -339,10 +342,12 @@ connections under `/ai`:
 - `GET /ai/config`
 - `POST /ai/connections`
 - `PUT /ai/connections/:provider`
+- `PUT /ai/connections/:provider/enabled`
 - `DELETE /ai/connections/:provider`
 - `PUT /ai/selection`
 
 Supported providers are `openai`, `google`, and `anthropic`. Generation requests
 may include `ai: { provider, model }`; iteration resolves the user's current
-selection server-side. Keys are never returned by these endpoints.
+selection server-side. The enabled endpoint accepts `{ "enabled": boolean }`
+and pauses that provider without deleting its saved key. Keys are never returned by these endpoints.
 Successful connection deletion returns `204 No Content`.

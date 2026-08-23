@@ -12,6 +12,7 @@ import (
 type Connection struct {
 	UserID, Provider, EncryptedAPIKey, EncryptionIV, KeyLastFour, Status string
 	EncryptionKeyVersion                                                 int
+	Enabled                                                              bool
 	ValidatedAt                                                          time.Time
 	LastUsedAt                                                           *time.Time
 }
@@ -20,6 +21,7 @@ type Selection struct {
 	Provider Provider `json:"provider"`
 	Model    string   `json:"model"`
 }
+
 type ConnectionService struct{ DB *sql.DB }
 
 // Connect validates first, then stores an authenticated AES-GCM encrypted key in ai_provider_connections.
@@ -63,7 +65,7 @@ func (s ConnectionService) List(ctx context.Context, userID string) ([]Connectio
 	if s.DB == nil {
 		return nil, errors.New("database is required")
 	}
-	rows, err := s.DB.QueryContext(ctx, `SELECT user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, validated_at, last_used_at FROM ai_provider_connections WHERE user_id = $1`, userID)
+	rows, err := s.DB.QueryContext(ctx, `SELECT user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, enabled, validated_at, last_used_at FROM ai_provider_connections WHERE user_id = $1`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +94,26 @@ func (s ConnectionService) GetSelection(ctx context.Context, userID string) (*Se
 		return nil, err
 	}
 	return &selection, nil
+}
+
+// SetProviderEnabled persists a per-provider generation switch without
+// touching the stored key or saved model selection.
+func (s ConnectionService) SetProviderEnabled(ctx context.Context, userID string, provider Provider, enabled bool) error {
+	if s.DB == nil {
+		return errors.New("database is required")
+	}
+	result, err := s.DB.ExecContext(ctx, `UPDATE ai_provider_connections SET enabled = $3, updated_at = NOW() WHERE user_id = $1 AND provider = $2`, userID, provider, enabled)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errors.New("this AI provider is not connected")
+	}
+	return nil
 }
 
 func (s ConnectionService) SetSelection(ctx context.Context, userID string, selection Selection) error {
@@ -163,11 +185,14 @@ func (s ConnectionService) ResolveSelection(ctx context.Context, userID string, 
 	var encrypted EncryptedCredential
 	var status string
 	err := s.DB.QueryRowContext(ctx, `SELECT encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status FROM ai_provider_connections WHERE user_id = $1 AND provider = $2`, userID, selected.Provider).Scan(&encrypted.EncryptedAPIKey, &encrypted.EncryptionIV, &encrypted.EncryptionKeyVersion, &encrypted.KeyLastFour, &status)
-	if errors.Is(err, sql.ErrNoRows) || status != "valid" {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, "", errors.New("the selected AI provider is not connected")
 	}
 	if err != nil {
 		return nil, "", err
+	}
+	if status != "valid" {
+		return nil, "", errors.New("the selected AI provider is not connected")
 	}
 	key, err := DecryptAPIKey(userID, selected.Provider, encrypted)
 	if err != nil {
@@ -190,6 +215,8 @@ func (s ConnectionService) ResolveSelection(ctx context.Context, userID string, 
 
 // CredentialForGeneration resolves a previously validated provider selection
 // without performing slow model-catalog discovery on every generation request.
+// A disabled selected provider reports no credential, causing point-funded
+// SlideSage OpenRouter to be used while the key remains stored.
 func (s ConnectionService) CredentialForGeneration(ctx context.Context, userID string, requested *Selection) (*Selection, string, error) {
 	selected := requested
 	if selected == nil {
@@ -207,12 +234,16 @@ func (s ConnectionService) CredentialForGeneration(ctx context.Context, userID s
 	}
 	var encrypted EncryptedCredential
 	var status string
-	err := s.DB.QueryRowContext(ctx, `SELECT encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status FROM ai_provider_connections WHERE user_id = $1 AND provider = $2`, userID, selected.Provider).Scan(&encrypted.EncryptedAPIKey, &encrypted.EncryptionIV, &encrypted.EncryptionKeyVersion, &encrypted.KeyLastFour, &status)
-	if errors.Is(err, sql.ErrNoRows) || status != "valid" {
+	var enabled bool
+	err := s.DB.QueryRowContext(ctx, `SELECT encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, enabled FROM ai_provider_connections WHERE user_id = $1 AND provider = $2`, userID, selected.Provider).Scan(&encrypted.EncryptedAPIKey, &encrypted.EncryptionIV, &encrypted.EncryptionKeyVersion, &encrypted.KeyLastFour, &status, &enabled)
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, "", errors.New("the selected AI provider is not connected")
 	}
 	if err != nil {
 		return nil, "", err
+	}
+	if status != "valid" || !enabled {
+		return nil, "", nil
 	}
 	key, err := DecryptAPIKey(userID, selected.Provider, encrypted)
 	if err != nil {
@@ -237,7 +268,7 @@ func (s ConnectionService) requireEligibility(ctx context.Context, userID string
 }
 
 func (s ConnectionService) upsert(ctx context.Context, userID string, provider Provider, key EncryptedCredential) (Connection, error) {
-	row := s.DB.QueryRowContext(ctx, `INSERT INTO ai_provider_connections (id, user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, validated_at) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, $3, $4, $5, $6, 'valid', NOW()) ON CONFLICT (user_id, provider) DO UPDATE SET encrypted_api_key = EXCLUDED.encrypted_api_key, encryption_iv = EXCLUDED.encryption_iv, encryption_key_version = EXCLUDED.encryption_key_version, key_last_four = EXCLUDED.key_last_four, status = 'valid', validated_at = NOW(), updated_at = NOW() RETURNING user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, validated_at, last_used_at`, userID, provider, key.EncryptedAPIKey, key.EncryptionIV, key.EncryptionKeyVersion, key.KeyLastFour)
+	row := s.DB.QueryRowContext(ctx, `INSERT INTO ai_provider_connections (id, user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, validated_at) VALUES (md5(random()::text || clock_timestamp()::text), $1, $2, $3, $4, $5, $6, 'valid', NOW()) ON CONFLICT (user_id, provider) DO UPDATE SET encrypted_api_key = EXCLUDED.encrypted_api_key, encryption_iv = EXCLUDED.encryption_iv, encryption_key_version = EXCLUDED.encryption_key_version, key_last_four = EXCLUDED.key_last_four, status = 'valid', enabled = true, validated_at = NOW(), updated_at = NOW() RETURNING user_id, provider, encrypted_api_key, encryption_iv, encryption_key_version, key_last_four, status, enabled, validated_at, last_used_at`, userID, provider, key.EncryptedAPIKey, key.EncryptionIV, key.EncryptionKeyVersion, key.KeyLastFour)
 	return scanConnection(row)
 }
 
@@ -246,7 +277,7 @@ type scanner interface{ Scan(...any) error }
 func scanConnection(row scanner) (Connection, error) {
 	var connection Connection
 	var last sql.NullTime
-	err := row.Scan(&connection.UserID, &connection.Provider, &connection.EncryptedAPIKey, &connection.EncryptionIV, &connection.EncryptionKeyVersion, &connection.KeyLastFour, &connection.Status, &connection.ValidatedAt, &last)
+	err := row.Scan(&connection.UserID, &connection.Provider, &connection.EncryptedAPIKey, &connection.EncryptionIV, &connection.EncryptionKeyVersion, &connection.KeyLastFour, &connection.Status, &connection.Enabled, &connection.ValidatedAt, &last)
 	if err != nil {
 		return Connection{}, fmt.Errorf("scan AI connection: %w", err)
 	}

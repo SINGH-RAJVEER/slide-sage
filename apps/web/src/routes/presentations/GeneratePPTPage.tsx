@@ -1,9 +1,9 @@
-import type { PresentationRetryOptions, ThemeId } from "@slidesage/types";
+import type { PresentationRetryOptions } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/app/Header";
 import { ROUTES } from "@/app/router/paths";
@@ -30,9 +30,8 @@ export default function GeneratePPTPage() {
 	const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
-	const [theme] = useState<ThemeId>(retry?.theme ?? "corporate-blue");
 	const navigate = useNavigate();
-	const { streamingState, startStreaming } = useStreaming();
+	const { streamingState, generate } = useStreaming();
 
 	useEffect(() => {
 		if (streamingState.error) {
@@ -79,7 +78,6 @@ export default function GeneratePPTPage() {
 					slideCount: count,
 					detailLevel,
 					tonality,
-					theme,
 					retryPresentationId,
 					...(retry?.ai ? { ai: retry.ai } : {}),
 				},
@@ -87,17 +85,14 @@ export default function GeneratePPTPage() {
 			return;
 		}
 
-		const streamingRequest = startStreaming(
-			normalizedPrompt,
-			count,
+		const streamingRequest = generate({
+			prompt: normalizedPrompt,
+			slideCount: count,
 			detailLevel,
 			tonality,
-			false,
-			undefined,
 			retryPresentationId,
-			theme,
-			retry?.ai,
-		);
+			ai: retry?.ai,
+		});
 		navigate(ROUTES.presentation, {
 			state: { isStreaming: true },
 		});
@@ -119,6 +114,40 @@ export default function GeneratePPTPage() {
 		requestGenerationNotificationPermission();
 		debouncedGenerate(prompt);
 	};
+
+	// Plain Enter anywhere on the generate page starts generation when a prompt
+	// is present, or moves focus to the prompt box when it is not. The listener
+	// runs in the capture phase so it wins over focused dropdown triggers whose
+	// default activation would otherwise reopen a menu, and generation is
+	// deferred one task so option-bar commit handlers run first.
+	const enterActionRef = useRef<() => void>(() => {});
+	enterActionRef.current = () => {
+		if (!prompt.trim()) {
+			document.getElementById("prompt")?.focus();
+			return;
+		}
+		if (!loading && !streamingState.isStreaming) {
+			handleGenerate();
+		}
+	};
+
+	useEffect(() => {
+		const handleGlobalEnter = (event: KeyboardEvent) => {
+			if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+			const target = event.target;
+			if (
+				target instanceof Element &&
+				target.closest('[role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]')
+			) {
+				return;
+			}
+			event.preventDefault();
+			window.setTimeout(() => enterActionRef.current(), 0);
+		};
+
+		window.addEventListener("keydown", handleGlobalEnter, true);
+		return () => window.removeEventListener("keydown", handleGlobalEnter, true);
+	}, []);
 
 	return (
 		<div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-transparent">

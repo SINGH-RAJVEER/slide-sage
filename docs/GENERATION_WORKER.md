@@ -23,29 +23,27 @@ reference.
 
 ## Submission Transaction
 
-`POST /generate-presentation-stream` and
-`POST /iterate-presentation-stream` perform the durable handoff before opening
-their event stream. In one PostgreSQL transaction, the API:
+`POST /presentation-jobs` performs the durable handoff and returns the job
+identity as JSON (`202` with `job_id`, `presentation_id`, and `status`). In one
+PostgreSQL transaction, the API:
 
 1. Locks and validates the idempotent point operation.
 2. Reserves SlideSage points and records the ledger entry when the server model is used.
 3. Creates the generating presentation placeholder for a new deck, or captures the expected revision for iteration or retry.
 4. Creates the `generation_jobs` row and initial `generation_job_events` rows.
 5. Calls River `InsertTx`, storing the River queue record in the same transaction.
-6. Commits, then tails `generation_job_events` for the returned application job.
 
 The transaction is all-or-nothing. A committed point reservation cannot exist
 without its application job and River queue record, and an enqueue failure does
-not leave a placeholder or reserved balance behind. Reusing an
-`Idempotency-Key` with the same request attaches to the existing job event stream;
-reusing it with different input returns `409`. Submission responses expose the
-job and presentation IDs in `X-Generation-Job-ID` and `X-Presentation-ID`. If a
-connection fails before those headers arrive, the client can recover the job via
-`GET /generation-jobs/idempotency/{key}/job?kind=generation|iteration`.
+not leave a placeholder or reserved balance behind. The client chooses the job
+ID, which doubles as the idempotency key: resubmitting it with the same request
+attaches to the existing job event stream; reusing it with different input
+returns `409`. Submission responses expose the job and presentation IDs in the
+JSON body. If a connection fails before the response arrives, the client polls
+`GET /generation-jobs/{id}` to discover whether submission committed.
 
-The POST response remains an SSE response for compatibility, but provider work
-is not performed by the API process. Closing that response only stops that
-client's event tail. It does not cancel the job.
+A `preview: true` body runs research synchronously with its own reservation
+accounting and responds with sources without creating a job.
 
 ## Worker Lifecycle
 
@@ -62,12 +60,22 @@ these states:
 | `cancelled` | A cancellation request was observed and finalized |
 
 River permits up to three attempts for the generation job. Each attempt has a
-four-minute timeout, exceeding the provider client's three-minute timeout, and
-River rescues jobs left running for five minutes. Shutdown first drains active
-jobs, then cancels their contexts after a six-second River soft-stop timeout so
-queue state can finalize within the Cloud Run termination window. The worker retries
+seven-minute timeout for the sequential planning and drafting calls, whose HTTP
+client timeout is three minutes per call. Provider calls reserve a fixed
+reasoning allowance on top of the requested output bound for reasoning-capable
+models, so internal thinking never truncates the structured JSON answer.
+Within a single attempt, provider
+requests retry transient failures in process: `429` and `5xx` responses are
+retried up to four total attempts with exponential backoff starting at two
+seconds and capped at fifteen seconds, and the provider's `Retry-After` header
+overrides the computed delay when it is longer. Context cancellation stops the
+backoff immediately. River rescues jobs left running for
+eight minutes. On shutdown the worker marks itself unready, cancels maintenance,
+and asks River to drain active jobs. River cancels remaining work after its
+six-second soft-stop timeout so queue state can finalize within the Cloud Run
+termination window. The worker retries
 network errors, provider `429` responses, and provider `5xx` responses. Events
-such as `created`, `theme`, `stage`, `retry`, `plan`, `outline`, `slide`, `complete`,
+such as `created`, `theme`, `stage`, `retry`, `plan`, `slide`, `complete`,
 `saved`, and `error` are stored before the API delivers them. `saved` and `error`
 are terminal stream events.
 
@@ -84,7 +92,6 @@ All job endpoints require the authenticated owner of the job.
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/generation-jobs/{id}` | Return status, stage, progress, timestamps, presentation ID, kind, and any terminal error |
-| `GET` | `/generation-jobs/idempotency/{key}/job?kind=...` | Recover a committed job after an ambiguous submission connection failure |
 | `GET` | `/generation-jobs/{id}/events` | Stream persisted events and continue tailing until a terminal event |
 | `POST` | `/generation-jobs/{id}/cancel` | Request cooperative cancellation of a queued, running, or retrying job |
 
@@ -99,9 +106,26 @@ The event endpoint can be consumed through `fetch` stream parsing. Browser
 headers require request options unavailable to `EventSource`; the `after` query
 parameter is available for clients that cannot set `Last-Event-ID`.
 
+When generation continues outside the presentation viewer, the web client shows
+a loader below the header. Hovering or focusing it expands the indicator to show
+the submitted prompt. Selecting it returns to the running presentation.
+
+One API instance accepts at most 40 generation event streams and at most three
+streams per user by default. Event rows are copied from PostgreSQL and the query
+is closed before bytes are written to the client, so a slow client does not hold
+a database connection. The API cancels active streams before graceful server
+shutdown. Configure the limits with `GENERATION_STREAM_LIMIT` and
+`GENERATION_STREAM_LIMIT_PER_USER`.
+
 Cancellation returns `202` with `{"status":"cancellation_requested"}` when the
 request is recorded. It returns `409` when the job is already terminal or is not
 otherwise cancellable.
+
+In the presentation viewer, a new generation can be cancelled only before its
+first slide arrives. During that skeleton state, the disabled slide-delete
+control is replaced with **Cancel generation**. A successful cancellation stops
+the local event consumer, clears its resumable job record, and returns the user
+to the generation form.
 
 ## Delivery and Accounting Guarantees
 
@@ -137,12 +161,25 @@ as the API, plus worker-specific controls:
 | `WORKER_HEALTH_PORT` | `8080` | Port for worker health probes |
 
 `GET /live` returns `204` while the health server is running. `GET /ready`
-returns `204` when PostgreSQL responds to a one-second ping, otherwise `503`.
+returns `204` only while the worker accepts work and PostgreSQL responds to a
+one-second ping. It returns `503` as soon as shutdown starts.
+
+The worker runs generation recovery every minute. It processes at most 100
+terminated jobs and 100 affected users per sweep, with at most two recovery
+transactions running concurrently. Hourly maintenance deletes bounded batches
+of expired rate-limit counters and unverified accounts. Maintenance stops before
+River drains.
+
+The API discovers model catalogs for independent BYOK connections concurrently,
+with at most three catalog requests per configuration response and one active
+catalog request per provider in each API process.
 
 ## Deployment
 
 The intended production topology is a Cloud Run service for the API and a Cloud
-Run Worker Pool for `cmd/worker`. API-to-worker coordination uses PostgreSQL
+Run Worker Pool for `cmd/worker`. The current service-based deployment must use
+instance-based billing through `--no-cpu-throttling`; a minimum instance alone
+does not allocate CPU between requests. API-to-worker coordination uses PostgreSQL
 only; there is no HTTP or RPC call from the API to a worker instance. The worker
 still makes its required outbound calls to PostgreSQL and the selected AI
 provider.
@@ -153,7 +190,7 @@ limits, PostgreSQL connections, and job duration, then change the instance count
 manually. Total potential job concurrency is the worker instance count multiplied
 by `WORKER_CONCURRENCY`; size the database pool and provider limits accordingly.
 
-`docker/Dockerfile` exposes three targets from the same source:
+`apps/api/Dockerfile` exposes three targets from the same source.
 
 | Target | Entrypoint | Use |
 | --- | --- | --- |

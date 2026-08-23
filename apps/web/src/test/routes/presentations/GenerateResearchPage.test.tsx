@@ -75,7 +75,7 @@ describe("GenerateResearchPage", () => {
 
 		globalThis.fetch = mock((input: RequestInfo | URL, init?: RequestInit) => {
 			requestCount += 1;
-			if (String(input).includes("/generate-presentation-stream")) {
+			if (String(input).includes("/presentation-jobs")) {
 				generationBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
 			}
 

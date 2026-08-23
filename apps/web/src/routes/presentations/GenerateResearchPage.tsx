@@ -1,4 +1,4 @@
-import type { AIModelSelection, ResearchPayload, ThemeId } from "@slidesage/types";
+import type { AIModelSelection, ResearchPayload } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { Spinner } from "@slidesage/ui/components/spinner";
@@ -14,7 +14,6 @@ interface ResearchRouteState {
 	slideCount: number;
 	detailLevel: string;
 	tonality: string;
-	theme: ThemeId;
 	researchPayload?: ResearchPayload;
 	retryPresentationId?: string;
 	ai?: AIModelSelection;
@@ -25,15 +24,13 @@ type ResearchStatus = "loading" | "ready" | "error";
 export default function GenerateResearchPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
-	const { streamingState, researchPreviewState, startResearchPreview, startStreaming } =
-		useStreaming();
+	const { streamingState, researchPreviewState, previewResearch, generate } = useStreaming();
 
 	const routeState = location.state as ResearchRouteState | null;
 	const prompt = routeState?.prompt?.trim() ?? "";
 	const slideCount = routeState?.slideCount ?? 0;
 	const detailLevel = routeState?.detailLevel ?? "balanced";
 	const tonality = routeState?.tonality ?? "professional";
-	const theme = routeState?.theme ?? "corporate-blue";
 	const savedResearch = routeState?.researchPayload;
 	const retryPresentationId = routeState?.retryPresentationId;
 	const ai = routeState?.ai;
@@ -80,8 +77,8 @@ export default function GenerateResearchPage() {
 
 	useEffect(() => {
 		if (!prompt || !slideCount) return;
-		void startResearchPreview(researchRequest, savedResearch, researchAttempt > 0);
-	}, [prompt, slideCount, researchAttempt, researchRequest, savedResearch, startResearchPreview]);
+		void previewResearch(researchRequest, savedResearch, researchAttempt > 0);
+	}, [prompt, slideCount, researchAttempt, researchRequest, savedResearch, previewResearch]);
 
 	const handleProceed = useCallback(async () => {
 		if (
@@ -103,17 +100,16 @@ export default function GenerateResearchPage() {
 			...(estimatedTokens === null ? {} : { estimated_tokens: estimatedTokens }),
 		};
 
-		const streamingRequest = startStreaming(
+		const streamingRequest = generate({
 			prompt,
 			slideCount,
 			detailLevel,
 			tonality,
-			true,
-			payload,
+			researchEnabled: true,
+			researchPayload: payload,
 			retryPresentationId,
-			theme,
 			ai,
-		);
+		});
 		navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
 		const success = await streamingRequest;
@@ -128,11 +124,10 @@ export default function GenerateResearchPage() {
 		prompt,
 		researchStatus,
 		retryPresentationId,
-		theme,
 		navigate,
 		slideCount,
 		sources,
-		startStreaming,
+		generate,
 		streamingState.isStreaming,
 		tonality,
 	]);

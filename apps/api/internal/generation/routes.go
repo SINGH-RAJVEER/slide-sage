@@ -15,7 +15,9 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
@@ -25,6 +27,9 @@ import (
 const (
 	maxBodyBytes         = 256 * 1024
 	defaultModel         = "google/gemma-4-26b-a4b-it"
+	providerMaxAttempts  = 4
+	providerInitialWait  = 2 * time.Second
+	providerMaximumWait  = 15 * time.Second
 	planningSystemPrompt = `Return exactly one JSON object and no Markdown. Create a DeckPlan with title, audience, thesis, style, and slides. style must be minimal, visual, classic, or consultant. Return exactly the requested number of slides. Each slide requires id, purpose, title, message, evidence, and visualIntent. purpose must be cover, section, context, problem, insight, solution, evidence, comparison, process, recommendation, or closing. visualIntent must be one of these data-only shapes:
 - {"kind":"none"}
 - {"kind":"image-hero","imagePrompt":"Specific visual direction","focalPoint":"center"}
@@ -35,7 +40,7 @@ const (
 - {"kind":"chart","chartType":"bar","dataSeries":[{"label":"Series","values":[1,2]}]}
 Use visual intents only when they clarify the slide message. Evidence must contain short source references from the supplied research, never invented citations. Never return HTML, Markdown, CSS, code, coordinates, colors, URLs, styles, or class names.`
 	generationSystemPrompt = `Return exactly one JSON object and no Markdown.
-The object must contain title, theme, and slides. Every slide must use type "content" and contain id, layout, title, subtitle, tone, density, pattern, and a top-level blocks array. Every slide must contain at least one substantive text block.
+The object must contain title and slides. Every slide must use type "content" and contain id, layout, title, subtitle, tone, density, pattern, and a top-level blocks array. Every slide must contain at least one substantive text block.
 Use only these exact block shapes:
 - {"type":"paragraph","region":"main","text":"Concise presentation copy"}
 - {"type":"bullets","region":"main","items":["Specific point"],"ordered":false}
@@ -47,20 +52,45 @@ Block region must be main, primary, secondary, or media. Do not rename text or i
 
 type Identity func(context.Context, *http.Request) (string, error)
 
+// RouteConfig controls long-lived generation event streams and synchronous
+// research previews.
+type RouteConfig struct {
+	StreamContext     context.Context
+	MaxStreams        int
+	MaxStreamsPerUser int
+	Research          *presentation.ExaResearchService
+}
+
 // RegisterRoutes installs durable generation submission and event endpoints.
-func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, connections ai.ConnectionService) {
+func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, connections ai.ConnectionService, config RouteConfig) {
 	if mux == nil || database == nil || identity == nil {
 		panic("generation routes require mux, database, and identity callback")
+	}
+	if config.StreamContext == nil {
+		config.StreamContext = context.Background()
+	}
+	if config.MaxStreams < 1 {
+		config.MaxStreams = positiveEnvInt("GENERATION_STREAM_LIMIT", 40)
+	}
+	if config.MaxStreamsPerUser < 1 {
+		config.MaxStreamsPerUser = positiveEnvInt("GENERATION_STREAM_LIMIT_PER_USER", 3)
 	}
 	queue, err := newInsertClient(database)
 	if err != nil {
 		panic(fmt.Sprintf("create generation queue client: %v", err))
 	}
-	handler := &handler{database: database, identity: identity, connections: connections, client: &http.Client{Timeout: 3 * time.Minute}, queue: queue}
-	mux.HandleFunc("POST /generate-presentation-stream", handler.generate)
-	mux.HandleFunc("POST /iterate-presentation-stream", handler.iterate)
+	handler := &handler{
+		database:      database,
+		identity:      identity,
+		connections:   connections,
+		client:        &http.Client{Timeout: 3 * time.Minute},
+		queue:         queue,
+		streamContext: config.StreamContext,
+		streams:       newStreamLimiter(config.MaxStreams, config.MaxStreamsPerUser),
+		research:      config.Research,
+	}
+	mux.HandleFunc("POST /presentation-jobs", handler.submit)
 	mux.HandleFunc("GET /generation-jobs/{id}", handler.jobStatus)
-	mux.HandleFunc("GET /generation-jobs/idempotency/{key}/job", handler.jobByIdempotency)
 	mux.HandleFunc("GET /generation-jobs/{id}/events", handler.jobEvents)
 	mux.HandleFunc("POST /generation-jobs/{id}/cancel", handler.cancelJob)
 }
@@ -68,51 +98,163 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 // RecoverExpired finalizes abandoned authorizations even when their user does
 // not submit another request. It is safe to call concurrently from API nodes.
 func RecoverExpired(ctx context.Context, database *sql.DB) error {
-	rows, err := database.QueryContext(ctx, `SELECT DISTINCT operation.user_id FROM generation_point_operations operation WHERE operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying'))`)
+	rows, err := database.QueryContext(ctx, `SELECT operation.user_id FROM generation_point_operations operation WHERE operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) GROUP BY operation.user_id ORDER BY MIN(operation.expires_at) LIMIT 100`)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	userIDs := []string{}
 	for rows.Next() {
 		var userID string
 		if err := rows.Scan(&userID); err != nil {
+			_ = rows.Close()
 			return err
 		}
-		if err := (&handler{database: database}).recoverExpired(ctx, userID); err != nil {
-			return err
-		}
+		userIDs = append(userIDs, userID)
 	}
-	return rows.Err()
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	recoveryHandler := &handler{database: database}
+	return runBounded(ctx, 2, userIDs, func(ctx context.Context, userID string) error {
+		return recoveryHandler.recoverExpired(ctx, userID)
+	})
 }
 
 type handler struct {
-	database    *sql.DB
-	identity    Identity
-	client      *http.Client
-	connections ai.ConnectionService
-	queue       *queueClient
+	database      *sql.DB
+	identity      Identity
+	client        *http.Client
+	connections   ai.ConnectionService
+	queue         *queueClient
+	streamContext context.Context
+	streams       *streamLimiter
+	research      *presentation.ExaResearchService
+	sleep         func(context.Context, time.Duration) error
 }
 
-type generationInput struct {
+// doProviderRequest sends a provider request and retries transient failures
+// (429 and 5xx) with exponential backoff, honoring Retry-After when present.
+func (h *handler) doProviderRequest(ctx context.Context, send func() (*http.Response, error)) (*http.Response, error) {
+	for attempt := 0; ; attempt++ {
+		response, err := send()
+		if err != nil {
+			return nil, err
+		}
+		if !retryableStatus(response.StatusCode) || attempt == providerMaxAttempts-1 {
+			return response, nil
+		}
+		delay := backoffDelay(attempt)
+		if after := parseRetryAfter(response.Header.Get("Retry-After")); after > delay {
+			delay = min(after, providerMaximumWait)
+		}
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 16*1024))
+		response.Body.Close()
+		if err := h.wait(ctx, delay); err != nil {
+			return nil, err
+		}
+	}
+}
+
+func (h *handler) wait(ctx context.Context, delay time.Duration) error {
+	if h.sleep != nil {
+		return h.sleep(ctx, delay)
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+func retryableStatus(status int) bool {
+	return status == http.StatusTooManyRequests || status >= 500
+}
+
+func backoffDelay(attempt int) time.Duration {
+	delay := providerInitialWait << attempt
+	return min(delay, providerMaximumWait)
+}
+
+func parseRetryAfter(value string) time.Duration {
+	value = strings.TrimSpace(value)
+	if seconds, err := strconv.Atoi(value); err == nil && seconds > 0 {
+		return time.Duration(seconds) * time.Second
+	}
+	if when, err := http.ParseTime(value); err == nil {
+		if remaining := time.Until(when); remaining > 0 {
+			return remaining
+		}
+	}
+	return 0
+}
+
+type streamLimiter struct {
+	mu         sync.Mutex
+	total      int
+	maxTotal   int
+	maxPerUser int
+	byUser     map[string]int
+}
+
+func newStreamLimiter(maxTotal, maxPerUser int) *streamLimiter {
+	return &streamLimiter{maxTotal: maxTotal, maxPerUser: maxPerUser, byUser: map[string]int{}}
+}
+
+func (limiter *streamLimiter) acquire(userID string) bool {
+	if limiter == nil {
+		return true
+	}
+	limiter.mu.Lock()
+	defer limiter.mu.Unlock()
+	if limiter.total >= limiter.maxTotal || limiter.byUser[userID] >= limiter.maxPerUser {
+		return false
+	}
+	limiter.total++
+	limiter.byUser[userID]++
+	return true
+}
+
+func (limiter *streamLimiter) release(userID string) {
+	if limiter == nil {
+		return
+	}
+	limiter.mu.Lock()
+	defer limiter.mu.Unlock()
+	if limiter.byUser[userID] == 0 {
+		return
+	}
+	limiter.total--
+	limiter.byUser[userID]--
+	if limiter.byUser[userID] == 0 {
+		delete(limiter.byUser, userID)
+	}
+}
+
+func positiveEnvInt(name string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(name)))
+	if err != nil || value < 1 {
+		return fallback
+	}
+	return value
+}
+
+type submitInput struct {
 	Topic           string
+	ParentID        string
+	RetryID         string
 	SlideCount      int
 	DetailLevel     string
 	Tonality        string
-	Theme           string
 	Research        any
 	ResearchPayload *presentation.ResearchPayload
 	AI              *ai.Selection
-	RetryID         string
-}
-
-type iterationInput struct {
-	PresentationID string
-	Feedback       string
-	SlideCount     int
-	DetailLevel    string
-	Tonality       string
-	Research       any
-	AI             *ai.Selection
 }
 
 type persistedPresentation struct {
@@ -123,96 +265,216 @@ type persistedPresentation struct {
 	Revision int
 }
 
-func (h *handler) generate(writer http.ResponseWriter, request *http.Request) {
-	userID, input, ok := h.generationRequest(writer, request)
+// submit creates a durable presentation job and returns its identity as JSON.
+// The client supplies the job ID, which doubles as the idempotency key:
+// resubmitting the same job ID with the same body attaches to the existing
+// job, and with a different body conflicts. Progress is consumed separately
+// through GET /generation-jobs/{id}/events.
+func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
+	userID, body, ok := h.body(writer, request, maxBodyBytes)
 	if !ok {
 		return
 	}
-	idempotencyKey, err := idempotencyKey(request)
+	input, err := parseSubmitInput(body)
 	if err != nil {
 		writeError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	requestHash := requestHash(input)
-	presentationID := input.RetryID
-	if presentationID != "" {
-		existing, err := h.ownedPresentation(request.Context(), presentationID, userID)
-		if err != nil {
-			writeError(writer, http.StatusNotFound, "Presentation not found")
-			return
-		}
-		var document map[string]any
-		_ = json.Unmarshal(existing.Data, &document)
-		if document["status"] != "failed" {
-			duplicate, err := h.existingOperation(request.Context(), userID, "generation", idempotencyKey, requestHash)
-			if err == nil && duplicate.jobID != "" {
-				setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
-				h.streamEvents(writer, request, duplicate.jobID, userID, 0)
-				return
-			}
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				h.reservationError(writer, err)
-				return
-			}
-			writeError(writer, http.StatusConflict, "Only failed presentations can be retried")
-			return
-		}
-	}
-	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
-	operationID, err := uuid()
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
-		return
-	}
-	if presentationID == "" {
-		presentationID, err = uuid()
+	jobID := text(body["job_id"], "")
+	if jobID == "" {
+		jobID, err = uuid()
 		if err != nil {
 			writeError(writer, http.StatusInternalServerError, "Unable to start generation")
 			return
 		}
-	}
-	jobID, err := uuid()
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start generation")
+	} else if _, idempotencyErr := validateIdempotencyKey(jobID); idempotencyErr != nil {
+		writeError(writer, http.StatusBadRequest, "job_id "+idempotencyErr.Error())
 		return
 	}
-	selection, _, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
-	if err != nil {
-		writeError(writer, http.StatusConflict, err.Error())
+	requestHashValue := requestHash(input)
+
+	// Preview mode runs research synchronously and stops before any planning
+	// or drafting work, so clients can show sources before committing points.
+	if preview, _ := body["preview"].(bool); preview {
+		if input.ParentID != "" || input.RetryID != "" {
+			writeError(writer, http.StatusBadRequest, "preview cannot target an existing presentation")
+			return
+		}
+		options, ok := input.Research.(presentation.ResearchOptions)
+		if !ok || !options.Enabled {
+			writeError(writer, http.StatusBadRequest, "preview requires enabled research")
+			return
+		}
+		if h.research == nil {
+			writeError(writer, http.StatusServiceUnavailable, "Research is unavailable")
+			return
+		}
+		result, err := presentation.RunResearchPreview(request.Context(), h.database, h.research, userID, jobID, requestHashValue, input.Topic, options, input.SlideCount, input.DetailLevel, input.Tonality)
+		if err != nil {
+			var previewErr *presentation.ResearchPreviewError
+			if errors.As(err, &previewErr) {
+				if previewErr.Insufficient {
+					writeJSON(writer, previewErr.Status, map[string]any{"error": map[string]string{"message": previewErr.Message, "code": "INSUFFICIENT_TOKENS"}, "slide_tokens_remaining": previewErr.RemainingPoints, "slide_tokens_required": previewErr.RequiredPoints})
+					return
+				}
+				writeError(writer, previewErr.Status, previewErr.Message)
+				return
+			}
+			writeError(writer, http.StatusInternalServerError, "Unable to start generation")
+			return
+		}
+		writeJSON(writer, http.StatusOK, map[string]any{"sources": result.Sources, "estimated_tokens": result.EstimatedTokens, "slide_tokens_remaining": result.RemainingPoints})
 		return
 	}
-	if selection != nil {
-		quote = 0
+
+	var job streamJob
+	var placeholder []byte
+	create := false
+	if input.ParentID != "" {
+		job, err = h.iterationJob(request.Context(), userID, input)
+	} else {
+		job, placeholder, err = h.generationJob(request.Context(), userID, input, jobID, requestHashValue)
+		create = input.RetryID == ""
 	}
-	initial := map[string]any{"schemaVersion": presentation.PresentationSchemaVersion, "title": "Generating...", "theme": input.Theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "theme": input.Theme, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
-	initialJSON, _ := json.Marshal(initial)
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: input.Theme, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
-	balance, revision, err := h.enqueue(request.Context(), job, idempotencyKey, requestHash, input.RetryID == "", input.Topic, initialJSON)
+	if err != nil {
+		var duplicate duplicateSubmit
+		if errors.As(err, &duplicate) {
+			writeJSON(writer, http.StatusOK, map[string]any{"job_id": duplicate.jobID, "presentation_id": duplicate.presentationID, "status": "existing"})
+			return
+		}
+		var status writeStatusError
+		if errors.As(err, &status) {
+			writeError(writer, status.Status, status.Message)
+			return
+		}
+		h.reservationError(writer, err)
+		return
+	}
+
+	balance, _, err := h.enqueue(request.Context(), job, requestHashValue, create, input.Topic, placeholder)
 	if err != nil {
 		var duplicate duplicateOperation
 		if errors.As(err, &duplicate) && duplicate.jobID != "" {
-			setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
-			h.streamEvents(writer, request, duplicate.jobID, userID, 0)
+			writeJSON(writer, http.StatusOK, map[string]any{"job_id": duplicate.jobID, "presentation_id": duplicate.presentationID, "status": "existing"})
 			return
 		}
 		h.reservationError(writer, err)
 		return
 	}
 	_ = balance
-	_ = revision
-	setGenerationHeaders(writer, jobID, presentationID)
-	h.streamEvents(writer, request, jobID, userID, 0)
+	writeJSON(writer, http.StatusAccepted, map[string]any{"job_id": job.jobID, "presentation_id": job.presentationID, "status": "queued"})
 }
 
-func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
-	userID, input, ok := h.iterationRequest(writer, request)
-	if !ok {
-		return
-	}
-	base, err := h.ownedPresentation(request.Context(), input.PresentationID, userID)
+// duplicateSubmit reports that a submission already exists for the supplied
+// job ID, carrying its committed identity.
+type duplicateSubmit struct {
+	jobID, presentationID string
+}
+
+func (duplicateSubmit) Error() string { return "duplicate submission" }
+
+type writeStatusError struct {
+	Status  int
+	Message string
+}
+
+func (e writeStatusError) Error() string { return e.Message }
+
+// parseSubmitInput validates the unified submission body. A parent_presentation_id
+// marks an iteration of an existing deck; retry_presentation_id resubmits a
+// failed generation; neither means a fresh generation.
+func parseSubmitInput(body map[string]any) (submitInput, error) {
+	topic, err := required(body["topic"], "topic")
 	if err != nil {
-		writeError(writer, http.StatusNotFound, "Presentation not found")
-		return
+		return submitInput{}, err
+	}
+	input := submitInput{Topic: topic}
+	input.ParentID = text(body["parent_presentation_id"], "")
+	input.RetryID = text(body["retry_presentation_id"], "")
+	if len(input.ParentID) > 200 || len(input.RetryID) > 200 {
+		return submitInput{}, errors.New("presentation id must contain at most 200 characters")
+	}
+	if input.ParentID != "" && input.RetryID != "" {
+		return submitInput{}, errors.New("parent_presentation_id and retry_presentation_id are mutually exclusive")
+	}
+	slides, err := slideCount(body, input.ParentID == "")
+	if err != nil {
+		return submitInput{}, err
+	}
+	input.SlideCount = slides
+	research, err := parseResearch(body["research"])
+	if err != nil {
+		return submitInput{}, err
+	}
+	input.Research = research
+	input.DetailLevel = choice(body["detail_level"], "balanced")
+	input.Tonality = choice(body["tonality"], "professional")
+	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) {
+		return submitInput{}, errors.New("Invalid generation options")
+	}
+	if value := body["research_payload"]; value != nil {
+		payload, err := presentation.ParseResearchPayload(value)
+		if err != nil {
+			return submitInput{}, err
+		}
+		input.ResearchPayload = &payload
+	}
+	selection, err := parseAISelection(body["ai"])
+	if err != nil {
+		return submitInput{}, err
+	}
+	input.AI = selection
+	return input, nil
+}
+
+func (h *handler) generationJob(ctx context.Context, userID string, input submitInput, jobID, hash string) (streamJob, []byte, error) {
+	presentationID := input.RetryID
+	if presentationID != "" {
+		existing, err := h.ownedPresentation(ctx, presentationID, userID)
+		if err != nil {
+			return streamJob{}, nil, writeStatusError{http.StatusNotFound, "Presentation not found"}
+		}
+		var document map[string]any
+		_ = json.Unmarshal(existing.Data, &document)
+		if document["status"] != "failed" {
+			duplicate, err := h.existingSubmission(ctx, userID, jobID, hash)
+			if err == nil && duplicate.jobID != "" {
+				return streamJob{}, nil, duplicateSubmit{jobID: duplicate.jobID, presentationID: duplicate.presentationID}
+			}
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return streamJob{}, nil, err
+			}
+			return streamJob{}, nil, writeStatusError{http.StatusConflict, "Only failed presentations can be retried"}
+		}
+	}
+	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
+	operationID, err := uuid()
+	if err != nil {
+		return streamJob{}, nil, err
+	}
+	if presentationID == "" {
+		presentationID, err = uuid()
+		if err != nil {
+			return streamJob{}, nil, err
+		}
+	}
+	selection, _, err := h.connections.CredentialForGeneration(ctx, userID, input.AI)
+	if err != nil {
+		return streamJob{}, nil, writeStatusError{http.StatusConflict, err.Error()}
+	}
+	if selection != nil {
+		quote = 0
+	}
+	initial := map[string]any{"title": "Generating...", "theme": "corporate-blue", "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
+	placeholder, _ := json.Marshal(initial)
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
+	return job, placeholder, nil
+}
+
+func (h *handler) iterationJob(ctx context.Context, userID string, input submitInput) (streamJob, error) {
+	base, err := h.ownedPresentation(ctx, input.ParentID, userID)
+	if err != nil {
+		return streamJob{}, writeStatusError{http.StatusNotFound, "Presentation not found"}
 	}
 	count := input.SlideCount
 	if count == 0 {
@@ -227,48 +489,18 @@ func (h *handler) iterate(writer http.ResponseWriter, request *http.Request) {
 	}
 	operationID, err := uuid()
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start iteration")
-		return
+		return streamJob{}, err
 	}
-	quote := authorizationMillis(count, input.Feedback, base.Data, input.Research, nil, 0)
-	selection, _, err := h.connections.CredentialForGeneration(request.Context(), userID, input.AI)
+	quote := authorizationMillis(count, input.Topic, base.Data, input.Research, nil, 0)
+	selection, _, err := h.connections.CredentialForGeneration(ctx, userID, input.AI)
 	if err != nil {
-		writeError(writer, http.StatusConflict, err.Error())
-		return
+		return streamJob{}, writeStatusError{http.StatusConflict, err.Error()}
 	}
 	if selection != nil {
 		quote = 0
 	}
-	idempotencyKey, err := idempotencyKey(request)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	jobID, err := uuid()
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to start iteration")
-		return
-	}
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Feedback, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, theme: documentTheme(base.Data), research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
-	balance, _, err := h.enqueue(request.Context(), job, idempotencyKey, requestHash(input), false, "", nil)
-	if err != nil {
-		var duplicate duplicateOperation
-		if errors.As(err, &duplicate) && duplicate.jobID != "" {
-			setGenerationHeaders(writer, duplicate.jobID, duplicate.presentationID)
-			h.streamEvents(writer, request, duplicate.jobID, userID, 0)
-			return
-		}
-		h.reservationError(writer, err)
-		return
-	}
-	_ = balance
-	setGenerationHeaders(writer, jobID, base.ID)
-	h.streamEvents(writer, request, jobID, userID, 0)
-}
-
-func setGenerationHeaders(writer http.ResponseWriter, jobID, presentationID string) {
-	writer.Header().Set("X-Generation-Job-ID", jobID)
-	writer.Header().Set("X-Presentation-ID", presentationID)
+	job := streamJob{userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
+	return job, nil
 }
 
 type streamJob struct {
@@ -277,12 +509,13 @@ type streamJob struct {
 	quote                                      int64
 	prompt                                     string
 	slideCount                                 int
-	detailLevel, tonality, theme, kind         string
+	detailLevel, tonality, kind                string
 	research                                   any
 	researchPayload                            *presentation.ResearchPayload
 	selection                                  *ai.Selection
 	credential                                 string
 	current                                    json.RawMessage
+	requestHash                                string
 }
 
 func generationUserPrompt(job streamJob) string {
@@ -341,28 +574,36 @@ func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user 
 	if provider != "openrouter" {
 		return h.directProvider(ctx, provider, model, key, system, user, maxOutput)
 	}
-	payload := map[string]any{"model": model, "max_tokens": maxOutput, "stream": true, "stream_options": map[string]bool{"include_usage": true}, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+	// openRouterGeneratePayload always includes the reasoning parameter because
+	// OpenRouter normalizes it across providers and drops it for models that
+	// cannot reason. Reasoning tokens count toward the completion bound on
+	// reasoning models, and the same amount is added on top of the requested
+	// output bound to keep the full answer budget available.
+	payload := openRouterGeneratePayload(model, system, user, maxOutput)
 	encoded, _ := json.Marshal(payload)
 	endpoint := strings.TrimSpace(os.Getenv("OPEN_ROUTER_API_BASE"))
 	if endpoint == "" {
 		endpoint = "https://openrouter.ai/api/v1/chat/completions"
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
-	if err != nil {
-		return nil, 0, err
+	send := func() (*http.Response, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+key)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("HTTP-Referer", strings.TrimSpace(os.Getenv("BASE_URL")))
+		req.Header.Set("X-OpenRouter-Title", "Slide Sage")
+		return h.client.Do(req)
 	}
-	req.Header.Set("Authorization", "Bearer "+key)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("HTTP-Referer", strings.TrimSpace(os.Getenv("BASE_URL")))
-	req.Header.Set("X-OpenRouter-Title", "Slide Sage")
-	response, err := h.client.Do(req)
+	response, err := h.doProviderRequest(ctx, send)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(response.Body, 16*1024))
-		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("OpenRouter request failed: %s", strings.TrimSpace(string(body)))}
+		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("OpenRouter request failed: %s", summarizeProviderError(body))}
 	}
 	var content strings.Builder
 	tokens := 0
@@ -416,6 +657,75 @@ func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user 
 	return document, tokens, nil
 }
 
+// reasoningBudget is the per-call reasoning allowance reserved on top of the
+// requested answer bound for every provider whose thinking tokens compete with
+// output tokens. It fits every reasoning-capable family (the smallest
+// supported nonzero budgets are 128 for Gemini Pro, 512 for Gemini Flash Lite,
+// and 1024 for Anthropic extended thinking).
+const reasoningBudget = 4096
+
+func googleGeneratePayload(model, system, user string, maxOutput int) map[string]any {
+	config := map[string]any{"responseMimeType": "application/json", "maxOutputTokens": maxOutput}
+	if googleSupportsThinkingControl(model) {
+		// Google nests thinking control under generationConfig.thinkingConfig;
+		// a bare thinkingBudget field is rejected with 400 INVALID_ARGUMENT.
+		config["thinkingConfig"] = map[string]any{"thinkingBudget": reasoningBudget}
+		config["maxOutputTokens"] = maxOutput + reasoningBudget
+	}
+	return map[string]any{
+		"systemInstruction": map[string]any{"parts": []map[string]string{{"text": system}}},
+		"contents":          []map[string]any{{"role": "user", "parts": []map[string]string{{"text": user}}}},
+		"generationConfig":  config,
+	}
+}
+
+func openRouterGeneratePayload(model, system, user string, maxOutput int) map[string]any {
+	return map[string]any{"model": model, "max_tokens": maxOutput + reasoningBudget, "reasoning": map[string]any{"max_tokens": reasoningBudget}, "stream": true, "stream_options": map[string]bool{"include_usage": true}, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+}
+
+func googleSupportsThinkingControl(model string) bool {
+	name := strings.ToLower(model)
+	return strings.HasPrefix(name, "gemini-2.5") || strings.HasPrefix(name, "gemini-3") || strings.HasPrefix(name, "gemini-4")
+}
+
+// openAIGeneratePayload switches reasoning models to max_completion_tokens,
+// which they require and which counts reasoning toward the completion bound.
+// Classic GPT models keep the legacy max_tokens parameter untouched.
+func openAIGeneratePayload(model string, system, user string, maxOutput int) map[string]any {
+	messages := []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}
+	if openAIReasoningModel(model) {
+		return map[string]any{"model": model, "max_completion_tokens": maxOutput + reasoningBudget, "response_format": map[string]string{"type": "json_object"}, "messages": messages}
+	}
+	return map[string]any{"model": model, "max_tokens": maxOutput, "response_format": map[string]string{"type": "json_object"}, "messages": messages}
+}
+
+func openAIReasoningModel(model string) bool {
+	base := strings.ToLower(strings.TrimPrefix(model, "ft:"))
+	if i := strings.IndexByte(base, ':'); i >= 0 {
+		base = base[:i]
+	}
+	oSeries := len(base) > 1 && base[0] == 'o' && base[1] >= '1' && base[1] <= '9'
+	return oSeries || strings.HasPrefix(base, "gpt-5")
+}
+
+// anthropicGeneratePayload enables extended thinking for Claude generations
+// that support it. Thinking tokens count against max_tokens, so the same
+// amount is added on top of the requested output bound. Anthropic requires
+// budget_tokens of at least 1024 and a max_tokens strictly greater than it.
+func anthropicGeneratePayload(model, system, user string, maxOutput int) map[string]any {
+	payload := map[string]any{"model": model, "max_tokens": maxOutput, "system": system, "messages": []map[string]string{{"role": "user", "content": user}}}
+	if anthropicSupportsThinking(model) {
+		payload["thinking"] = map[string]any{"type": "enabled", "budget_tokens": reasoningBudget}
+		payload["max_tokens"] = maxOutput + reasoningBudget
+	}
+	return payload
+}
+
+func anthropicSupportsThinking(model string) bool {
+	name := strings.ToLower(model)
+	return strings.Contains(name, "-3-7") || strings.Contains(name, "-4")
+}
+
 func (h *handler) directProvider(ctx context.Context, provider ai.Provider, model, key, system, user string, maxOutput int) (map[string]any, int, error) {
 	var endpoint string
 	var payload any
@@ -424,16 +734,16 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	case ai.OpenAI:
 		endpoint = "https://api.openai.com/v1/chat/completions"
 		headers["Authorization"] = "Bearer " + key
-		payload = map[string]any{"model": model, "max_tokens": maxOutput, "response_format": map[string]string{"type": "json_object"}, "messages": []map[string]string{{"role": "system", "content": system}, {"role": "user", "content": user}}}
+		payload = openAIGeneratePayload(model, system, user, maxOutput)
 	case ai.Google:
 		endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
 		headers["x-goog-api-key"] = key
-		payload = map[string]any{"systemInstruction": map[string]any{"parts": []map[string]string{{"text": system}}}, "contents": []map[string]any{{"role": "user", "parts": []map[string]string{{"text": user}}}}, "generationConfig": map[string]any{"responseMimeType": "application/json", "maxOutputTokens": maxOutput}}
+		payload = googleGeneratePayload(model, system, user, maxOutput)
 	case ai.Anthropic:
 		endpoint = "https://api.anthropic.com/v1/messages"
 		headers["x-api-key"] = key
 		headers["anthropic-version"] = "2023-06-01"
-		payload = map[string]any{"model": model, "max_tokens": maxOutput, "system": system, "messages": []map[string]string{{"role": "user", "content": user}}}
+		payload = anthropicGeneratePayload(model, system, user, maxOutput)
 	default:
 		return nil, 0, errors.New("unsupported AI provider")
 	}
@@ -441,14 +751,17 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	if err != nil {
 		return nil, 0, err
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
-	if err != nil {
-		return nil, 0, err
+	send := func() (*http.Response, error) {
+		request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(encoded)))
+		if err != nil {
+			return nil, err
+		}
+		for name, value := range headers {
+			request.Header.Set(name, value)
+		}
+		return h.client.Do(request)
 	}
-	for name, value := range headers {
-		request.Header.Set(name, value)
-	}
-	response, err := h.client.Do(request)
+	response, err := h.doProviderRequest(ctx, send)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -461,7 +774,11 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 		return nil, 0, errors.New("AI provider response is too large")
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, 0, &providerRequestError{Status: response.StatusCode, Message: fmt.Sprintf("AI provider request failed with status %d", response.StatusCode)}
+		return nil, 0, &providerRequestError{
+			Status: response.StatusCode,
+			Message: fmt.Sprintf("AI provider request failed with status %d: %s",
+				response.StatusCode, summarizeProviderError(body)),
+		}
 	}
 	var envelope struct {
 		Choices []struct {
@@ -501,6 +818,9 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	if len(envelope.Content) > 0 {
 		content = envelope.Content[0].Text
 	}
+	if strings.TrimSpace(content) == "" {
+		return nil, 0, errors.New("AI provider returned no text content")
+	}
 	document, err := decodeGeneratedDocument(content)
 	if err != nil {
 		return nil, 0, err
@@ -515,8 +835,25 @@ func (h *handler) directProvider(ctx context.Context, provider ai.Provider, mode
 	return document, tokens, nil
 }
 
+// summarizeProviderError condenses an upstream error body into a bounded,
+// single-line snippet so failure surfaces carry the provider's actual reason
+// (invalid API keys, rejected parameters, quota text) instead of a bare status.
+func summarizeProviderError(body []byte) string {
+	snippet := strings.TrimSpace(string(body))
+	if idx := strings.IndexByte(snippet, '\n'); idx >= 0 {
+		snippet = snippet[:idx]
+	}
+	return truncate(snippet, 300)
+}
+
 func decodeGeneratedDocument(content string) (map[string]any, error) {
 	content = strings.TrimSpace(content)
+	// Some models emit reasoning inline as <think> blocks before the answer.
+	if start := strings.Index(content, "<think>"); start >= 0 {
+		if end := strings.Index(content[start:], "</think>"); end >= 0 {
+			content = strings.TrimSpace(content[:start] + content[start+end+len("</think>"):])
+		}
+	}
 	start, end := strings.IndexByte(content, '{'), strings.LastIndexByte(content, '}')
 	if start < 0 || end < start {
 		return nil, errors.New("AI provider returned invalid presentation JSON")
@@ -562,91 +899,6 @@ func hasSubstantiveGeneratedContent(slides []any) bool {
 	return len(slides) > 0
 }
 
-func (h *handler) generationRequest(writer http.ResponseWriter, request *http.Request) (string, generationInput, bool) {
-	userID, body, ok := h.body(writer, request, maxBodyBytes)
-	if !ok {
-		return "", generationInput{}, false
-	}
-	topic, err := required(body["topic"], "topic")
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	slides, err := slideCount(body, true)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	research, err := parseResearch(body["research"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	input := generationInput{Topic: topic, SlideCount: slides, DetailLevel: choice(body["detail_level"], body["detailLevel"], "balanced", "brief", "concise", "balanced", "detailed", "comprehensive"), Tonality: choice(body["tonality"], nil, "professional", "casual", "professional", "enthusiastic", "persuasive"), Theme: text(body["theme"], "corporate-blue"), Research: research}
-	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) || len(input.Theme) > 100 {
-		writeError(writer, http.StatusBadRequest, "Invalid generation options")
-		return "", generationInput{}, false
-	}
-	input.RetryID = text(first(body, "retry_presentation_id", "retryPresentationId"), "")
-	if len(input.RetryID) > 200 {
-		writeError(writer, http.StatusBadRequest, "retry_presentation_id must be a non-empty string")
-		return "", generationInput{}, false
-	}
-	if value := first(body, "research_payload", "researchPayload"); value != nil {
-		payload, err := presentation.ParseResearchPayload(value)
-		if err != nil {
-			writeError(writer, http.StatusBadRequest, err.Error())
-			return "", generationInput{}, false
-		}
-		input.ResearchPayload = &payload
-	}
-	selection, err := parseAISelection(body["ai"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", generationInput{}, false
-	}
-	input.AI = selection
-	return userID, input, true
-}
-
-func (h *handler) iterationRequest(writer http.ResponseWriter, request *http.Request) (string, iterationInput, bool) {
-	userID, body, ok := h.body(writer, request, 32*1024)
-	if !ok {
-		return "", iterationInput{}, false
-	}
-	id := text(first(body, "parent_presentation_id", "presentation_id", "parentPresentationId", "presentationId"), "")
-	feedback, err := required(first(body, "feedback", "topic", "prompt"), "feedback")
-	if id == "" || len(id) > 200 {
-		writeError(writer, http.StatusBadRequest, "presentation_id must be a non-empty string")
-		return "", iterationInput{}, false
-	}
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	count, err := slideCount(body, false)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	research, err := parseResearch(body["research"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	input := iterationInput{PresentationID: id, Feedback: feedback, SlideCount: count, DetailLevel: choice(body["detail_level"], body["detailLevel"], "balanced", "brief", "concise", "balanced", "detailed", "comprehensive"), Tonality: choice(body["tonality"], nil, "professional", "casual", "professional", "enthusiastic", "persuasive"), Research: research}
-	if !validDetail(input.DetailLevel) || !validTonality(input.Tonality) {
-		writeError(writer, http.StatusBadRequest, "Invalid iteration options")
-		return "", iterationInput{}, false
-	}
-	input.AI, err = parseAISelection(body["ai"])
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return "", iterationInput{}, false
-	}
-	return userID, input, true
-}
-
 func (h *handler) body(writer http.ResponseWriter, request *http.Request, maximum int64) (string, map[string]any, bool) {
 	userID, err := h.identity(request.Context(), request)
 	if err != nil || strings.TrimSpace(userID) == "" {
@@ -682,13 +934,17 @@ func (h *handler) ownedPresentation(ctx context.Context, id, userID string) (per
 	return item, err
 }
 
-func (h *handler) existingOperation(ctx context.Context, userID, kind, idempotencyKey, requestHash string) (duplicateOperation, error) {
+// existingSubmission resolves a reused job ID against the committed job row:
+// resubmitting the same body attaches to the existing job, a different body
+// conflicts. The job row carries its own request hash.
+func (h *handler) existingSubmission(ctx context.Context, userID, jobID, requestHash string) (duplicateOperation, error) {
 	var existingHash string
 	var duplicate duplicateOperation
-	err := h.database.QueryRowContext(ctx, `SELECT operation.request_hash, COALESCE(job.id, ''), operation.presentation_id FROM generation_point_operations operation LEFT JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3`, userID, kind, idempotencyKey).Scan(&existingHash, &duplicate.jobID, &duplicate.presentationID)
+	err := h.database.QueryRowContext(ctx, `SELECT COALESCE(payload->>'request_hash', ''), presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, jobID, userID).Scan(&existingHash, &duplicate.presentationID)
 	if err != nil {
 		return duplicateOperation{}, err
 	}
+	duplicate.jobID = jobID
 	if existingHash != requestHash {
 		return duplicateOperation{}, idempotencyConflict{}
 	}
@@ -696,8 +952,10 @@ func (h *handler) existingOperation(ctx context.Context, userID, kind, idempoten
 }
 
 // enqueue atomically creates the authorization, placeholder, durable domain job,
-// and River queue record.
-func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
+// and River queue record. The job ID is the idempotency token: submissions of
+// one user serialize on their balance row, so a repeated job ID attaches to the
+// committed job instead of reserving points twice.
+func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string, create bool, prompt string, data []byte) (int64, int, error) {
 	if h.queue == nil {
 		return 0, 0, errors.New("generation queue is unavailable")
 	}
@@ -709,22 +967,21 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, re
 		return 0, 0, err
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, job.userID+":"+job.kind+":"+idempotencyKey); err != nil {
+	// Serializing same-user submissions on this row makes the duplicate check
+	// below safe without a separate advisory-lock protocol.
+	var balance int64
+	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
 		return 0, 0, err
 	}
-	var existingHash, existingJobID, existingPresentationID string
-	err = tx.QueryRowContext(ctx, `SELECT operation.request_hash, COALESCE(job.id, ''), COALESCE(operation.presentation_id, '') FROM generation_point_operations operation LEFT JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3 FOR UPDATE OF operation`, job.userID, job.kind, idempotencyKey).Scan(&existingHash, &existingJobID, &existingPresentationID)
+	var existingHash, existingPresentationID string
+	err = tx.QueryRowContext(ctx, `SELECT COALESCE(payload->>'request_hash', ''), presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, job.jobID, job.userID).Scan(&existingHash, &existingPresentationID)
 	if err == nil {
 		if existingHash == requestHash {
-			return 0, 0, duplicateOperation{jobID: existingJobID, presentationID: existingPresentationID}
+			return 0, 0, duplicateOperation{jobID: job.jobID, presentationID: existingPresentationID}
 		}
 		return 0, 0, idempotencyConflict{}
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
-		return 0, 0, err
-	}
-	var balance int64
-	if err := tx.QueryRowContext(ctx, `SELECT balance_millis FROM users WHERE id = $1 FOR UPDATE`, job.userID).Scan(&balance); err != nil {
 		return 0, 0, err
 	}
 	if balance < job.quote {
@@ -751,11 +1008,12 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, re
 		}
 	}
 	job.expectedRevision = revision
+	job.requestHash = requestHash
 	payload, err := json.Marshal(payloadFromJob(job))
 	if err != nil {
 		return 0, 0, err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, job.operationID, job.userID, job.presentationID, job.kind, idempotencyKey, requestHash, job.quote)
+	_, err = tx.ExecContext(ctx, `INSERT INTO generation_point_operations (id, user_id, presentation_id, kind, idempotency_key, request_hash, pricing_version, quoted_millis, expires_at) VALUES ($1, $2, $3, $4, $5, $6, '2026-08-v1', $7, NOW() + INTERVAL '1 hour')`, job.operationID, job.userID, job.presentationID, job.kind, job.jobID, requestHash, job.quote)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -786,7 +1044,11 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, idempotencyKey, re
 			return 0, 0, err
 		}
 	}
-	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": job.theme}); err != nil {
+	theme := "corporate-blue"
+	if job.kind == "iteration" {
+		theme = documentTheme(job.current)
+	}
+	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": theme}); err != nil {
 		return 0, 0, err
 	}
 	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Preparing presentation", "completed": 1, "total": 3}); err != nil {
@@ -848,11 +1110,10 @@ func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) erro
 
 	if job.kind == "generation" {
 		failed := map[string]any{
-			"schemaVersion": presentation.PresentationSchemaVersion,
-			"title":         "Generation failed",
-			"theme":         job.theme,
-			"slides":        []any{},
-			"status":        "failed",
+			"title":  "Generation failed",
+			"theme":  "corporate-blue",
+			"slides": []any{},
+			"status": "failed",
 			"failure": map[string]any{
 				"message": message,
 				"retry": map[string]any{
@@ -860,7 +1121,6 @@ func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) erro
 					"slide_count":      job.slideCount,
 					"detail_level":     job.detailLevel,
 					"tonality":         job.tonality,
-					"theme":            job.theme,
 					"research_enabled": job.research != nil || job.researchPayload != nil,
 					"research_payload": job.researchPayload,
 					"ai":               job.selection,
@@ -905,7 +1165,7 @@ func (h *handler) recoverExpired(ctx context.Context, userID string) error {
 		return err
 	}
 	defer tx.Rollback()
-	rows, err := tx.QueryContext(ctx, `SELECT operation.id, operation.quoted_millis, operation.presentation_id, operation.kind FROM generation_point_operations operation WHERE operation.user_id = $1 AND operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) FOR UPDATE OF operation SKIP LOCKED`, userID)
+	rows, err := tx.QueryContext(ctx, `SELECT operation.id, operation.quoted_millis, operation.presentation_id, operation.kind FROM generation_point_operations operation WHERE operation.user_id = $1 AND operation.status = 'reserved' AND operation.expires_at <= NOW() AND NOT EXISTS (SELECT 1 FROM generation_jobs job WHERE job.operation_id = operation.id AND job.status IN ('queued', 'running', 'retrying')) ORDER BY operation.expires_at LIMIT 100 FOR UPDATE OF operation SKIP LOCKED`, userID)
 	if err != nil {
 		return err
 	}
@@ -978,10 +1238,6 @@ func (duplicateOperation) Error() string { return "duplicate operation" }
 type idempotencyConflict struct{}
 
 func (idempotencyConflict) Error() string { return "idempotency conflict" }
-
-func idempotencyKey(request *http.Request) (string, error) {
-	return validateIdempotencyKey(request.Header.Get("Idempotency-Key"))
-}
 
 func validateIdempotencyKey(value string) (string, error) {
 	key := strings.TrimSpace(value)
@@ -1090,7 +1346,7 @@ func parseResearch(value any) (any, error) {
 	return options, nil
 }
 func slideCount(body map[string]any, mandatory bool) (int, error) {
-	value := first(body, "slide_count", "slideCount")
+	value := body["slide_count"]
 	if value == nil && !mandatory {
 		return 0, nil
 	}
@@ -1101,14 +1357,6 @@ func slideCount(body map[string]any, mandatory bool) (int, error) {
 	}
 	return int(parsed), nil
 }
-func first(body map[string]any, keys ...string) any {
-	for _, key := range keys {
-		if value, ok := body[key]; ok {
-			return value
-		}
-	}
-	return nil
-}
 func text(value any, fallback string) string {
 	result, ok := value.(string)
 	result = strings.TrimSpace(result)
@@ -1117,11 +1365,7 @@ func text(value any, fallback string) string {
 	}
 	return result
 }
-func choice(primary, secondary any, fallback string, allowed ...string) string {
-	value := primary
-	if value == nil {
-		value = secondary
-	}
+func choice(value any, fallback string) string {
 	if value == nil {
 		return fallback
 	}
@@ -1168,24 +1412,6 @@ func documentTheme(data []byte) string {
 	var document map[string]any
 	_ = json.Unmarshal(data, &document)
 	return text(document["theme"], "corporate-blue")
-}
-func outline(title string, slides []any) map[string]any {
-	cards := make([]map[string]any, 0, len(slides))
-	for index, slide := range slides {
-		object, _ := slide.(map[string]any)
-		cardTitle := text(object["title"], fmt.Sprintf("Slide %d", index+1))
-		cards = append(cards, map[string]any{"id": text(object["id"], fmt.Sprintf("slide-%d", index+1)), "title": cardTitle, "objective": cardTitle, "keyPoints": []any{}, "narrativeRole": narrativeRole(index, len(slides)), "visualIntent": "none", "sourceIds": []any{}})
-	}
-	return map[string]any{"title": title, "audience": "General audience", "thesis": title, "cards": cards}
-}
-func narrativeRole(index, total int) string {
-	if index == 0 {
-		return "opening"
-	}
-	if index == total-1 {
-		return "closing"
-	}
-	return "insight"
 }
 func truncate(value string, maximum int) string {
 	if len(value) > maximum {

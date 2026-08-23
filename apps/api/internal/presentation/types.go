@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	MaxResearchBodyBytes    = 32 * 1024
 	MaxResearchPayloadBytes = 128 * 1024
 )
 
@@ -90,14 +89,6 @@ type Source struct {
 type ResearchPayload struct {
 	Sources         []Source `json:"sources"`
 	EstimatedTokens *float64 `json:"estimated_tokens,omitempty"`
-}
-
-type ResearchRequest struct {
-	Topic       string
-	SlideCount  *int
-	DetailLevel string
-	Tonality    string
-	Research    ResearchOptions
 }
 
 type DBTX interface {

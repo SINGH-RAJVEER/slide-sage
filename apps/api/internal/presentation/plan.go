@@ -246,7 +246,7 @@ func numberValue(value any) (float64, error) {
 	}
 }
 
-// ApplyDeckPlan is the deterministic plan-to-slide compiler for schema-v5
+// ApplyDeckPlan is the deterministic plan-to-slide compiler for content
 // content slides. Drafting supplies copy only; title, stable IDs, and semantic
 // layouts always originate from the validated plan.
 func ApplyDeckPlan(document map[string]any, plan map[string]any) map[string]any {
@@ -334,57 +334,5 @@ func layoutForPlan(purpose string, intent map[string]any) string {
 		return "spotlight"
 	default:
 		return "body"
-	}
-}
-
-func OutlineFromDeckPlan(plan map[string]any) map[string]any {
-	planSlides, _ := plan["slides"].([]any)
-	cards := make([]any, 0, len(planSlides))
-	for _, value := range planSlides {
-		slide, ok := value.(map[string]any)
-		if !ok {
-			continue
-		}
-		cards = append(cards, map[string]any{
-			"id":            slide["id"],
-			"title":         slide["title"],
-			"objective":     slide["message"],
-			"keyPoints":     []any{},
-			"narrativeRole": narrativeRoleForPurpose(boundedText(slide["purpose"], 40)),
-			"visualIntent":  legacyVisualIntent(slide["visualIntent"]),
-			"sourceIds":     slide["evidence"],
-		})
-	}
-	return map[string]any{
-		"title": plan["title"], "audience": plan["audience"], "thesis": plan["thesis"], "cards": cards,
-	}
-}
-
-func narrativeRoleForPurpose(purpose string) string {
-	if purpose == "cover" {
-		return "opening"
-	}
-	if purpose == "section" {
-		return "context"
-	}
-	if purpose == "closing" {
-		return "closing"
-	}
-	return purpose
-}
-
-func legacyVisualIntent(value any) string {
-	intent, _ := value.(map[string]any)
-	switch intent["kind"] {
-	case "image-hero":
-		return "image"
-	case "chart":
-		return "chart"
-	case "comparison":
-		return "table"
-	case "metric-grid":
-		return "stats"
-	default:
-		return "none"
 	}
 }

@@ -43,7 +43,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/Dockerfile
+          file: apps/api/Dockerfile
           target: api
           push: true
           cache-from: type=gha
@@ -56,7 +56,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/Dockerfile
+          file: apps/api/Dockerfile
           target: worker
           push: true
           cache-from: type=gha
@@ -68,7 +68,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/Dockerfile
+          file: apps/api/Dockerfile
           target: migrate
           push: true
           cache-from: type=gha
@@ -123,6 +123,7 @@ jobs:
             $API_AUTH_FLAG \
             --image=$IMAGE \
             --region=$RUN_REGION \
+            --ingress=internal-and-cloud-load-balancing \
             --port=8000 \
             --cpu=1 \
             --memory=512Mi \
@@ -140,11 +141,34 @@ jobs:
             --no-allow-unauthenticated \
             --image=$IMAGE \
             --region=$RUN_REGION \
+            --ingress=internal \
             --port=8080 \
             --cpu=1 \
             --memory=1Gi \
+            --no-cpu-throttling \
             --min-instances=1 \
             --max-instances=1 \
             --concurrency=1 \
             --set-secrets=DATABASE_URL=DATABASE_URL:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest \
             --set-env-vars='^@^NODE_ENV=production@WORKER_CONCURRENCY=2@BASE_URL=https://api.slidesage.app@OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions'
+
+      - name: Verify Cloud Run exposure
+        run: |
+          API_INGRESS=$(gcloud run services describe api \
+            --project=$PROJECT_ID \
+            --region=$RUN_REGION \
+            --format="value(metadata.annotations.'run.googleapis.com/ingress')")
+          WORKER_INGRESS=$(gcloud run services describe worker \
+            --project=$PROJECT_ID \
+            --region=$RUN_REGION \
+            --format="value(metadata.annotations.'run.googleapis.com/ingress')")
+          WORKER_PUBLIC_BINDING=$(gcloud run services get-iam-policy worker \
+            --project=$PROJECT_ID \
+            --region=$RUN_REGION \
+            --flatten='bindings[].members' \
+            --filter='bindings.role=roles/run.invoker AND bindings.members=allUsers' \
+            --format='value(bindings.members)')
+
+          test "$API_INGRESS" = internal-and-cloud-load-balancing
+          test "$WORKER_INGRESS" = internal
+          test -z "$WORKER_PUBLIC_BINDING"

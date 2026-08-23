@@ -1,8 +1,4 @@
-import {
-	type PresentationData,
-	SCENE_PRESENTATION_SCHEMA_VERSION,
-	type Slide,
-} from "@slidesage/types";
+import { type PresentationData, type Slide } from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -90,8 +86,6 @@ export function usePresentationData({
 		if (consumesStreamingState && streamingState.isStreaming && streamingSlidesCount > 0) {
 			setPresentation({
 				...streamingState.completedDocument,
-				schemaVersion:
-					streamingState.completedDocument?.schemaVersion || SCENE_PRESENTATION_SCHEMA_VERSION,
 				title: streamingState.title,
 				theme: streamingState.theme,
 				dimensions: streamingState.completedDocument?.dimensions || {
@@ -122,8 +116,6 @@ export function usePresentationData({
 		) {
 			setPresentation({
 				...streamingState.completedDocument,
-				schemaVersion:
-					streamingState.completedDocument?.schemaVersion || SCENE_PRESENTATION_SCHEMA_VERSION,
 				title: streamingState.title,
 				theme: streamingState.theme,
 				dimensions: streamingState.completedDocument?.dimensions || {

@@ -2,14 +2,12 @@ import type {
 	ChartConfig,
 	DeckPlan,
 	PresentationDimensions,
-	PresentationOutline,
 	SlideEffect,
 	SlideTransition,
 	Source,
 	ThemeId,
 } from "./index";
 
-export const SCENE_PRESENTATION_SCHEMA_VERSION = 6 as const;
 export const SCENE_ENGINE_VERSION = "1.0.0" as const;
 export const SCENE_GRID_SIZE = 8 as const;
 
@@ -201,7 +199,6 @@ export interface SceneSlide {
 }
 
 export interface ScenePresentationDocument {
-	schemaVersion: typeof SCENE_PRESENTATION_SCHEMA_VERSION;
 	engineVersion: string;
 	title: string;
 	theme: ThemeId;
@@ -209,7 +206,6 @@ export interface ScenePresentationDocument {
 	dimensions: PresentationDimensions;
 	slides: SceneSlide[];
 	totalSlides: number;
-	outline?: PresentationOutline;
 	deckPlan?: DeckPlan;
 	sources?: Source[];
 	status?: "ready" | "failed";

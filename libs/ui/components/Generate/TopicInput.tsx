@@ -152,16 +152,13 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 	};
 
 	const handleTextareaKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-		handleExpandedControlKeyDown(event);
-		if (event.defaultPrevented) return;
-		if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-		if (morphing) return;
-
-		const shouldGenerate = expanded ? event.shiftKey : !event.shiftKey;
-		if (!shouldGenerate) return;
-
-		event.preventDefault();
-		onGenerate();
+		if (event.key === "Escape") {
+			event.preventDefault();
+			setEditorExpanded(false);
+		}
+		// Plain Enter is owned by the generate page's global handler, which
+		// starts generation from anywhere on the page. Shift + Enter keeps the
+		// default newline behavior inside the expanded editor.
 	};
 
 	const showExpandedLayer = expanded || morphing;
@@ -250,7 +247,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 						}
 					>
 						{expanded ? (
-							"Enter for a new line. Shift + Enter to generate."
+							"Shift + Enter for a new line. Enter to generate."
 						) : (
 							<>
 								Press <span className="text-white/60">Enter</span> to generate

@@ -55,7 +55,8 @@ in
         "db:migrate" = {
             after = [ "db:setup" ];
             exec = ''
-                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" bash "$DEVENV_ROOT/apps/api/scripts/migrate.sh"
+                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" \
+                    go -C "$DEVENV_ROOT/apps/api" run ./cmd/migrate
             '';
         };
     };

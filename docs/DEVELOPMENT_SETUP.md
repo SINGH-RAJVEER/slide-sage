@@ -91,20 +91,21 @@ tables. Create an application migration with:
 just db-generate add_example_table
 ```
 
-Write the SQL, then apply it with `just migrate`. The script runs `cmd/migrate`,
-which applies embedded Goose migrations first and River migrations second. The
-migration runner applies all migrations to an empty database. If Goose history is
-absent but the current Go API schema is already present, the wrapper records the
-supported baseline before running the migration command.
-The wrapper intentionally accepts only no arguments or `up`; application and
-River migration histories must be advanced together.
+Write the SQL, then apply it with `just migrate`, which runs `go -C apps/api
+run ./cmd/migrate` directly. The command applies embedded Goose migrations
+first and River migrations second. The migration runner applies all migrations
+to an empty database. If Goose history is absent but the current Go API schema
+is already present, the runner records the supported baseline before applying
+migrations. Application and River migration histories must be advanced
+together, so only an upward pass is exposed; there is no down or redo entry
+point.
 
 Migration `00016_remove_database_sessions.sql` removes the old database-backed
 session table. Authentication now uses only signed JWTs, carried in the
 `slidesage_token` HTTP-only cookie or an `Authorization: Bearer` header.
 
 Apply migrations before starting or deploying the API and worker. Production
-images use the `migrate` target in `docker/Dockerfile` as a one-off migration
+images use the `migrate` target in `apps/api/Dockerfile` as a one-off migration
 job; runtime startup does not apply schema changes.
 
 ## Local URLs

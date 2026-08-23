@@ -65,17 +65,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cleanupContext, cancelCleanup := context.WithCancel(context.Background())
-	defer cancelCleanup()
-	go cleanupUnverifiedUsers(cleanupContext, service)
-
 	mux := http.NewServeMux()
 	auth.RegisterAuthRoutes(mux, service)
 	auth.RegisterProfileRoutes(mux, service)
 	identity := service.AuthenticatedUserID
+	researchService := presentation.NewExaResearchService(os.Getenv("EXA_API_KEY"), nil)
 	presentation.RegisterRoutes(mux, presentation.NewService(presentation.NewRepository(database)), func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
-	}, presentation.NewExaResearchService(os.Getenv("EXA_API_KEY"), nil), database)
+	}, researchService, database)
 	ai.RegisterRoutes(mux, ai.ConnectionService{DB: database}, identity)
 	var razorpay *billing.RazorpayClient
 	if os.Getenv("RAZORPAY_KEY_ID") != "" && os.Getenv("RAZORPAY_KEY_SECRET") != "" {
@@ -85,9 +82,11 @@ func main() {
 		}
 	}
 	billing.RegisterRoutes(mux, billing.PaymentService{DB: database}, razorpay, identity)
+	streamContext, cancelStreams := context.WithCancel(context.Background())
+	defer cancelStreams()
 	generation.RegisterRoutes(mux, database, func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
-	}, ai.ConnectionService{DB: database})
+	}, ai.ConnectionService{DB: database}, generation.RouteConfig{StreamContext: streamContext, Research: researchService})
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", notFoundHandler)
 
@@ -100,45 +99,36 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	signalContext, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopSignals()
+	serveErrors := make(chan error, 1)
 	go func() {
-		<-stop
-		context, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		_ = server.Shutdown(context)
+		err := server.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		}
+		serveErrors <- err
 	}()
 
 	log.Printf("api listening on %s", server.Addr)
-	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		log.Fatal(err)
-	}
-}
-
-func cleanupUnverifiedUsers(ctx context.Context, service *auth.Service) {
-	cleanup := func() {
-		deleted, err := service.CleanupExpiredUnverifiedUsers(ctx)
+	select {
+	case <-signalContext.Done():
+	case err := <-serveErrors:
 		if err != nil {
-			if !errors.Is(err, context.Canceled) {
-				log.Printf("unverified account cleanup failed: %v", err)
-			}
-			return
+			log.Fatal(err)
 		}
-		if deleted > 0 {
-			log.Printf("deleted %d expired unverified accounts", deleted)
-		}
+		return
 	}
 
-	cleanup()
-	ticker := time.NewTicker(time.Hour)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			cleanup()
-		}
+	cancelStreams()
+	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancelShutdown()
+	if err := server.Shutdown(shutdownContext); err != nil {
+		log.Printf("api shutdown failed: %v", err)
+		_ = server.Close()
+	}
+	if err := <-serveErrors; err != nil {
+		log.Printf("api server failed: %v", err)
 	}
 }
 

@@ -41,8 +41,9 @@ it("shows point-funded OpenRouter until a provider is connected", async () => {
 	const view = render(<AISettings />);
 
 	expect(await view.findByText("SlideSage")).toBeInTheDocument();
-	expect(view.getByText("Points billing")).toBeInTheDocument();
-	expect(view.getByText("Connect a provider to choose a default model.")).toBeInTheDocument();
+	expect(view.queryByText(/billing/i)).not.toBeInTheDocument();
+	expect(view.getByRole("button", { name: "About API key security" })).toBeInTheDocument();
+	expect(view.queryByRole("combobox")).not.toBeInTheDocument();
 	for (const input of view.getAllByLabelText(/API key$/)) {
 		expect(input).toHaveAttribute("type", "password");
 	}
@@ -62,6 +63,7 @@ it("shows a provider-local model catalog error without hiding key controls", asy
 					{
 						provider: "openai",
 						status: "valid",
+						enabled: true,
 						keyHint: "••••1234",
 						validatedAt: "2026-01-01T00:00:00.000Z",
 					},
@@ -80,7 +82,8 @@ it("shows a provider-local model catalog error without hiding key controls", asy
 	expect(
 		await view.findByText("The provider model list is temporarily unavailable."),
 	).toBeInTheDocument();
-	expect(view.getByLabelText("OpenAI API key")).toBeInTheDocument();
+	expect(view.getByRole("switch", { name: "Use OpenAI for generation" })).toBeChecked();
+	expect(view.queryByLabelText("OpenAI API key")).not.toBeInTheDocument();
 });
 
 it("updates the saved default model from settings", async () => {
@@ -91,6 +94,7 @@ it("updates the saved default model from settings", async () => {
 			{
 				provider: "openai",
 				status: "valid",
+				enabled: true,
 				keyHint: "••••1234",
 				validatedAt: "2026-01-01T00:00:00.000Z",
 			},
@@ -122,7 +126,7 @@ it("updates the saved default model from settings", async () => {
 	globalThis.fetch = fetchMock as unknown as typeof fetch;
 
 	const view = render(<AISettings />);
-	const selector = await view.findByRole("combobox");
+	const selector = await view.findByRole("combobox", { name: "OpenAI model" });
 	fireEvent.keyDown(selector, { key: "ArrowDown" });
 	fireEvent.click(await view.findByRole("option", { name: "GPT-4.1 mini" }));
 
@@ -134,6 +138,110 @@ it("updates the saved default model from settings", async () => {
 		provider: "openai",
 		model: "gpt-4.1-mini",
 	});
+});
+
+it("toggles a connected provider from the row without showing replacement controls", async () => {
+	let enabled = true;
+	const config = () => ({
+		generation: enabled
+			? { mode: "byok", model: "gpt-4.1", billing: "provider" }
+			: { mode: "openrouter", model: null, billing: "points" },
+		eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+		connections: [
+			{
+				provider: "openai",
+				status: "valid",
+				enabled,
+				keyHint: "••••1234",
+				validatedAt: "2026-01-01T00:00:00.000Z",
+			},
+		],
+		models: [
+			{
+				provider: "openai",
+				model: "gpt-4.1",
+				label: "GPT-4.1",
+				description: "High quality",
+			},
+		],
+		selection: { provider: "openai", model: "gpt-4.1" },
+	});
+	const fetchMock = mock((url: string | URL | Request, init?: RequestInit) => {
+		if (init?.method === "PUT" && String(url).includes("/ai/connections/openai/enabled")) {
+			enabled = Boolean(JSON.parse(String(init.body)).enabled);
+			return Promise.resolve(jsonResponse({ provider: "openai", enabled }));
+		}
+		return Promise.resolve(jsonResponse(config()));
+	});
+	globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+	const view = render(<AISettings />);
+	const toggle = await view.findByRole("switch", { name: "Use OpenAI for generation" });
+	expect(toggle).toBeChecked();
+	expect(view.getByRole("button", { name: "Remove OpenAI" })).toBeInTheDocument();
+	expect(view.queryByLabelText("OpenAI API key")).not.toBeInTheDocument();
+	expect(view.queryByRole("button", { name: "Replace" })).not.toBeInTheDocument();
+
+	fireEvent.click(toggle);
+
+	expect(await view.findByText(/OpenAI paused/)).toBeInTheDocument();
+	const request = fetchMock.mock.calls.find(
+		([url, init]) =>
+			init?.method === "PUT" && String(url).includes("/ai/connections/openai/enabled"),
+	);
+	expect(JSON.parse(String(request?.[1]?.body))).toEqual({ enabled: false });
+	expect(view.getByText("Connected ••••1234")).toBeInTheDocument();
+});
+
+it("removes a connected provider from the delete icon", async () => {
+	let connected = true;
+	const config = () => ({
+		generation: connected
+			? { mode: "byok", model: "gpt-4.1", billing: "provider" }
+			: { mode: "openrouter", model: null, billing: "points" },
+		eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+		connections: connected
+			? [
+					{
+						provider: "openai",
+						status: "valid",
+						enabled: true,
+						keyHint: "••••1234",
+						validatedAt: "2026-01-01T00:00:00.000Z",
+					},
+				]
+			: [],
+		models: connected
+			? [
+					{
+						provider: "openai",
+						model: "gpt-4.1",
+						label: "GPT-4.1",
+						description: "High quality",
+					},
+				]
+			: [],
+		selection: connected ? { provider: "openai", model: "gpt-4.1" } : null,
+	});
+	const fetchMock = mock((url: string | URL | Request, init?: RequestInit) => {
+		if (init?.method === "DELETE" && String(url).includes("/ai/connections/openai")) {
+			connected = false;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		}
+		return Promise.resolve(jsonResponse(config()));
+	});
+	globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+	const view = render(<AISettings />);
+	fireEvent.click(await view.findByRole("button", { name: "Remove OpenAI" }));
+
+	expect(
+		await view.findByText("Provider removed. OpenRouter resumes when no connections remain."),
+	).toBeInTheDocument();
+	expect(view.queryByRole("button", { name: "Remove OpenAI" })).not.toBeInTheDocument();
+	expect(view.getByLabelText("OpenAI API key")).toBeInTheDocument();
+	const request = fetchMock.mock.calls.find(([, init]) => init?.method === "DELETE");
+	expect(request?.[0]).toContain("/ai/connections/openai");
 });
 
 it("replaces the loading indicator with an error when settings fail to load", async () => {

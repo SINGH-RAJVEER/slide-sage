@@ -1,7 +1,6 @@
 import {
 	type ContentSlide,
 	isChartSlide,
-	isLegacyHtmlSlide,
 	isSceneSlide,
 	resolveSlideSupportVisual,
 	type Slide,
@@ -11,7 +10,6 @@ import {
 } from "@slidesage/types";
 import { Image as ImageIcon } from "lucide-react";
 import React from "react";
-import { adaptLegacyHtmlSlide } from "../../lib/legacy-slide-adapter";
 import { tweenNumber } from "../../lib/presentation-motion";
 import { getTemplate, type TemplateStyles } from "../../lib/templates";
 import { isWidgetBlock, type WidgetWidth } from "../../lib/widget-scene";
@@ -756,12 +754,11 @@ export const SlideRenderer = React.memo(
 			);
 		}
 
-		const contentSlide = isLegacyHtmlSlide(slide) ? adaptLegacyHtmlSlide(slide) : slide;
 		return (
 			<TemplateApplier templateId={currentTemplate} className="w-full h-full ss-editorial-frame">
-				<EditorialBackground slide={contentSlide} />
+				<EditorialBackground slide={slide} />
 				<EditorialContent
-					slide={contentSlide}
+					slide={slide}
 					styles={template.styles}
 					isActive={isActive}
 					onSelectBlock={onSelectBlock}

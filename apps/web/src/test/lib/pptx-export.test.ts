@@ -40,7 +40,7 @@ async function archiveFor(slides: PresentationData["slides"]) {
 }
 
 describe("editable PPTX export", () => {
-	test("writes schema-v5 body content, tables, and charts as native objects", async () => {
+	test("writes body content, tables, and charts as native objects", async () => {
 		const archive = await archiveFor([
 			contentSlide("body", [
 				{
@@ -88,7 +88,7 @@ describe("editable PPTX export", () => {
 		expect(chart).toContain("<c:barChart>");
 	});
 
-	test("uses native geometry for every schema-v5 composition", async () => {
+	test("uses native geometry for every content composition", async () => {
 		const layouts: SlideLayout[] = [
 			"cover",
 			"section",
@@ -261,30 +261,6 @@ describe("editable PPTX export", () => {
 
 		expect(slide).toContain("EDITABLE QUARTERLY REVIEW");
 		expect(theme).toContain('typeface="Arial"');
-	});
-
-	test("normalizes legacy HTML before composing native content", async () => {
-		const archive = await archiveFor([
-			{
-				id: "legacy-split",
-				type: "content",
-				html: `
-                    <div id="slide-content" class="layout-two-col">
-                        <h2 id="slide-title">Legacy comparison</h2>
-                        <div class="two-column">
-                            <div class="column"><p>Legacy primary</p></div>
-                            <div class="column"><p>Legacy secondary</p></div>
-                        </div>
-                    </div>
-                `,
-			},
-		]);
-		const slide = await archive.file("ppt/slides/slide1.xml")?.async("string");
-
-		expect(slide).toContain("Legacy comparison");
-		expect(slide).toContain("Legacy primary");
-		expect(slide).toContain("Legacy secondary");
-		expect(slide).toContain("Split divider");
 	});
 
 	test("uses a native radar chart for polar-area source data", async () => {

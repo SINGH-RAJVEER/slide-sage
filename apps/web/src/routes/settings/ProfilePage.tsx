@@ -7,12 +7,25 @@ import type {
 	UserProfile,
 } from "@slidesage/types";
 import { useAuth } from "@slidesage/ui";
+import { Button } from "@slidesage/ui/components/button";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
-import { API_URL } from "@slidesage/ui/lib/api";
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
+import { FolderOpen, Loader2 } from "lucide-react";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/app/Header";
 import { ROUTES } from "@/app/router/paths";
+
+const AVATAR_URL_DEBOUNCE_MS = 800;
+const MAX_AVATAR_UPLOAD_BYTES = 800 * 1024;
+
+function isValidAvatarUrl(value: string): boolean {
+	try {
+		return new URL(value).protocol === "https:";
+	} catch {
+		return false;
+	}
+}
 
 export default function ProfilePage() {
 	const { refreshSession } = useAuth();
@@ -37,6 +50,11 @@ export default function ProfilePage() {
 
 	const [imageUrl, setImageUrl] = useState("");
 	const [uploadingImage, setUploadingImage] = useState(false);
+	const avatarUrlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const avatarRequest = useRef<AbortController | null>(null);
+	const avatarRevision = useRef(0);
+	const savedImage = useRef("");
+	const fileInput = useRef<HTMLInputElement>(null);
 
 	const [savingProfile, setSavingProfile] = useState(false);
 
@@ -57,6 +75,7 @@ export default function ProfilePage() {
 			setNewName(data.user.name || "");
 			setNewEmail(data.user.email);
 			setImageUrl(data.user.image || "");
+			savedImage.current = data.user.image || "";
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to load profile");
 		} finally {
@@ -212,45 +231,105 @@ export default function ProfilePage() {
 		}
 	};
 
-	const handleUpdateAvatar = async (event: FormEvent) => {
-		event.preventDefault();
+	const cancelAvatarUpdate = () => {
+		if (avatarUrlTimer.current) {
+			clearTimeout(avatarUrlTimer.current);
+			avatarUrlTimer.current = null;
+		}
+		avatarRevision.current += 1;
+		avatarRequest.current?.abort();
+		avatarRequest.current = null;
+		setUploadingImage(false);
+		return avatarRevision.current;
+	};
+
+	const applyAvatarUpdate = async (endpoint: string, init: RequestInit, revision: number) => {
+		const controller = new AbortController();
+		avatarRequest.current = controller;
 		setUploadingImage(true);
 		setError(null);
 		setSuccess(null);
 
-		if (!imageUrl.trim()) {
-			setError("Please enter an image URL");
-			setUploadingImage(false);
-			return;
-		}
-
 		try {
-			const res = await fetch(`${API_URL}/profile/avatar`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
+			const response = await fetch(`${API_URL}${endpoint}`, {
+				...init,
 				credentials: "include",
-				body: JSON.stringify({
-					imageUrl: imageUrl.trim(),
-				} satisfies UpdateAvatarRequest),
+				signal: controller.signal,
 			});
-
-			if (!res.ok) {
-				const data = (await res.json()) as ApiErrorResponse;
-				throw new Error(data.error?.message || "Failed to update avatar");
+			if (!response.ok) {
+				const data = await readJsonResponse<ApiErrorResponse>(response);
+				throw new Error(data?.error?.message || "Failed to update profile picture");
 			}
 
-			const data = (await res.json()) as ProfileAvatarResponse;
+			const data = await readJsonResponse<ProfileAvatarResponse>(response);
+			if (!data?.user || revision !== avatarRevision.current) return;
+
+			savedImage.current = data.user.image || "";
+			setImageUrl(data.user.image || "");
 			setProfile((currentProfile) =>
 				currentProfile ? { ...currentProfile, ...data.user } : currentProfile,
 			);
 			await refreshSession({ force: true });
-			setSuccess("Avatar updated successfully");
+			if (revision === avatarRevision.current) setSuccess("Profile picture updated");
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to update avatar");
+			if (err instanceof Error && err.name === "AbortError") return;
+			if (revision === avatarRevision.current) {
+				setError(err instanceof Error ? err.message : "Failed to update profile picture");
+			}
 		} finally {
-			setUploadingImage(false);
+			if (avatarRequest.current === controller) avatarRequest.current = null;
+			if (revision === avatarRevision.current) setUploadingImage(false);
 		}
 	};
+
+	const handleImageUrlChange = (value: string) => {
+		const revision = cancelAvatarUpdate();
+		setImageUrl(value);
+		setError(null);
+		setSuccess(null);
+
+		const trimmed = value.trim();
+		if (!trimmed || trimmed === savedImage.current || !isValidAvatarUrl(trimmed)) return;
+
+		avatarUrlTimer.current = setTimeout(() => {
+			avatarUrlTimer.current = null;
+			void applyAvatarUpdate(
+				"/profile/avatar",
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ imageUrl: trimmed } satisfies UpdateAvatarRequest),
+				},
+				revision,
+			);
+		}, AVATAR_URL_DEBOUNCE_MS);
+	};
+
+	const handleAvatarFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		event.target.value = "";
+		if (!file) return;
+
+		const revision = cancelAvatarUpdate();
+		setError(null);
+		setSuccess(null);
+		if (file.size > MAX_AVATAR_UPLOAD_BYTES) {
+			setError("Image must be smaller than 800 KB");
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append("file", file);
+		void applyAvatarUpdate("/profile/avatar/upload", { method: "POST", body: formData }, revision);
+	};
+
+	useEffect(() => {
+		return () => {
+			if (avatarUrlTimer.current) clearTimeout(avatarUrlTimer.current);
+			avatarRevision.current += 1;
+			avatarRequest.current?.abort();
+		};
+	}, []);
 
 	if (loading) {
 		return <LoadingScreen label="Loading profile" />;
@@ -286,14 +365,8 @@ export default function ProfilePage() {
 						</div>
 					) : null}
 
-					{/* Profile Header */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
-						<h1 className="mb-1 text-2xl font-semibold text-white">My profile</h1>
-						<p className="text-white/65">Manage your account details and security</p>
-					</div>
-
 					{/* Avatar Section */}
-					<div className="space-y-4 rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="space-y-4 pb-8">
 						<h2 className="text-lg font-semibold text-white">Profile Picture</h2>
 
 						{profile.image ? (
@@ -313,34 +386,55 @@ export default function ProfilePage() {
 							</div>
 						)}
 
-						<form className="space-y-4" onSubmit={handleUpdateAvatar}>
-							<div className="space-y-2">
-								<label htmlFor="avatar-url" className="text-sm font-medium text-white/80">
-									Image URL
-								</label>
+						<div className="space-y-2">
+							<label htmlFor="avatar-url" className="text-sm font-medium text-white/80">
+								Image URL
+							</label>
+							<div className="flex items-center gap-2">
 								<input
 									id="avatar-url"
 									type="url"
 									value={imageUrl}
-									onChange={(e) => setImageUrl(e.target.value)}
+									onChange={(event) => handleImageUrlChange(event.target.value)}
 									placeholder="https://example.com/image.jpg"
-									className="w-full rounded-lg bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+									aria-busy={uploadingImage}
+									className="min-w-0 flex-1 rounded-lg bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
 								/>
-								<p className="text-xs text-white/50">Paste a link to your profile picture</p>
+								<Button
+									type="button"
+									variant="outline"
+									size="icon"
+									aria-label="Upload profile picture from your device"
+									title="Upload from device"
+									disabled={uploadingImage}
+									onClick={() => fileInput.current?.click()}
+									className="h-12 w-12 shrink-0 border-white/15 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+								>
+									{uploadingImage ? (
+										<Loader2 className="animate-spin" aria-hidden />
+									) : (
+										<FolderOpen aria-hidden />
+									)}
+								</Button>
 							</div>
-
-							<button
-								type="submit"
-								disabled={uploadingImage}
-								className="w-full bg-white text-black font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-60"
-							>
-								{uploadingImage ? "Uploading..." : "Update Picture"}
-							</button>
-						</form>
+							<input
+								ref={fileInput}
+								id="avatar-file"
+								type="file"
+								accept="image/png,image/jpeg,image/webp,image/gif"
+								className="hidden"
+								onChange={handleAvatarFileChange}
+							/>
+							<p className="text-xs text-white/50" aria-live="polite">
+								{uploadingImage
+									? "Updating profile picture..."
+									: "Paste an HTTPS link or pick a PNG, JPEG, WebP, or GIF up to 800 KB. Changes save automatically."}
+							</p>
+						</div>
 					</div>
 
 					{/* Name Section */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
 							<h2 className="text-lg font-semibold text-white">Full name</h2>
 							{!editingName ? (
@@ -393,7 +487,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Email Section */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
 							<div>
 								<h2 className="text-lg font-semibold text-white">Email</h2>
@@ -463,7 +557,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Password Section */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
 							<h2 className="text-lg font-semibold text-white">Password</h2>
 							{!editingPassword ? (
@@ -557,7 +651,7 @@ export default function ProfilePage() {
 					</div>
 
 					{/* Account Info */}
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
+					<div className="border-t border-white/10 py-8">
 						<h2 className="mb-4 text-lg font-semibold text-white">Account Information</h2>
 
 						<div className="space-y-3">

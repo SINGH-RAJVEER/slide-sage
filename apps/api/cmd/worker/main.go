@@ -10,13 +10,16 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/auth"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/generation"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/middleware"
 )
 
 func main() {
@@ -47,26 +50,72 @@ func main() {
 	if err := client.Start(workerContext); err != nil {
 		log.Fatal(err)
 	}
-	healthServer := startHealthServer(database)
-	go recoverExpiredOperations(workerContext, database)
+	authService, err := auth.NewService(auth.Config{Database: database})
+	if err != nil {
+		log.Fatal(err)
+	}
+	ready := &atomic.Bool{}
+	healthServer, healthErrors, err := startHealthServer(database, ready)
+	if err != nil {
+		log.Fatal(err)
+	}
+	maintenanceContext, cancelMaintenance := context.WithCancel(context.Background())
+	maintenanceDone := make(chan struct{})
+	go func() {
+		defer close(maintenanceDone)
+		runMaintenance(maintenanceContext, database, authService)
+	}()
+	ready.Store(true)
 	log.Printf("generation worker started with concurrency %d", maxWorkers)
-	<-signalContext.Done()
+	select {
+	case <-signalContext.Done():
+	case err := <-healthErrors:
+		if err != nil {
+			log.Printf("worker health server failed: %v", err)
+		}
+	}
 
+	ready.Store(false)
+	cancelMaintenance()
+	select {
+	case <-maintenanceDone:
+	case <-time.After(500 * time.Millisecond):
+		log.Printf("worker maintenance did not stop within 500 milliseconds")
+	}
+	healthDone := make(chan error, 1)
+	go func() {
+		healthContext, cancelHealth := context.WithTimeout(context.Background(), time.Second)
+		defer cancelHealth()
+		healthDone <- healthServer.Shutdown(healthContext)
+	}()
 	drainContext, cancelDrain := context.WithTimeout(context.Background(), time.Duration(envInt("WORKER_DRAIN_TIMEOUT", 8))*time.Second)
-	defer cancelDrain()
-	_ = healthServer.Shutdown(drainContext)
-	if err := client.Stop(drainContext); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
-		log.Printf("generation worker shutdown failed: %v", err)
+	stopErr := client.Stop(drainContext)
+	cancelDrain()
+	if stopErr != nil {
+		log.Printf("generation worker graceful shutdown failed: %v", stopErr)
+		cancelWorker()
+		forceContext, cancelForce := context.WithTimeout(context.Background(), time.Second)
+		if err := client.StopAndCancel(forceContext); err != nil {
+			log.Printf("generation worker forced shutdown failed: %v", err)
+		}
+		cancelForce()
 	}
 	cancelWorker()
+	if err := <-healthDone; err != nil {
+		log.Printf("worker health shutdown failed: %v", err)
+	}
 }
 
-func startHealthServer(database *sql.DB) *http.Server {
+func startHealthServer(database *sql.DB, ready *atomic.Bool) (*http.Server, <-chan error, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /live", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("GET /ready", func(writer http.ResponseWriter, request *http.Request) {
+		if !ready.Load() {
+			http.Error(writer, "worker is not ready", http.StatusServiceUnavailable)
+			return
+		}
 		ctx, cancel := context.WithTimeout(request.Context(), time.Second)
 		defer cancel()
 		if err := database.PingContext(ctx); err != nil {
@@ -81,29 +130,59 @@ func startHealthServer(database *sql.DB) *http.Server {
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       30 * time.Second,
 	}
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		return nil, nil, err
+	}
+	errorChannel := make(chan error, 1)
 	go func() {
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("worker health server failed: %v", err)
+		err := server.Serve(listener)
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
 		}
+		errorChannel <- err
 	}()
-	return server
+	return server, errorChannel, nil
 }
 
-func recoverExpiredOperations(ctx context.Context, database *sql.DB) {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
+func runMaintenance(ctx context.Context, database *sql.DB, authService *auth.Service) {
+	recoveryTicker := time.NewTicker(time.Minute)
+	cleanupTicker := time.NewTicker(time.Hour)
+	defer recoveryTicker.Stop()
+	defer cleanupTicker.Stop()
+	runRecovery(ctx, database)
+	runCleanup(ctx, database, authService)
 	for {
-		if err := generation.RecoverTerminatedQueueJobs(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
-			log.Printf("terminated generation recovery failed: %v", err)
-		}
-		if err := generation.RecoverExpired(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
-			log.Printf("expired generation recovery failed: %v", err)
-		}
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
+		case <-recoveryTicker.C:
+			runRecovery(ctx, database)
+		case <-cleanupTicker.C:
+			runCleanup(ctx, database, authService)
 		}
+	}
+}
+
+func runRecovery(ctx context.Context, database *sql.DB) {
+	if err := generation.RecoverTerminatedQueueJobs(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
+		log.Printf("terminated generation recovery failed: %v", err)
+	}
+	if err := generation.RecoverExpired(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
+		log.Printf("expired generation recovery failed: %v", err)
+	}
+}
+
+func runCleanup(ctx context.Context, database *sql.DB, authService *auth.Service) {
+	if deleted, err := authService.CleanupExpiredUnverifiedUsers(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		log.Printf("unverified account cleanup failed: %v", err)
+	} else if deleted > 0 {
+		log.Printf("deleted %d expired unverified accounts", deleted)
+	}
+	if deleted, err := middleware.CleanupExpired(ctx, database, 500); err != nil && !errors.Is(err, context.Canceled) {
+		log.Printf("rate-limit cleanup failed: %v", err)
+	} else if deleted > 0 {
+		log.Printf("deleted %d expired rate-limit counters", deleted)
 	}
 }
 

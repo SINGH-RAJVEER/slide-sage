@@ -5,12 +5,76 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const researchFeeMillis int64 = 1000
+
+// ResearchPreview carries the synchronous result of a paid research lookup.
+type ResearchPreview struct {
+	Sources         []Source
+	EstimatedTokens float64
+	RemainingPoints float64
+}
+
+// ResearchPreviewError exposes research failures with an HTTP status so the
+// unified submission endpoint can forward them directly.
+type ResearchPreviewError struct {
+	Status          int
+	Message         string
+	Insufficient    bool
+	RemainingPoints float64
+	RequiredPoints  float64
+}
+
+func (e *ResearchPreviewError) Error() string { return e.Message }
+
+// RunResearchPreview reserves research points, executes the search, and either
+// settles the reservation on success or refunds it on failure. It backs the
+// preview mode of POST /presentation-jobs.
+func RunResearchPreview(ctx context.Context, database *sql.DB, service *ExaResearchService, userID, key, hash, topic string, options ResearchOptions, slideCount int, detailLevel, tonality string) (*ResearchPreview, error) {
+	handler := &presentationHandler{database: database, research: service}
+	operationID, err := researchOperationID()
+	if err != nil {
+		return nil, err
+	}
+	balance, err := handler.reserveResearch(ctx, operationID, userID, key, hash)
+	if err != nil {
+		var insufficient researchInsufficient
+		if errors.As(err, &insufficient) {
+			return nil, &ResearchPreviewError{Status: http.StatusPaymentRequired, Message: insufficient.Error(), Insufficient: true, RemainingPoints: float64(insufficient.balance) / 1000, RequiredPoints: float64(researchFeeMillis) / 1000}
+		}
+		var duplicate researchDuplicate
+		if errors.As(err, &duplicate) {
+			return nil, &ResearchPreviewError{Status: http.StatusConflict, Message: "This research request is already being processed"}
+		}
+		var conflict researchIdempotencyConflict
+		if errors.As(err, &conflict) {
+			return nil, &ResearchPreviewError{Status: http.StatusConflict, Message: conflict.Error()}
+		}
+		return nil, err
+	}
+	sources, searchErr := service.Search(ctx, topic, options)
+	if searchErr != nil {
+		refundCtx, cancelRefund := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		_ = handler.refundResearch(refundCtx, operationID, userID, "Research provider failed")
+		cancelRefund()
+		return nil, &ResearchPreviewError{Status: http.StatusBadGateway, Message: "Research service is unavailable"}
+	}
+	if err := handler.settleResearch(ctx, operationID, userID, balance); err != nil {
+		refundCtx, cancelRefund := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		_ = handler.refundResearch(refundCtx, operationID, userID, "Research settlement failed")
+		cancelRefund()
+		return nil, &ResearchPreviewError{Status: http.StatusInternalServerError, Message: "Unable to settle research points"}
+	}
+	encodedSources, _ := json.Marshal(sources)
+	estimated := estimatePoints(slideCount, detailLevel, tonality, (len(encodedSources)+3)/4)
+	return &ResearchPreview{Sources: sources, EstimatedTokens: estimated, RemainingPoints: float64(balance) / 1000}, nil
+}
 
 type researchDuplicate struct{}
 

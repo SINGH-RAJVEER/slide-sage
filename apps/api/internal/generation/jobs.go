@@ -50,22 +50,23 @@ type jobPayload struct {
 	SlideCount       int                           `json:"slide_count"`
 	DetailLevel      string                        `json:"detail_level"`
 	Tonality         string                        `json:"tonality"`
-	Theme            string                        `json:"theme"`
 	Research         any                           `json:"research,omitempty"`
 	ResearchPayload  *presentation.ResearchPayload `json:"research_payload,omitempty"`
 	Selection        *ai.Selection                 `json:"ai,omitempty"`
 	Current          json.RawMessage               `json:"current,omitempty"`
 	ExpectedRevision int                           `json:"expected_revision"`
 	QuotedMillis     int64                         `json:"quoted_millis"`
+	RequestHash      string                        `json:"request_hash,omitempty"`
 }
 
 func payloadFromJob(job streamJob) jobPayload {
 	return jobPayload{
 		UserID: job.userID, OperationID: job.operationID, PresentationID: job.presentationID,
 		Kind: job.kind, Prompt: job.prompt, SlideCount: job.slideCount,
-		DetailLevel: job.detailLevel, Tonality: job.tonality, Theme: job.theme,
+		DetailLevel: job.detailLevel, Tonality: job.tonality,
 		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection,
 		Current: job.current, ExpectedRevision: job.expectedRevision, QuotedMillis: job.quote,
+		RequestHash: job.requestHash,
 	}
 }
 
@@ -74,9 +75,9 @@ func (payload jobPayload) streamJob() streamJob {
 		userID: payload.UserID, operationID: payload.OperationID, presentationID: payload.PresentationID,
 		expectedRevision: payload.ExpectedRevision, quote: payload.QuotedMillis,
 		prompt: payload.Prompt, slideCount: payload.SlideCount, detailLevel: payload.DetailLevel,
-		tonality: payload.Tonality, theme: payload.Theme, research: payload.Research,
+		tonality: payload.Tonality, research: payload.Research,
 		researchPayload: payload.ResearchPayload, selection: payload.Selection, current: payload.Current,
-		kind: payload.Kind,
+		kind: payload.Kind, requestHash: payload.RequestHash,
 	}
 }
 
@@ -111,8 +112,8 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 	})
 	return river.NewClient(riverdatabasesql.New(database), &river.Config{
 		FetchPollInterval:    time.Second,
-		JobTimeout:           4 * time.Minute,
-		RescueStuckJobsAfter: 5 * time.Minute,
+		JobTimeout:           7 * time.Minute,
+		RescueStuckJobsAfter: 8 * time.Minute,
 		SoftStopTimeout:      6 * time.Second,
 		Queues: map[string]river.QueueConfig{
 			generationQueue: {MaxWorkers: maxWorkers},
@@ -124,11 +125,10 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 // RecoverTerminatedQueueJobs refunds domain jobs that River permanently
 // discarded or cancelled outside the normal processor finalization path.
 func RecoverTerminatedQueueJobs(ctx context.Context, database *sql.DB) error {
-	rows, err := database.QueryContext(ctx, `SELECT job.id FROM generation_jobs job JOIN river_job queue_job ON queue_job.id = job.river_job_id WHERE job.status IN ('queued', 'running', 'retrying') AND queue_job.state IN ('cancelled', 'discarded')`)
+	rows, err := database.QueryContext(ctx, `SELECT job.id FROM generation_jobs job JOIN river_job queue_job ON queue_job.id = job.river_job_id WHERE job.status IN ('queued', 'running', 'retrying') AND queue_job.state IN ('cancelled', 'discarded') ORDER BY job.updated_at LIMIT 100`)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 	jobIDs := []string{}
 	for rows.Next() {
 		var jobID string
@@ -138,15 +138,18 @@ func RecoverTerminatedQueueJobs(ctx context.Context, database *sql.DB) error {
 		jobIDs = append(jobIDs, jobID)
 	}
 	if err := rows.Err(); err != nil {
+		_ = rows.Close()
 		return err
 	}
-	recoveryErrors := []error{}
-	for _, jobID := range jobIDs {
-		if err := recoverTerminatedQueueJob(ctx, database, jobID); err != nil {
-			recoveryErrors = append(recoveryErrors, fmt.Errorf("recover generation job %s: %w", jobID, err))
-		}
+	if err := rows.Close(); err != nil {
+		return err
 	}
-	return errors.Join(recoveryErrors...)
+	return runBounded(ctx, 2, jobIDs, func(ctx context.Context, jobID string) error {
+		if err := recoverTerminatedQueueJob(ctx, database, jobID); err != nil {
+			return fmt.Errorf("recover generation job %s: %w", jobID, err)
+		}
+		return nil
+	})
 }
 
 func recoverTerminatedQueueJob(ctx context.Context, database *sql.DB, jobID string) error {
@@ -260,7 +263,6 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		}
 		tokens += planTokens
 		_ = h.appendEvent(ctx, record.ID, "plan", plan)
-		_ = h.appendEvent(ctx, record.ID, "outline", presentation.OutlineFromDeckPlan(plan))
 		_ = h.updateStage(ctx, record.ID, "drafting", "Writing planned slide content", 2, 4)
 	}
 
@@ -281,9 +283,11 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "usage_unavailable", "Provider usage was unavailable")
 	}
 
-	document["schemaVersion"] = presentation.PresentationSchemaVersion
 	document["title"] = truncate(text(document["title"], "Untitled Presentation"), 255)
-	document["theme"] = text(document["theme"], job.theme)
+	document["theme"] = "corporate-blue"
+	if job.kind == "iteration" {
+		document["theme"] = documentTheme(job.current)
+	}
 	document["status"] = "ready"
 	document["tokens_used"] = tokens
 	if plan != nil {
@@ -307,7 +311,6 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 
 	title := text(document["title"], "Untitled Presentation")
 	if plan == nil {
-		_ = h.appendEvent(ctx, record.ID, "outline", outline(title, slides))
 		_ = h.updateStage(ctx, record.ID, "drafting", "Writing slide content", 2, 3)
 	}
 	for index, slide := range slides {
@@ -623,35 +626,6 @@ func (h *handler) jobStatus(writer http.ResponseWriter, request *http.Request) {
 	writeJSON(writer, http.StatusOK, result)
 }
 
-func (h *handler) jobByIdempotency(writer http.ResponseWriter, request *http.Request) {
-	userID, err := h.identity(request.Context(), request)
-	if err != nil || strings.TrimSpace(userID) == "" {
-		writeError(writer, http.StatusUnauthorized, "Authentication required")
-		return
-	}
-	key, err := validateIdempotencyKey(request.PathValue("key"))
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	kind := strings.TrimSpace(request.URL.Query().Get("kind"))
-	if kind != "generation" && kind != "iteration" {
-		writeError(writer, http.StatusBadRequest, "kind must be generation or iteration")
-		return
-	}
-	var jobID, presentationID string
-	err = h.database.QueryRowContext(request.Context(), `SELECT job.id, job.presentation_id FROM generation_point_operations operation JOIN generation_jobs job ON job.operation_id = operation.id WHERE operation.user_id = $1 AND operation.kind = $2 AND operation.idempotency_key = $3`, userID, kind, key).Scan(&jobID, &presentationID)
-	if errors.Is(err, sql.ErrNoRows) {
-		writeError(writer, http.StatusNotFound, "Generation job not found")
-		return
-	}
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "Unable to load generation job")
-		return
-	}
-	writeJSON(writer, http.StatusOK, map[string]any{"id": jobID, "presentation_id": presentationID, "kind": kind})
-}
-
 func (h *handler) jobEvents(writer http.ResponseWriter, request *http.Request) {
 	userID, err := h.identity(request.Context(), request)
 	if err != nil || strings.TrimSpace(userID) == "" {
@@ -674,8 +648,21 @@ func eventCursor(request *http.Request) int64 {
 }
 
 func (h *handler) streamEvents(writer http.ResponseWriter, request *http.Request, jobID, userID string, cursor int64) {
+	if !h.streams.acquire(userID) {
+		writeError(writer, http.StatusTooManyRequests, "Too many active generation streams")
+		return
+	}
+	defer h.streams.release(userID)
+
+	ctx, cancel := context.WithCancel(request.Context())
+	if h.streamContext != nil {
+		stopShutdown := context.AfterFunc(h.streamContext, cancel)
+		defer stopShutdown()
+	}
+	defer cancel()
+
 	var presentationID string
-	err := h.database.QueryRowContext(request.Context(), `SELECT presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, jobID, userID).Scan(&presentationID)
+	err := h.database.QueryRowContext(ctx, `SELECT presentation_id FROM generation_jobs WHERE id = $1 AND user_id = $2`, jobID, userID).Scan(&presentationID)
 	if errors.Is(err, sql.ErrNoRows) {
 		writeError(writer, http.StatusNotFound, "Generation job not found")
 		return
@@ -699,21 +686,21 @@ func (h *handler) streamEvents(writer http.ResponseWriter, request *http.Request
 	defer poll.Stop()
 	defer keepalive.Stop()
 	for {
-		terminal, next, err := h.writePendingEvents(request.Context(), writer, flusher, jobID, cursor)
+		terminal, next, err := h.writePendingEvents(ctx, writer, flusher, jobID, cursor)
 		if err != nil || terminal {
 			return
 		}
 		cursor = next
-		if finalized, err := h.generationJobTerminal(request.Context(), jobID); err != nil {
+		if finalized, err := h.generationJobTerminal(ctx, jobID); err != nil {
 			return
 		} else if finalized {
 			// Finalization may commit between the first event query and status
 			// check. Query once more so that race cannot hide the terminal event.
-			_, _, _ = h.writePendingEvents(request.Context(), writer, flusher, jobID, cursor)
+			_, _, _ = h.writePendingEvents(ctx, writer, flusher, jobID, cursor)
 			return
 		}
 		select {
-		case <-request.Context().Done():
+		case <-ctx.Done():
 			return
 		case <-poll.C:
 		case <-keepalive.C:
@@ -734,24 +721,41 @@ func (h *handler) writePendingEvents(ctx context.Context, writer http.ResponseWr
 	if err != nil {
 		return false, cursor, err
 	}
-	defer rows.Close()
-	terminal := false
+	type pendingEvent struct {
+		id        int64
+		eventType string
+		payload   json.RawMessage
+	}
+	events := make([]pendingEvent, 0, 16)
 	for rows.Next() {
-		var id int64
-		var eventType string
-		var payload json.RawMessage
-		if err := rows.Scan(&id, &eventType, &payload); err != nil {
+		var event pendingEvent
+		if err := rows.Scan(&event.id, &event.eventType, &event.payload); err != nil {
+			_ = rows.Close()
 			return false, cursor, err
 		}
-		_, _ = fmt.Fprintf(writer, "id: %d\nevent: %s\ndata: %s\n\n", id, eventType, payload)
-		flusher.Flush()
-		cursor = id
-		terminal = eventType == "saved" || eventType == "error"
-		if terminal {
+		event.payload = append(json.RawMessage(nil), event.payload...)
+		events = append(events, event)
+		if event.eventType == "saved" || event.eventType == "error" {
 			break
 		}
 	}
-	return terminal, cursor, rows.Err()
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return false, cursor, err
+	}
+	if err := rows.Close(); err != nil {
+		return false, cursor, err
+	}
+	terminal := false
+	for _, event := range events {
+		if _, err := fmt.Fprintf(writer, "id: %d\nevent: %s\ndata: %s\n\n", event.id, event.eventType, event.payload); err != nil {
+			return false, cursor, err
+		}
+		flusher.Flush()
+		cursor = event.id
+		terminal = event.eventType == "saved" || event.eventType == "error"
+	}
+	return terminal, cursor, nil
 }
 
 func (h *handler) cancelJob(writer http.ResponseWriter, request *http.Request) {

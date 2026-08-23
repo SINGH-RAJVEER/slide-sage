@@ -3,27 +3,21 @@ import type {
 	DeckPlan,
 	PresentationData,
 	PresentationGenerationStage,
-	PresentationOutline,
 	ResearchPayload,
 	Slide,
 	Source,
-	ThemeId,
 } from "@slidesage/types";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_URL, readJsonResponse } from "../lib/api";
 import { publishPointsBalance } from "../lib/points";
 import { publishPresentationUpdated } from "../lib/presentation-events";
+import { consumeSSEStream } from "../lib/sse-stream";
 
 const ACTIVE_GENERATION_KEY = "slidesage-active-generation";
 
-function idempotencyKey() {
-	return crypto.randomUUID();
-}
-
 interface StoredGeneration {
 	jobId: string;
-	idempotencyKey?: string;
 	presentationId: string;
 	operation: "generation" | "iteration";
 	prompt?: string;
@@ -41,7 +35,6 @@ function readStoredGeneration(): StoredGeneration | null {
 	try {
 		const raw = window.localStorage.getItem(ACTIVE_GENERATION_KEY);
 		if (!raw) {
-			if (generationStorageUnavailable) return inMemoryGeneration;
 			inMemoryGeneration = null;
 			return null;
 		}
@@ -89,6 +82,13 @@ function clearStoredGeneration(jobId: string) {
 	if (!stored || stored.jobId === jobId) storeGeneration(null);
 }
 
+function updateStoredCursor(jobId: string, lastEventId: number) {
+	const stored = readStoredGeneration();
+	if (stored && stored.jobId === jobId && stored.lastEventId < lastEventId) {
+		storeGeneration({ ...stored, lastEventId });
+	}
+}
+
 export interface StreamingState {
 	isStreaming: boolean;
 	slides: Slide[];
@@ -107,9 +107,20 @@ export interface StreamingState {
 	generationStage?: PresentationGenerationStage;
 	generationMessage?: string;
 	generationProgress?: { completed: number; total: number };
-	outline?: PresentationOutline;
 	deckPlan?: DeckPlan;
 	completedDocument?: PresentationData;
+}
+
+export interface GenerateOptions {
+	prompt: string;
+	slideCount: number;
+	detailLevel: string;
+	tonality: string;
+	researchEnabled?: boolean;
+	researchPayload?: ResearchPayload;
+	parentPresentationId?: string;
+	retryPresentationId?: string;
+	ai?: AIModelSelection;
 }
 
 type ResearchPreviewStatus = "idle" | "loading" | "ready" | "error";
@@ -132,29 +143,12 @@ interface ResearchPreviewState extends ResearchPreviewRequest {
 interface StreamingContextValue {
 	streamingState: StreamingState;
 	researchPreviewState: ResearchPreviewState;
-	startResearchPreview: (
+	generate: (options: GenerateOptions) => Promise<boolean>;
+	cancelGeneration: () => Promise<boolean>;
+	previewResearch: (
 		request: ResearchPreviewRequest,
 		savedResearch?: ResearchPayload,
 		forceRefresh?: boolean,
-	) => Promise<boolean>;
-	startStreaming: (
-		prompt: string,
-		slideCount: number,
-		detailLevel: string,
-		tonality: string,
-		researchEnabled?: boolean,
-		researchPayload?: ResearchPayload,
-		retryPresentationId?: string,
-		theme?: ThemeId,
-		ai?: AIModelSelection,
-	) => Promise<boolean>;
-	startIterating: (
-		prompt: string,
-		parentPresentationId: string,
-		slideCount: number,
-		detailLevel: string,
-		tonality: string,
-		researchEnabled?: boolean,
 	) => Promise<boolean>;
 	stopStreaming: () => void;
 	resetStreaming: () => void;
@@ -183,7 +177,7 @@ const initialResearchPreviewState: ResearchPreviewState = {
 	estimatedTokens: null,
 };
 
-const StreamingContext = createContext<StreamingContextValue | null>(null);
+export const StreamingContext = createContext<StreamingContextValue | null>(null);
 
 function getResearchPreviewKey(request: ResearchPreviewRequest) {
 	return [request.prompt.trim(), request.slideCount, request.detailLevel, request.tonality].join(
@@ -220,16 +214,45 @@ function waitForRetry(delay: number, signal: AbortSignal) {
 	});
 }
 
+interface ResearchEventPayload {
+	status?: StreamingState["researchStatus"];
+	sources?: Source[];
+}
+
+interface StageEventPayload {
+	stage?: PresentationGenerationStage;
+	message?: string;
+	completed?: number;
+	total?: number;
+}
+
+interface SlideEventPayload {
+	index?: number;
+	slide: Slide;
+	title?: string;
+}
+
+interface SavedEventPayload {
+	presentation_id?: string;
+	slide_tokens_remaining?: number;
+}
+
+interface ErrorEventPayload {
+	error?: string;
+}
+
+interface ThemeEventPayload {
+	theme: string;
+}
+
 export function StreamingProvider({ children }: { children: ReactNode }) {
 	const [streamingState, setStreamingState] = useState<StreamingState>(initialState);
-	const [reconnectVersion, setReconnectVersion] = useState(0);
 	const [researchPreviewState, setResearchPreviewState] = useState<ResearchPreviewState>(
 		initialResearchPreviewState,
 	);
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const activeStreamRef = useRef(false);
-	const researchAbortControllerRef = useRef<AbortController | null>(null);
 	const researchRequestIdRef = useRef(0);
 	const researchPreviewStateRef = useRef<ResearchPreviewState>(initialResearchPreviewState);
 
@@ -269,7 +292,439 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		setStreamingState((prev) => ({ ...prev, isStreaming: false, isComplete: false }));
 	}, [releaseActiveStream]);
 
-	const startResearchPreview = useCallback(
+	const cancelGeneration = useCallback(async (): Promise<boolean> => {
+		const jobId = streamingState.jobId;
+		if (
+			!jobId ||
+			!streamingState.isStreaming ||
+			streamingState.operation !== "generation" ||
+			streamingState.slides.length > 0
+		) {
+			return false;
+		}
+
+		try {
+			const response = await fetch(`${API_URL}/generation-jobs/${jobId}/cancel`, {
+				method: "POST",
+				credentials: "include",
+			});
+			if (!response.ok) return false;
+
+			clearStoredGeneration(jobId);
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+				abortControllerRef.current = null;
+			}
+			if (readerRef.current) {
+				void readerRef.current.cancel();
+				readerRef.current = null;
+			}
+			releaseActiveStream();
+			setStreamingState(initialState);
+			return true;
+		} catch {
+			return false;
+		}
+	}, [
+		releaseActiveStream,
+		streamingState.isStreaming,
+		streamingState.jobId,
+		streamingState.operation,
+		streamingState.slides.length,
+	]);
+
+	// Shared SSE event dispatch used by every consumption path so live and
+	// resumed streams update state identically. Returns true when the event
+	// was a complete document snapshot.
+	const applyStreamEvent = useCallback((event: string, data: unknown): boolean => {
+		switch (event) {
+			case "start":
+				setStreamingState((prev) => ({
+					...prev,
+					researchStatus:
+						prev.researchStatus && prev.researchStatus !== "idle"
+							? "generating"
+							: prev.researchStatus,
+				}));
+				break;
+
+			case "research": {
+				const payload = data as ResearchEventPayload;
+				setStreamingState((prev) => ({
+					...prev,
+					researchStatus: payload.status || prev.researchStatus,
+					researchSources: payload.sources ?? prev.researchSources,
+				}));
+				break;
+			}
+
+			case "stage": {
+				const payload = data as StageEventPayload;
+				setStreamingState((prev) => ({
+					...prev,
+					generationStage: payload.stage,
+					generationMessage: payload.message,
+					generationProgress: { completed: payload.completed ?? 0, total: payload.total ?? 0 },
+				}));
+				break;
+			}
+
+			case "plan":
+				setStreamingState((prev) => ({
+					...prev,
+					deckPlan: data as DeckPlan,
+					title: (data as DeckPlan).title || prev.title,
+				}));
+				break;
+
+			case "theme": {
+				const payload = data as ThemeEventPayload;
+				const stored = readStoredGeneration();
+				if (stored) storeGeneration({ ...stored, theme: payload.theme });
+				setStreamingState((prev) => ({ ...prev, theme: payload.theme }));
+				break;
+			}
+
+			case "retry":
+				setStreamingState((prev) => ({
+					...prev,
+					slides: [],
+					isComplete: false,
+					error: undefined,
+				}));
+				break;
+
+			case "slide": {
+				const payload = data as SlideEventPayload;
+				setStreamingState((prev) => {
+					const slides = [...prev.slides];
+					const index = Number(payload.index);
+					if (Number.isInteger(index) && index >= 0) {
+						slides[index] = payload.slide;
+					} else {
+						const existingIndex = slides.findIndex((slide) => slide.id === payload.slide.id);
+						if (existingIndex >= 0) {
+							slides[existingIndex] = payload.slide;
+						} else {
+							slides.push(payload.slide);
+						}
+					}
+					return {
+						...prev,
+						slides,
+						title: payload.title || prev.title,
+						totalSlides: slides.length,
+					};
+				});
+				break;
+			}
+
+			case "complete": {
+				const document = data as PresentationData;
+				setStreamingState((prev) => ({
+					...prev,
+					completedDocument: document,
+					theme: document.theme || prev.theme,
+					title: document.title || prev.title,
+					slides: document.slides || prev.slides,
+					totalSlides:
+						document.totalSlides || (document.slides ? document.slides.length : prev.slides.length),
+				}));
+				return true;
+			}
+		}
+		return false;
+	}, []);
+
+	// consumeJobEvents is the single resumable event consumer for a submitted
+	// job: it tails GET /generation-jobs/{id}/events from `lastEventId`, and on
+	// any interruption retries with exponential backoff until a terminal
+	// saved/error event arrives or the caller aborts.
+	const consumeJobEvents = useCallback(
+		async (jobId: string, presentationId: string, controller: AbortController, startCursor = 0) => {
+			let cursor = startCursor;
+			let retryDelay = 1000;
+			let receivedComplete = false;
+
+			const fail = (message: string) => {
+				clearStoredGeneration(jobId);
+				setStreamingState((prev) => ({
+					...prev,
+					isStreaming: false,
+					isComplete: false,
+					error: message,
+				}));
+			};
+
+			while (!controller.signal.aborted) {
+				let terminal = false;
+				try {
+					const response = await fetch(
+						`${API_URL}/generation-jobs/${jobId}/events?after=${cursor}`,
+						{
+							credentials: "include",
+							signal: controller.signal,
+						},
+					);
+
+					if (response.status === 401 || response.status === 403) {
+						setStreamingState((prev) => ({
+							...prev,
+							error: "Session expired. Please log in again.",
+						}));
+					} else if (response.status === 404 || response.status === 410) {
+						fail("The generation job is no longer available.");
+						return;
+					} else if (!response.ok || !response.body) {
+						throw new Error(`Unable to read generation events (${response.status}).`);
+					} else {
+						const reader = response.body.getReader();
+						readerRef.current = reader;
+						await consumeSSEStream(reader, async ({ event, id, data }) => {
+							const previousCursor = cursor;
+							cursor = id;
+							if (cursor > previousCursor && event !== "saved" && event !== "error") {
+								updateStoredCursor(jobId, cursor);
+								retryDelay = 1000;
+							}
+							if (applyStreamEvent(event, data)) receivedComplete = true;
+
+							switch (event) {
+								case "created": {
+									const payload = data as { job_id?: string; presentation_id?: string };
+									setStreamingState((prev) => ({
+										...prev,
+										jobId: payload.job_id || prev.jobId,
+										presentationId: payload.presentation_id || prev.presentationId,
+									}));
+									break;
+								}
+
+								case "saved": {
+									const payload = data as SavedEventPayload;
+									clearStoredGeneration(jobId);
+									const persisted = receivedComplete
+										? null
+										: await fetchPersistedPresentation(
+												payload.presentation_id || presentationId,
+												controller.signal,
+											).catch(() => null);
+									if (controller.signal.aborted || abortControllerRef.current !== controller) {
+										return false;
+									}
+									if (!receivedComplete && !persisted) {
+										// The save confirmation arrived without a replayable
+										// document; rewind so the stream resends the tail.
+										cursor = Math.max(0, id - 1);
+										updateStoredCursor(jobId, cursor);
+										return true;
+									}
+									terminal = true;
+									setStreamingState((prev) => ({
+										...prev,
+										...(persisted ?? {}),
+										isStreaming: false,
+										isComplete: true,
+										completedDocument: persisted || prev.completedDocument,
+										slides: persisted?.slides || prev.slides,
+										totalSlides: persisted?.slides?.length || prev.slides.length,
+										presentationId: payload.presentation_id || prev.presentationId,
+									}));
+									publishPresentationUpdated(payload.presentation_id);
+									publishPointsBalance(payload.slide_tokens_remaining);
+									return false;
+								}
+
+								case "save_error":
+									console.error("Save error:", (data as ErrorEventPayload).error);
+									break;
+
+								case "error": {
+									const payload = data as ErrorEventPayload;
+									terminal = true;
+									fail(payload.error ?? "Presentation generation failed.");
+									return false;
+								}
+							}
+						});
+					}
+					if (terminal || controller.signal.aborted || abortControllerRef.current !== controller) {
+						return;
+					}
+				} catch (error) {
+					if (controller.signal.aborted) return;
+					console.error("Generation stream failed:", error);
+				}
+				await waitForRetry(retryDelay, controller.signal);
+				retryDelay = Math.min(retryDelay * 2, 10_000);
+			}
+		},
+		[applyStreamEvent],
+	);
+
+	const generate = useCallback(
+		async (options: GenerateOptions): Promise<boolean> => {
+			if (activeStreamRef.current) return false;
+			activeStreamRef.current = true;
+			const jobId = crypto.randomUUID();
+			const operation = options.parentPresentationId ? "iteration" : "generation";
+			const targetPresentationId =
+				options.parentPresentationId ?? options.retryPresentationId ?? "";
+			setStreamingState({
+				...initialState,
+				isStreaming: true,
+				jobId,
+				requestedSlides: options.slideCount,
+				operation,
+				prompt: options.prompt,
+				presentationId: targetPresentationId || undefined,
+				researchStatus: options.researchEnabled && !options.researchPayload ? "searching" : "idle",
+			});
+			const stored: StoredGeneration = {
+				jobId,
+				presentationId: targetPresentationId,
+				operation,
+				prompt: options.prompt,
+				requestedSlides: options.slideCount,
+				theme: "corporate-blue",
+				lastEventId: 0,
+			};
+			storeGeneration(stored);
+
+			const controller = new AbortController();
+			abortControllerRef.current = controller;
+			const attachAndConsume = async (attachedPresentationId?: string) => {
+				storeGeneration({
+					...stored,
+					presentationId: attachedPresentationId || stored.presentationId,
+				});
+				setStreamingState((prev) => ({
+					...prev,
+					jobId,
+					presentationId: attachedPresentationId || prev.presentationId,
+				}));
+				// Release the stream slot no matter how consumption ends, so later
+				// generations are not blocked by a finished or failed stream.
+				await consumeJobEvents(
+					jobId,
+					attachedPresentationId || targetPresentationId,
+					controller,
+				).finally(() => releaseActiveStream(controller));
+			};
+
+			try {
+				const response = await fetch(`${API_URL}/presentation-jobs`, {
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						job_id: jobId,
+						topic: options.prompt,
+						slide_count: options.slideCount,
+						detail_level: options.detailLevel,
+						tonality: options.tonality,
+						research: { enabled: Boolean(options.researchEnabled) },
+						research_payload: options.researchPayload,
+						parent_presentation_id: options.parentPresentationId,
+						retry_presentation_id: options.retryPresentationId,
+						ai: options.ai,
+					}),
+					signal: controller.signal,
+				});
+
+				if (response.status === 401 || response.status === 422) {
+					clearStoredGeneration(jobId);
+					releaseActiveStream(controller);
+					setStreamingState((prev) => ({
+						...prev,
+						isStreaming: false,
+						error:
+							response.status === 401
+								? "Session expired. Please log in again."
+								: "Your session is invalid. Please log out and log in again.",
+					}));
+					return false;
+				}
+
+				if (response.status === 402) {
+					const errorData = await readJsonResponse<{
+						slide_tokens_remaining?: number;
+						slide_tokens_required?: number;
+					}>(response);
+					publishPointsBalance(errorData?.slide_tokens_remaining);
+					clearStoredGeneration(jobId);
+					releaseActiveStream(controller);
+					setStreamingState((prev) => ({
+						...prev,
+						isStreaming: false,
+						error: `Insufficient points. You have ${
+							errorData?.slide_tokens_remaining?.toFixed(1) || 0
+						} points, but need at least ${errorData?.slide_tokens_required || 1}.`,
+					}));
+					return false;
+				}
+
+				const data = await readJsonResponse<{ job_id?: string; presentation_id?: string }>(
+					response,
+				);
+				if (!response.ok || !data?.job_id) {
+					const message = (data as { error?: { message?: string } } | null)?.error?.message ?? "";
+					clearStoredGeneration(jobId);
+					releaseActiveStream(controller);
+					setStreamingState((prev) => ({
+						...prev,
+						isStreaming: false,
+						error: message || `Unable to start generation (${response.status}).`,
+					}));
+					return false;
+				}
+
+				await attachAndConsume(data.presentation_id);
+				return true;
+			} catch (error) {
+				const isAbort =
+					(error instanceof Error && error.name === "AbortError") || controller.signal.aborted;
+				if (isAbort) {
+					releaseActiveStream(controller);
+					return false;
+				}
+				// The connection failed before the server responded, so submission is
+				// ambiguous. The job ID was chosen up front: recover by asking for it.
+				try {
+					const recovery = await fetch(`${API_URL}/generation-jobs/${jobId}`, {
+						credentials: "include",
+					});
+					if (recovery.ok) {
+						const job = (await recovery.json().catch(() => null)) as {
+							presentation_id?: string;
+						} | null;
+						await attachAndConsume(job?.presentation_id);
+						return true;
+					}
+					clearStoredGeneration(jobId);
+					releaseActiveStream(controller);
+					setStreamingState((prev) => ({
+						...prev,
+						isStreaming: false,
+						error: "Unable to submit the generation request. Check your connection and try again.",
+					}));
+					return false;
+				} catch {
+					clearStoredGeneration(jobId);
+					releaseActiveStream(controller);
+					setStreamingState((prev) => ({
+						...prev,
+						isStreaming: false,
+						error: "Unable to submit the generation request. Check your connection and try again.",
+					}));
+					return false;
+				}
+			}
+		},
+		[consumeJobEvents, releaseActiveStream],
+	);
+
+	const previewResearch = useCallback(
 		async (
 			request: ResearchPreviewRequest,
 			savedResearch?: ResearchPayload,
@@ -288,8 +743,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 
 			researchRequestIdRef.current += 1;
 			const requestId = researchRequestIdRef.current;
-			researchAbortControllerRef.current?.abort();
-			researchAbortControllerRef.current = null;
+			const controller = new AbortController();
 
 			if (savedResearch && !forceRefresh) {
 				updateResearchPreviewState({
@@ -305,8 +759,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				return true;
 			}
 
-			const controller = new AbortController();
-			researchAbortControllerRef.current = controller;
 			updateResearchPreviewState({
 				...request,
 				status: "loading",
@@ -317,28 +769,23 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			});
 
 			try {
-				const response = await fetch(`${API_URL}/research-presentation`, {
+				const response = await fetch(`${API_URL}/presentation-jobs`, {
 					method: "POST",
 					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-						"Idempotency-Key": idempotencyKey(),
-					},
+					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
+						job_id: crypto.randomUUID(),
+						preview: true,
 						topic: request.prompt,
-						research: {
-							enabled: true,
-						},
 						slide_count: request.slideCount,
 						detail_level: request.detailLevel,
 						tonality: request.tonality,
+						research: { enabled: true },
 					}),
 					signal: controller.signal,
 				});
 
-				if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
-					return false;
-				}
+				if (requestId !== researchRequestIdRef.current) return false;
 
 				if (!response.ok) {
 					const errorData = await readJsonResponse<{
@@ -351,7 +798,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						typeof errorData?.error === "string"
 							? errorData.error
 							: errorData?.error?.message || errorData?.message || "Failed to fetch research";
-
 					updateResearchPreviewState((previous) => ({
 						...previous,
 						status: "error",
@@ -360,37 +806,26 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					return false;
 				}
 
-				const data = await readJsonResponse<ResearchPayload & { slide_tokens_remaining?: number }>(
-					response,
-				);
-				if (controller.signal.aborted || requestId !== researchRequestIdRef.current) {
-					return false;
-				}
-
-				if (!data) {
-					updateResearchPreviewState((previous) => ({
-						...previous,
-						status: "error",
-						error: "The research service returned an invalid response.",
-					}));
-					return false;
-				}
-				publishPointsBalance(data.slide_tokens_remaining);
+				const data = await readJsonResponse<{
+					sources?: Source[];
+					estimated_tokens?: number;
+					slide_tokens_remaining?: number;
+				}>(response);
+				if (requestId !== researchRequestIdRef.current) return false;
+				publishPointsBalance(data?.slide_tokens_remaining);
 
 				updateResearchPreviewState({
 					...request,
 					status: "ready",
-					sources: Array.isArray(data.sources) ? data.sources : [],
-					estimatedTokens: typeof data.estimated_tokens === "number" ? data.estimated_tokens : null,
+					sources: Array.isArray(data?.sources) ? data.sources : [],
+					estimatedTokens:
+						typeof data?.estimated_tokens === "number" ? data.estimated_tokens : null,
 					requestKey,
 				});
 				return true;
 			} catch (err: unknown) {
 				const isAbort = err instanceof Error && err.name === "AbortError";
-				if (isAbort || controller.signal.aborted || requestId !== researchRequestIdRef.current) {
-					return false;
-				}
-
+				if (isAbort || requestId !== researchRequestIdRef.current) return false;
 				const message = err instanceof Error ? err.message : String(err);
 				updateResearchPreviewState((previous) => ({
 					...previous,
@@ -398,10 +833,6 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					error: message,
 				}));
 				return false;
-			} finally {
-				if (requestId === researchRequestIdRef.current) {
-					researchAbortControllerRef.current = null;
-				}
 			}
 		},
 		[updateResearchPreviewState],
@@ -419,954 +850,10 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		};
 	}, [streamingState]);
 
-	const startStreaming = useCallback(
-		async (
-			prompt: string,
-			slideCount: number,
-			detailLevel: string,
-			tonality: string,
-			researchEnabled = false,
-			researchPayload?: ResearchPayload,
-			retryPresentationId?: string,
-			theme: ThemeId = "corporate-blue",
-			ai?: AIModelSelection,
-		): Promise<boolean> => {
-			if (activeStreamRef.current) return false;
-			activeStreamRef.current = true;
-			const requestIdempotencyKey = idempotencyKey();
-
-			// Reset state
-			setStreamingState({
-				...initialState,
-				isStreaming: true,
-				requestedSlides: slideCount,
-				operation: "generation",
-				prompt,
-				theme,
-				presentationId: retryPresentationId,
-				researchStatus: researchEnabled && !researchPayload ? "searching" : "idle",
-			});
-
-			const controller = new AbortController();
-			abortControllerRef.current = controller;
-			storeGeneration({
-				jobId: "",
-				idempotencyKey: requestIdempotencyKey,
-				presentationId: retryPresentationId || "",
-				operation: "generation",
-				prompt,
-				requestedSlides: slideCount,
-				theme,
-				lastEventId: 0,
-			});
-
-			try {
-				const response = await fetch(`${API_URL}/generate-presentation-stream`, {
-					method: "POST",
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-						"Idempotency-Key": requestIdempotencyKey,
-					},
-					body: JSON.stringify({
-						topic: prompt,
-						slide_count: slideCount,
-						detail_level: detailLevel,
-						tonality,
-						research: {
-							enabled: Boolean(researchEnabled),
-						},
-						research_payload: researchPayload,
-						retry_presentation_id: retryPresentationId,
-						theme,
-						ai,
-					}),
-					signal: controller.signal,
-				});
-
-				// Handle 401 Unauthorized - token might be expired
-				if (response.status === 401) {
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: "Session expired. Please log in again.",
-					}));
-					return false;
-				}
-
-				if (response.status === 422) {
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: "Your session is invalid. Please log out and log in again.",
-					}));
-					return false;
-				}
-
-				if (response.status === 402) {
-					const errorData = await readJsonResponse<{
-						slide_tokens_remaining?: number;
-						slide_tokens_required?: number;
-					}>(response);
-					publishPointsBalance(errorData?.slide_tokens_remaining);
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: `Insufficient points. You have ${
-							errorData?.slide_tokens_remaining?.toFixed(1) || 0
-						} points, but need at least ${errorData?.slide_tokens_required || 1} to generate.`,
-					}));
-					return false;
-				}
-				if (response.status >= 500) {
-					releaseActiveStream(controller);
-					setStreamingState((previous) => ({
-						...previous,
-						isStreaming: true,
-						error: undefined,
-						generationMessage: "Confirming generation submission",
-					}));
-					setReconnectVersion((version) => version + 1);
-					return true;
-				}
-
-				if (!response.ok) {
-					const errorData = await readJsonResponse<{
-						error?: string | { message?: string };
-						message?: string;
-					}>(response);
-					const errorMessage =
-						typeof errorData?.error === "string"
-							? errorData.error
-							: errorData?.error?.message ||
-								errorData?.message ||
-								`Presentation service request failed (${response.status}).`;
-
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: errorMessage,
-					}));
-					return false;
-				}
-				const responseJobId = response.headers.get("X-Generation-Job-ID") || undefined;
-				const responsePresentationId =
-					response.headers.get("X-Presentation-ID") || retryPresentationId;
-				if (!responseJobId) clearStoredGeneration("");
-				if (responseJobId && responsePresentationId) {
-					storeGeneration({
-						jobId: responseJobId,
-						idempotencyKey: requestIdempotencyKey,
-						presentationId: responsePresentationId,
-						operation: "generation",
-						prompt,
-						requestedSlides: slideCount,
-						theme,
-						lastEventId: 0,
-					});
-					setStreamingState((previous) => ({
-						...previous,
-						jobId: responseJobId,
-						presentationId: responsePresentationId,
-					}));
-				}
-
-				const reader = response.body?.getReader();
-				if (!reader) {
-					if (responseJobId) {
-						releaseActiveStream(controller);
-						setReconnectVersion((version) => version + 1);
-						return true;
-					}
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: "Failed to read streaming response",
-					}));
-					return false;
-				}
-
-				readerRef.current = reader;
-				const decoder = new TextDecoder();
-				let buffer = "";
-				let currentEvent = ""; // Persist across reads
-				let receivedComplete = false;
-				let receivedError = false;
-				let receivedSaved = false;
-				let streamedPresentationId = responsePresentationId;
-				let streamedJobId = responseJobId;
-				let currentEventId = 0;
-				let completedData: PresentationData | null = null;
-
-				const processStream = async () => {
-					try {
-						while (true) {
-							const { done, value } = await reader.read();
-							if (done) break;
-
-							buffer += decoder.decode(value, { stream: true });
-							const lines = buffer.split("\n");
-							buffer = lines.pop() || "";
-
-							for (const line of lines) {
-								if (line.startsWith("id: ")) {
-									currentEventId = Number(line.slice(4).trim()) || currentEventId;
-								} else if (line.startsWith("event: ")) {
-									currentEvent = line.slice(7).trim();
-								} else if (line.startsWith("data: ") && currentEvent) {
-									const dataStr = line.slice(6);
-									try {
-										const data = JSON.parse(dataStr);
-
-										switch (currentEvent) {
-											case "start":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus:
-														prev.researchStatus && prev.researchStatus !== "idle"
-															? "generating"
-															: prev.researchStatus,
-												}));
-												break;
-
-											case "research":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus: data.status || prev.researchStatus,
-													researchSources: data.sources ?? prev.researchSources,
-												}));
-												break;
-
-											case "stage":
-												setStreamingState((prev) => ({
-													...prev,
-													generationStage: data.stage,
-													generationMessage: data.message,
-													generationProgress: {
-														completed: data.completed,
-														total: data.total,
-													},
-												}));
-												break;
-
-											case "outline":
-												setStreamingState((prev) => ({
-													...prev,
-													outline: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "plan":
-												setStreamingState((prev) => ({
-													...prev,
-													deckPlan: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "created":
-												streamedPresentationId = data.presentation_id;
-												streamedJobId = data.job_id;
-												if (streamedJobId) {
-													storeGeneration({
-														jobId: streamedJobId,
-														idempotencyKey: requestIdempotencyKey,
-														presentationId: data.presentation_id,
-														operation: "generation",
-														prompt,
-														requestedSlides: slideCount,
-														theme,
-														lastEventId: currentEventId,
-													});
-												}
-												// Presentation record created - store the ID immediately
-												setStreamingState((prev) => ({
-													...prev,
-													jobId: data.job_id,
-													presentationId: data.presentation_id,
-												}));
-												break;
-
-											case "theme":
-												setStreamingState((prev) => ({
-													...prev,
-													theme: data.theme,
-												}));
-												break;
-
-											case "retry":
-												setStreamingState((prev) => ({
-													...prev,
-													slides: [],
-													theme: "corporate-blue",
-													title: "Untitled Presentation",
-													totalSlides: 0,
-													isComplete: false,
-													error: undefined,
-												}));
-												break;
-
-											case "slide":
-												setStreamingState((prev) => {
-													const newSlides = [...prev.slides];
-													const index = Number(data.index);
-													if (Number.isInteger(index) && index >= 0) {
-														newSlides[index] = data.slide;
-													} else {
-														const existingIndex = newSlides.findIndex(
-															(slide) => slide.id === data.slide.id,
-														);
-														if (existingIndex >= 0) {
-															newSlides[existingIndex] = data.slide;
-														} else {
-															newSlides.push(data.slide);
-														}
-													}
-													console.log(
-														"Adding slide",
-														data.slide.id,
-														"Total slides:",
-														newSlides.length,
-													);
-													return {
-														...prev,
-														slides: newSlides,
-														title: data.title || prev.title,
-														totalSlides: newSlides.length,
-													};
-												});
-												break;
-
-											case "complete":
-												receivedComplete = true;
-												completedData = data as PresentationData;
-												setStreamingState((prev) => ({
-													...prev,
-													completedDocument: data,
-													isComplete: receivedSaved,
-													theme: data.theme || prev.theme,
-													title: data.title || prev.title,
-													slides: data.slides || prev.slides,
-													totalSlides:
-														data.totalSlides ||
-														(data.slides ? data.slides.length : prev.slides.length),
-												}));
-												break;
-
-											case "saved":
-												receivedSaved = true;
-												clearStoredGeneration(streamedJobId || "");
-												// Final save confirmation - update presentation ID if provided
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: true,
-													presentationId: data.presentation_id || prev.presentationId,
-													researchStatus:
-														prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
-												}));
-												console.log("Presentation saved:", data.presentation_id);
-												publishPresentationUpdated(data.presentation_id);
-												publishPointsBalance(data.slide_tokens_remaining);
-												return;
-
-											case "save_error":
-												console.error("Save error:", data.error);
-												// Don't set streaming to false, just log the error
-												break;
-
-											case "error":
-												receivedError = true;
-												clearStoredGeneration(streamedJobId || "");
-												if (data.presentation_id) {
-													publishPresentationUpdated(data.presentation_id);
-												}
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: false,
-													error: data.error,
-													researchStatus: "idle",
-												}));
-												return;
-										}
-
-										// Reset event after processing
-										currentEvent = "";
-									} catch (parseErr) {
-										console.error("Failed to parse SSE data:", parseErr);
-									}
-								}
-							}
-						}
-
-						if (!receivedComplete || !receivedSaved || receivedError) {
-							if (!receivedError) {
-								if (streamedJobId) {
-									releaseActiveStream(controller);
-									setReconnectVersion((version) => version + 1);
-									return;
-								}
-								const persisted = streamedPresentationId
-									? await fetchPersistedPresentation(
-											streamedPresentationId,
-											controller.signal,
-										).catch(() => null)
-									: null;
-								if (controller.signal.aborted || abortControllerRef.current !== controller) return;
-								const persistedSlides = persisted?.slides ?? [];
-								const generatedSlides = completedData?.slides ?? [];
-								if (
-									persisted &&
-									(persisted as (PresentationData & { status?: string }) | null)?.status ===
-										"ready" &&
-									persistedSlides.length > 0 &&
-									JSON.stringify(persistedSlides) === JSON.stringify(generatedSlides)
-								) {
-									setStreamingState((prev) => ({
-										...prev,
-										...persisted,
-										completedDocument: persisted,
-										presentationId: streamedPresentationId,
-										slides: persistedSlides,
-										totalSlides: persistedSlides.length,
-										isStreaming: false,
-										isComplete: true,
-										error: undefined,
-									}));
-									publishPresentationUpdated(streamedPresentationId);
-									return;
-								}
-								setStreamingState((prev) => ({
-									...prev,
-									isStreaming: false,
-									isComplete: false,
-									error: "Generation stream ended before the presentation was completed.",
-								}));
-							}
-							return;
-						}
-
-						setStreamingState((prev) => ({
-							...prev,
-							isStreaming: false,
-							isComplete: true,
-							researchStatus: prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
-						}));
-					} catch (streamErr: unknown) {
-						const isAbort = streamErr instanceof Error && streamErr.name === "AbortError";
-						if (!isAbort && streamedJobId) {
-							releaseActiveStream(controller);
-							setReconnectVersion((version) => version + 1);
-						} else if (!isAbort) {
-							console.error("Stream error:", streamErr);
-							const message = streamErr instanceof Error ? streamErr.message : String(streamErr);
-							setStreamingState((prev) => ({
-								...prev,
-								isStreaming: false,
-								isComplete: false,
-								error: `Streaming error: ${message}`,
-							}));
-						}
-					} finally {
-						releaseActiveStream(controller);
-					}
-				};
-
-				// Start processing the stream in the background
-				processStream();
-				return true;
-			} catch (err: unknown) {
-				releaseActiveStream(controller);
-				const isAbort = err instanceof Error && err.name === "AbortError";
-				if (!isAbort) {
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: true,
-						error: undefined,
-						generationMessage: "Reconnecting to generation",
-					}));
-					setReconnectVersion((version) => version + 1);
-				}
-				return false;
-			}
-		},
-		[releaseActiveStream],
-	);
-
-	const startIterating = useCallback(
-		async (
-			prompt: string,
-			parentPresentationId: string,
-			slideCount: number,
-			detailLevel: string,
-			tonality: string,
-			researchEnabled = false,
-		): Promise<boolean> => {
-			if (activeStreamRef.current) return false;
-			activeStreamRef.current = true;
-			const requestIdempotencyKey = idempotencyKey();
-
-			// Reset state
-			setStreamingState({
-				...initialState,
-				isStreaming: true,
-				requestedSlides: slideCount,
-				operation: "iteration",
-				prompt,
-				presentationId: parentPresentationId,
-				researchStatus: researchEnabled ? "searching" : "idle",
-			});
-
-			const controller = new AbortController();
-			abortControllerRef.current = controller;
-			storeGeneration({
-				jobId: "",
-				idempotencyKey: requestIdempotencyKey,
-				presentationId: parentPresentationId,
-				operation: "iteration",
-				prompt,
-				requestedSlides: slideCount,
-				theme: "corporate-blue",
-				lastEventId: 0,
-			});
-
-			try {
-				const response = await fetch(`${API_URL}/iterate-presentation-stream`, {
-					method: "POST",
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-						"Idempotency-Key": requestIdempotencyKey,
-					},
-					body: JSON.stringify({
-						topic: prompt,
-						parent_presentation_id: parentPresentationId,
-						slide_count: slideCount,
-						detail_level: detailLevel,
-						tonality,
-						research: {
-							enabled: Boolean(researchEnabled),
-						},
-					}),
-					signal: controller.signal,
-				});
-
-				// Handle 401 Unauthorized - token might be expired
-				if (response.status === 401) {
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: "Session expired. Please log in again.",
-					}));
-					return false;
-				}
-
-				if (response.status === 422) {
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: "Your session is invalid. Please log out and log in again.",
-					}));
-					return false;
-				}
-
-				if (response.status === 402) {
-					const errorData = await readJsonResponse<{
-						slide_tokens_remaining?: number;
-						slide_tokens_required?: number;
-					}>(response);
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: `Insufficient points. You have ${
-							errorData?.slide_tokens_remaining?.toFixed(1) || 0
-						} points, but need at least ${errorData?.slide_tokens_required || 1} to iterate.`,
-					}));
-					return false;
-				}
-				if (response.status >= 500) {
-					releaseActiveStream(controller);
-					setStreamingState((previous) => ({
-						...previous,
-						isStreaming: true,
-						error: undefined,
-						generationMessage: "Confirming generation submission",
-					}));
-					setReconnectVersion((version) => version + 1);
-					return true;
-				}
-
-				if (!response.ok) {
-					const errorData = await readJsonResponse<{
-						error?: string | { message?: string };
-						message?: string;
-					}>(response);
-					const errorMessage =
-						typeof errorData?.error === "string"
-							? errorData.error
-							: errorData?.error?.message ||
-								errorData?.message ||
-								`Presentation service request failed (${response.status}).`;
-					clearStoredGeneration("");
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: errorMessage,
-					}));
-					return false;
-				}
-				const responseJobId = response.headers.get("X-Generation-Job-ID") || undefined;
-				const responsePresentationId =
-					response.headers.get("X-Presentation-ID") || parentPresentationId;
-				if (!responseJobId) clearStoredGeneration("");
-				if (responseJobId) {
-					storeGeneration({
-						jobId: responseJobId,
-						idempotencyKey: requestIdempotencyKey,
-						presentationId: responsePresentationId,
-						operation: "iteration",
-						prompt,
-						requestedSlides: slideCount,
-						theme: "corporate-blue",
-						lastEventId: 0,
-					});
-					setStreamingState((previous) => ({ ...previous, jobId: responseJobId }));
-				}
-
-				const reader = response.body?.getReader();
-				if (!reader) {
-					if (responseJobId) {
-						releaseActiveStream(controller);
-						setReconnectVersion((version) => version + 1);
-						return true;
-					}
-					releaseActiveStream(controller);
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: false,
-						error: "Failed to read streaming response",
-					}));
-					return false;
-				}
-
-				readerRef.current = reader;
-				const decoder = new TextDecoder();
-				let buffer = "";
-				let currentEvent = ""; // Persist across reads
-				let receivedComplete = false;
-				let receivedError = false;
-				let receivedSaved = false;
-				let streamedJobId = responseJobId;
-				let currentEventId = 0;
-				let completedData: PresentationData | null = null;
-
-				const processStream = async () => {
-					try {
-						while (true) {
-							const { done, value } = await reader.read();
-							if (done) break;
-
-							buffer += decoder.decode(value, { stream: true });
-							const lines = buffer.split("\n");
-							buffer = lines.pop() || "";
-
-							for (const line of lines) {
-								if (line.startsWith("id: ")) {
-									currentEventId = Number(line.slice(4).trim()) || currentEventId;
-								} else if (line.startsWith("event: ")) {
-									currentEvent = line.slice(7).trim();
-								} else if (line.startsWith("data: ") && currentEvent) {
-									const dataStr = line.slice(6);
-									try {
-										const data = JSON.parse(dataStr);
-
-										switch (currentEvent) {
-											case "created":
-												streamedJobId = data.job_id;
-												if (streamedJobId) {
-													storeGeneration({
-														jobId: streamedJobId,
-														idempotencyKey: requestIdempotencyKey,
-														presentationId: data.presentation_id || parentPresentationId,
-														operation: "iteration",
-														prompt,
-														requestedSlides: slideCount,
-														theme: "corporate-blue",
-														lastEventId: currentEventId,
-													});
-												}
-												setStreamingState((prev) => ({ ...prev, jobId: data.job_id }));
-												break;
-
-											case "start":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus:
-														prev.researchStatus && prev.researchStatus !== "idle"
-															? "generating"
-															: prev.researchStatus,
-												}));
-												break;
-
-											case "research":
-												setStreamingState((prev) => ({
-													...prev,
-													researchStatus: data.status || prev.researchStatus,
-													researchSources: data.sources ?? prev.researchSources,
-												}));
-												break;
-
-											case "stage":
-												setStreamingState((prev) => ({
-													...prev,
-													generationStage: data.stage,
-													generationMessage: data.message,
-													generationProgress: {
-														completed: data.completed,
-														total: data.total,
-													},
-												}));
-												break;
-
-											case "outline":
-												setStreamingState((prev) => ({
-													...prev,
-													outline: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "plan":
-												setStreamingState((prev) => ({
-													...prev,
-													deckPlan: data,
-													title: data.title || prev.title,
-												}));
-												break;
-
-											case "theme":
-												setStreamingState((prev) => ({
-													...prev,
-													theme: data.theme,
-												}));
-												break;
-
-											case "retry":
-												setStreamingState((prev) => ({
-													...prev,
-													slides: [],
-													theme: "corporate-blue",
-													title: "Updated Presentation",
-													totalSlides: 0,
-													isComplete: false,
-													error: undefined,
-												}));
-												break;
-
-											case "slide":
-												setStreamingState((prev) => {
-													const newSlides = [...prev.slides];
-													const index = Number(data.index);
-													if (Number.isInteger(index) && index >= 0) {
-														newSlides[index] = data.slide;
-													} else {
-														const existingIndex = newSlides.findIndex(
-															(slide) => slide.id === data.slide.id,
-														);
-														if (existingIndex >= 0) {
-															newSlides[existingIndex] = data.slide;
-														} else {
-															newSlides.push(data.slide);
-														}
-													}
-													console.log(
-														"Adding slide",
-														data.slide.id,
-														"Total slides:",
-														newSlides.length,
-													);
-													return {
-														...prev,
-														slides: newSlides,
-														title: data.title || prev.title,
-														totalSlides: newSlides.length,
-													};
-												});
-												break;
-
-											case "complete":
-												receivedComplete = true;
-												completedData = data as PresentationData;
-												setStreamingState((prev) => ({
-													...prev,
-													completedDocument: data,
-													isComplete: receivedSaved,
-													theme: data.theme || prev.theme,
-													title: data.title || prev.title,
-													// Use complete slides data if available to ensure consistency
-													slides: data.slides || prev.slides,
-													totalSlides:
-														data.totalSlides ||
-														(data.slides ? data.slides.length : prev.slides.length),
-												}));
-												break;
-
-											case "saved":
-												receivedSaved = true;
-												clearStoredGeneration(streamedJobId || "");
-												// Iteration saved - presentation updated in place
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: true,
-													presentationId: data.presentation_id || prev.presentationId,
-													researchStatus:
-														prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
-												}));
-												console.log("Iteration saved to presentation:", data.presentation_id);
-												publishPresentationUpdated(data.presentation_id || parentPresentationId);
-												publishPointsBalance(data.slide_tokens_remaining);
-												return;
-
-											case "save_error":
-												console.error("Save error during iteration:", data.error);
-												break;
-
-											case "error":
-												receivedError = true;
-												clearStoredGeneration(streamedJobId || "");
-												setStreamingState((prev) => ({
-													...prev,
-													isStreaming: false,
-													isComplete: false,
-													error: data.error,
-													researchStatus: "idle",
-												}));
-												return;
-										}
-
-										// Reset event after processing
-										currentEvent = "";
-									} catch (parseErr) {
-										console.error("Failed to parse SSE data:", parseErr);
-									}
-								}
-							}
-						}
-
-						if (!receivedComplete || !receivedSaved || receivedError) {
-							if (!receivedError) {
-								if (streamedJobId) {
-									releaseActiveStream(controller);
-									setReconnectVersion((version) => version + 1);
-									return;
-								}
-								const persisted = await fetchPersistedPresentation(
-									parentPresentationId,
-									controller.signal,
-								).catch(() => null);
-								if (controller.signal.aborted || abortControllerRef.current !== controller) return;
-								const persistedSlides = persisted?.slides ?? [];
-								const generatedSlides = completedData?.slides ?? [];
-								if (
-									persisted &&
-									(persisted as (PresentationData & { status?: string }) | null)?.status ===
-										"ready" &&
-									persistedSlides.length > 0 &&
-									JSON.stringify(persistedSlides) === JSON.stringify(generatedSlides)
-								) {
-									setStreamingState((prev) => ({
-										...prev,
-										...persisted,
-										completedDocument: persisted,
-										presentationId: parentPresentationId,
-										slides: persistedSlides,
-										totalSlides: persistedSlides.length,
-										isStreaming: false,
-										isComplete: true,
-										error: undefined,
-									}));
-									publishPresentationUpdated(parentPresentationId);
-									return;
-								}
-								setStreamingState((prev) => ({
-									...prev,
-									isStreaming: false,
-									isComplete: false,
-									error: "Update stream ended before the presentation was completed.",
-								}));
-							}
-							return;
-						}
-
-						setStreamingState((prev) => ({
-							...prev,
-							isStreaming: false,
-							isComplete: true,
-							researchStatus: prev.researchStatus === "generating" ? "ready" : prev.researchStatus,
-						}));
-					} catch (streamErr: unknown) {
-						const isAbort = streamErr instanceof Error && streamErr.name === "AbortError";
-						if (!isAbort && streamedJobId) {
-							releaseActiveStream(controller);
-							setReconnectVersion((version) => version + 1);
-						} else if (!isAbort) {
-							console.error("Stream error:", streamErr);
-							const message = streamErr instanceof Error ? streamErr.message : String(streamErr);
-							setStreamingState((prev) => ({
-								...prev,
-								isStreaming: false,
-								isComplete: false,
-								error: `Streaming error: ${message}`,
-							}));
-						}
-					} finally {
-						releaseActiveStream(controller);
-					}
-				};
-
-				// Start processing the stream in the background
-				processStream();
-				return true;
-			} catch (err: unknown) {
-				releaseActiveStream(controller);
-				const isAbort = err instanceof Error && err.name === "AbortError";
-				if (!isAbort) {
-					setStreamingState((prev) => ({
-						...prev,
-						isStreaming: true,
-						error: undefined,
-						generationMessage: "Reconnecting to generation",
-					}));
-					setReconnectVersion((version) => version + 1);
-				}
-				return false;
-			}
-		},
-		[releaseActiveStream],
-	);
-
+	// Resume any persisted active generation after a reload or navigation.
 	useEffect(() => {
 		const initialStored = readStoredGeneration();
-		if (!initialStored || activeStreamRef.current) return;
+		if (!initialStored?.jobId || activeStreamRef.current) return;
 
 		const controller = new AbortController();
 		abortControllerRef.current = controller;
@@ -1374,7 +861,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		setStreamingState({
 			...initialState,
 			isStreaming: true,
-			jobId: initialStored.jobId || undefined,
+			jobId: initialStored.jobId,
 			presentationId: initialStored.presentationId || undefined,
 			operation: initialStored.operation,
 			prompt: initialStored.prompt,
@@ -1382,281 +869,21 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			theme: initialStored.theme,
 		});
 
-		const resume = async () => {
-			let stored = initialStored;
-			let retryDelay = 1000;
-			let lookupAttempts = 0;
-			while (!stored.jobId && !controller.signal.aborted) {
-				if (!stored.idempotencyKey) {
-					clearStoredGeneration("");
-					setStreamingState((previous) => ({
-						...previous,
-						isStreaming: false,
-						error: "Unable to recover the submitted generation request.",
-					}));
-					return;
-				}
-				try {
-					const response = await fetch(
-						`${API_URL}/generation-jobs/idempotency/${encodeURIComponent(stored.idempotencyKey)}/job?kind=${stored.operation}`,
-						{ credentials: "include", signal: controller.signal },
-					);
-					if (response.status === 401 || response.status === 403) {
-						setStreamingState((previous) => ({
-							...previous,
-							isStreaming: false,
-							error: "Session expired. Please log in again.",
-						}));
-						await waitForRetry(retryDelay, controller.signal);
-						retryDelay = Math.min(retryDelay * 2, 10_000);
-						continue;
-					}
-					if (response.ok) {
-						const job = (await response.json()) as { id?: string; presentation_id?: string };
-						if (job.id && job.presentation_id) {
-							stored = {
-								...stored,
-								jobId: job.id,
-								presentationId: job.presentation_id,
-								lastEventId: 0,
-							};
-							storeGeneration(stored);
-							setStreamingState((previous) => ({
-								...previous,
-								jobId: job.id,
-								presentationId: job.presentation_id,
-								generationMessage: undefined,
-							}));
-							break;
-						}
-					}
-					if (response.status !== 404 && response.status !== 429 && response.status < 500) {
-						clearStoredGeneration("");
-						setStreamingState((previous) => ({
-							...previous,
-							isStreaming: false,
-							error: "Unable to recover the submitted generation request.",
-						}));
-						return;
-					}
-				} catch (error) {
-					if (controller.signal.aborted) return;
-					console.error("Generation lookup failed:", error);
-				}
-				lookupAttempts++;
-				if (lookupAttempts >= 4) {
-					setStreamingState((previous) => ({
-						...previous,
-						isStreaming: false,
-						error: "Unable to confirm the submitted generation yet. Reload to try again.",
-					}));
-					return;
-				}
-				await waitForRetry(retryDelay, controller.signal);
-				retryDelay = Math.min(retryDelay * 2, 10_000);
-			}
-			let cursor = 0;
-			let receivedComplete = false;
-			while (!controller.signal.aborted) {
-				try {
-					const response = await fetch(
-						`${API_URL}/generation-jobs/${stored.jobId}/events?after=${cursor}`,
-						{ credentials: "include", signal: controller.signal },
-					);
-					if (response.status === 401 || response.status === 403) {
-						setStreamingState((previous) => ({
-							...previous,
-							isStreaming: false,
-							isComplete: false,
-							error: "Session expired. Please log in again.",
-						}));
-						await waitForRetry(retryDelay, controller.signal);
-						retryDelay = Math.min(retryDelay * 2, 10_000);
-						continue;
-					}
-					if (response.status === 404 || response.status === 410) {
-						clearStoredGeneration(stored.jobId);
-						setStreamingState((previous) => ({
-							...previous,
-							isStreaming: false,
-							isComplete: false,
-							error: "The saved generation job is no longer available.",
-						}));
-						return;
-					}
-					if (response.status !== 429 && response.status >= 400 && response.status < 500) {
-						clearStoredGeneration(stored.jobId);
-						setStreamingState((previous) => ({
-							...previous,
-							isStreaming: false,
-							error: `Unable to reconnect to generation (${response.status}).`,
-						}));
-						return;
-					}
-					if (!response.ok || !response.body) {
-						throw new Error(`Unable to reconnect to generation (${response.status}).`);
-					}
-					const reader = response.body.getReader();
-					readerRef.current = reader;
-					const decoder = new TextDecoder();
-					let buffer = "";
-					let currentEvent = "";
-					let currentEventId = cursor;
-					let terminal = false;
-					while (!terminal) {
-						const { done, value } = await reader.read();
-						if (done) break;
-						buffer += decoder.decode(value, { stream: true });
-						const lines = buffer.split("\n");
-						buffer = lines.pop() || "";
-						for (const line of lines) {
-							if (line.startsWith("id: ")) {
-								currentEventId = Number(line.slice(4).trim()) || currentEventId;
-								continue;
-							}
-							if (line.startsWith("event: ")) {
-								currentEvent = line.slice(7).trim();
-								continue;
-							}
-							if (!line.startsWith("data: ") || !currentEvent) continue;
-							const data = JSON.parse(line.slice(6));
-							const previousCursor = cursor;
-							cursor = currentEventId;
-							if (currentEvent !== "saved" && currentEvent !== "error") {
-								storeGeneration({ ...stored, lastEventId: cursor });
-								if (cursor > previousCursor) retryDelay = 1000;
-							}
-							switch (currentEvent) {
-								case "research":
-									setStreamingState((previous) => ({
-										...previous,
-										researchStatus: data.status || previous.researchStatus,
-										researchSources: data.sources ?? previous.researchSources,
-									}));
-									break;
-								case "theme":
-									setStreamingState((previous) => ({ ...previous, theme: data.theme }));
-									break;
-								case "stage":
-									setStreamingState((previous) => ({
-										...previous,
-										generationStage: data.stage,
-										generationMessage: data.message,
-										generationProgress: { completed: data.completed, total: data.total },
-									}));
-									break;
-								case "outline":
-									setStreamingState((previous) => ({
-										...previous,
-										outline: data,
-										title: data.title || previous.title,
-									}));
-									break;
-								case "plan":
-									setStreamingState((previous) => ({
-										...previous,
-										deckPlan: data,
-										title: data.title || previous.title,
-									}));
-									break;
-								case "retry":
-									setStreamingState((previous) => ({
-										...previous,
-										slides: [],
-										isComplete: false,
-										error: undefined,
-									}));
-									break;
-								case "slide":
-									setStreamingState((previous) => {
-										const slides = [...previous.slides];
-										slides[Number(data.index)] = data.slide;
-										return {
-											...previous,
-											slides,
-											title: data.title || previous.title,
-											totalSlides: slides.length,
-										};
-									});
-									break;
-								case "complete":
-									receivedComplete = true;
-									setStreamingState((previous) => ({
-										...previous,
-										completedDocument: data,
-										theme: data.theme || previous.theme,
-										title: data.title || previous.title,
-										slides: data.slides || previous.slides,
-										totalSlides: data.slides?.length || previous.slides.length,
-									}));
-									break;
-								case "saved": {
-									const persisted = receivedComplete
-										? null
-										: await fetchPersistedPresentation(
-												data.presentation_id || stored.presentationId,
-												controller.signal,
-											).catch(() => null);
-									if (controller.signal.aborted || abortControllerRef.current !== controller)
-										return;
-									if (!receivedComplete && !persisted) {
-										cursor = Math.max(0, currentEventId - 1);
-										storeGeneration({ ...stored, lastEventId: cursor });
-										break;
-									}
-									terminal = true;
-									clearStoredGeneration(stored.jobId);
-									setStreamingState((previous) => ({
-										...previous,
-										...persisted,
-										isStreaming: false,
-										isComplete: true,
-										completedDocument: persisted || previous.completedDocument,
-										slides: persisted?.slides || previous.slides,
-										totalSlides: persisted?.slides?.length || previous.slides.length,
-										presentationId: data.presentation_id || previous.presentationId,
-									}));
-									publishPresentationUpdated(data.presentation_id || stored.presentationId);
-									publishPointsBalance(data.slide_tokens_remaining);
-									break;
-								}
-								case "error":
-									terminal = true;
-									clearStoredGeneration(stored.jobId);
-									setStreamingState((previous) => ({
-										...previous,
-										isStreaming: false,
-										isComplete: false,
-										error: data.error,
-									}));
-									break;
-							}
-							currentEvent = "";
-							if (terminal) break;
-						}
-					}
-					if (terminal) return;
-				} catch (error) {
-					if (controller.signal.aborted) return;
-					console.error("Generation reconnect failed:", error);
-				}
-				await waitForRetry(retryDelay, controller.signal);
-				retryDelay = Math.min(retryDelay * 2, 10_000);
-			}
-		};
-
-		void resume().finally(() => releaseActiveStream(controller));
+		void consumeJobEvents(
+			initialStored.jobId,
+			initialStored.presentationId,
+			controller,
+			initialStored.lastEventId,
+		).finally(() => releaseActiveStream(controller));
 		return () => {
 			controller.abort();
 			releaseActiveStream(controller);
 		};
-	}, [reconnectVersion, releaseActiveStream]);
+	}, [consumeJobEvents, releaseActiveStream]);
 
-	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
 			stopStreaming();
-			researchAbortControllerRef.current?.abort();
 		};
 	}, [stopStreaming]);
 
@@ -1665,9 +892,9 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			value={{
 				streamingState,
 				researchPreviewState,
-				startResearchPreview,
-				startStreaming,
-				startIterating,
+				generate,
+				cancelGeneration,
+				previewResearch,
 				stopStreaming,
 				resetStreaming,
 				getPresentation,

@@ -42,6 +42,18 @@ saved selection is missing or no longer listed. A selection is checked against a
 fresh provider response before it is saved or used for generation.
 
 Catalog refresh failures are isolated per provider so the settings page remains
+responsive. Generation requests fund model reasoning separately from the answer
+on every provider: reasoning and thinking tokens count against each provider's
+output bound, so a fixed allowance (`reasoningBudget`) is reserved on top of the
+requested output limit whenever the selected model supports it. Google Gemini
+2.5+ receives `thinkingBudget`, Anthropic Claude 3.7/4 receives an extended
+`thinking` block, OpenAI o-series and GPT-5 switch from `max_tokens` to
+`max_completion_tokens` (which those models require), and the built-in
+OpenRouter route always sends the normalized `reasoning.max_tokens` parameter,
+which OpenRouter drops for models that cannot reason. Inline `<think>` blocks
+emitted inside answer text are stripped before the presentation JSON is parsed,
+and an empty provider response is reported as its own error instead of a generic
+JSON parse failure.
 usable for replacing or deleting a key. A definitive key rejection or loss of all
 compatible models marks that connection invalid and restores point-funded
 OpenRouter when no other valid connection remains. A transient provider failure
@@ -61,14 +73,14 @@ Configure a base64-encoded 32-byte key:
 
 ```text
 BYOK_ENCRYPTION_KEY_CURRENT_VERSION=1
-BYOK_ENCRYPTION_KEY_V1=<base64 key>
+BYOK_ENCRYPTION_KEY=<base64 key>
 ```
 
 Keep old versioned keys available while rotating stored credentials.
 `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` is a non-secret selector. The
-`BYOK_ENCRYPTION_KEY_V<n>` values are secrets; `secretspec.toml` includes the
-initial `BYOK_ENCRYPTION_KEY_V1` entry without treating the version selector as a
-secret.
+`BYOK_ENCRYPTION_KEY` value (and any rotated `BYOK_ENCRYPTION_KEY_V<n>` values)
+are secrets; `secretspec.toml` includes the initial `BYOK_ENCRYPTION_KEY` entry
+without treating the version selector as a secret.
 
 ## Routing
 
@@ -80,6 +92,16 @@ switches subsequent requests to BYOK.
 Removing the final valid connection restores OpenRouter automatically. When one
 or more connections exist, SlideSage uses the saved provider and never silently
 falls back to another direct provider.
+
+Each connected provider has its own generation switch at the end of its row in
+settings. `PUT /ai/connections/:provider/enabled` pauses or resumes that key
+without deleting it. If the selected provider is disabled, generation uses
+SlideSage points and the server-owned OpenRouter route; the saved key and model
+selection remain available for later. Connected rows show a delete icon beside
+the provider name and do not show inline replacement controls. Internal dividers
+separate providers without placing a rule directly below the API keys heading.
+Each connected provider's model dropdown appears below that provider so the key
+and its available models stay together.
 
 The settings page loads its configuration from `GET /ai/config`. Production
 releases that add or change these endpoints must deploy the Go API as well as
@@ -93,7 +115,8 @@ and selection/deletion use separate per-user rate-limit scopes. See
 deployment requirement.
 
 Apply committed database migrations before deploying the Go API. BYOK requires
-`00010_add_ai_provider_connections.sql` and the production
+`00010_add_ai_provider_connections.sql`, per-provider switches require
+`00019_add_ai_provider_connections_enabled.sql`, and production needs the
 `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` and versioned encryption-key secrets.
 
 Research uses Exa. Source, presentation, and retrieval embeddings always use

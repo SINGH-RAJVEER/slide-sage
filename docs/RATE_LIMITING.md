@@ -16,13 +16,10 @@ migration `00013_repair_schema_and_revisions.sql` also ensures they exist.
 | `/auth/sign-in/*` | Client IP | 30 | 15 minutes |
 | `/auth/sign-up/*` | Normalized email | 5 | 1 hour |
 | `/auth/sign-up/*` | Client IP | 20 | 1 hour |
-| `PUT /profile` | Authenticated user | 10 | 15 minutes |
-| `POST /profile/email/verify` | Authenticated user | 10 | 15 minutes |
+| `PUT /profile`, `POST /profile/email/verify`, `POST /profile/avatar`, `POST /profile/avatar/upload` | Authenticated user | 10 shared | 15 minutes |
 | `POST /ai/connections`, `PUT /ai/connections/:provider` | Authenticated user | 6 shared | 10 minutes |
-| `DELETE /ai/connections/:provider`, `PUT /ai/selection` | Authenticated user | 20 shared | 10 minutes |
-| `POST /generate-presentation-stream` | Authenticated user | 6 | 1 minute |
-| `POST /iterate-presentation-stream` | Authenticated user | 12 | 1 minute |
-| `POST /research-presentation` | Authenticated user | 20 | 1 minute |
+| `DELETE /ai/connections/:provider`, `PUT /ai/selection`, `PUT /ai/connections/:provider/enabled` | Authenticated user | 20 shared | 10 minutes |
+| `POST /presentation-jobs` | Authenticated user | 15 | 1 minute |
 | `POST /billing/checkout` | Authenticated user | 10 | 10 minutes |
 | `POST /billing/verify` | Authenticated user | 20 | 15 minutes |
 | `POST /billing/webhook` | Client IP | 120 | 1 minute |
@@ -77,13 +74,14 @@ Apply migrations `00012` and `00013` before deploying the hardened API and monit
 `rate_limit_store_failed`; an unavailable store intentionally blocks protected
 requests rather than silently disabling enforcement.
 
-Expired rows are deleted opportunistically during successful counter updates.
-There is no separate cleanup scheduler.
+Counter updates do not perform global cleanup. The generation worker deletes up
+to 500 expired rows during each hourly maintenance pass using `SKIP LOCKED`, so
+request latency does not include an unbounded delete and multiple workers can
+clean safely.
 
 ## Verification
 
-Go tests cover identity hashing, policy selection, middleware ordering, structured
-responses, `Retry-After`, and fail-closed behavior. Before production rollout, run
-targeted failure-injection and concurrent multi-process tests against the target
-PostgreSQL path, then verify `429` behavior through the staging proxy so client-IP
-headers match production.
+Go tests cover identity hashing and policy selection. Before production rollout,
+run targeted failure-injection and concurrent multi-process tests against the
+target PostgreSQL path, then verify `429` behavior through the staging proxy so
+client-IP headers match production.

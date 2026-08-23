@@ -2,7 +2,6 @@ import {
 	type ChartConfig,
 	type ContentSlide,
 	isChartSlide,
-	isLegacyHtmlSlide,
 	isSceneSlide,
 	type PresentationData,
 	type PresentationDimensions,
@@ -14,7 +13,6 @@ import {
 	type SlideRegion,
 	type WidgetBlock,
 } from "@slidesage/types";
-import { adaptLegacyHtmlSlide } from "@slidesage/ui/lib/legacy-slide-adapter";
 import { compileWidgetScene, isWidgetBlock } from "@slidesage/ui/lib/widget-scene";
 import PptxGenJS from "pptxgenjs";
 
@@ -143,6 +141,82 @@ const THEMES: Record<string, PptxTheme> = {
 		headingFont: "Georgia",
 		bodyFont: "Inter",
 		contentInset: 1.1,
+	},
+	"neon-district": {
+		background: "0D0518",
+		text: "F4ECFF",
+		title: "FDF7FF",
+		muted: "9D8FC0",
+		accent: "FF2EA6",
+		accentAlt: "29E6FF",
+		surface: "1B0F2E",
+		headingFont: "Consolas",
+		bodyFont: "Segoe UI",
+		contentInset: 1.1,
+	},
+	"draft-board": {
+		background: "103A63",
+		text: "DBEEFF",
+		title: "F2F9FF",
+		muted: "8FB0D1",
+		accent: "FF9440",
+		accentAlt: "7FD1FF",
+		surface: "164674",
+		headingFont: "Century Gothic",
+		bodyFont: "Trebuchet MS",
+		contentInset: 1.1,
+		titleUppercase: true,
+	},
+	"velvet-marquee": {
+		background: "131010",
+		text: "F6EFE4",
+		title: "FAF4E8",
+		muted: "A89C88",
+		accent: "D4AF6A",
+		accentAlt: "9C2B3A",
+		surface: "201A16",
+		headingFont: "Didot",
+		bodyFont: "Avenir Next",
+		contentInset: 1.27,
+		titleBold: false,
+		titleItalic: true,
+	},
+	"bubblegum-pop": {
+		background: "FFF1F7",
+		text: "47203C",
+		title: "35142C",
+		muted: "96648A",
+		accent: "FF4FA3",
+		accentAlt: "37C8E8",
+		surface: "FFD9EC",
+		headingFont: "Trebuchet MS",
+		bodyFont: "Trebuchet MS",
+		contentInset: 1.1,
+	},
+	"concrete-brutal": {
+		background: "D8D8D3",
+		text: "101010",
+		title: "0A0A0A",
+		muted: "55564F",
+		accent: "E8490F",
+		accentAlt: "141414",
+		surface: "C7C7C1",
+		headingFont: "Arial Black",
+		bodyFont: "Helvetica Neue",
+		contentInset: 1.1,
+		titleUppercase: true,
+	},
+	"terra-mesa": {
+		background: "F8EAD8",
+		text: "40291D",
+		title: "3A2317",
+		muted: "8C6F57",
+		accent: "C65A32",
+		accentAlt: "2F8F83",
+		surface: "EFDCC2",
+		headingFont: "Rockwell",
+		bodyFont: "Gill Sans",
+		contentInset: 1.27,
 	},
 };
 
@@ -1872,8 +1946,7 @@ export const buildEditablePptx = async (presentation: PresentationData) => {
 			continue;
 		}
 
-		const contentSlide = isLegacyHtmlSlide(slide) ? adaptLegacyHtmlSlide(slide) : slide;
-		await renderStructuredSlide(pptx, contentSlide, theme);
+		await renderStructuredSlide(pptx, slide, theme);
 	}
 
 	return pptx;

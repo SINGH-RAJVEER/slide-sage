@@ -6,14 +6,12 @@ export function useFullscreenMode() {
 	const enter = useCallback(async () => {
 		setIsFullscreenMode(true);
 
-		// Try to enter browser fullscreen as well (best-effort).
+		// Try to enter browser fullscreen as well
 		try {
 			if (!document.fullscreenElement) {
 				await document.documentElement.requestFullscreen();
 			}
-		} catch {
-			// Ignore; UI fullscreen mode still works.
-		}
+		} catch {}
 	}, []);
 
 	const exit = useCallback(async () => {
@@ -24,9 +22,7 @@ export function useFullscreenMode() {
 			if (document.fullscreenElement) {
 				await document.exitFullscreen();
 			}
-		} catch {
-			// Ignore
-		}
+		} catch {}
 	}, []);
 
 	const toggle = useCallback(() => {
@@ -40,7 +36,7 @@ export function useFullscreenMode() {
 	useEffect(() => {
 		const handleFullscreenChange = () => {
 			if (!document.fullscreenElement) {
-				// Esc / user action exited browser fullscreen; also exit UI mode.
+				// User action exited browser fullscreen should also exit UI mode
 				setIsFullscreenMode(false);
 			}
 		};

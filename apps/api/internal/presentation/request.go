@@ -19,40 +19,6 @@ type InputError struct {
 
 func (e *InputError) Error() string { return e.Message }
 
-func ParseResearchRequest(body []byte) (ResearchRequest, error) {
-	if len(body) > MaxResearchBodyBytes {
-		return ResearchRequest{}, inputError("Request body is too large", 413)
-	}
-	object, err := decodeObject(body)
-	if err != nil {
-		return ResearchRequest{}, err
-	}
-	topic, err := requiredText(first(object, "topic", "prompt", "query"), "topic")
-	if err != nil {
-		return ResearchRequest{}, err
-	}
-	slideCount, err := optionalInteger(first(object, "slide_count", "slideCount"), "slide_count", 1, 40)
-	if err != nil {
-		return ResearchRequest{}, err
-	}
-	detail, err := knownValue(first(object, "detail_level", "detailLevel"), "detail_level", "balanced", "brief", "concise", "balanced", "detailed", "comprehensive")
-	if err != nil {
-		return ResearchRequest{}, err
-	}
-	tonality, err := knownValue(object["tonality"], "tonality", "professional", "casual", "professional", "enthusiastic", "persuasive")
-	if err != nil {
-		return ResearchRequest{}, err
-	}
-	research, err := ParseResearchOptions(object["research"])
-	if err != nil {
-		return ResearchRequest{}, err
-	}
-	if !research.Enabled {
-		return ResearchRequest{}, inputError("research.enabled must be true", 400)
-	}
-	return ResearchRequest{Topic: topic, SlideCount: slideCount, DetailLevel: detail, Tonality: tonality, Research: research}, nil
-}
-
 func ParseResearchOptions(input any) (ResearchOptions, error) {
 	object, ok := input.(map[string]any)
 	if !ok {
@@ -191,24 +157,8 @@ func decodeObject(body []byte) (map[string]any, error) {
 	}
 	return result, nil
 }
-func first(values map[string]any, keys ...string) any {
-	for _, key := range keys {
-		if value, ok := values[key]; ok {
-			return value
-		}
-	}
-	return nil
-}
 func inputError(message string, status int) error {
 	return &InputError{Message: message, Status: status}
-}
-func requiredText(value any, field string) (string, error) {
-	text, ok := value.(string)
-	text = strings.TrimSpace(text)
-	if !ok || len(text) < 1 || len(text) > 400 {
-		return "", inputError(field+" must contain between 1 and 400 characters", 400)
-	}
-	return text, nil
 }
 func optionalText(value any, field string, maximum int) (string, error) {
 	if value == nil {

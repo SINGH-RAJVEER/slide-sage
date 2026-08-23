@@ -4,7 +4,7 @@ The repository deploys its Go API and generation worker to Google Cloud Run. Eve
 
 ## Flow
 
-1. GitHub Actions builds three image targets from `docker/Dockerfile` using Docker BuildKit. The Dockerfile also provides Linux/amd64 defaults for `BUILDPLATFORM`, `TARGETOS`, and `TARGETARCH`, so plain Docker builds (including Google Cloud Build's Docker builder) do not expand the platform to an empty value:
+1. GitHub Actions builds three image targets from `apps/api/Dockerfile` using Docker BuildKit. The Dockerfile also provides Linux/amd64 defaults for `BUILDPLATFORM`, `TARGETOS`, and `TARGETARCH`, so plain Docker builds (including Google Cloud Build's Docker builder) do not expand the platform to an empty value:
    - `api` (web server, port 8000) -> Cloud Run **service** `api`
    - `worker` (River queue consumer with a health server, port 8080) -> Cloud Run **service** `worker`
    - `migrate` (Goose + River migrations, one-shot) -> Cloud Run **job** `slidesage-migrate`
@@ -87,6 +87,47 @@ gcloud iam service-accounts add-iam-policy-binding \
 
 The workflow signs in to GCP through Workload Identity Federation using short-lived OIDC tokens from GitHub, so no long-lived service account keys are stored anywhere.
 
+The project-level `roles/run.admin` grant above permits the first deployment, when the Cloud Run resources do not exist yet. After the first successful deployment, scope the CI/CD identity to the resources it manages:
+
+```bash
+DEPLOY_SA="slidesage-deploy@$PROJECT_ID.iam.gserviceaccount.com"
+
+gcloud run services add-iam-policy-binding api \
+  --project=$PROJECT_ID \
+  --region=asia-south1 \
+  --member="serviceAccount:$DEPLOY_SA" \
+  --role=roles/run.admin
+
+gcloud run services add-iam-policy-binding worker \
+  --project=$PROJECT_ID \
+  --region=asia-south1 \
+  --member="serviceAccount:$DEPLOY_SA" \
+  --role=roles/run.admin
+
+gcloud run jobs add-iam-policy-binding slidesage-migrate \
+  --project=$PROJECT_ID \
+  --region=asia-south1 \
+  --member="serviceAccount:$DEPLOY_SA" \
+  --role=roles/run.developer
+
+gcloud projects remove-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$DEPLOY_SA" \
+  --role=roles/run.admin
+```
+
+The API and worker grants use `roles/run.admin` at the individual service because the workflow enforces their public/private invocation policies during each deployment. The migration job only grants the CI/CD identity `roles/run.developer`, which permits updating and executing that existing job without granting access to other Cloud Run resources. Project owners retain administrative access.
+
+Audit project-level Cloud Run grants after applying the scoped bindings:
+
+```bash
+gcloud projects get-iam-policy $PROJECT_ID \
+  --flatten='bindings[].members' \
+  --filter='bindings.role:roles/run' \
+  --format='table(bindings.role,bindings.members)'
+```
+
+Remove unexpected `roles/run.admin`, `roles/run.developer`, or `roles/run.invoker` grants. Cloud Run runtime service accounts do not need these deployment roles.
+
 ## GitHub repository setup
 
 Create secrets in Settings -> Secrets and variables -> Actions:
@@ -101,7 +142,7 @@ Optional variable:
 
 | Variable | Value | Purpose |
 | --- | --- | --- |
-| `API_AUTH_FLAG` | `--allow-unauthenticated` (default) or `--no-allow-unauthenticated` | Whether the API service accepts requests without a bearer token. Flip to `--no-allow-unauthenticated` once traffic goes through Cloudflare Access. |
+| `API_AUTH_FLAG` | `--allow-unauthenticated` (default) or `--no-allow-unauthenticated` | Whether Cloud Run requires Google IAM authentication before requests reach the API. Keep the default while browsers and external webhooks call the public API. Application authentication still protects private routes. |
 
 ## Secret Manager
 
@@ -143,6 +184,49 @@ If the database is Cloud SQL, add `--add-cloudsql-instances=<INSTANCE_CONNECTION
 
 The worker is not request-driven, so a `min-instances=1` keeps a warm, always-on instance polling Postgres. River uses row-level `SKIP LOCKED` so scaling out further is safe if needed.
 
+### Ingress and invocation
+
+The deployment workflow pins each service's ingress instead of inheriting a mutable Cloud Run default:
+
+| Resource | Ingress | Invocation policy |
+| --- | --- | --- |
+| `api` | `internal-and-cloud-load-balancing` | Public at the Cloud Run IAM layer by default because browsers and external webhooks call it; application authentication protects private routes. Internet traffic must pass through the external HTTPS load balancer. |
+| `worker` | `internal` | Private. It polls PostgreSQL and has no Pub/Sub, Cloud Tasks, Eventarc, or API invoker, so it needs no `roles/run.invoker` binding. |
+| `slidesage-migrate` | Not applicable | Cloud Run Job executed by the authenticated CI/CD identity. Jobs do not have service ingress settings. |
+
+The API ingress setting blocks direct internet requests to its `run.app` URL. It also makes the external load balancer the enforcement point for any attached Cloud Armor policy. Do not change the API to `ingress=all` while the load balancer is the documented production entry point.
+
+After deployment, the workflow verifies both ingress values and fails if the worker has an `allUsers` invoker binding.
+
+To bring existing services in line with the workflow without waiting for another deployment, run:
+
+```bash
+gcloud run services update api \
+  --project=slidesage-504414 \
+  --region=asia-south1 \
+  --ingress=internal-and-cloud-load-balancing
+
+gcloud run services update worker \
+  --project=slidesage-504414 \
+  --region=asia-south1 \
+  --ingress=internal \
+  --invoker-iam-check
+```
+
+The migration deployment remains a job command with no ingress flag:
+
+```bash
+gcloud run jobs deploy slidesage-migrate \
+  --project=slidesage-504414 \
+  --image="$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION" \
+  --region=asia-south1 \
+  --set-secrets=DATABASE_URL=DATABASE_URL:latest \
+  --execute-now \
+  --wait
+```
+
+`roles/run.invoker` is enough to execute an existing job without overrides. This workflow also updates the migration job before executing it, so its scoped job binding uses `roles/run.developer`.
+
 ## Rollback
 
 Every deploy is a Cloud Run revision pinned to an immutable SHA image, so rollback is instant:
@@ -164,7 +248,7 @@ or atomically in the console: Cloud Run -> service -> Revisions -> select revisi
 ```bash
 gcloud auth configure-docker asia-south1-docker.pkg.dev
 
-docker build --target api --file docker/Dockerfile --tag asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev .
+docker build --target api --file apps/api/Dockerfile --tag asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev .
 docker push asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev
 ```
 

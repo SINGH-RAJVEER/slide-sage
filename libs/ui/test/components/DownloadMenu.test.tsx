@@ -26,7 +26,13 @@ const presentation: PresentationData = {
 		{
 			id: "presentation-slide",
 			type: "content",
-			html: '<div id="slide-content">Current presentation content</div>',
+			layout: "body",
+			title: "Current presentation",
+			subtitle: "",
+			tone: "default",
+			density: "standard",
+			pattern: "none",
+			blocks: [{ type: "paragraph", region: "main", text: "Current presentation content" }],
 		},
 	],
 };
