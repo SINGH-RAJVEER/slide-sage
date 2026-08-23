@@ -115,7 +115,7 @@ goroutines.
 
 ## Deployment
 
-`docker/Dockerfile` has `api`, `worker`, and `migrate` targets. Production is
+`apps/api/Dockerfile` has `api`, `worker`, and `migrate` targets. Production is
 intended to run the API as a Cloud Run service and the worker as a Cloud Run
 Worker Pool. Worker Pools have fixed/manual scaling rather than request-driven
 autoscaling; deploy one worker instance initially and increase it deliberately.

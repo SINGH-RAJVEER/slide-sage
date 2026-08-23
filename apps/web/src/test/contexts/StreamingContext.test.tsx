@@ -76,6 +76,34 @@ function IterateStarter() {
 	);
 }
 
+function CancelStarter() {
+	const { cancelGeneration, generate, streamingState } = useStreaming();
+
+	return (
+		<div>
+			<output data-testid="cancel-state">
+				{streamingState.isStreaming ? "streaming" : "idle"}:{streamingState.error ?? "no-error"}
+			</output>
+			<button
+				type="button"
+				onClick={() => {
+					void generate({
+						prompt: "Cancel this deck",
+						slideCount: 2,
+						detailLevel: "balanced",
+						tonality: "professional",
+					});
+				}}
+			>
+				Start
+			</button>
+			<button type="button" onClick={() => void cancelGeneration()}>
+				Cancel generation
+			</button>
+		</div>
+	);
+}
+
 function AwayPage() {
 	const { streamingState } = useStreaming();
 
@@ -100,6 +128,13 @@ function NavigationHarness() {
 
 function sse(body: string) {
 	return new Response(body, {
+		status: 200,
+		headers: { "Content-Type": "text/event-stream" },
+	});
+}
+
+function pendingSSE() {
+	return new Response(new ReadableStream({ start() {} }), {
 		status: 200,
 		headers: { "Content-Type": "text/event-stream" },
 	});
@@ -162,6 +197,47 @@ it("submits a job and continues processing after the initiating page unmounts", 
 		expect(event.detail.presentationId).toBe("presentation_1");
 	} finally {
 		window.removeEventListener(PRESENTATIONS_UPDATED_EVENT, presentationUpdated);
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("cancels an active generation and clears its resumable state", async () => {
+	const originalFetch = globalThis.fetch;
+	const requests: Array<{ url: string; method?: string }> = [];
+	globalThis.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
+		const url = String(input);
+		requests.push({ url, method: init?.method });
+		if (url.endsWith("/presentation-jobs")) {
+			return Response.json(
+				{ job_id: "job_cancel", presentation_id: "presentation_cancel" },
+				{ status: 202 },
+			);
+		}
+		if (url.endsWith("/cancel")) {
+			return Response.json({ status: "cancellation_requested" }, { status: 202 });
+		}
+		return pendingSSE();
+	}) as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<StreamingProvider>
+				<CancelStarter />
+			</StreamingProvider>,
+		);
+
+		fireEvent.click(view.getByRole("button", { name: "Start" }));
+		await waitFor(() => expect(view.getByTestId("cancel-state")).toHaveTextContent("streaming"));
+		fireEvent.click(view.getByRole("button", { name: "Cancel generation" }));
+
+		await waitFor(() =>
+			expect(view.getByTestId("cancel-state")).toHaveTextContent("idle:no-error"),
+		);
+		expect(
+			requests.some((request) => request.url.endsWith("/cancel") && request.method === "POST"),
+		).toBe(true);
+		expect(localStorage.getItem("slidesage-active-generation")).toBeNull();
+	} finally {
 		globalThis.fetch = originalFetch;
 	}
 });

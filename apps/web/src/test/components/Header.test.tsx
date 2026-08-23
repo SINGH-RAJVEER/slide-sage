@@ -39,6 +39,8 @@ describe("Header", () => {
 		// Header should be present
 		const header = container.querySelector("header");
 		expect(header).toBeInTheDocument();
+		expect(header?.firstElementChild).toHaveClass("h-16");
+		expect(header?.firstElementChild).not.toHaveClass("md:h-20");
 	});
 
 	it("hides navigation tabs on auth pages", async () => {

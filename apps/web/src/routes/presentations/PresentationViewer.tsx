@@ -43,7 +43,7 @@ export default function PresentationViewerPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const params = useParams();
-	const { streamingState, getPresentation, generate } = useStreaming();
+	const { streamingState, getPresentation, generate, cancelGeneration } = useStreaming();
 	const { currentTemplate, changeTemplate } = useTemplate();
 	const installedThemes = useInstalledMarketplaceThemes();
 
@@ -186,6 +186,7 @@ export default function PresentationViewerPage() {
 	const [savingEdit, setSavingEdit] = useState(false);
 	const [pendingSlides, setPendingSlides] = useState<Record<string, ContentSlide | SceneSlide>>({});
 	const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
+	const [isCancelling, setIsCancelling] = useState(false);
 
 	const handleIteratePresentation = async (
 		prompt: string,
@@ -254,6 +255,16 @@ export default function PresentationViewerPage() {
 		}
 	};
 
+	const handleCancelGeneration = async () => {
+		setIsCancelling(true);
+		const cancelled = await cancelGeneration();
+		if (cancelled) {
+			navigate(ROUTES.generate, { replace: true });
+			return;
+		}
+		setIsCancelling(false);
+	};
+
 	const exportPresentation: PresentationExporter = async (format, presentationToExport) => {
 		if (format === "pptx") {
 			const { exportEditablePptx } = await import("@slidesage/ui/lib/pptx-export");
@@ -282,6 +293,12 @@ export default function PresentationViewerPage() {
 		} satisfies PresentationData);
 	const viewerPresentation = baseViewerPresentation;
 	const hasSlides = viewerPresentation.slides.length > 0;
+	const canCancelGeneration =
+		shouldShowGenerating &&
+		streamingState.operation === "generation" &&
+		streamingState.isStreaming &&
+		streamingState.slides.length === 0 &&
+		!!streamingState.jobId;
 	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
 	const activeDraftSlide = activeSlide ? pendingSlides[activeSlide.id] : undefined;
 	const activeContentSlide = activeSlide && isContentSlide(activeSlide) ? activeSlide : undefined;
@@ -442,6 +459,8 @@ export default function PresentationViewerPage() {
 						}}
 						onDelete={deleteCurrentSlide}
 						deleteDisabled={viewerPresentation.slides.length <= 1}
+						onCancelGeneration={canCancelGeneration ? handleCancelGeneration : undefined}
+						cancelDisabled={isCancelling}
 						onSave={pendingSlides[activeSlide?.id || ""] ? savePendingSlide : undefined}
 						saveDisabled={savingEdit}
 						onExport={exportPresentation}

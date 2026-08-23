@@ -121,6 +121,12 @@ Cancellation returns `202` with `{"status":"cancellation_requested"}` when the
 request is recorded. It returns `409` when the job is already terminal or is not
 otherwise cancellable.
 
+In the presentation viewer, a new generation can be cancelled only before its
+first slide arrives. During that skeleton state, the disabled slide-delete
+control is replaced with **Cancel generation**. A successful cancellation stops
+the local event consumer, clears its resumable job record, and returns the user
+to the generation form.
+
 ## Delivery and Accounting Guarantees
 
 River provides durable queueing, but calls to OpenRouter or a BYOK provider are
@@ -184,7 +190,7 @@ limits, PostgreSQL connections, and job duration, then change the instance count
 manually. Total potential job concurrency is the worker instance count multiplied
 by `WORKER_CONCURRENCY`; size the database pool and provider limits accordingly.
 
-`docker/Dockerfile` exposes three targets from the same source:
+`apps/api/Dockerfile` exposes three targets from the same source.
 
 | Target | Entrypoint | Use |
 | --- | --- | --- |

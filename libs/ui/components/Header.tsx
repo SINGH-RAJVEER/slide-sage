@@ -97,10 +97,10 @@ export function Header({
 				sticky && "sticky top-0 z-50",
 			)}
 		>
-			<div className="grid min-h-16 w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 md:h-20 md:grid-cols-3 md:px-10 md:py-5">
+			<div className="grid h-16 w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 md:grid-cols-3 md:px-10">
 				<div className="hidden items-center md:flex md:w-full">
 					<LinkComponent to={routes.home} aria-label="Go to home">
-						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain md:h-12" />
+						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain" />
 					</LinkComponent>
 				</div>
 

@@ -6,7 +6,13 @@ export type ThemeLayoutLanguage =
 	| "paper-grid"
 	| "kinetic-blocks"
 	| "editorial-ledger"
-	| "field-notes";
+	| "field-notes"
+	| "neon-district"
+	| "draft-board"
+	| "velvet-marquee"
+	| "bubblegum-pop"
+	| "concrete-brutal"
+	| "terra-mesa";
 
 export interface ThemeVisualSystem {
 	background: string;
@@ -259,9 +265,164 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 	}),
 ];
 
+/**
+ * Visual systems sold through the marketplace. They share no palette,
+ * typography pairing, or layout language with AVAILABLE_TEMPLATES, so an
+ * installed theme renders as its own studio identity instead of a recolored
+ * built-in.
+ */
+export const MARKETPLACE_TEMPLATES: Template[] = [
+	createTemplate({
+		id: "neon-district",
+		name: "Neon District",
+		description: "After-hours synthwave glow for product drops and night-market energy",
+		visual: {
+			background: "#0d0518",
+			foreground: "#f4ecff",
+			title: "#fdf7ff",
+			muted: "#9d8fc0",
+			accent: "#ff2ea6",
+			accentAlt: "#29e6ff",
+			surface: "#1b0f2e",
+			line: "#3d2560",
+			chartGrid: "#33204f",
+			chartColors: ["#ff2ea6", "#29e6ff", "#b78bff", "#ffe14d", "#5cff9d"],
+			displayFont:
+				"'JetBrains Mono', 'Cascadia Code', 'SF Mono', ui-monospace, Menlo, Consolas, monospace",
+			bodyFont: "'Segoe UI', 'Helvetica Neue', Inter, Arial, sans-serif",
+			displayWeight: 700,
+			layout: "neon-district",
+			imageFilter: "saturate(1.28) hue-rotate(-8deg) contrast(1.08)",
+		},
+	}),
+	createTemplate({
+		id: "draft-board",
+		name: "Draft Board",
+		description: "Blueprint linework and orange markups for engineering reviews and specs",
+		visual: {
+			background: "#103a63",
+			foreground: "#dbeeff",
+			title: "#f2f9ff",
+			muted: "#8fb0d1",
+			accent: "#ff9440",
+			accentAlt: "#7fd1ff",
+			surface: "#164674",
+			line: "#4a79ad",
+			chartGrid: "#2c567f",
+			chartColors: ["#ff9440", "#7fd1ff", "#f2f9ff", "#ffd166", "#9be3c8"],
+			displayFont: "'Century Gothic', 'Avant Garde', Futura, 'Trebuchet MS', sans-serif",
+			bodyFont: "'Trebuchet MS', 'Segoe UI', Verdana, sans-serif",
+			displayWeight: 700,
+			layout: "draft-board",
+			imageFilter: "saturate(0.72) contrast(1.06)",
+		},
+	}),
+	createTemplate({
+		id: "velvet-marquee",
+		name: "Velvet Marquee",
+		description: "Black-tie theater glamour with champagne gold for galas and premieres",
+		visual: {
+			background: "#131010",
+			foreground: "#f6efe4",
+			title: "#faf4e8",
+			muted: "#a89c88",
+			accent: "#d4af6a",
+			accentAlt: "#9c2b3a",
+			surface: "#201a16",
+			line: "#46392c",
+			chartGrid: "#372c21",
+			chartColors: ["#d4af6a", "#9c2b3a", "#7fa08c", "#b8b8ad", "#e0c79b"],
+			displayFont: "'Didot', 'Bodoni MT', 'Playfair Display', Georgia, serif",
+			bodyFont: "'Avenir Next', 'Segoe UI', Inter, sans-serif",
+			displayWeight: 400,
+			layout: "velvet-marquee",
+			imageFilter: "sepia(0.24) contrast(1.03)",
+		},
+	}),
+	createTemplate({
+		id: "bubblegum-pop",
+		name: "Bubblegum Pop",
+		description: "Y2K candy pastels for community launches, clubs, and playful pitches",
+		visual: {
+			background: "#fff1f7",
+			foreground: "#47203c",
+			title: "#35142c",
+			muted: "#96648a",
+			accent: "#ff4fa3",
+			accentAlt: "#37c8e8",
+			surface: "#ffd9ec",
+			line: "#f3bcd8",
+			chartGrid: "#f7d3e6",
+			chartColors: ["#ff4fa3", "#37c8e8", "#ffb84d", "#8e6ff0", "#54d98c"],
+			displayFont: "'Trebuchet MS', Verdana, 'Segoe UI', sans-serif",
+			bodyFont: "'Trebuchet MS', Verdana, 'Segoe UI', sans-serif",
+			displayWeight: 800,
+			layout: "bubblegum-pop",
+			imageFilter: "saturate(1.18) brightness(1.04)",
+		},
+	}),
+	createTemplate({
+		id: "concrete-brutal",
+		name: "Concrete Brutal",
+		description: "Raw industrial slabs and safety-orange signage for bold internal truths",
+		visual: {
+			background: "#d8d8d3",
+			foreground: "#101010",
+			title: "#0a0a0a",
+			muted: "#55564f",
+			accent: "#e8490f",
+			accentAlt: "#141414",
+			surface: "#c7c7c1",
+			line: "#9a9b93",
+			chartGrid: "#b5b5ae",
+			chartColors: ["#e8490f", "#141414", "#33658a", "#f2c230", "#808078"],
+			displayFont: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+			bodyFont: "'Helvetica Neue', Arial, sans-serif",
+			displayWeight: 900,
+			layout: "concrete-brutal",
+			imageFilter: "grayscale(1) contrast(1.15)",
+		},
+	}),
+	createTemplate({
+		id: "terra-mesa",
+		name: "Terra Mesa",
+		description: "Sun-baked adobe craft with sienna and turquoise for heritage stories",
+		visual: {
+			background: "#f8ead8",
+			foreground: "#40291d",
+			title: "#3a2317",
+			muted: "#8c6f57",
+			accent: "#c65a32",
+			accentAlt: "#2f8f83",
+			surface: "#efdcc2",
+			line: "#d4b894",
+			chartGrid: "#e3cbaa",
+			chartColors: ["#c65a32", "#2f8f83", "#e0a458", "#7a5c8f", "#96b259"],
+			displayFont: "'Rockwell', 'Bookman Old Style', Georgia, serif",
+			bodyFont: "'Gill Sans', 'Avenir Next', 'Segoe UI', sans-serif",
+			displayWeight: 600,
+			layout: "terra-mesa",
+			imageFilter: "sepia(0.26) saturate(0.92)",
+		},
+	}),
+];
+
+const DEFAULT_TEMPLATE_ID = "corporate-blue";
+
+export function findTemplate(templateId: string): Template | undefined {
+	return (
+		AVAILABLE_TEMPLATES.find((template) => template.id === templateId) ||
+		MARKETPLACE_TEMPLATES.find((template) => template.id === templateId)
+	);
+}
+
+export function isDefaultTemplateId(templateId: string): boolean {
+	return AVAILABLE_TEMPLATES.some((template) => template.id === templateId);
+}
+
 export function getTemplate(templateId: string): Template {
-	const fallback = AVAILABLE_TEMPLATES.find((template) => template.id === "corporate-blue");
-	const template = AVAILABLE_TEMPLATES.find((item) => item.id === templateId) || fallback;
+	const fallback = findTemplate(DEFAULT_TEMPLATE_ID);
+	const template = findTemplate(templateId) || fallback;
 	if (!template) throw new Error("The SlideSage default theme is unavailable.");
 	return template;
 }

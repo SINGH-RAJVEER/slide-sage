@@ -144,6 +144,7 @@ interface StreamingContextValue {
 	streamingState: StreamingState;
 	researchPreviewState: ResearchPreviewState;
 	generate: (options: GenerateOptions) => Promise<boolean>;
+	cancelGeneration: () => Promise<boolean>;
 	previewResearch: (
 		request: ResearchPreviewRequest,
 		savedResearch?: ResearchPayload,
@@ -290,6 +291,47 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		releaseActiveStream();
 		setStreamingState((prev) => ({ ...prev, isStreaming: false, isComplete: false }));
 	}, [releaseActiveStream]);
+
+	const cancelGeneration = useCallback(async (): Promise<boolean> => {
+		const jobId = streamingState.jobId;
+		if (
+			!jobId ||
+			!streamingState.isStreaming ||
+			streamingState.operation !== "generation" ||
+			streamingState.slides.length > 0
+		) {
+			return false;
+		}
+
+		try {
+			const response = await fetch(`${API_URL}/generation-jobs/${jobId}/cancel`, {
+				method: "POST",
+				credentials: "include",
+			});
+			if (!response.ok) return false;
+
+			clearStoredGeneration(jobId);
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+				abortControllerRef.current = null;
+			}
+			if (readerRef.current) {
+				void readerRef.current.cancel();
+				readerRef.current = null;
+			}
+			releaseActiveStream();
+			setStreamingState(initialState);
+			return true;
+		} catch {
+			return false;
+		}
+	}, [
+		releaseActiveStream,
+		streamingState.isStreaming,
+		streamingState.jobId,
+		streamingState.operation,
+		streamingState.slides.length,
+	]);
 
 	// Shared SSE event dispatch used by every consumption path so live and
 	// resumed streams update state identically. Returns true when the event
@@ -531,6 +573,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			setStreamingState({
 				...initialState,
 				isStreaming: true,
+				jobId,
 				requestedSlides: options.slideCount,
 				operation,
 				prompt: options.prompt,
@@ -850,6 +893,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				streamingState,
 				researchPreviewState,
 				generate,
+				cancelGeneration,
 				previewResearch,
 				stopStreaming,
 				resetStreaming,
