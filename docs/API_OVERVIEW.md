@@ -33,16 +33,21 @@ formats used by existing accounts. See [AUTH_API.md](AUTH_API.md).
 | `GET` | `/profile` | None | Get the signed-in user's profile |
 | `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or change the password |
 | `POST` | `/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
+| `POST` | `/profile/avatar/upload` | Multipart `file` field | Upload and use a local image |
+| `GET` | `/profile/avatar/image/{id}` | None | Serve an uploaded avatar image |
 
-All profile routes require authentication. Password changes require both the
-current and new password. Existing JWTs remain valid until they expire. The change cannot be combined with
-name or email updates. Email changes
+Profile management routes require authentication. Uploaded avatar images are
+public because browsers load their URLs without API credentials. Password
+changes require both the current and new password. Existing JWTs remain valid
+until they expire. The change cannot be combined with name or email updates. Email changes
 require current-password verification, normalize the new address, mark it
 unverified, and invalidate old/new address OTPs. A user who has forgotten the
 current password must complete the verified password-reset OTP flow first.
 
 Avatar URLs must be valid HTTPS URLs no longer than 2,048 characters. URLs with
-embedded credentials or control characters are rejected.
+embedded credentials or control characters are rejected. Local uploads accept
+PNG, JPEG, WebP, and GIF files up to 800 KB. Uploads replace the previous stored
+avatar and return the same profile-avatar response as URL updates.
 
 ## Presentations
 

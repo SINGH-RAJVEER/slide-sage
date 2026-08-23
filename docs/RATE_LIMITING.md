@@ -16,8 +16,7 @@ migration `00013_repair_schema_and_revisions.sql` also ensures they exist.
 | `/auth/sign-in/*` | Client IP | 30 | 15 minutes |
 | `/auth/sign-up/*` | Normalized email | 5 | 1 hour |
 | `/auth/sign-up/*` | Client IP | 20 | 1 hour |
-| `PUT /profile` | Authenticated user | 10 | 15 minutes |
-| `POST /profile/email/verify` | Authenticated user | 10 | 15 minutes |
+| `PUT /profile`, `POST /profile/email/verify`, `POST /profile/avatar`, `POST /profile/avatar/upload` | Authenticated user | 10 shared | 15 minutes |
 | `POST /ai/connections`, `PUT /ai/connections/:provider` | Authenticated user | 6 shared | 10 minutes |
 | `DELETE /ai/connections/:provider`, `PUT /ai/selection` | Authenticated user | 20 shared | 10 minutes |
 | `POST /presentation-jobs` | Authenticated user | 15 | 1 minute |
