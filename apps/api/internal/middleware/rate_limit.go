@@ -142,9 +142,9 @@ func policyFor(method, path string) (ratePolicy, bool) {
 	case method == http.MethodPut && path == "/profile" ||
 		method == http.MethodPost && (path == "/profile/email/verify" || path == "/profile/avatar" || path == "/profile/avatar/upload"):
 		return ratePolicy{"profile-mutation", 10, fifteenMinutes, true}, true
-	case method == http.MethodPost && path == "/ai/connections" || method == http.MethodPut && strings.HasPrefix(path, "/ai/connections/"):
+	case method == http.MethodPost && path == "/ai/connections" || method == http.MethodPut && strings.HasPrefix(path, "/ai/connections/") && !strings.HasSuffix(path, "/enabled"):
 		return ratePolicy{"ai-connection-write", 6, tenMinutes, true}, true
-	case (method == http.MethodDelete && strings.HasPrefix(path, "/ai/connections/")) || (method == http.MethodPut && (path == "/ai/selection" || path == "/ai/mode")):
+	case (method == http.MethodDelete && strings.HasPrefix(path, "/ai/connections/")) || method == http.MethodPut && (path == "/ai/selection" || strings.HasSuffix(path, "/enabled")):
 		return ratePolicy{"ai-selection-write", 20, tenMinutes, true}, true
 	case method == http.MethodPost && path == "/presentation-jobs":
 		return ratePolicy{"presentation-generation", 15, minute, true}, true

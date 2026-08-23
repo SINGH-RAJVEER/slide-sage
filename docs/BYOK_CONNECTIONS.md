@@ -93,6 +93,16 @@ Removing the final valid connection restores OpenRouter automatically. When one
 or more connections exist, SlideSage uses the saved provider and never silently
 falls back to another direct provider.
 
+Each connected provider has its own generation switch at the end of its row in
+settings. `PUT /ai/connections/:provider/enabled` pauses or resumes that key
+without deleting it. If the selected provider is disabled, generation uses
+SlideSage points and the server-owned OpenRouter route; the saved key and model
+selection remain available for later. Connected rows show a delete icon beside
+the provider name and do not show inline replacement controls. Internal dividers
+separate providers without placing a rule directly below the API keys heading.
+Each connected provider's model dropdown appears below that provider so the key
+and its available models stay together.
+
 The settings page loads its configuration from `GET /ai/config`. Production
 releases that add or change these endpoints must deploy the Go API as well as
 the web application; an unauthenticated request to this route should return `401`,
@@ -105,7 +115,8 @@ and selection/deletion use separate per-user rate-limit scopes. See
 deployment requirement.
 
 Apply committed database migrations before deploying the Go API. BYOK requires
-`00010_add_ai_provider_connections.sql` and the production
+`00010_add_ai_provider_connections.sql`, per-provider switches require
+`00019_add_ai_provider_connections_enabled.sql`, and production needs the
 `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` and versioned encryption-key secrets.
 
 Research uses Exa. Source, presentation, and retrieval embeddings always use

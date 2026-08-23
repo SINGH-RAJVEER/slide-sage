@@ -82,7 +82,26 @@ export const THEME_IDS = [
 	"nature-green",
 ] as const;
 
-export type ThemeId = (typeof THEME_IDS)[number];
+/**
+ * Visual systems distributed exclusively through the template marketplace.
+ * These never ship as default themes: they resolve through
+ * MARKETPLACE_TEMPLATES and must be installed before they appear in the
+ * viewer theme dropdown.
+ */
+export const MARKETPLACE_THEME_IDS = [
+	"neon-district",
+	"draft-board",
+	"velvet-marquee",
+	"bubblegum-pop",
+	"concrete-brutal",
+	"terra-mesa",
+] as const;
+
+export type MarketplaceThemeId = (typeof MARKETPLACE_THEME_IDS)[number];
+
+const ALL_THEME_IDS = [...THEME_IDS, ...MARKETPLACE_THEME_IDS] as const;
+
+export type ThemeId = (typeof ALL_THEME_IDS)[number];
 
 export const DECK_PLAN_PURPOSES = [
 	"cover",
@@ -395,6 +414,7 @@ export interface AIModelDescriptor extends AIModelSelection {
 export interface AIConnectionSummary {
 	provider: AIProvider;
 	status: "valid" | "invalid";
+	enabled: boolean;
 	keyHint: string;
 	validatedAt: string;
 	lastUsedAt?: string;
@@ -423,6 +443,10 @@ export interface UpsertAIConnectionRequest {
 }
 
 export interface UpdateAISelectionRequest extends AIModelSelection {}
+
+export interface UpdateAIConnectionEnabledRequest {
+	enabled: boolean;
+}
 
 export { buildResearchSystemMessage, estimateMessageInputTokens } from "./research-context";
 

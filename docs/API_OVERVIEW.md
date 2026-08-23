@@ -342,10 +342,12 @@ connections under `/ai`:
 - `GET /ai/config`
 - `POST /ai/connections`
 - `PUT /ai/connections/:provider`
+- `PUT /ai/connections/:provider/enabled`
 - `DELETE /ai/connections/:provider`
 - `PUT /ai/selection`
 
 Supported providers are `openai`, `google`, and `anthropic`. Generation requests
 may include `ai: { provider, model }`; iteration resolves the user's current
-selection server-side. Keys are never returned by these endpoints.
+selection server-side. The enabled endpoint accepts `{ "enabled": boolean }`
+and pauses that provider without deleting its saved key. Keys are never returned by these endpoints.
 Successful connection deletion returns `204 No Content`.
