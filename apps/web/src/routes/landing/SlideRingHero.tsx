@@ -1,7 +1,6 @@
 import { ScaledSlide } from "@slidesage/ui/components/Viewer/ScaledSlide";
 import { SlideRenderer } from "@slidesage/ui/components/Viewer/SlideRenderer";
 import { getTemplate } from "@slidesage/ui/lib/templates";
-import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LANDING_PLATES } from "./slide-examples";
 import { WordmarkOrb } from "./WordmarkOrb";
@@ -143,7 +142,9 @@ export function SlideRingHero() {
 			const dx = event.clientX - lastX;
 			const dt = Math.max(1, now - lastT);
 			const radiusX = Math.min(width * 0.4, 540);
-			const dSpin = dx / (radiusX * DRAG_SENSITIVITY);
+			/* negate the delta so the ring reads as grabbed: dragging right
+			   pushes the front plates right */
+			const dSpin = -dx / (radiusX * DRAG_SENSITIVITY);
 			spin += dSpin;
 			dragMoved += Math.abs(dx);
 			dragAngularVel = (dSpin / dt) * 1000;
@@ -294,14 +295,6 @@ export function SlideRingHero() {
 							{previewTheme.name}
 							{previewTitle ? ` · ${previewTitle}` : ""}
 						</p>
-						<button
-							type="button"
-							aria-label="Close preview"
-							onClick={() => setPreviewIndex(null)}
-							className="absolute -top-3 -right-3 rounded-full bg-white p-2 text-neutral-950 shadow-lg transition-transform hover:scale-105"
-						>
-							<X className="size-4" />
-						</button>
 					</div>
 				</div>
 			)}

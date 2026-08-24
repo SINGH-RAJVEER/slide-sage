@@ -8,6 +8,23 @@ const STATIC_ELAPSED = 4.2;
 
 type Star = { x: number; y: number; depth: number; phase: number; drift: number; size: number };
 
+/* A warp particle from the Constellation Field particle-network reference:
+   it spawns on a disc behind the sphere at far z and flies toward the viewer,
+   drawn as a hairline streak from its previous projection to its current one. */
+type Warp = {
+	angle: number;
+	radius: number;
+	z: number;
+	speed: number;
+	length: number;
+	color: string;
+};
+
+const WARP_DEPTH = 1000;
+const WARP_FOV = 300;
+/* restrained steel-white and brand-blue hues for the streaks */
+const WARP_HUES = ["196, 206, 220", "86, 140, 204"];
+
 function seeded(index: number, salt: number) {
 	return Math.abs(Math.sin(index * 91.173 + salt * 17.719) * 43758.5453) % 1;
 }
@@ -23,6 +40,17 @@ function createStars(count: number): Star[] {
 	}));
 }
 
+function createWarps(count: number): Warp[] {
+	return Array.from({ length: count }, (_, index) => ({
+		angle: seeded(index, 11) * Math.PI * 2,
+		radius: seeded(index, 12),
+		z: 100 + seeded(index, 13) * (WARP_DEPTH - 100),
+		speed: (seeded(index, 14) * 2 + 1) * 1.1,
+		length: seeded(index, 15) * 2 + 0.5,
+		color: WARP_HUES[seeded(index, 16) > 0.5 ? 0 : 1] ?? "196, 206, 220",
+	}));
+}
+
 function compile(gl: WebGLRenderingContext, type: number, source: string) {
 	const shader = gl.createShader(type);
 	if (!shader) return null;
@@ -34,6 +62,10 @@ function compile(gl: WebGLRenderingContext, type: number, source: string) {
 
 function fract(value: number) {
 	return value - Math.floor(value);
+}
+
+function has2dContext(ctx: CanvasRenderingContext2D | null): ctx is CanvasRenderingContext2D {
+	return ctx !== null && typeof ctx.clearRect === "function" && typeof ctx.fillRect === "function";
 }
 
 /* Two wordmark copies sit on the texture (one per hemisphere), centred on the
@@ -53,7 +85,9 @@ function paintWordmarkTexture(canvas: HTMLCanvasElement) {
 		ctx.font = `${size}px 'Yellowtail', 'Brush Script MT', cursive`;
 		const measured = ctx.measureText("SlideSage").width;
 		if (measured > 0) {
-			size = Math.floor(size * Math.min(1.4, (canvas.width * 0.21) / measured));
+			/* stretch the wordmark across most of its hemisphere so it reads
+			   wide on the sphere face */
+			size = Math.floor(size * Math.min(2.1, (canvas.width * 0.3) / measured));
 			ctx.font = `${size}px 'Yellowtail', 'Brush Script MT', cursive`;
 		}
 		ctx.strokeStyle = "#042f5c";
@@ -107,14 +141,18 @@ function WordmarkSvg() {
 export function WordmarkOrb() {
 	const hostRef = useRef<HTMLDivElement>(null);
 	const starCanvasRef = useRef<HTMLCanvasElement>(null);
+	const warpCanvasRef = useRef<HTMLCanvasElement>(null);
+	const stageRef = useRef<HTMLDivElement>(null);
 	const glCanvasRef = useRef<HTMLCanvasElement>(null);
 	const fallbackRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		const host = hostRef.current;
 		const starCanvas = starCanvasRef.current;
+		const warpCanvas = warpCanvasRef.current;
+		const stage = stageRef.current;
 		const glCanvas = glCanvasRef.current;
-		if (!host || !starCanvas || !glCanvas) return undefined;
+		if (!host || !starCanvas || !warpCanvas || !stage || !glCanvas) return undefined;
 
 		let disposed = false;
 		const showFallback = () => {
@@ -122,10 +160,12 @@ export function WordmarkOrb() {
 			if (!fallback) return;
 			fallback.style.display = "grid";
 			starCanvas.style.display = "none";
-			glCanvas.style.display = "none";
+			warpCanvas.style.display = "none";
+			stage.style.display = "none";
 		};
 
 		const starContext = starCanvas.getContext("2d", { alpha: true });
+		const warpContext = warpCanvas.getContext("2d", { alpha: true });
 		const gl =
 			glCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true }) ??
 			glCanvas.getContext("experimental-webgl", {
@@ -133,7 +173,7 @@ export function WordmarkOrb() {
 				premultipliedAlpha: false,
 				antialias: true,
 			});
-		if (!starContext || typeof starContext.clearRect !== "function" || !gl) {
+		if (!has2dContext(starContext) || !has2dContext(warpContext) || !gl) {
 			showFallback();
 			return undefined;
 		}
@@ -204,10 +244,13 @@ export function WordmarkOrb() {
 				.catch(() => {});
 
 			const stars = createStars(180);
+			const warps = createWarps(170);
 			const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 			const reducedMotion = motionQuery.matches;
 			let width = 1;
 			let height = 1;
+			let stageWidth = 1;
+			let stageHeight = 1;
 			let starDpr = 1;
 			let frame = 0;
 			let visible = true;
@@ -217,31 +260,47 @@ export function WordmarkOrb() {
 				const bounds = host.getBoundingClientRect();
 				width = Math.max(1, bounds.width);
 				height = Math.max(1, bounds.height);
-				const dpr = Math.min(window.devicePixelRatio || 1, 2);
-				const bufferWidth = Math.max(1, Math.round(width * dpr));
-				const bufferHeight = Math.max(1, Math.round(height * dpr));
-				if (glCanvas.width !== bufferWidth || glCanvas.height !== bufferHeight) {
-					glCanvas.width = bufferWidth;
-					glCanvas.height = bufferHeight;
-				}
-				webgl.viewport(0, 0, bufferWidth, bufferHeight);
-				webgl.uniform2f(uniforms.resolution, bufferWidth, bufferHeight);
 
+				const dpr = Math.min(window.devicePixelRatio || 1, 2);
 				starDpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
 				const starWidth = Math.max(1, Math.round(width * starDpr));
 				const starHeight = Math.max(1, Math.round(height * starDpr));
 				if (starCanvas.width !== starWidth || starCanvas.height !== starHeight) {
 					starCanvas.width = starWidth;
 					starCanvas.height = starHeight;
 				}
+
+				/* trails must not survive a resize as stretched ghosts */
+				const warpDpr = dpr;
+				const warpWidth = Math.max(1, Math.round(width * warpDpr));
+				const warpHeight = Math.max(1, Math.round(height * warpDpr));
+				if (warpCanvas.width !== warpWidth || warpCanvas.height !== warpHeight) {
+					warpCanvas.width = warpWidth;
+					warpCanvas.height = warpHeight;
+				}
+				warpContext.setTransform(warpDpr, 0, 0, warpDpr, 0, 0);
+				warpContext.clearRect(0, 0, width, height);
+				warpContext.imageSmoothingEnabled = false;
+
+				const stageBounds = stage.getBoundingClientRect();
+				stageWidth = Math.max(1, stageBounds.width);
+				stageHeight = Math.max(1, stageBounds.height);
+				const bufferWidth = Math.max(1, Math.round(stageWidth * dpr));
+				const bufferHeight = Math.max(1, Math.round(stageHeight * dpr));
+				if (glCanvas.width !== bufferWidth || glCanvas.height !== bufferHeight) {
+					glCanvas.width = bufferWidth;
+					glCanvas.height = bufferHeight;
+				}
+				webgl.viewport(0, 0, bufferWidth, bufferHeight);
+				webgl.uniform2f(uniforms.resolution, bufferWidth, bufferHeight);
 			};
 
 			const drawStars = (elapsed: number) => {
-				starContext.setTransform(1, 0, 0, 1, 0, 0);
-				starContext.clearRect(0, 0, starCanvas.width, starCanvas.height);
+				starContext.setTransform(starDpr, 0, 0, starDpr, 0, 0);
+				starContext.clearRect(0, 0, starCanvas.width / starDpr, starCanvas.height / starDpr);
 				const count = Math.min(stars.length, Math.round((width * height) / 4200));
 				if (!count) return;
-				starContext.setTransform(starDpr, 0, 0, starDpr, 0, 0);
 				starContext.globalCompositeOperation = "screen";
 				for (let index = 0; index < count; index += 1) {
 					const star = stars[index];
@@ -261,10 +320,61 @@ export function WordmarkOrb() {
 				starContext.globalCompositeOperation = "source-over";
 			};
 
+			/* The reference's trail technique, adapted to a transparent layer:
+			   erase toward nothing each frame instead of painting background
+			   colour, so streaks stay crisp over the hero gradient. */
+			const drawWarps = () => {
+				warpContext.save();
+				warpContext.globalCompositeOperation = "destination-out";
+				warpContext.fillStyle = "rgba(0, 0, 0, 0.45)";
+				warpContext.fillRect(0, 0, width, height);
+				warpContext.restore();
+
+				const originX = width / 2;
+				const originY = height / 2;
+				const spawnRadius = Math.min(width, height) * 0.72;
+				warpContext.lineCap = "butt";
+				warpContext.lineJoin = "miter";
+				for (const warp of warps) {
+					warp.z -= warp.speed;
+					if (warp.z <= 0) {
+						warp.angle = Math.random() * Math.PI * 2;
+						warp.radius = Math.random();
+						warp.z = WARP_DEPTH;
+						warp.speed = (Math.random() * 2 + 1) * 1.1;
+						warp.length = Math.random() * 2 + 0.5;
+					}
+					const x = Math.cos(warp.angle) * warp.radius * spawnRadius;
+					const y = Math.sin(warp.angle) * warp.radius * spawnRadius;
+					const scale = WARP_FOV / warp.z;
+					const px = originX + x * scale;
+					const py = originY + y * scale;
+
+					const prevZ = warp.z + warp.speed * warp.length;
+					const prevScale = WARP_FOV / prevZ;
+					const prevPx = originX + x * prevScale;
+					const prevPy = originY + y * prevScale;
+
+					let opacity = 1 - warp.z / WARP_DEPTH;
+					if (warp.z > WARP_DEPTH * 0.92) opacity *= (WARP_DEPTH - warp.z) / (WARP_DEPTH * 0.08);
+					if (warp.z < 100) opacity = warp.z / 100;
+					if (opacity <= 0) continue;
+
+					warpContext.beginPath();
+					warpContext.moveTo(prevPx, prevPy);
+					warpContext.lineTo(px, py);
+					warpContext.strokeStyle = `rgba(${warp.color}, ${(opacity * 0.9).toFixed(3)})`;
+					/* hairline strokes stay crisp under retina DPR scaling */
+					warpContext.lineWidth = Math.max(0.25, (1 - warp.z / WARP_DEPTH) * 0.4);
+					warpContext.stroke();
+				}
+			};
+
 			const render = (now: number) => {
 				frame = 0;
-				const elapsed = (now - startedAt) * 0.001;
-				drawStars(reducedMotion ? STATIC_ELAPSED : elapsed);
+				const elapsed = reducedMotion ? STATIC_ELAPSED : (now - startedAt) * 0.001;
+				drawStars(elapsed);
+				drawWarps();
 				/* the fragment shader advances rotation at 2π/ORBIT_SECONDS rad per
 				   unit of time, so seconds map straight onto the shared orbit */
 				webgl.uniform1f(uniforms.time, reducedMotion ? STATIC_ELAPSED : elapsed);
@@ -305,8 +415,8 @@ export function WordmarkOrb() {
 					: null;
 
 			resize();
-			/* paint one frame synchronously so the sphere is never blank on
-			   first paint, even before the animation loop gets a slot */
+			/* paint one frame synchronously so the scene is never blank on first
+			   paint, even before the animation loop gets a slot */
 			render(performance.now());
 			start();
 			observer?.observe(host);
@@ -338,10 +448,18 @@ export function WordmarkOrb() {
 			ref={hostRef}
 			role="img"
 			aria-label="SlideSage"
-			className="pointer-events-none absolute top-1/2 left-1/2 z-10 aspect-square h-[min(86%,640px)] -translate-x-1/2 -translate-y-1/2"
+			className="pointer-events-none absolute inset-0 z-10"
 		>
 			<canvas ref={starCanvasRef} className="absolute inset-0 h-full w-full" />
-			<canvas ref={glCanvasRef} className="absolute inset-0 h-full w-full" />
+			{/* warp streaks sit directly under the sphere so they read as
+			    originating from behind it */}
+			<canvas ref={warpCanvasRef} className="absolute inset-0 h-full w-full" />
+			<div
+				ref={stageRef}
+				className="absolute top-1/2 left-1/2 aspect-square h-[min(76%,560px)] -translate-x-1/2 -translate-y-1/2"
+			>
+				<canvas ref={glCanvasRef} className="absolute inset-0 h-full w-full" />
+			</div>
 			<div
 				ref={fallbackRef}
 				aria-hidden="true"
