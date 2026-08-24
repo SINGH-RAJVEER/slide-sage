@@ -19,8 +19,10 @@ deep navy. There is no header, copy, or footer — the ring is the page.
 ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
 
 - The background is the SlideSage signature navy (`#161b27`) with the app's soft top glow.
-- The wordmark is the shipped `icon.webp` itself — same script face, same halo — centered with
-  layered `drop-shadow` filters, so the mark on the page matches the product icon exactly.
+- The wordmark is rendered as text, not an image: SVG type set in Yellowtail (the icon's script
+  face, loaded from Google Fonts), with the icon's steel-blue fill, dark navy outline under the
+  fill via `paint-order: stroke`, and a halo from a blurred lighter-blue copy behind. It stays
+  crisp at any display size.
 - Fifteen plates sit on a tilted ellipse. Plates behind the wordmark render at a lower z-index,
   plates in front above it, so orbiting plates pass over the mark exactly as in the reference.
 - The ring holds still until the pointer arrives, then springs into orbit (stiffness 26,
