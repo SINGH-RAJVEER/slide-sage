@@ -4,6 +4,7 @@ import { createBrowserRouter } from "react-router-dom";
 import EntranceRoute from "@/app/router/EntranceRoute";
 import RequireSignedInLayout from "@/app/router/RequireSignedInLayout";
 import RootLayout from "@/app/router/RootLayout";
+import LandingPage from "@/routes/landing/LandingPage";
 import ForgotPasswordPage from "@/routes/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/routes/auth/ResetPasswordPage";
 import SignInPage from "@/routes/auth/SignInPage";
@@ -28,6 +29,9 @@ export const router = createBrowserRouter([
 		hydrateFallbackElement: <LoadingScreen label="Loading page" />,
 		children: [
 			{ index: true, element: <EntranceRoute /> },
+			/* the landing page is always public, so the header icon can reach
+			   it even for signed-in users */
+			{ path: "landing", element: <LandingPage /> },
 			{ path: "sign-in/*", element: <SignInPage /> },
 			{ path: "sign-up/*", element: <SignUpPage /> },
 			{ path: "sign-up/verify-email", element: <VerifyEmailPage /> },

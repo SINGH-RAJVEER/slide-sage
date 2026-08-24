@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { WORDMARK_ORB_FRAGMENT_SHADER, WORDMARK_ORB_VERTEX_SHADER } from "./wordmark-orb-shaders";
 
 /* The orb's rotation speed lives in the fragment shader (0.2417 rad/s), which
    spins the sphere once every 26 seconds so it revolves together with the
    slide ring. */
 const STATIC_ELAPSED = 4.2;
+/* pointer travel past this many pixels means a ring drag, not a sphere click */
+const DRAG_CLICK_SLOP = 6;
 
 type Star = { x: number; y: number; depth: number; phase: number; drift: number; size: number };
 
@@ -85,9 +88,9 @@ function paintWordmarkTexture(canvas: HTMLCanvasElement) {
 		ctx.font = `${size}px 'Yellowtail', 'Brush Script MT', cursive`;
 		const measured = ctx.measureText("SlideSage").width;
 		if (measured > 0) {
-			/* stretch the wordmark across most of its hemisphere so it reads
-			   wide on the sphere face */
-			size = Math.floor(size * Math.min(2.1, (canvas.width * 0.3) / measured));
+			/* stretch the wordmark wide across its hemisphere, a touch short of
+			   the limb so it reads cleanly on the sphere face */
+			size = Math.floor(size * Math.min(2.1, (canvas.width * 0.26) / measured));
 			ctx.font = `${size}px 'Yellowtail', 'Brush Script MT', cursive`;
 		}
 		ctx.strokeStyle = "#042f5c";
@@ -142,9 +145,12 @@ export function WordmarkOrb() {
 	const hostRef = useRef<HTMLDivElement>(null);
 	const starCanvasRef = useRef<HTMLCanvasElement>(null);
 	const warpCanvasRef = useRef<HTMLCanvasElement>(null);
-	const stageRef = useRef<HTMLDivElement>(null);
+	const stageRef = useRef<HTMLAnchorElement>(null);
 	const glCanvasRef = useRef<HTMLCanvasElement>(null);
 	const fallbackRef = useRef<HTMLDivElement>(null);
+	/* pointer travel across the sphere, so a ring drag never fires navigation */
+	const dragStartX = useRef(0);
+	const dragDistance = useRef(0);
 
 	useEffect(() => {
 		const host = hostRef.current;
@@ -444,28 +450,47 @@ export function WordmarkOrb() {
 	}, []);
 
 	return (
-		<div
-			ref={hostRef}
-			role="img"
-			aria-label="SlideSage"
-			className="pointer-events-none absolute inset-0 z-10"
-		>
+		<div ref={hostRef} className="pointer-events-none absolute inset-0 z-10">
 			<canvas ref={starCanvasRef} className="absolute inset-0 h-full w-full" />
 			{/* warp streaks sit directly under the sphere so they read as
 			    originating from behind it */}
 			<canvas ref={warpCanvasRef} className="absolute inset-0 h-full w-full" />
-			<div
+			{/* the sphere itself is the call to action: clicking it leads to
+			    sign-up. Drag distance is tracked so grabbing the ring through
+			    the sphere never fires the navigation. */}
+			<Link
+				to="/sign-up"
+				aria-label="SlideSage — sign up"
 				ref={stageRef}
-				className="absolute top-1/2 left-1/2 aspect-square h-[min(76%,560px)] -translate-x-1/2 -translate-y-1/2"
+				onPointerDown={(event) => {
+					dragStartX.current = event.clientX;
+					dragDistance.current = 0;
+				}}
+				onPointerMove={(event) => {
+					dragDistance.current += Math.abs(event.clientX - dragStartX.current);
+					dragStartX.current = event.clientX;
+				}}
+				onClick={(event) => {
+					if (dragDistance.current > DRAG_CLICK_SLOP) event.preventDefault();
+				}}
+				className="pointer-events-auto absolute top-1/2 left-1/2 aspect-square h-[min(76%,560px)] -translate-x-1/2 -translate-y-1/2 cursor-pointer"
 			>
 				<canvas ref={glCanvasRef} className="absolute inset-0 h-full w-full" />
-			</div>
+			</Link>
+			{/* shown only when WebGL is unavailable; inline styles keep the
+			    accessible tree correct in both paths */}
 			<div
 				ref={fallbackRef}
-				aria-hidden="true"
-				className="absolute inset-0 hidden place-items-center"
+				style={{ display: "none" }}
+				className="absolute inset-0 place-items-center"
 			>
-				<WordmarkSvg />
+				<Link
+					to="/sign-up"
+					aria-label="SlideSage — sign up"
+					className="grid w-full place-items-center"
+				>
+					<WordmarkSvg />
+				</Link>
 			</div>
 		</div>
 	);

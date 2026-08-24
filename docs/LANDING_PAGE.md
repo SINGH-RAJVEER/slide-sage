@@ -10,6 +10,9 @@ deep navy. There is no header, copy, or footer — the ring is the page.
 - Signed-in visitors are sent to the existing app home (presentations or generate, via
   `HomePage`), so authenticated behaviour is unchanged.
 - Anonymous visitors see the landing page instead of being redirected straight to sign-in.
+- `/landing` renders the landing page for everyone, signed in or not. The app header's
+  SlideSage icon links there (`ROUTES.landing`), so clicking the icon from anywhere in the app
+  always reaches the landing page.
 - All other guarded routes keep the existing `RequireSignedInLayout` redirect to sign-in with a
   `redirect_url`.
 
@@ -38,37 +41,46 @@ ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
    off-screen or when the tab is hidden, and honours `prefers-reduced-motion: reduce` by
    rendering one static frame. Without WebGL it falls back to the flat SVG wordmark the hero
    used before the orb.
-- Twenty-two plates sit on a tilted ellipse. Plates behind the orb render at a lower z-index,
+- Twenty-six plates sit on a tilted ellipse. Plates behind the orb render at a lower z-index,
    plates in front above it, so orbiting plates pass over the sphere exactly as in the
    reference.
-- The ring holds still until the pointer arrives, then springs into orbit (stiffness 26,
-  damping 5.7) and springs to a stop when the pointer leaves — the reference's own motion
-  model. One revolution takes 26 seconds.
-- The ring can be thrown: dragging horizontally spins it directly — dragging right pushes the
-  front plates right, like grabbing the ring — and releasing hands the flick's momentum to the
-  spring, which carries it and eases the ring back to its resting pace. A drag under six pixels
-  counts as a click instead.
+- The ring is in constant orbit — one revolution every 26 seconds — irrespective of the cursor
+   or anything else. Dragging horizontally spins it directly in proportion to the drag's length
+   — dragging right pushes the front plates right, like grabbing the ring — and on release the
+   constant orbit resumes from where the drag left it, with no flick or momentum. A drag under
+   six pixels counts as a click instead.
 - Clicking a plate opens a hovering preview: the slide re-rendered at 68 percent of the hero's
-  width (still through `ScaledSlide` at the full 1280x720 stage) over a blurred backdrop, with
-  the theme name and slide title as a caption. Clicking anywhere outside the slide or pressing
-  Escape dismisses it, and the ring pauses while the preview is open.
+   width (still through `ScaledSlide` at the full 1280x720 stage) over a blurred backdrop, with
+   the theme name and slide title as a caption. Clicking anywhere outside the slide or pressing
+   Escape dismisses it, while the ring keeps turning behind it.
+- The sphere is the page's call to action: it is a link to `/sign-up` (keyboard focusable,
+   pointer cursor), and the no-WebGL fallback wordmark links there too. Ring drags that pass
+   over the sphere never fire the navigation — pointer travel across the link is tracked and
+   past six pixels the click is suppressed, matching the plates' tap-versus-drag slop.
 - `prefers-reduced-motion: reduce` disables the orbit entirely; the ring renders one static
-  frame.
+   frame.
 
 ## The Plates
 
 Each plate is a real slide rendered by the production pipeline — `SlideRenderer` inside
 `ScaledSlide` at the canonical 1280x720 16:9 canvas, scaled down to plate size — the same
 implementation the viewer and the marketplace previews use. Plates are positioned, faded, and
-scaled per frame, but their content never changes.
+scaled per frame. The plate currently sitting at the front of the ring renders in a "live" slot
+(keyed remount with `isActive`), so its charts draw in and its stats count up each time it
+swings to the front; every other plate renders statically.
 
 `apps/web/src/routes/landing/slide-examples.ts` defines the plates:
 
-- Sixteen authored slides across Midnight Terminal, Neon District, Terra Mesa, Concrete Brutal,
-  Elegant Serif, Draft Board, and Bubblegum Pop, using sample deck copy written for the landing
-  page. The mix deliberately spans slide kinds: covers, bullet and stats pages, a spec table, a
-  side-by-side comparison, quote slides, and live charts (line, doughnut, bar, and polar area,
-  each coloured by its theme's chart palette).
+- Twenty authored slides across ten visual systems, using sample deck copy written for the
+  landing page. Only one plain heading page remains — every other plate pairs its title with
+  real content, chosen as permutations:
+  - Image-plus-text: photos (stable Unsplash urls, https as the renderer requires) in
+    media-left/right compositions with bullets, paragraphs, quotes, callouts, and stats, plus
+    one full-bleed photographic cover with an overlay.
+  - Live-animation-plus-text: whole-slide charts (line, doughnut, bar, polar area), an embedded
+    inline radar chart beside bullets, count-up stat rows beside paragraphs, and generated
+    timeline/flow diagrams beside prose.
+  - Structure pages: a spec table, a side-by-side comparison, and a quote slide.
 - All six marketplace themes, reusing each item's own `previewSlide` from the catalog.
 - The list is interleaved round-robin by theme, so two slides from one visual system never sit
   side by side on the ring (including across the wrap from last to first).
@@ -83,6 +95,7 @@ scaled per frame, but their content never changes.
 - `apps/web/src/routes/landing/wordmark-orb-shaders.ts` — the orb's GLSL programs.
 - `apps/web/src/routes/landing/slide-examples.ts` — plate definitions and theme interleaving.
 - `apps/web/src/app/router/EntranceRoute.tsx` — auth-aware index route.
+- `apps/web/src/app/Header.tsx` — app header; its icon links to `/landing`.
 - `apps/web/src/test/routes/landing/LandingPage.test.tsx` — render, route, and plate tests.
 - `apps/web/src/test/routes/landing/WordmarkOrb.test.tsx` — orb labelling, canvas layering, and
   fallback tests.

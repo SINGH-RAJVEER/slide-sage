@@ -36,7 +36,8 @@ describe("LandingPage", () => {
 		).toBeInTheDocument();
 		expect(queryByRole("banner")).not.toBeInTheDocument();
 		expect(queryByRole("contentinfo")).not.toBeInTheDocument();
-		expect(queryByRole("link")).not.toBeInTheDocument();
+		/* the sphere is the page's single call to action */
+		expect(getByRole("link", { name: "SlideSage — sign up" })).toHaveAttribute("href", "/sign-up");
 		expect(container.querySelectorAll("h1, h2, p")).toHaveLength(0);
 	});
 
@@ -50,7 +51,7 @@ describe("LandingPage", () => {
 		);
 
 		expect(getAllByTestId("slide-preview")).toHaveLength(LANDING_PLATES.length);
-		expect(getByRole("img", { name: "SlideSage" })).toBeInTheDocument();
+		expect(getByRole("link", { name: "SlideSage — sign up" })).toHaveAttribute("href", "/sign-up");
 	});
 
 	it("opens a hovering preview when a plate is clicked, and closes on Escape", async () => {
@@ -160,5 +161,61 @@ describe("Landing plates", () => {
 		expect(blocks.some((block) => block.type === "table")).toBe(true);
 		expect(slides.some((s) => s.type === "content" && s.layout === "comparison")).toBe(true);
 		expect(slides.some((s) => s.type === "content" && s.layout === "quote")).toBe(true);
+	});
+
+	it("keeps plain heading pages rare and pairs every other plate with content", () => {
+		const content = LANDING_PLATES.flatMap((plate) =>
+			plate.slide.type === "content" ? [plate.slide] : [],
+		);
+		const covers = content.filter((s) => s.layout === "cover");
+		expect(covers.length).toBeLessThanOrEqual(2);
+		/* every non-cover plate carries at least one content block */
+		for (const slide of content) {
+			if (slide.layout === "cover") continue;
+			const hasBackground = Boolean(slide.backgroundImage);
+			expect(hasBackground || slide.blocks.length > 0).toBe(true);
+		}
+	});
+
+	it("spreads image-plus-text permutations across the ring", () => {
+		const blocks = LANDING_PLATES.flatMap((plate) =>
+			plate.slide.type === "content" ? plate.slide.blocks : [],
+		);
+		const images = blocks.filter((block) => block.type === "image");
+		expect(images.length).toBeGreaterThanOrEqual(5);
+		for (const image of images) {
+			if (image.type !== "image") continue;
+			expect(image.url).toMatch(/^https:/);
+			expect(image.alt.length).toBeGreaterThan(0);
+		}
+		const mediaLayouts = LANDING_PLATES.filter(
+			(plate) =>
+				plate.slide.type === "content" &&
+				(plate.slide.layout === "media-left" || plate.slide.layout === "media-right"),
+		);
+		expect(mediaLayouts.length).toBeGreaterThanOrEqual(5);
+	});
+
+	it("brings live animations: drawing charts and counting stats beside text", () => {
+		const content = LANDING_PLATES.flatMap((plate) =>
+			plate.slide.type === "content" ? [plate.slide] : [],
+		);
+		/* embedded chart blocks animate their draw-in */
+		const chartBlocks = content.flatMap((slide) =>
+			slide.blocks.filter((block) => block.type === "chart"),
+		);
+		expect(chartBlocks.length).toBeGreaterThanOrEqual(1);
+		/* stat values are numeric so they count up when the plate goes live */
+		const statValues = content
+			.flatMap((slide) => slide.blocks.filter((block) => block.type === "stats"))
+			.flatMap((block) => (block.type === "stats" ? block.items : []))
+			.map((item) => item.value);
+		expect(statValues.length).toBeGreaterThanOrEqual(8);
+		expect(statValues.some((value) => /\d/.test(value))).toBe(true);
+		/* generated diagrams render beside prose */
+		const widgets = content.flatMap((slide) =>
+			slide.blocks.filter((block) => block.type === "widget"),
+		);
+		expect(widgets.length).toBeGreaterThanOrEqual(2);
 	});
 });

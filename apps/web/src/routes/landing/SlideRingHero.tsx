@@ -6,25 +6,24 @@ import { LANDING_PLATES } from "./slide-examples";
 import { WordmarkOrb } from "./WordmarkOrb";
 
 /* Ring geometry and motion, adapted from the Gallery Heading matte gallery:
-   a tilted ellipse of 16:9 plates that hold still until the pointer arrives,
-   then spring into orbit. The ring can also be thrown by dragging, and any
-   plate opens in a hovering preview when clicked. */
+   a tilted ellipse of 16:9 plates in constant orbit — cursor or no cursor.
+   Dragging rotates the ring in direct proportion to the drag's length, and
+   any plate opens in a hovering preview when clicked. */
 const AXIS = (-25.5 * Math.PI) / 180;
 const ORBIT_SECONDS = 26;
-const SPRING_K = 26;
-const SPRING_D = 5.7;
 /* radians of spin per pixel of horizontal drag */
 const DRAG_SENSITIVITY = 1.15;
 const DRAG_CLICK_SLOP = 6;
-const FLICK_CLAMP = 3;
 
 export function SlideRingHero() {
 	const rootRef = useRef<HTMLDivElement>(null);
 	const plateRefs = useRef<(HTMLDivElement | null)[]>([]);
 	const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 	const [previewShown, setPreviewShown] = useState(false);
-	const previewOpenRef = useRef(false);
-	previewOpenRef.current = previewIndex !== null;
+	/* whichever plate currently sits at the front of the ring; its slide
+	   renders "live" so charts draw in and stats count up as it arrives */
+	const [frontIndex, setFrontIndex] = useState(-1);
+	const frontRef = useRef(-1);
 
 	useEffect(() => {
 		const root = rootRef.current;
@@ -39,10 +38,6 @@ export function SlideRingHero() {
 		let width = 0;
 		let height = 0;
 		let spin = 0;
-		let rate = 0;
-		let velocity = 0;
-		let hovering = false;
-		let settled = false;
 		let last = performance.now();
 		let frameId = 0;
 
@@ -51,8 +46,6 @@ export function SlideRingHero() {
 		let dragMoved = 0;
 		let dragIndex = -1;
 		let lastX = 0;
-		let lastT = 0;
-		let dragAngularVel = 0;
 
 		const layout = () => {
 			width = root.clientWidth;
@@ -89,36 +82,36 @@ export function SlideRingHero() {
 				plate.style.opacity = String(0.42 + 0.58 * depth);
 				plate.style.zIndex = String(Math.round(depth * 20) + (depth >= 0.5 ? 1 : 0));
 			}
+
+			/* the deepest plate is front-most; hand it the live slot */
+			let front = 0;
+			let frontDepth = -1;
+			for (let i = 0; i < count; i++) {
+				const angle = (i / count) * Math.PI * 2 + spin;
+				const depth = (Math.sin(angle) + 1) / 2;
+				if (depth > frontDepth) {
+					frontDepth = depth;
+					front = i;
+				}
+			}
+			if (front !== frontRef.current) {
+				frontRef.current = front;
+				setFrontIndex(front);
+			}
 		};
 
 		const frame = (now: number) => {
 			const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
 			last = now;
-			/* while the pointer drags the ring, the move handler owns spin */
+			/* the ring always turns; while the pointer drags, the move handler
+			   owns spin instead */
 			if (!dragging && !reducedMotion) {
-				const target = previewOpenRef.current ? 0 : hovering ? 1 : 0;
-				velocity += ((target - rate) * SPRING_K - velocity * SPRING_D) * dt;
-				rate += velocity * dt;
-				if (Math.abs(rate) > 0.0004 || Math.abs(velocity) > 0.0004) {
-					spin += (dt * rate) / ORBIT_SECONDS;
-					render();
-					settled = false;
-				} else if (!settled) {
-					rate = 0;
-					velocity = 0;
-					render();
-					settled = true;
-				}
+				spin += dt / ORBIT_SECONDS;
+				render();
 			}
 			frameId = requestAnimationFrame(frame);
 		};
 
-		const setHover = (state: boolean) => {
-			hovering = state;
-		};
-		const onEnter = () => setHover(true);
-		const onLeave = () => setHover(false);
-		const onBlur = () => setHover(false);
 		const onVisibility = () => {
 			last = performance.now();
 		};
@@ -132,41 +125,29 @@ export function SlideRingHero() {
 				? Number.parseInt(plate.getAttribute("data-plate-index") ?? "", 10)
 				: -1;
 			lastX = event.clientX;
-			lastT = performance.now();
-			dragAngularVel = 0;
 		};
 
 		const onPointerMove = (event: PointerEvent) => {
 			if (!dragging) return;
-			const now = performance.now();
 			const dx = event.clientX - lastX;
-			const dt = Math.max(1, now - lastT);
 			const radiusX = Math.min(width * 0.4, 540);
 			/* negate the delta so the ring reads as grabbed: dragging right
 			   pushes the front plates right */
 			const dSpin = -dx / (radiusX * DRAG_SENSITIVITY);
 			spin += dSpin;
 			dragMoved += Math.abs(dx);
-			dragAngularVel = (dSpin / dt) * 1000;
 			lastX = event.clientX;
-			lastT = now;
 			render();
-			settled = false;
 		};
 
 		const onPointerUp = () => {
 			if (!dragging) return;
 			dragging = false;
 			if (dragMoved < DRAG_CLICK_SLOP) {
-				/* a tap, not a throw: open the plate under the pointer */
+				/* a tap, not a drag: open the plate under the pointer */
 				if (dragIndex >= 0) setPreviewIndex(dragIndex);
-				return;
 			}
-			/* hand the flick to the spring, which carries the momentum and
-			   eases the ring back to its resting pace */
-			rate = Math.max(-FLICK_CLAMP, Math.min(FLICK_CLAMP, dragAngularVel));
-			velocity = 0;
-			settled = false;
+			/* the ring resumes its constant turn on the next frame */
 		};
 
 		const observer =
@@ -180,32 +161,20 @@ export function SlideRingHero() {
 		layout();
 		render();
 		observer?.observe(root);
-		root.addEventListener("pointerenter", onEnter);
-		root.addEventListener("pointermove", onEnter);
-		root.addEventListener("pointerdown", onEnter);
 		root.addEventListener("pointerdown", onPointerDown);
-		root.addEventListener("pointerleave", onLeave);
-		root.addEventListener("pointercancel", onLeave);
 		window.addEventListener("pointermove", onPointerMove);
 		window.addEventListener("pointerup", onPointerUp);
 		window.addEventListener("pointercancel", onPointerUp);
-		window.addEventListener("blur", onBlur);
 		document.addEventListener("visibilitychange", onVisibility);
 		frameId = requestAnimationFrame(frame);
 
 		return () => {
 			cancelAnimationFrame(frameId);
 			observer?.disconnect();
-			root.removeEventListener("pointerenter", onEnter);
-			root.removeEventListener("pointermove", onEnter);
-			root.removeEventListener("pointerdown", onEnter);
 			root.removeEventListener("pointerdown", onPointerDown);
-			root.removeEventListener("pointerleave", onLeave);
-			root.removeEventListener("pointercancel", onLeave);
 			window.removeEventListener("pointermove", onPointerMove);
 			window.removeEventListener("pointerup", onPointerUp);
 			window.removeEventListener("pointercancel", onPointerUp);
-			window.removeEventListener("blur", onBlur);
 			document.removeEventListener("visibilitychange", onVisibility);
 		};
 	}, []);
@@ -256,7 +225,14 @@ export function SlideRingHero() {
 						style={{ boxShadow: "0 18px 44px rgba(0, 0, 0, 0.45)" }}
 					>
 						<ScaledSlide>
-							<SlideRenderer slide={plate.slide} currentTemplate={plate.themeId} isActive />
+							{/* keying on the live slot remounts the renderer when a
+							    plate swings to the front, replaying its animations */}
+							<SlideRenderer
+								key={index === frontIndex ? "live" : "idle"}
+								slide={plate.slide}
+								currentTemplate={plate.themeId}
+								isActive={index === frontIndex}
+							/>
 						</ScaledSlide>
 					</div>
 				))}
