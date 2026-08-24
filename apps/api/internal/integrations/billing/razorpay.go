@@ -98,7 +98,9 @@ func (c *RazorpayClient) CreateOrder(ctx context.Context, userID string, pack Pa
 	payload := map[string]any{"amount": price.AmountPaise, "currency": "INR", "receipt": receipt, "notes": map[string]string{"userId": userID, "pack": string(pack), "tokens": strconv.Itoa(price.Tokens)}, "partial_payment": false}
 	var response struct {
 		ID, Entity, Currency, Receipt, Status string
-		Amount, AmountDue, AmountPaid         int
+		Amount                                int
+		AmountDue                             int `json:"amount_due"`
+		AmountPaid                            int `json:"amount_paid"`
 		PartialPayment                        bool `json:"partial_payment"`
 	}
 	if err := c.request(ctx, http.MethodPost, "/orders", payload, &response); err != nil {
