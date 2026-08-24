@@ -8,9 +8,9 @@ describe("WordmarkOrb", () => {
 		expect(getByRole("img", { name: "SlideSage" })).toBeInTheDocument();
 	});
 
-	it("layers a star canvas and the WebGL orb canvas", () => {
+	it("layers the star field under the warp streaks under the WebGL orb", () => {
 		const { container } = render(<WordmarkOrb />);
-		expect(container.querySelectorAll("canvas")).toHaveLength(2);
+		expect(container.querySelectorAll("canvas")).toHaveLength(3);
 	});
 
 	it("falls back to the flat SVG wordmark when WebGL is unavailable", () => {

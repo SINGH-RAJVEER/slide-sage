@@ -75,12 +75,14 @@ describe("LandingPage", () => {
 		if (slide?.type === "content") {
 			expect(within(dialog).getByText(slide.title)).toBeInTheDocument();
 		}
+		/* the only button in the preview is the backdrop; there is no close X */
+		expect(within(dialog).getAllByRole("button")).toHaveLength(1);
 
-		fireEvent.keyDown(window, { key: "Escape" });
+		fireEvent.click(within(dialog).getByRole("button"));
 		expect(queryByRole("dialog")).not.toBeInTheDocument();
 	});
 
-	it("treats a drag as a throw, not a click, so no preview opens", async () => {
+	it("throws the ring on drag without opening the preview", async () => {
 		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
 
 		const { queryByRole } = render(
@@ -92,11 +94,12 @@ describe("LandingPage", () => {
 		const plate = document.querySelector('[data-plate-index="0"]');
 		expect(plate).not.toBeNull();
 
-		fireEvent.pointerDown(plate as Element, { clientX: 100 });
-		fireEvent.pointerMove(window, { clientX: 180 });
-		fireEvent.pointerMove(window, { clientX: 260 });
-		fireEvent.pointerUp(window, { clientX: 260 });
+		fireEvent.pointerDown(plate as Element, { clientX: 100, clientY: 100 });
+		fireEvent.pointerMove(window, { clientX: 160, clientY: 100 });
+		fireEvent.pointerMove(window, { clientX: 220, clientY: 100 });
+		fireEvent.pointerUp(window, { clientX: 220, clientY: 100 });
 
+		/* a throw, not a tap: the ring spins on and no preview opens */
 		expect(queryByRole("dialog")).not.toBeInTheDocument();
 	});
 });
