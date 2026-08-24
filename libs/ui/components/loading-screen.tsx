@@ -1,4 +1,4 @@
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { cn } from "@slidesage/ui/lib/utils";
 import type { HTMLAttributes } from "react";
 
@@ -12,7 +12,7 @@ export function LoadingScreen({ className, label = "Loading", ...props }: Loadin
 			className={cn("fixed inset-0 z-50 grid min-h-dvh w-full place-items-center", className)}
 			{...props}
 		>
-			<Spinner aria-label={label} className="h-9 w-9 text-white" />
+			<ThinkingOrb size={64} aria-label={label} />
 		</div>
 	);
 }

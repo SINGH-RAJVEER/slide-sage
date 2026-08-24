@@ -1,7 +1,7 @@
 import type { PresentationSummary } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@slidesage/ui/components/card";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { Calendar, RotateCcw, Trash2 } from "lucide-react";
 import type React from "react";
 
@@ -34,7 +34,7 @@ export const PresentationCard: React.FC<PresentationCardProps> = ({
 					<span className="min-w-0 flex-1">
 						{presentation.status === "failed" && (
 							<span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-red-300">
-								{isOpening ? <Spinner /> : <RotateCcw className="h-3.5 w-3.5" />}
+								{isOpening ? <ThinkingOrb size={20} /> : <RotateCcw className="h-3.5 w-3.5" />}
 								Ready to retry
 							</span>
 						)}
@@ -47,7 +47,7 @@ export const PresentationCard: React.FC<PresentationCardProps> = ({
 						onClick={(e) => onDelete(e, presentation.id)}
 						disabled={isDeleting}
 					>
-						{isDeleting ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+						{isDeleting ? <ThinkingOrb size={20} /> : <Trash2 className="h-4 w-4" />}
 					</Button>
 				</CardTitle>
 			</CardHeader>

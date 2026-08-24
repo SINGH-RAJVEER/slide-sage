@@ -1,5 +1,5 @@
 import { Button } from "@slidesage/ui/components/button";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { Maximize2, Minimize2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -266,7 +266,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 					>
 						{loading ? (
 							<>
-								<Spinner />
+								<ThinkingOrb size={20} />
 								Creating...
 							</>
 						) : (

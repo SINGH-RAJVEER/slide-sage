@@ -1,7 +1,7 @@
 import { Button } from "@slidesage/ui/components/button";
 import { DialogHeader } from "@slidesage/ui/components/dialog";
-import { Spinner } from "@slidesage/ui/components/spinner";
 import { Textarea } from "@slidesage/ui/components/textarea";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { Globe, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -261,7 +261,7 @@ export default function IterateModal({
 				>
 					{isStreaming ? (
 						<>
-							<Spinner className="mr-2 size-4" />
+							<ThinkingOrb size={20} className="mr-2" />
 							Generating...
 						</>
 					) : (

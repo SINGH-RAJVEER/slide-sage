@@ -30,7 +30,7 @@ it("renders a blank loading slide before the first streamed slide", () => {
 	expect(
 		view.getByRole("option", { name: "Waiting for the first generated slide" }),
 	).toBeInTheDocument();
-	expect(view.getByRole("status", { name: "Loading" })).toBeInTheDocument();
+	expect(view.getByRole("img", { name: "Loading" })).toBeInTheDocument();
 });
 
 it("keeps empty-presentation controls visible and disabled", () => {

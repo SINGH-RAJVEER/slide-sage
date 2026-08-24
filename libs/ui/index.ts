@@ -15,8 +15,8 @@ export { default as MarketplaceCard } from "./components/Marketplace/Marketplace
 export * from "./components/Presentations";
 export * from "./components/Settings/AISettings";
 export * from "./components/select";
-export * from "./components/spinner";
 export * from "./components/textarea";
+export * from "./components/thinking-orb";
 export * from "./components/Viewer";
 export * from "./context/AuthContext";
 export * from "./context/StreamingContext";

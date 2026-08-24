@@ -8,8 +8,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@slidesage/ui/components/select";
-import { Spinner } from "@slidesage/ui/components/spinner";
 import { Switch } from "@slidesage/ui/components/switch";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@slidesage/ui/components/tooltip";
 import { Info, KeyRound, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -283,7 +283,7 @@ export function AISettings({
 											className="h-10 w-full bg-white text-black hover:bg-white/90 sm:w-auto"
 										>
 											{busy === provider.id ? (
-												<Spinner className="size-4" aria-hidden="true" />
+												<ThinkingOrb size={20} aria-hidden="true" />
 											) : (
 												"Connect"
 											)}

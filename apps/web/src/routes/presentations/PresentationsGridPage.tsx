@@ -19,7 +19,7 @@ import {
 	PresentationCard,
 	PresentationSearchBar,
 } from "@slidesage/ui/components/Presentations";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
 import { PRESENTATIONS_UPDATED_EVENT } from "@slidesage/ui/lib/presentation-events";
 import { getPresentationRetryDestination } from "@slidesage/ui/lib/presentation-retry";
@@ -332,7 +332,7 @@ export default function PresentationsGridPage() {
 							role="status"
 							aria-label="Loading presentations"
 						>
-							<Spinner className="size-6 text-white/60" aria-hidden="true" />
+							<ThinkingOrb size={64} className="opacity-60" aria-hidden="true" />
 						</div>
 					) : (
 						<>
@@ -387,7 +387,7 @@ export default function PresentationsGridPage() {
 									>
 										{loadingMore ? (
 											<>
-												<Spinner className="mr-2" />
+												<ThinkingOrb size={20} className="mr-2" />
 												Loading...
 											</>
 										) : (
@@ -428,7 +428,7 @@ export default function PresentationsGridPage() {
 						>
 							{deletingId !== null ? (
 								<>
-									<Spinner className="mr-2" />
+									<ThinkingOrb size={20} className="mr-2" />
 									Deleting...
 								</>
 							) : (

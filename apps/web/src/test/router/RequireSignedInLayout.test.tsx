@@ -40,7 +40,7 @@ describe("RequireSignedInLayout", () => {
 
 		const view = renderGuard();
 
-		expect(view.getByRole("status", { name: "Checking session" })).toBeInTheDocument();
+		expect(view.getByRole("img", { name: "Checking session" })).toBeInTheDocument();
 		expect(view.queryByText("Private content")).toBeNull();
 	});
 
