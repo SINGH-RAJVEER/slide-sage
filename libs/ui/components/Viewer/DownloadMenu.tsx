@@ -6,7 +6,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@slidesage/ui/components/dropdown-menu";
-import { ChevronDown, Download, FileText, LoaderCircle, Presentation } from "lucide-react";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
+import { ChevronDown, Download, FileText, Presentation } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
 
@@ -57,7 +58,7 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 						className="bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20 shadow-none transition-colors duration-200"
 					>
 						{isExporting ? (
-							<LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+							<ThinkingOrb size={20} className="mr-2" />
 						) : (
 							<Download className="w-4 h-4 mr-2" />
 						)}

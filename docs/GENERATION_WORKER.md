@@ -107,8 +107,9 @@ headers require request options unavailable to `EventSource`; the `after` query
 parameter is available for clients that cannot set `Last-Event-ID`.
 
 When generation continues outside the presentation viewer, the web client shows
-a loader below the header. Hovering or focusing it expands the indicator to show
-the submitted prompt. Selecting it returns to the running presentation.
+a thinking-orb indicator below the header. Hovering or focusing it expands the
+indicator to show the submitted prompt. Selecting it returns to the running
+presentation.
 
 One API instance accepts at most 40 generation event streams and at most three
 streams per user by default. Event rows are copied from PostgreSQL and the query
@@ -123,9 +124,11 @@ otherwise cancellable.
 
 In the presentation viewer, a new generation can be cancelled only before its
 first slide arrives. During that skeleton state, the disabled slide-delete
-control is replaced with **Cancel generation**. A successful cancellation stops
-the local event consumer, clears its resumable job record, and returns the user
-to the generation form.
+control is replaced with **Cancel generation**. The theme selector remains
+available in this state; changes apply immediately and persist after generation
+finishes so they do not conflict with the worker's optimistic persistence. A
+successful cancellation stops the local event consumer, clears its resumable job
+record, and returns the user to the generation form.
 
 ## Delivery and Accounting Guarantees
 

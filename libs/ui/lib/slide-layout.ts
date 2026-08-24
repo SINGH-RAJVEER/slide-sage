@@ -1,7 +1,7 @@
 import type { ContentSlide, SlideBlock, SlideLayout, SlideRegion } from "@slidesage/types";
 
 const isVisualBlock = (block: SlideBlock) =>
-	block.type === "image" || block.type === "image-placeholder";
+	block.type === "image" || block.type === "image-placeholder" || block.type === "chart";
 
 type LayoutGeneratedPlaceholder = Extract<SlideBlock, { type: "image-placeholder" }> & {
 	layoutGenerated: true;

@@ -33,6 +33,8 @@ The production API is served at `https://api.slidesage.app` through a global ext
 
 Cloudflare Pages runs `bun run build` from `apps/web`. Vite bundles the React application into `apps/web/dist`, handles route-level code splitting, processes Tailwind through `@tailwindcss/vite`, and copies static files from `apps/web/public`.
 
+The Pages deployment copies `apps/web/public/_headers` into the build and sends `Cache-Control: no-cache` for the application and its assets. Do not add a Cloudflare Browser TTL or Cache Everything rule for `slidesage.app`. Pages manages its own CDN cache, and an extra zone cache can keep HTML from one deployment while its hashed JavaScript chunks come from another. The web entry point also listens for Vite's `vite:preloadError` event. If an open tab requests a chunk removed by a newer deployment, it reloads once to fetch the current HTML and then leaves any repeated failure to the route error page instead of entering a reload loop.
+
 ## One-time GCP bootstrap
 
 Run these once with the account that owns the project. Set `PROJECT_ID` to `slidesage-504414` and `PROJECT_NUMBER` to the project number (see `gcloud projects describe $PROJECT_ID`).
@@ -257,3 +259,4 @@ docker push asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev
 - `403` pushing to Artifact Registry: re-run `gcloud auth configure-docker asia-south1-docker.pkg.dev` and confirm the service account has `roles/artifactregistry.writer`.
 - `Permission 'iam.serviceAccounts.actAs' denied` during deploy: re-apply the `roles/iam.serviceAccountUser` binding.
 - WIF auth step fails: confirm `GCP_WIF_PROVIDER`/`GCP_SERVICE_ACCOUNT` match the pool that was created and that the binding uses the same `REPO_URL` casing as the repository.
+- `error loading dynamically imported module` after a web deploy: confirm the failed `/assets/*.js` URL belongs to an older build, then check Cloudflare Cache Rules for a custom Browser TTL or Cache Everything rule and remove it. Pages should return `Cache-Control: no-cache` from `public/_headers`. Purge the zone cache once after removing the rule so cached SPA HTML is not served for missing asset URLs.

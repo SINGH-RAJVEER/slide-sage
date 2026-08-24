@@ -424,9 +424,19 @@ function blockNode(slideId: string, block: SlideBlock, index: number): SceneNode
 			fit: "cover",
 		};
 	}
+	if (block.type === "chart") {
+		return {
+			id,
+			order: index,
+			type: "widget",
+			kind: "chart",
+			version: 1,
+			props: { chartConfig: block.chartConfig },
+		};
+	}
 	const kind =
-		block.type === "widget" ? (block.kind === "flow" ? "process" : block.kind) : block.type;
-	return { id, order: index, type: "widget", kind, version: 1, props: { ...block } };
+		block.type === "widget" ? (block.kind === "flow" ? "process" : block.kind) : (block.type as string);
+	return { id, order: index, type: "widget", kind, version: 1, props: { ...block } } as SceneNode;
 }
 
 function contentSlideToScene(slide: ContentSlide): SceneSlide {
@@ -435,7 +445,11 @@ function contentSlideToScene(slide: ContentSlide): SceneSlide {
 		? [textNode(`${slide.id}-subtitle`, 1, "subtitle", slide.subtitle)]
 		: [];
 	const blocks = slide.blocks.map((block, index) => blockNode(slide.id, block, index + 2));
-	const visualIndex = blocks.findIndex((node) => node.type === "image");
+	// Charts count as the slide's visual partner: they take the split column
+	// beside explanatory text instead of stacking under it.
+	const visualIndex = blocks.findIndex(
+		(node) => node.type === "image" || (node.type === "widget" && node.kind === "chart"),
+	);
 	const visual = visualIndex >= 0 ? blocks[visualIndex] : undefined;
 	const body = blocks.filter((_, index) => index !== visualIndex);
 	const composition: SceneGroupNode = visual

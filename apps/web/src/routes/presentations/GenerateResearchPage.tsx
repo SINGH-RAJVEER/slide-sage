@@ -1,7 +1,7 @@
 import type { AIModelSelection, ResearchPayload } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -198,7 +198,7 @@ export default function GenerateResearchPage() {
 							<div className="flex items-center justify-between">
 								<h3 className="flex items-center gap-2 text-xl font-semibold text-white/90">
 									Sources
-									{isLoading && <Spinner className="text-white/50" />}
+									{isLoading && <ThinkingOrb size={20} className="opacity-50" />}
 								</h3>
 								{hasSources && (
 									<span className="text-sm text-white/45">
@@ -346,7 +346,7 @@ export default function GenerateResearchPage() {
 								<span className="flex items-center gap-2 text-sm font-semibold">
 									{isProceeding ? (
 										<>
-											<Spinner />
+											<ThinkingOrb size={20} />
 											Processing...
 										</>
 									) : (

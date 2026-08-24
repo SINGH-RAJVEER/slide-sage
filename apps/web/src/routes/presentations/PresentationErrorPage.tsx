@@ -1,6 +1,6 @@
 import type { ApiErrorResponse, PresentationResponse } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
 import { getPresentationRetryDestination } from "@slidesage/ui/lib/presentation-retry";
 import { CircleAlert, RotateCcw, Trash2 } from "lucide-react";
@@ -153,7 +153,7 @@ export default function PresentationErrorPage({
 								disabled={isRetrying}
 								className="h-11 bg-white px-5 text-[#151c2a] hover:bg-white/90"
 							>
-								{isRetrying ? <Spinner /> : <RotateCcw className="h-4 w-4" />}
+								{isRetrying ? <ThinkingOrb size={20} /> : <RotateCcw className="h-4 w-4" />}
 								{isRetrying ? "Opening retry..." : "Retry presentation"}
 							</Button>
 						)}

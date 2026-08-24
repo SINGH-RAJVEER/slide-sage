@@ -1977,3 +1977,200 @@
 		margin: 0;
 	}
 }
+
+/*
+ * Embedded chart blocks.
+ *
+ * Charts are no longer whole-slide objects only: a chart block can share a
+ * slide with explanatory text. The structural wrapper below is theme-neutral
+ * (built from --ss-* custom properties); each theme then adds its own dressing
+ * in the dialect section keyed by data-theme, following that theme's layout
+ * language. Scales:
+ *   ss-chart--inline  sits inside a narrow text column (sidebar rail, split)
+ *   ss-chart--panel   fills one composition cell (media region, spotlight hero)
+ *   ss-chart--hero    the legacy whole-slide presentation
+ */
+.ss-chart-block {
+	display: flex;
+	width: 100%;
+	min-width: 0;
+	min-height: 0;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.ss-chart-block .ss-chart-canvas {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 200px;
+}
+
+.ss-chart-caption {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	color: var(--ss-muted, currentColor);
+	font-family: var(--ss-body-font);
+}
+
+.ss-chart-caption-title {
+	color: var(--ss-title, currentColor);
+	font-family: var(--ss-display-font);
+	font-size: clamp(13px, 1.15vw, 16px);
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.ss-chart-caption-note {
+	font-size: clamp(11px, 0.95vw, 13px);
+	line-height: 1.45;
+	opacity: 0.85;
+}
+
+.ss-chart--panel .ss-chart-canvas {
+	min-height: 220px;
+}
+
+.ss-chart--inline .ss-chart-canvas {
+	flex: 0 1 auto;
+	aspect-ratio: 4 / 3;
+	max-height: 300px;
+	min-height: 160px;
+}
+
+.ss-chart--hero {
+	height: 100%;
+	gap: 12px;
+}
+
+/* Signal Grid (corporate-blue): consultant exhibit on a hairline panel with an
+ * accent rule across the top. */
+.template-applier[data-theme="corporate-blue"] .ss-chart-block:not(.ss-chart--hero) {
+	background: var(--ss-surface);
+	border: 1px solid var(--ss-line);
+	border-top: 3px solid var(--ss-accent);
+	padding: 18px;
+}
+
+/* Midnight Terminal (modern-dark): frameless, chart floats directly on the
+ * background; a thin accent tick anchors the caption. */
+.template-applier[data-theme="modern-dark"] .ss-chart-block:not(.ss-chart--hero) {
+	padding-top: 6px;
+	border-top: 1px solid color-mix(in srgb, var(--ss-accent) 45%, transparent);
+}
+
+.template-applier[data-theme="modern-dark"] .ss-chart-caption {
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.01em;
+}
+
+.template-applier[data-theme="modern-dark"] .ss-chart-caption::before {
+	content: "";
+	display: block;
+	width: 22px;
+	height: 2px;
+	margin-bottom: 7px;
+	background: var(--ss-accent);
+}
+
+/* Monochrome Grid (minimalist): frameless with generous air; a single quiet
+ * rule above, muted captions. */
+.template-applier[data-theme="minimalist"] .ss-chart-block:not(.ss-chart--hero) {
+	padding-top: 14px;
+	border-top: 1px solid var(--ss-line);
+}
+
+/* Kinetic Blocks (creative-studio): poster card with a hard offset accent
+ * shadow. */
+.template-applier[data-theme="creative-studio"] .ss-chart-block:not(.ss-chart--hero) {
+	background: color-mix(in srgb, var(--ss-surface) 42%, transparent);
+	border: 2px solid var(--ss-line);
+	box-shadow: -6px 6px 0 var(--ss-accent);
+	padding: 16px;
+}
+
+/* Editorial Ledger (elegant-serif): print-figure convention, rules above and
+ * below with a serif italic caption. */
+.template-applier[data-theme="elegant-serif"] .ss-chart-block:not(.ss-chart--hero) {
+	padding: 14px 4px;
+	border-top: 1px solid var(--ss-line);
+	border-bottom: 1px solid var(--ss-line);
+}
+
+.template-applier[data-theme="elegant-serif"] .ss-chart-caption-title {
+	font-style: italic;
+	font-weight: 500;
+}
+
+/* Field Notes (nature-green): dashed sketch frame on paper tint. */
+.template-applier[data-theme="nature-green"] .ss-chart-block:not(.ss-chart--hero) {
+	background: color-mix(in srgb, var(--ss-surface) 65%, transparent);
+	border: 1.5px dashed color-mix(in srgb, var(--ss-accent) 55%, var(--ss-line));
+	border-radius: 8px;
+	padding: 14px;
+}
+
+/* Neon District: glowing accent outline on dark surface. */
+.template-applier[data-theme="neon-district"] .ss-chart-block:not(.ss-chart--hero) {
+	background: color-mix(in srgb, var(--ss-surface) 80%, transparent);
+	border: 1px solid color-mix(in srgb, var(--ss-accent) 50%, var(--ss-line));
+	box-shadow: 0 0 24px -6px color-mix(in srgb, var(--ss-accent) 55%, transparent);
+	padding: 16px;
+}
+
+/* Draft Board: blueprint dashes with an orange markup rule. */
+.template-applier[data-theme="draft-board"] .ss-chart-block:not(.ss-chart--hero) {
+	background: color-mix(in srgb, var(--ss-surface) 70%, transparent);
+	border: 1.5px dashed var(--ss-accent);
+	padding: 16px;
+}
+
+/* Velvet Marquee: champagne ticket panel. */
+.template-applier[data-theme="velvet-marquee"] .ss-chart-block:not(.ss-chart--hero) {
+	background: var(--ss-surface);
+	border: 1px solid var(--ss-accent);
+	padding: 18px;
+}
+
+.template-applier[data-theme="velvet-marquee"] .ss-chart-caption-title {
+	font-weight: 400;
+	letter-spacing: 0.04em;
+}
+
+/* Bubblegum Pop: rounded candy card. */
+.template-applier[data-theme="bubblegum-pop"] .ss-chart-block:not(.ss-chart--hero) {
+	background: var(--ss-surface);
+	border: 2px solid var(--ss-line);
+	border-radius: 22px;
+	padding: 16px;
+}
+
+/* Concrete Brutal: raw slab with hard offset shadow. */
+.template-applier[data-theme="concrete-brutal"] .ss-chart-block:not(.ss-chart--hero) {
+	background: var(--ss-surface);
+	border: 3px solid var(--ss-accent-alt);
+	box-shadow: 10px 10px 0 color-mix(in srgb, var(--ss-accent) 88%, transparent);
+	padding: 14px;
+}
+
+/* Terra Mesa: warm adobe panel with a turquoise base rule. */
+.template-applier[data-theme="terra-mesa"] .ss-chart-block:not(.ss-chart--hero) {
+	background: var(--ss-surface);
+	border: 1px solid var(--ss-line);
+	border-bottom: 3px solid var(--ss-accent-alt);
+	border-radius: 10px;
+	padding: 16px;
+}
+
+/*
+ * Card-within-card guard: comparison panels and sidebar rails already carry
+ * their own surface treatment, so embedded charts stay frameless inside them.
+ */
+.template-applier .ss-editorial-panel .ss-chart-block:not(.ss-chart--hero),
+.template-applier .ss-editorial-rail .ss-chart-block:not(.ss-chart--hero) {
+	background: transparent;
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0;
+}

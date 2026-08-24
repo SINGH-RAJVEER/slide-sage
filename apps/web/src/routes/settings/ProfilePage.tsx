@@ -9,8 +9,9 @@ import type {
 import { useAuth } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
-import { FolderOpen, Loader2 } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/app/Header";
@@ -411,7 +412,7 @@ export default function ProfilePage() {
 									className="h-12 w-12 shrink-0 border-white/15 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
 								>
 									{uploadingImage ? (
-										<Loader2 className="animate-spin" aria-hidden />
+										<ThinkingOrb size={20} aria-hidden />
 									) : (
 										<FolderOpen aria-hidden />
 									)}

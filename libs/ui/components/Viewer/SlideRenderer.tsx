@@ -13,10 +13,71 @@ import React from "react";
 import { tweenNumber } from "../../lib/presentation-motion";
 import { getTemplate, type TemplateStyles } from "../../lib/templates";
 import { isWidgetBlock, type WidgetWidth } from "../../lib/widget-scene";
-import ChartRenderer from "../Charts/ChartRenderer";
+import ChartRenderer, { type ChartDensity } from "../Charts/ChartRenderer";
 import { SceneRenderer } from "./SceneRenderer";
 import TemplateApplier from "./TemplateApplier";
 import { WidgetRenderer } from "./WidgetRenderer";
+
+/** Theme tokens an embedded chart block needs to dress itself. */
+export interface ChartTheme {
+	textColor: string;
+	gridColor: string;
+	palette: readonly string[];
+	fontFamily?: string;
+}
+
+/** Charts embedded beside text default to compact typography in narrow
+ * columns and panel sizing inside composition cells. */
+function resolveChartScale(
+	block: Extract<SlideBlock, { type: "chart" }>,
+	widthMode: WidgetWidth,
+	media?: boolean,
+) {
+	if (block.scale === "hero") return "hero";
+	if (block.scale) return block.scale;
+	if (media) return "panel";
+	return widthMode === "column" ? "inline" : "panel";
+}
+
+function EmbeddedChartFigure({
+	block,
+	chartTheme,
+	density,
+	scale,
+	isActive,
+}: {
+	block: Extract<SlideBlock, { type: "chart" }>;
+	chartTheme: ChartTheme;
+	density?: ChartDensity;
+	scale?: string;
+	isActive?: boolean;
+}) {
+	const title = block.chartConfig.title;
+	const description = block.chartConfig.description;
+	return (
+		<figure className={`ss-chart-block${scale ? ` ss-chart--${scale}` : ""}`}>
+			<div className="ss-chart-canvas">
+				<ChartRenderer
+					chartConfig={block.chartConfig}
+					className="w-full h-full"
+					textColor={chartTheme.textColor}
+					gridColor={chartTheme.gridColor}
+					palette={chartTheme.palette}
+					fontFamily={chartTheme.fontFamily}
+					isActive={isActive}
+					density={density}
+					embedded
+				/>
+			</div>
+			{(title || description) && (
+				<figcaption className="ss-chart-caption">
+					{title && <span className="ss-chart-caption-title">{title}</span>}
+					{description && <span className="ss-chart-caption-note">{description}</span>}
+				</figcaption>
+			)}
+		</figure>
+	);
+}
 
 function keyed<T>(items: T[], keyFor: (item: T) => string): Array<{ item: T; key: string }> {
 	const occurrences = new Map<string, number>();
@@ -109,7 +170,11 @@ function safeImageUrl(value: string): string | undefined {
 }
 
 function isVisualBlock(block: SlideBlock): boolean {
-	return block.type === "image" || block.type === "image-placeholder";
+	return (
+		block.type === "image" ||
+		block.type === "image-placeholder" ||
+		block.type === "chart"
+	);
 }
 
 function AnimatedStatValue({ value, active }: { value: string; active: boolean }) {
@@ -150,6 +215,7 @@ function BlockRenderer({
 	onEdit,
 	widthMode,
 	media,
+	chartTheme,
 }: {
 	block: SlideBlock;
 	styles: TemplateStyles;
@@ -158,6 +224,7 @@ function BlockRenderer({
 	onEdit?: (block: SlideBlock) => void;
 	widthMode: WidgetWidth;
 	media?: boolean;
+	chartTheme: ChartTheme;
 }) {
 	const textArea = (value: string, update: (value: string) => SlideBlock, rows = 3) =>
 		editing ? (
@@ -261,6 +328,19 @@ function BlockRenderer({
 		}
 		case "image-placeholder":
 			return <ImagePlaceholder alt={block.alt} caption={block.caption} media={media} />;
+		case "chart": {
+			const scale = resolveChartScale(block, widthMode, media);
+			const density: ChartDensity = scale === "inline" ? "compact" : "standard";
+			return (
+				<EmbeddedChartFigure
+					block={block}
+					chartTheme={chartTheme}
+					density={density}
+					scale={scale}
+					isActive={isActive}
+				/>
+			);
+		}
 		case "quote":
 			if (editing) return textArea(block.text, (text) => ({ ...block, text }), 4);
 			return (
@@ -361,6 +441,7 @@ interface RegionProps {
 	widthMode: WidgetWidth;
 	className?: string;
 	media?: boolean;
+	chartTheme: ChartTheme;
 }
 
 function Region({
@@ -375,6 +456,7 @@ function Region({
 	widthMode,
 	className = "",
 	media,
+	chartTheme,
 }: RegionProps) {
 	const interactionProps = (item: SlideBlock): React.HTMLAttributes<HTMLDivElement> =>
 		onSelectBlock
@@ -416,6 +498,7 @@ function Region({
 								onEdit={onEditBlock}
 								widthMode={widthMode}
 								media={media}
+								chartTheme={chartTheme}
 							/>
 						</div>
 					</ContentObjectFrame>
@@ -436,6 +519,7 @@ interface EditorialContentProps {
 	onEditSubtitle?: (subtitle: string) => void;
 	onEditBlock?: (block: SlideBlock) => void;
 	editingTarget?: string;
+	chartTheme: ChartTheme;
 }
 
 function EditorialHeader({
@@ -550,7 +634,7 @@ function EditorialBackground({ slide }: { slide: ContentSlide }) {
 }
 
 function EditorialContent(props: EditorialContentProps) {
-	const { slide, styles, isActive } = props;
+	const { slide, styles, isActive, chartTheme } = props;
 	const supportVisual = slide.backgroundImage ? undefined : resolveSlideSupportVisual(slide);
 	const foregroundBlocks = supportVisual
 		? slide.blocks.filter((block) => block !== supportVisual.block)
@@ -571,6 +655,7 @@ function EditorialContent(props: EditorialContentProps) {
 		onEditBlock: props.onEditBlock,
 		editingTarget: props.editingTarget,
 		widthMode: region === "main" ? "full" : "column",
+		chartTheme,
 	});
 	const all = foregroundBlocks;
 	const hasAuthoredPair = primary.length > 0 && secondary.length > 0;
@@ -735,18 +820,25 @@ export const SlideRenderer = React.memo(
 			);
 		}
 		const template = getTemplate(currentTemplate);
+		const chartTheme: ChartTheme = {
+			textColor: String(template.styles.slideContent.color || "white"),
+			gridColor: template.visual.chartGrid,
+			palette: template.visual.chartColors,
+			fontFamily: template.visual.bodyFont,
+		};
 
 		if (isChartSlide(slide)) {
 			return (
 				<TemplateApplier templateId={currentTemplate} className="w-full h-full">
-					<div className="w-full h-full flex items-center justify-center">
-						<ChartRenderer
-							chartConfig={slide.chartConfig}
-							className="w-full h-full"
-							textColor={String(template.styles.slideContent.color || "white")}
-							gridColor={template.visual.chartGrid}
-							palette={template.visual.chartColors}
-							fontFamily={template.visual.bodyFont}
+					<div className="w-full h-full p-6">
+						<EmbeddedChartFigure
+							block={{
+								type: "chart",
+								chartConfig: slide.chartConfig,
+								region: "main",
+								scale: "hero",
+							}}
+							chartTheme={chartTheme}
 							isActive={isActive}
 						/>
 					</div>
@@ -768,6 +860,7 @@ export const SlideRenderer = React.memo(
 					onEditSubtitle={onEditSubtitle}
 					onEditBlock={onEditBlock}
 					editingTarget={editingTarget}
+					chartTheme={chartTheme}
 				/>
 			</TemplateApplier>
 		);

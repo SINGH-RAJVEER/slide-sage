@@ -327,6 +327,22 @@ export interface WidgetBlock extends BaseSlideBlock {
 	edges: WidgetEdge[];
 }
 
+/**
+ * How much slide real estate an embedded chart claims when it shares a slide
+ * with explanatory text. `inline` sits inside a text column, `panel` fills a
+ * composition cell (media region or spotlight hero), and `hero` is the legacy
+ * whole-slide presentation. When omitted, the renderer derives the scale from
+ * the block's region and layout.
+ */
+export const CHART_SCALES = ["inline", "panel", "hero"] as const;
+export type ChartScale = (typeof CHART_SCALES)[number];
+
+export interface ChartBlock extends BaseSlideBlock {
+	type: "chart";
+	chartConfig: ChartConfig;
+	scale?: ChartScale;
+}
+
 export type SlideBlock =
 	| ParagraphBlock
 	| BulletBlock
@@ -336,7 +352,8 @@ export type SlideBlock =
 	| QuoteBlock
 	| CalloutBlock
 	| StatsBlock
-	| WidgetBlock;
+	| WidgetBlock
+	| ChartBlock;
 
 export interface BaseSlide {
 	id: string;
@@ -379,6 +396,10 @@ export function isChartSlide(slide: Slide): slide is ChartSlide {
 
 export function isContentSlide(slide: Slide): slide is ContentSlide {
 	return !isSceneSlide(slide) && slide.type === "content";
+}
+
+export function isChartBlock(block: SlideBlock): block is ChartBlock {
+	return block.type === "chart";
 }
 
 export interface Source {

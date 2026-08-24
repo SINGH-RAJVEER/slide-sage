@@ -1,7 +1,7 @@
 import type { ContentSlide, Slide } from "@slidesage/types";
 import { isContentSlide, isSceneSlide, type SceneSlide } from "@slidesage/types";
 import { Card } from "@slidesage/ui/components/card";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import type React from "react";
 import { EditableSceneCanvas } from "./EditableSceneCanvas";
 import { EditableSlideCanvas } from "./EditableSlideCanvas";
@@ -53,8 +53,8 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 					>
 						<div className="h-full w-full">
 							<Card className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[hsl(222,27%,12%)] shadow-2xl">
-								<div className="flex items-center justify-center text-white/70">
-									<Spinner className="size-8 text-blue-400" />
+								<div className="flex items-center justify-center">
+									<ThinkingOrb size={64} aria-label="Loading" />
 								</div>
 							</Card>
 						</div>

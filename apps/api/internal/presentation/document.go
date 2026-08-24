@@ -274,9 +274,89 @@ func normalizeBlocks(input map[string]any, slideID string) []any {
 			base["type"], base["url"], base["alt"], base["caption"] = "image", imageURL, boundedText(block["alt"], 700), boundedText(block["caption"], 300)
 			base["focalPoint"] = knownText(block["focalPoint"], "center", "center", "top", "bottom", "left", "right")
 			result = append(result, base)
+		case "chart":
+			chartConfig := normalizeChartBlockConfig(block["chartConfig"])
+			if chartConfig == nil {
+				continue
+			}
+			base["type"], base["chartConfig"] = "chart", chartConfig
+			if scale := knownText(block["scale"], "", "inline", "panel", "hero"); scale != "" {
+				base["scale"] = scale
+			}
+			result = append(result, base)
 		}
 	}
 	return result
+}
+
+// normalizeChartBlockConfig validates an embedded chart block's config against
+// the same bounded contract used for standalone chart slides: a known chart
+// type, string labels, and finite numeric series.
+func normalizeChartBlockConfig(value any) map[string]any {
+	input, ok := value.(map[string]any)
+	if !ok {
+		return nil
+	}
+	chartType := boundedText(input["type"], 40)
+	if !validChartTypes[chartType] {
+		return nil
+	}
+	data, ok := input["data"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	rawLabels, _ := data["labels"].([]any)
+	labels := make([]any, 0, len(rawLabels))
+	for _, rawLabel := range rawLabels {
+		if label := boundedText(rawLabel, 120); label != "" {
+			labels = append(labels, label)
+		}
+	}
+	rawDatasets, _ := data["datasets"].([]any)
+	datasets := make([]any, 0, len(rawDatasets))
+	for index, rawDataset := range rawDatasets {
+		if index >= 8 {
+			break
+		}
+		dataset, ok := rawDataset.(map[string]any)
+		if !ok {
+			continue
+		}
+		rawValues, ok := dataset["data"].([]any)
+		if !ok || len(rawValues) == 0 || len(rawValues) > 16 {
+			continue
+		}
+		values := make([]any, 0, len(rawValues))
+		for _, number := range rawValues {
+			parsed, err := numberValue(number)
+			if err != nil {
+				continue
+			}
+			values = append(values, parsed)
+		}
+		if len(values) == 0 {
+			continue
+		}
+		entry := map[string]any{"data": values}
+		if label := boundedText(dataset["label"], 180); label != "" {
+			entry["label"] = label
+		}
+		datasets = append(datasets, entry)
+	}
+	if len(labels) == 0 || len(datasets) == 0 {
+		return nil
+	}
+	config := map[string]any{
+		"type": chartType,
+		"data": map[string]any{"labels": labels, "datasets": datasets},
+	}
+	if title := boundedText(input["title"], 300); title != "" {
+		config["title"] = title
+	}
+	if description := boundedText(input["description"], 500); description != "" {
+		config["description"] = description
+	}
+	return config
 }
 
 func normalizeBackgroundImage(value any) map[string]any {

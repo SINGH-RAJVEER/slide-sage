@@ -1,5 +1,5 @@
 import type { Slide } from "@slidesage/types";
-import { Spinner } from "@slidesage/ui/components/spinner";
+import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import type React from "react";
 import { ScaledSlide } from "./ScaledSlide";
 import { SlideRenderer } from "./SlideRenderer";
@@ -62,7 +62,7 @@ export const ViewerThumbnails: React.FC<{
 						}}
 						className="w-32 h-[4.5rem] border-2 border-dashed border-blue-400/50 rounded-lg flex-shrink-0 overflow-hidden backdrop-blur-sm bg-blue-500/10 flex items-center justify-center"
 					>
-						<Spinner className="size-5 text-blue-400" />
+						<ThinkingOrb size={20} />
 					</div>
 				)}
 			</div>

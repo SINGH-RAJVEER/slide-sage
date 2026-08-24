@@ -5,6 +5,7 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { StreamingProvider } from "@/modules/contexts/StreamingContext";
 import GeneratePPTPage from "@/routes/presentations/GeneratePPTPage";
+import PresentationViewerPage from "@/routes/presentations/PresentationViewer";
 
 function RouteStateProbe() {
 	const location = useLocation();
@@ -128,6 +129,86 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			model: "claude-sonnet-4-20250514",
 		});
 		expect(requestBody).not.toHaveProperty("theme");
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("switches the theme while the generation skeleton is visible", async () => {
+	const originalFetch = globalThis.fetch;
+	const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) => {
+		const url = String(input);
+		if (url.includes("/ai/config")) {
+			return Promise.resolve(
+				Response.json({
+					generation: { mode: "openrouter", model: "openrouter/default", billing: "points" },
+					eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+					connections: [],
+					models: [],
+					selection: null,
+				}),
+			);
+		}
+		if (url.includes("/presentation-jobs")) {
+			return Promise.resolve(
+				Response.json(
+					{ job_id: "job_1", presentation_id: "pres_1", status: "queued" },
+					{ status: 202 },
+				),
+			);
+		}
+		return new Promise<Response>(() => {});
+	});
+	globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+	try {
+		const view = render(
+			<MemoryRouter
+				initialEntries={[
+					{
+						pathname: "/generate",
+						state: {
+							retry: {
+								prompt: "Skeleton theme selection",
+								slide_count: 5,
+								detail_level: "balanced",
+								tonality: "professional",
+								research_enabled: false,
+							},
+						},
+					},
+				]}
+			>
+				<StreamingProvider>
+					<Routes>
+						<Route path="/generate" element={<GeneratePPTPage />} />
+						<Route path="/presentation" element={<PresentationViewerPage />} />
+						<Route path="/presentations" element={<div>Presentations grid</div>} />
+					</Routes>
+				</StreamingProvider>
+			</MemoryRouter>,
+		);
+
+		fireEvent.click(view.getByRole("button", { name: "Generate" }));
+		await waitFor(() =>
+			expect(
+				fetchMock.mock.calls.some(([input]) => String(input).includes("/presentation-jobs")),
+			).toBe(true),
+		);
+		await waitFor(() =>
+			expect(view.getByRole("button", { name: /Signal Grid/ })).toBeInTheDocument(),
+		);
+
+		fireEvent.pointerDown(view.getByRole("button", { name: /Signal Grid/ }), { button: 0 });
+		fireEvent.click(view.getByRole("menuitem", { name: /Midnight Terminal/ }));
+
+		expect(view.getByRole("button", { name: /Midnight Terminal/ })).toBeInTheDocument();
+		expect(
+			fetchMock.mock.calls.some(
+				([input, init]) =>
+					String(input).includes("/presentations/pres_1") && init?.method === "PATCH",
+			),
+		).toBe(false);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
