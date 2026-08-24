@@ -27,6 +27,13 @@ ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
   sphere through the rotating normal's spherical coordinates, so one wordmark rotates out of view
   exactly as the next rotates in — one per visible hemisphere. The sphere completes one
   revolution per 26 seconds, matching the ring.
+- A particle warp radiates from behind the sphere, adapted from the ThreeUI Constellation Field
+  particle-network reference: particles spawn on a disc at far z behind the orb and fly toward the
+  viewer, drawn as hairline streaks from their previous projection to their current one in
+  restrained steel-white and brand-blue hues. The streak layer sits directly under the sphere
+  canvas on a full-bleed transparent canvas whose trails are kept crisp by erasing toward nothing
+  each frame (`destination-out`), so they never smear over the hero gradient or clip at the
+  sphere stage's edge.
 - The orb paints its first frame synchronously so it is never blank on first paint, pauses when
    off-screen or when the tab is hidden, and honours `prefers-reduced-motion: reduce` by
    rendering one static frame. Without WebGL it falls back to the flat SVG wordmark the hero
@@ -37,13 +44,14 @@ ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
 - The ring holds still until the pointer arrives, then springs into orbit (stiffness 26,
   damping 5.7) and springs to a stop when the pointer leaves — the reference's own motion
   model. One revolution takes 26 seconds.
-- The ring can be thrown: dragging horizontally spins it directly, and releasing hands the
-  flick's momentum to the spring, which carries it and eases the ring back to its resting pace.
-  A drag under six pixels counts as a click instead.
+- The ring can be thrown: dragging horizontally spins it directly — dragging right pushes the
+  front plates right, like grabbing the ring — and releasing hands the flick's momentum to the
+  spring, which carries it and eases the ring back to its resting pace. A drag under six pixels
+  counts as a click instead.
 - Clicking a plate opens a hovering preview: the slide re-rendered at 68 percent of the hero's
   width (still through `ScaledSlide` at the full 1280x720 stage) over a blurred backdrop, with
-  the theme name and slide title as a caption. The backdrop button, the close button, and the
-  Escape key all dismiss it, and the ring pauses while the preview is open.
+  the theme name and slide title as a caption. Clicking anywhere outside the slide or pressing
+  Escape dismisses it, and the ring pauses while the preview is open.
 - `prefers-reduced-motion: reduce` disables the orbit entirely; the ring renders one static
   frame.
 
