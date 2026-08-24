@@ -275,4 +275,60 @@ describe("SlideRenderer", () => {
 		expect(container.querySelector("svg img")).toBeNull();
 		expect(container.querySelectorAll("[data-widget-node]")).toHaveLength(2);
 	});
+
+	it("renders embedded chart blocks as themed figures beside explanatory text", () => {
+		const { container, getByText } = renderSlide(
+			contentSlide("split", [
+				{
+					type: "bullets",
+					region: "primary",
+					ordered: false,
+					items: ["Adoption doubled in a year"],
+				},
+				{
+					id: "evidence-chart",
+					type: "chart",
+					region: "secondary",
+					scale: "inline",
+					chartConfig: {
+						type: "bar",
+						title: "Adoption by quarter",
+						description: "New teams per quarter",
+						data: { labels: ["Q1", "Q2"], datasets: [{ label: "Teams", data: [12, 24] }] },
+					},
+				},
+			]),
+		);
+
+		const figure = container.querySelector("figure.ss-chart-block");
+		expect(figure).toHaveClass("ss-chart--inline");
+		expect(figure?.querySelector("canvas")).not.toBeNull();
+		expect(getByText("Adoption by quarter")).toBeInTheDocument();
+		expect(getByText("New teams per quarter")).toBeInTheDocument();
+		expect(
+			container.querySelector('[data-region="secondary"] .ss-chart-caption'),
+		).toBeInTheDocument();
+	});
+
+	it("derives panel scale for media-region charts and keeps them out of backgrounds", () => {
+		const { container } = renderSlide(
+			contentSlide("media-right", [
+				{ type: "paragraph", region: "primary", text: "The numbers explain themselves." },
+				{
+					id: "panel-chart",
+					type: "chart",
+					region: "media",
+					chartConfig: {
+						type: "doughnut",
+						data: { labels: ["A", "B"], datasets: [{ data: [60, 40] }] },
+					},
+				},
+			]),
+		);
+
+		expect(container.querySelector(".ss-editorial-background")).toBeNull();
+		expect(container.querySelector('[data-region="media"] figure.ss-chart-block')).toHaveClass(
+			"ss-chart--panel",
+		);
+	});
 });

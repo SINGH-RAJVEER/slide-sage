@@ -7,6 +7,9 @@ interface SceneWidgetProps {
 	node: ResolvedSceneNode;
 	foreground: string;
 	accent: string;
+	gridColor?: string;
+	palette?: readonly string[];
+	bodyFont?: string;
 	isActive: boolean;
 	editing?: boolean;
 	onEditProps?: (props: Record<string, unknown>) => void;
@@ -18,7 +21,14 @@ function widgetProps(node: ResolvedSceneNode): Record<string, unknown> {
 	return node.props || {};
 }
 
-function ChartWidget({ node, foreground, isActive }: SceneWidgetProps) {
+function ChartWidget({
+	node,
+	foreground,
+	isActive,
+	gridColor,
+	palette,
+	bodyFont,
+}: SceneWidgetProps) {
 	const chartConfig = widgetProps(node)["chartConfig"] as ChartConfig | undefined;
 	if (!chartConfig) return <WidgetFallback node={node} />;
 	return (
@@ -26,6 +36,10 @@ function ChartWidget({ node, foreground, isActive }: SceneWidgetProps) {
 			chartConfig={chartConfig}
 			className="h-full w-full"
 			textColor={foreground}
+			gridColor={gridColor}
+			palette={palette}
+			fontFamily={bodyFont}
+			density={node.bounds.width < 480 ? "compact" : "standard"}
 			isActive={isActive}
 		/>
 	);

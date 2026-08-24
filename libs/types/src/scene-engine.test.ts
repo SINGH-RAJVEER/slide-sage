@@ -2,6 +2,36 @@ import { describe, expect, it } from "bun:test";
 import { resolveScene, slideToScene } from "./scene-engine";
 
 describe("scene engine", () => {
+	it("pairs embedded chart blocks with explanatory text in a split composition", () => {
+		const slide = slideToScene({
+			id: "slide-chart",
+			type: "content",
+			layout: "split",
+			title: "Adoption trend",
+			subtitle: "",
+			blocks: [
+				{ id: "copy", type: "paragraph", region: "primary", text: "Adoption doubled in a year." },
+				{
+					id: "chart",
+					type: "chart",
+					region: "secondary",
+					chartConfig: {
+						type: "bar",
+						data: { labels: ["Q1", "Q2"], datasets: [{ label: "Teams", data: [12, 24] }] },
+					},
+				},
+			],
+		});
+
+		const resolved = resolveScene(slide, { width: 1280, height: 720 });
+		const composition = resolved.root.children?.find((node) => node.id === "slide-chart-composition");
+		expect(composition?.children).toHaveLength(2);
+		const widget = composition?.children?.find((node) => node.id === "chart");
+		expect(widget?.type).toBe("widget");
+		const body = composition?.children?.find((node) => node.id === "slide-chart-body");
+		expect(body?.bounds.x).toBeLessThan(widget!.bounds.x);
+	});
+
 	it("resolves nested stack and grid layouts deterministically", () => {
 		const slide = slideToScene({
 			id: "slide-1",

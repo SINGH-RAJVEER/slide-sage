@@ -55,6 +55,8 @@ function SceneNodeView({
 	accent,
 	displayFont,
 	bodyFont,
+	gridColor,
+	palette,
 	isActive,
 	editingTarget,
 	onSelectText,
@@ -70,6 +72,8 @@ function SceneNodeView({
 	accent: string;
 	displayFont: string;
 	bodyFont: string;
+	gridColor: string;
+	palette: readonly string[];
 	isActive: boolean;
 	editingTarget?: string;
 	onSelectText?: (nodeId: string) => void;
@@ -93,6 +97,8 @@ function SceneNodeView({
 						accent={accent}
 						displayFont={displayFont}
 						bodyFont={bodyFont}
+						gridColor={gridColor}
+						palette={palette}
 						isActive={isActive}
 						editingTarget={editingTarget}
 						onSelectText={onSelectText}
@@ -266,6 +272,9 @@ function SceneNodeView({
 				node={node}
 				foreground={foreground}
 				accent={accent}
+				gridColor={gridColor}
+				palette={palette}
+				bodyFont={bodyFont}
 				isActive={isActive}
 				editing={editingTarget === node.id}
 				onEditProps={(props) => onEditWidget?.(node.id, props)}
@@ -380,6 +389,8 @@ export function SceneRenderer({
 					accent={accent}
 					displayFont={theme.displayFont}
 					bodyFont={theme.bodyFont}
+					gridColor={theme.chartGrid}
+					palette={theme.chartColors}
 					isActive={isActive}
 					editingTarget={editingTarget}
 					onSelectText={onSelectText}
