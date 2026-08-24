@@ -2,18 +2,28 @@ import { describe, expect, it, mock } from "bun:test";
 import { getTemplate } from "@slidesage/ui/lib/templates";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { SLIDE_EXAMPLES } from "@/routes/landing/slide-examples";
+import { LANDING_PLATES } from "@/routes/landing/slide-examples";
 
 mock.module("@slidesage/ui", () => ({
 	useAuth: () => ({ isSignedIn: false, loading: false }),
 	LoadingScreen: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
+mock.module("@slidesage/ui/components/Viewer/SlideRenderer", () => ({
+	SlideRenderer: ({ slide }: { slide: { title?: string } }) => (
+		<div data-testid="slide-preview">{slide.title}</div>
+	),
+}));
+
+mock.module("@slidesage/ui/components/Viewer/ScaledSlide", () => ({
+	ScaledSlide: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 describe("LandingPage", () => {
-	it("renders the ring hero, tagline, and sign-up call to action", async () => {
+	it("renders only the ring hero, with no header or copy sections", async () => {
 		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
 
-		const { getByRole, getByText } = render(
+		const { getByRole, queryByRole, container } = render(
 			<MemoryRouter>
 				<LandingPage />
 			</MemoryRouter>,
@@ -21,14 +31,26 @@ describe("LandingPage", () => {
 
 		expect(
 			getByRole("img", {
-				name: "Static slides from finished decks orbiting the SlideSage wordmark",
+				name: "Slides from finished decks orbiting the SlideSage wordmark",
 			}),
 		).toBeInTheDocument();
-		expect(getByText("One prompt in. A finished deck out.")).toBeInTheDocument();
-		expect(getByRole("link", { name: "Start generating" }).getAttribute("href")).toBe("/sign-up");
-		expect(getByRole("link", { name: "Create your first deck" }).getAttribute("href")).toBe(
-			"/sign-up",
+		expect(queryByRole("banner")).not.toBeInTheDocument();
+		expect(queryByRole("contentinfo")).not.toBeInTheDocument();
+		expect(queryByRole("link")).not.toBeInTheDocument();
+		expect(container.querySelectorAll("h1, h2, p")).toHaveLength(0);
+	});
+
+	it("renders every plate through the slide renderer", async () => {
+		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
+
+		const { getAllByTestId, getByAltText } = render(
+			<MemoryRouter>
+				<LandingPage />
+			</MemoryRouter>,
 		);
+
+		expect(getAllByTestId("slide-preview")).toHaveLength(LANDING_PLATES.length);
+		expect(getByAltText("SlideSage")).toBeInTheDocument();
 	});
 });
 
@@ -36,24 +58,45 @@ describe("EntranceRoute", () => {
 	it("shows the landing page to anonymous visitors", async () => {
 		const { default: EntranceRoute } = await import("@/app/router/EntranceRoute");
 
-		const { getByText } = render(
+		const { getByRole } = render(
 			<MemoryRouter>
 				<EntranceRoute />
 			</MemoryRouter>,
 		);
 
-		expect(getByText("One prompt in. A finished deck out.")).toBeInTheDocument();
+		expect(
+			getByRole("img", {
+				name: "Slides from finished decks orbiting the SlideSage wordmark",
+			}),
+		).toBeInTheDocument();
 	});
 });
 
-describe("Slide examples", () => {
-	it("provides a full ring of unique, resolvable theme plates", () => {
-		expect(SLIDE_EXAMPLES.length).toBeGreaterThanOrEqual(12);
-		const ids = new Set(SLIDE_EXAMPLES.map((example) => example.id));
-		expect(ids.size).toBe(SLIDE_EXAMPLES.length);
-		for (const example of SLIDE_EXAMPLES) {
-			expect(getTemplate(example.themeId)).toBeDefined();
-			expect(example.title.length).toBeGreaterThan(0);
+describe("Landing plates", () => {
+	it("draws from built-in and marketplace themes with unique ids", () => {
+		expect(LANDING_PLATES.length).toBeGreaterThanOrEqual(12);
+		const ids = new Set(LANDING_PLATES.map((plate) => plate.id));
+		expect(ids.size).toBe(LANDING_PLATES.length);
+		const themeIds = new Set(LANDING_PLATES.map((plate) => plate.themeId));
+		expect(themeIds.has("modern-dark")).toBe(true);
+		expect(themeIds.has("neon-district")).toBe(true);
+		expect(themeIds.has("velvet-marquee")).toBe(true);
+		expect(themeIds.has("bubblegum-pop")).toBe(true);
+		for (const plate of LANDING_PLATES) {
+			expect(getTemplate(plate.themeId)).toBeDefined();
+			expect(plate.slide.type).toBe("content");
 		}
+	});
+
+	it("never places two slides from one theme side by side on the ring", () => {
+		for (let i = 1; i < LANDING_PLATES.length; i++) {
+			const current = LANDING_PLATES[i];
+			const previous = LANDING_PLATES[i - 1];
+			expect(current?.themeId).not.toBe(previous?.themeId);
+		}
+		/* the ring wraps, so the last plate must also differ from the first */
+		const first = LANDING_PLATES[0];
+		const last = LANDING_PLATES[LANDING_PLATES.length - 1];
+		expect(first?.themeId).not.toBe(last?.themeId);
 	});
 });
