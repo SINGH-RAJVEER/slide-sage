@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 )
 
@@ -83,7 +84,7 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 		database:      database,
 		identity:      identity,
 		connections:   connections,
-		client:        &http.Client{Timeout: 3 * time.Minute},
+		client:        &http.Client{Timeout: 3 * time.Minute, Transport: observability.HTTPTransport(nil)},
 		queue:         queue,
 		streamContext: config.StreamContext,
 		streams:       newStreamLimiter(config.MaxStreams, config.MaxStreamsPerUser),
