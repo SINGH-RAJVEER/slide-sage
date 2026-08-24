@@ -1,79 +1,34 @@
 import { describe, expect, it, mock } from "bun:test";
-import { fireEvent, render } from "@testing-library/react";
+import { getTemplate } from "@slidesage/ui/lib/templates";
+import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-
-mock.module("@designcodeio/threeui", () => ({
-	GalleryHeading: ({ variant }: { variant?: string }) => (
-		<div data-testid="gallery-heading" data-variant={variant} />
-	),
-}));
+import { SLIDE_EXAMPLES } from "@/routes/landing/slide-examples";
 
 mock.module("@slidesage/ui", () => ({
 	useAuth: () => ({ isSignedIn: false, loading: false }),
 	LoadingScreen: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
-mock.module("@slidesage/ui/components/Viewer/SlideRenderer", () => ({
-	SlideRenderer: ({ slide }: { slide: { title?: string } }) => (
-		<div data-testid="slide-preview">{slide.title}</div>
-	),
-}));
-
-mock.module("@slidesage/ui/components/Viewer/ScaledSlide", () => ({
-	ScaledSlide: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 describe("LandingPage", () => {
-	it("renders the hero, tagline, and one theme gallery per tab", async () => {
+	it("renders the ring hero, tagline, and sign-up call to action", async () => {
 		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
 
-		const { getByTestId, getByRole, getAllByRole, getByText } = render(
+		const { getByRole, getByText } = render(
 			<MemoryRouter>
 				<LandingPage />
 			</MemoryRouter>,
 		);
 
-		expect(getByTestId("gallery-heading")).toBeInTheDocument();
-		expect(getByTestId("gallery-heading").dataset["variant"]).toBe("rising-diagonal");
+		expect(
+			getByRole("img", {
+				name: "Static slides from finished decks orbiting the SlideSage wordmark",
+			}),
+		).toBeInTheDocument();
 		expect(getByText("One prompt in. A finished deck out.")).toBeInTheDocument();
-
-		const tabs = getAllByRole("tab");
-		expect(tabs).toHaveLength(4);
-		expect(tabs[0]).toHaveTextContent("Midnight Terminal");
-		expect(getByRole("tab", { name: "Concrete Brutal" })).toBeInTheDocument();
-	});
-
-	it("shows the first sample slide and switches galleries from the tabs", async () => {
-		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
-
-		const { getByTestId, getByRole, getByText } = render(
-			<MemoryRouter>
-				<LandingPage />
-			</MemoryRouter>,
+		expect(getByRole("link", { name: "Start generating" }).getAttribute("href")).toBe("/sign-up");
+		expect(getByRole("link", { name: "Create your first deck" }).getAttribute("href")).toBe(
+			"/sign-up",
 		);
-
-		expect(getByTestId("slide-preview")).toHaveTextContent("Ship the roadmap after dark");
-
-		fireEvent.click(getByRole("tab", { name: "Terra Mesa" }));
-
-		expect(getByRole("tab", { name: "Terra Mesa" }).getAttribute("aria-selected")).toBe("true");
-		expect(getByTestId("gallery-heading").dataset["variant"]).toBe("horizontal-sweep");
-		expect(getByTestId("slide-preview")).toHaveTextContent("Let the place tell the story");
-		expect(getByText("Theme 03 of 4")).toBeInTheDocument();
-	});
-
-	it("advances to the next slide with the next control", async () => {
-		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
-
-		const { getByTestId, getByRole } = render(
-			<MemoryRouter>
-				<LandingPage />
-			</MemoryRouter>,
-		);
-
-		fireEvent.click(getByRole("button", { name: "Next slide" }));
-
-		expect(getByTestId("slide-preview")).toHaveTextContent("Three bets carry the quarter");
 	});
 });
 
@@ -88,5 +43,17 @@ describe("EntranceRoute", () => {
 		);
 
 		expect(getByText("One prompt in. A finished deck out.")).toBeInTheDocument();
+	});
+});
+
+describe("Slide examples", () => {
+	it("provides a full ring of unique, resolvable theme plates", () => {
+		expect(SLIDE_EXAMPLES.length).toBeGreaterThanOrEqual(12);
+		const ids = new Set(SLIDE_EXAMPLES.map((example) => example.id));
+		expect(ids.size).toBe(SLIDE_EXAMPLES.length);
+		for (const example of SLIDE_EXAMPLES) {
+			expect(getTemplate(example.themeId)).toBeDefined();
+			expect(example.title.length).toBeGreaterThan(0);
+		}
 	});
 });
