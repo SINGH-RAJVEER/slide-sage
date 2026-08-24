@@ -162,15 +162,47 @@ export function SlideRingHero() {
 					</div>
 				))}
 			</div>
-			<img
-				src="/icon.webp"
-				alt="SlideSage"
+			{/* The wordmark is rendered as text in the icon's script face: a
+			    blurred copy in lighter blue for the halo, then the crisp mark
+			    with its dark outline under the fill (paint-order stroke). */}
+			<svg
+				aria-label="SlideSage"
+				role="img"
 				className="pointer-events-none absolute top-1/2 left-1/2 z-10 w-[52%] max-w-[620px] -translate-x-1/2 -translate-y-1/2"
-				style={{
-					filter:
-						"drop-shadow(0 0 14px rgba(110, 165, 255, 0.5)) drop-shadow(0 0 44px rgba(110, 165, 255, 0.3))",
-				}}
-			/>
+				viewBox="0 0 1200 430"
+			>
+				<defs>
+					<filter id="landing-wordmark-halo" x="-40%" y="-40%" width="180%" height="180%">
+						<feGaussianBlur in="SourceGraphic" stdDeviation="16" />
+					</filter>
+				</defs>
+				<text
+					x="600"
+					y="285"
+					textAnchor="middle"
+					fontFamily="'Yellowtail', 'Brush Script MT', cursive"
+					fontSize="250"
+					fill="#8fb7e8"
+					opacity="0.5"
+					filter="url(#landing-wordmark-halo)"
+				>
+					SlideSage
+				</text>
+				<text
+					x="600"
+					y="285"
+					textAnchor="middle"
+					fontFamily="'Yellowtail', 'Brush Script MT', cursive"
+					fontSize="250"
+					fill="#4d7fc4"
+					stroke="#16345f"
+					strokeWidth="12"
+					paintOrder="stroke"
+					strokeLinejoin="round"
+				>
+					SlideSage
+				</text>
+			</svg>
 		</div>
 	);
 }
