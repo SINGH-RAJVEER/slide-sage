@@ -43,14 +43,14 @@ describe("LandingPage", () => {
 	it("renders every plate through the slide renderer", async () => {
 		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
 
-		const { getAllByTestId, getByAltText } = render(
+		const { getAllByTestId, getByRole } = render(
 			<MemoryRouter>
 				<LandingPage />
 			</MemoryRouter>,
 		);
 
 		expect(getAllByTestId("slide-preview")).toHaveLength(LANDING_PLATES.length);
-		expect(getByAltText("SlideSage")).toBeInTheDocument();
+		expect(getByRole("img", { name: "SlideSage" })).toBeInTheDocument();
 	});
 });
 
@@ -63,7 +63,6 @@ describe("EntranceRoute", () => {
 				<EntranceRoute />
 			</MemoryRouter>,
 		);
-
 		expect(
 			getByRole("img", {
 				name: "Slides from finished decks orbiting the SlideSage wordmark",
