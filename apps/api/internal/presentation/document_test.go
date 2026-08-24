@@ -236,3 +236,111 @@ func TestNormalizeDeckPlanRejectsIncompleteSemanticData(t *testing.T) {
 		t.Fatal("plan with empty chart data was accepted")
 	}
 }
+
+func TestApplyDeckPlanCompilesChartIntentsIntoPairedSlides(t *testing.T) {
+	plan, err := NormalizeDeckPlan(map[string]any{
+		"title": "Chart pairing", "audience": "Operators", "thesis": "Charts share slides with prose", "style": "consultant",
+		"slides": []any{
+			map[string]any{"id": "compact", "purpose": "evidence", "title": "Compact evidence", "message": "Adoption doubled", "evidence": []any{"IEA 2025"}, "visualIntent": map[string]any{
+				"kind": "chart", "chartType": "bar",
+				"dataSeries": []any{map[string]any{"label": "2025", "values": []any{1.0, 2.0, 3.0}}},
+			}},
+			map[string]any{"id": "rich", "purpose": "evidence", "title": "Rich evidence", "message": "Two full series", "evidence": []any{}, "visualIntent": map[string]any{
+				"kind": "chart", "chartType": "line",
+				"dataSeries": []any{
+					map[string]any{"label": "Actual", "values": []any{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}},
+					map[string]any{"label": "Planned", "values": []any{2.0, 3.0, 4.0, 5.0, 6.0, 7.0}},
+				},
+			}},
+		},
+	}, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	slides := plan["slides"].([]any)
+	if slides[0].(map[string]any)["layout"] != "split" {
+		t.Fatalf("compact chart layout = %v, want split", slides[0].(map[string]any)["layout"])
+	}
+	if slides[1].(map[string]any)["layout"] != "spotlight" {
+		t.Fatalf("rich chart layout = %v, want spotlight", slides[1].(map[string]any)["layout"])
+	}
+
+	document, err := NormalizeDocument(map[string]any{
+		"title": "Provider title", "slides": []any{
+			map[string]any{"type": "content", "title": "Wrong title", "blocks": []any{map[string]any{"type": "bullets", "items": []any{"Adoption grew"}}}},
+			map[string]any{"type": "content", "title": "Wrong title two", "blocks": []any{}},
+		},
+		"deckPlan": plan,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	compiled := document["slides"].([]any)
+
+	splitBlocks := compiled[0].(map[string]any)["blocks"].([]any)
+	if len(splitBlocks) != 2 {
+		t.Fatalf("split slide blocks: %#v", splitBlocks)
+	}
+	chartBlock := splitBlocks[len(splitBlocks)-1].(map[string]any)
+	if chartBlock["type"] != "chart" || chartBlock["region"] != "secondary" {
+		t.Fatalf("split chart block: %#v", chartBlock)
+	}
+	config := chartBlock["chartConfig"].(map[string]any)
+	if config["type"] != "bar" {
+		t.Fatalf("chart config: %#v", config)
+	}
+	if _, hasScale := chartBlock["scale"]; hasScale {
+		t.Fatal("synthesized chart should let the renderer derive its scale")
+	}
+
+	spotlightBlocks := compiled[1].(map[string]any)["blocks"].([]any)
+	if len(spotlightBlocks) != 2 {
+		t.Fatalf("spotlight slide blocks: %#v", spotlightBlocks)
+	}
+	heroBlock := spotlightBlocks[len(spotlightBlocks)-1].(map[string]any)
+	if heroBlock["type"] != "chart" || heroBlock["region"] != "primary" || heroBlock["emphasis"] != "hero" {
+		t.Fatalf("spotlight hero block: %#v", heroBlock)
+	}
+	messageBlock := spotlightBlocks[0].(map[string]any)
+	if messageBlock["type"] != "paragraph" || messageBlock["text"] != "Two full series" {
+		t.Fatalf("fallback message block: %#v", messageBlock)
+	}
+}
+
+func TestNormalizeDocumentAcceptsEmbeddedChartBlocks(t *testing.T) {
+	document, err := NormalizeDocument(map[string]any{
+		"title": "Embedded charts", "slides": []any{
+			map[string]any{"type": "content", "layout": "split", "title": "Split with chart", "blocks": []any{
+				map[string]any{"type": "paragraph", "region": "primary", "text": "The trend is up."},
+				map[string]any{"type": "chart", "region": "secondary", "scale": "inline", "chartConfig": map[string]any{
+					"type": "doughnut",
+					"title": "Share of adoption",
+					"description": "2025 market share",
+					"data": map[string]any{
+						"labels": []any{"Batteries", "Hydro"},
+						"datasets": []any{map[string]any{"label": "Share", "data": []any{62, 38}}},
+					},
+				}},
+				map[string]any{"type": "chart", "region": "secondary", "chartConfig": map[string]any{
+					"type": "nonsense",
+					"data": map[string]any{"labels": []any{"a"}, "datasets": []any{}},
+				}},
+			}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	blocks := document["slides"].([]any)[0].(map[string]any)["blocks"].([]any)
+	if len(blocks) != 2 {
+		t.Fatalf("blocks: %#v", blocks)
+	}
+	chart := blocks[1].(map[string]any)
+	if chart["type"] != "chart" || chart["scale"] != "inline" {
+		t.Fatalf("embedded chart block: %#v", chart)
+	}
+	config := chart["chartConfig"].(map[string]any)
+	if config["title"] != "Share of adoption" || len(config["description"].(string)) == 0 {
+		t.Fatalf("chart config fields: %#v", config)
+	}
+}

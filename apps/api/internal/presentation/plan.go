@@ -228,6 +228,26 @@ func normalizeChartSeries(value any) ([]any, error) {
 	return result, nil
 }
 
+// layoutForChartIntent pairs compact chart evidence with explanatory prose on
+// a split; richer series earn the spotlight hero treatment with a support strip.
+func layoutForChartIntent(intent map[string]any) string {
+	series, _ := intent["dataSeries"].([]any)
+	totalPoints := 0
+	for _, value := range series {
+		entry, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		if values, ok := entry["values"].([]any); ok {
+			totalPoints += len(values)
+		}
+	}
+	if len(series) <= 2 && totalPoints <= 8 {
+		return "split"
+	}
+	return "spotlight"
+}
+
 func numberValue(value any) (float64, error) {
 	switch number := value.(type) {
 	case json.Number:
@@ -241,6 +261,10 @@ func numberValue(value any) (float64, error) {
 			return 0, errors.New("invalid number")
 		}
 		return number, nil
+	case int:
+		return float64(number), nil
+	case int64:
+		return float64(number), nil
 	default:
 		return 0, errors.New("invalid number")
 	}
@@ -267,8 +291,11 @@ func ApplyDeckPlan(document map[string]any, plan map[string]any) map[string]any 
 		slide["title"] = planSlide["title"]
 		slide["layout"] = planSlide["layout"]
 		intent, _ := planSlide["visualIntent"].(map[string]any)
-		if intent["kind"] == "image-hero" {
+		switch intent["kind"] {
+		case "image-hero":
 			applyImageHeroIntent(slide, planSlide, intent)
+		case "chart":
+			applyChartIntent(slide, planSlide, intent)
 		}
 	}
 	return document
@@ -302,6 +329,96 @@ func applyImageHeroIntent(slide, planSlide, intent map[string]any) {
 	slide["blocks"] = blocks
 }
 
+// applyChartIntent deterministically compiles a chart visual intent into an
+// embedded chart block that shares the slide with drafted explanatory text.
+// Splits carry the chart in the secondary column; every other layout promotes
+// it to the hero position while evidence prose fills the support regions.
+func applyChartIntent(slide, planSlide, intent map[string]any) {
+	blocks, _ := slide["blocks"].([]any)
+	region, emphasis := "secondary", "standard"
+	if boundedText(slide["layout"], 40) != "split" {
+		region, emphasis = "primary", "hero"
+	}
+	kept := make([]any, 0, len(blocks)+2)
+	hasText := false
+	var chartBlock map[string]any
+	for _, value := range blocks {
+		block, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		if block["type"] == "chart" {
+			if chartBlock == nil {
+				chartBlock = block
+			}
+			continue
+		}
+		if block["type"] == "paragraph" && block["text"] == fallbackSlideContent() {
+			continue
+		}
+		hasText = true
+		kept = append(kept, block)
+	}
+	if chartBlock == nil {
+		chartBlock = map[string]any{
+			"id":        boundedText(planSlide["id"], 120) + "-chart",
+			"type":      "chart",
+			"sourceIds": planSlide["evidence"],
+			"treatment": "plain",
+		}
+	}
+	if normalizeChartBlockConfig(chartBlock["chartConfig"]) == nil {
+		chartBlock["chartConfig"] = chartConfigFromIntent(intent)
+	}
+	chartBlock["region"] = region
+	chartBlock["emphasis"] = emphasis
+	if !hasText {
+		if message := boundedText(planSlide["message"], 700); message != "" {
+			kept = append(kept, map[string]any{
+				"id":        boundedText(planSlide["id"], 120) + "-message",
+				"type":      "paragraph",
+				"text":      message,
+				"sourceIds": planSlide["evidence"],
+				"emphasis":  "standard",
+				"treatment": "plain",
+			})
+		}
+	}
+	kept = append(kept, chartBlock)
+	slide["blocks"] = kept
+}
+
+// chartConfigFromIntent synthesizes a bounded chart config when the draft pass
+// did not supply one. Category labels are positional; dataset labels and values
+// come straight from the validated plan series.
+func chartConfigFromIntent(intent map[string]any) map[string]any {
+	series, _ := intent["dataSeries"].([]any)
+	longest := 0
+	datasets := make([]any, 0, len(series))
+	for _, value := range series {
+		entry, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		values, _ := entry["values"].([]any)
+		if len(values) > longest {
+			longest = len(values)
+		}
+		datasets = append(datasets, map[string]any{
+			"label": entry["label"],
+			"data":  values,
+		})
+	}
+	labels := make([]any, 0, longest)
+	for index := 1; index <= longest; index++ {
+		labels = append(labels, fmt.Sprintf("%d", index))
+	}
+	return map[string]any{
+		"type": intent["chartType"],
+		"data": map[string]any{"labels": labels, "datasets": datasets},
+	}
+}
+
 func layoutForPlan(purpose string, intent map[string]any) string {
 	if purpose == "cover" {
 		return "cover"
@@ -316,8 +433,10 @@ func layoutForPlan(purpose string, intent map[string]any) string {
 		return "media-right"
 	case "timeline", "process":
 		return "canvas"
-	case "metric-grid", "chart":
+	case "metric-grid":
 		return "spotlight"
+	case "chart":
+		return layoutForChartIntent(intent)
 	}
 	switch purpose {
 	case "comparison":
