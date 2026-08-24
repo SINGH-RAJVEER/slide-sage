@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { getTemplate } from "@slidesage/ui/lib/templates";
-import { render } from "@testing-library/react";
+import { fireEvent, render, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { LANDING_PLATES } from "@/routes/landing/slide-examples";
 
@@ -51,6 +51,53 @@ describe("LandingPage", () => {
 
 		expect(getAllByTestId("slide-preview")).toHaveLength(LANDING_PLATES.length);
 		expect(getByRole("img", { name: "SlideSage" })).toBeInTheDocument();
+	});
+
+	it("opens a hovering preview when a plate is clicked, and closes on Escape", async () => {
+		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
+
+		const { getByRole, queryByRole } = render(
+			<MemoryRouter>
+				<LandingPage />
+			</MemoryRouter>,
+		);
+
+		const index = LANDING_PLATES.findIndex((plate) => plate.slide.type === "content");
+		const plate = document.querySelector(`[data-plate-index="${index}"]`);
+		expect(plate).not.toBeNull();
+
+		fireEvent.pointerDown(plate as Element);
+		fireEvent.pointerUp(window);
+
+		const dialog = getByRole("dialog");
+		expect(dialog).toBeInTheDocument();
+		const slide = LANDING_PLATES[index]?.slide;
+		if (slide?.type === "content") {
+			expect(within(dialog).getByText(slide.title)).toBeInTheDocument();
+		}
+
+		fireEvent.keyDown(window, { key: "Escape" });
+		expect(queryByRole("dialog")).not.toBeInTheDocument();
+	});
+
+	it("treats a drag as a throw, not a click, so no preview opens", async () => {
+		const { default: LandingPage } = await import("@/routes/landing/LandingPage");
+
+		const { queryByRole } = render(
+			<MemoryRouter>
+				<LandingPage />
+			</MemoryRouter>,
+		);
+
+		const plate = document.querySelector('[data-plate-index="0"]');
+		expect(plate).not.toBeNull();
+
+		fireEvent.pointerDown(plate as Element, { clientX: 100 });
+		fireEvent.pointerMove(window, { clientX: 180 });
+		fireEvent.pointerMove(window, { clientX: 260 });
+		fireEvent.pointerUp(window, { clientX: 260 });
+
+		expect(queryByRole("dialog")).not.toBeInTheDocument();
 	});
 });
 
