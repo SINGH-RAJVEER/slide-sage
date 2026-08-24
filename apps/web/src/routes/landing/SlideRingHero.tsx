@@ -162,9 +162,10 @@ export function SlideRingHero() {
 					</div>
 				))}
 			</div>
-			{/* The wordmark is rendered as text in the icon's script face: a
-			    blurred copy in lighter blue for the halo, then the crisp mark
-			    with its dark outline under the fill (paint-order stroke). */}
+			{/* The wordmark is rendered as text in the icon's script face with
+			    the icon's own sampled colours: deep navy fill, darker outline
+			    under the fill (paint-order stroke), and a soft gray-white halo
+			    from a blurred copy behind. */}
 			<svg
 				aria-label="SlideSage"
 				role="img"
@@ -182,8 +183,8 @@ export function SlideRingHero() {
 					textAnchor="middle"
 					fontFamily="'Yellowtail', 'Brush Script MT', cursive"
 					fontSize="250"
-					fill="#8fb7e8"
-					opacity="0.5"
+					fill="#a9b3bd"
+					opacity="0.4"
 					filter="url(#landing-wordmark-halo)"
 				>
 					SlideSage
@@ -194,9 +195,9 @@ export function SlideRingHero() {
 					textAnchor="middle"
 					fontFamily="'Yellowtail', 'Brush Script MT', cursive"
 					fontSize="250"
-					fill="#4d7fc4"
-					stroke="#16345f"
-					strokeWidth="12"
+					fill="#0d3762"
+					stroke="#042f5c"
+					strokeWidth="10"
 					paintOrder="stroke"
 					strokeLinejoin="round"
 				>
