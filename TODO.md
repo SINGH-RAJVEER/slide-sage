@@ -18,6 +18,8 @@
 - The presentations page makes a db request everytime its switched off of, make it keep a local copy of metadata ready
 - Make sure the input tokens are counted towards tokens utilization specially when web search is used
 - User beyond a certain number of tokens can have multiple generations going at once
+- Implement adding AI generated animations to slides
+- Implement ability to add presenter notes.
 
 ## Issues
 
@@ -30,3 +32,4 @@
 - Generation indicator on hover too small
 - The indicator for a generating ppt shows as retry instead of generating in the viewer page
 - Figure out what a better auth session token is doing being assigned during login
+- Current export functionality is a liability

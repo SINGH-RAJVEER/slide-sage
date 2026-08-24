@@ -1163,6 +1163,85 @@ const addStructuredWidget = (context: RenderContext, block: WidgetBlock) => {
 	context.cursorY += height + 0.15;
 };
 
+// Renders an embedded chart block into its region rectangle with values
+// printed on the data points, mirroring the on-screen always-visible labels.
+const addStructuredChart = (
+	context: RenderContext,
+	block: SlideBlock & { type: "chart"; chartConfig: ChartConfig },
+	availableHeight: number,
+) => {
+	const chartConfig = block.chartConfig;
+	const description = cleanText(chartConfig.description);
+	const height = Math.max(
+		1.6,
+		Math.min(availableHeight - (description ? 0.45 : 0.1), context.region.h),
+	);
+	const chartType: PptxGenJS.CHART_NAME =
+		chartConfig.type === "polarArea" ? "radar" : chartConfig.type;
+	const chartColors = chartConfig.data.datasets.map((dataset, index) =>
+		normalizeColor(
+			dataset.backgroundColor || dataset.borderColor,
+			[context.theme.accent, context.theme.accentAlt, context.theme.title, context.theme.muted][
+				index % 4
+			] || context.theme.accent,
+		),
+	);
+	const series = chartConfig.data.datasets.map((dataset, index) => ({
+		name: cleanText(dataset.label) || `Series ${index + 1}`,
+		labels: chartConfig.data.labels.map((label) => cleanText(label)),
+		values: dataset.data.map((value) => Number(value) || 0),
+	}));
+	const circular = ["pie", "doughnut"].includes(chartConfig.type);
+
+	context.slide.addChart(chartType, series, {
+		x: context.region.x,
+		y: context.cursorY,
+		w: context.region.w,
+		h: height,
+		showTitle: false,
+		showLegend: series.length > 1 || circular,
+		legendPos: "b",
+		legendColor: context.theme.text,
+		legendFontFace: context.theme.bodyFont,
+		legendFontSize: 10,
+		chartColors,
+		showValue: true,
+		showPercent: circular,
+		dataLabelColor: context.theme.text,
+		dataLabelFontSize: 9,
+		dataLabelPosition: "bestFit",
+		dataLabelFontFace: context.theme.bodyFont,
+		catAxisLabelColor: context.theme.muted,
+		catAxisLabelFontFace: context.theme.bodyFont,
+		catAxisLabelFontSize: 10,
+		valAxisLabelColor: context.theme.muted,
+		valAxisLabelFontFace: context.theme.bodyFont,
+		valAxisLabelFontSize: 10,
+		catGridLine: { color: context.theme.muted, size: 0.5 },
+		valGridLine: { color: context.theme.muted, size: 0.5 },
+		showSerName: false,
+		border: { color: context.theme.muted, pt: 0.75 },
+		objectName: `${cleanText(chartConfig.title) || "Chart"} embedded chart`,
+		altText: description || cleanText(chartConfig.title) || "Embedded chart",
+	});
+	context.cursorY += height + 0.12;
+	if (description) {
+		context.slide.addText(description, {
+			x: context.region.x,
+			y: context.cursorY,
+			w: context.region.w,
+			h: 0.32,
+			fontFace: context.theme.bodyFont,
+			fontSize: 10,
+			color: context.theme.muted,
+			margin: 0,
+			fit: "shrink",
+			objectName: "Embedded chart caption",
+		});
+		context.cursorY += 0.38;
+	}
+};
+
 const estimateBlockHeight = (block: SlideBlock, width: number) => {
 	switch (block.type) {
 		case "paragraph":
@@ -1182,6 +1261,8 @@ const estimateBlockHeight = (block: SlideBlock, width: number) => {
 			return 1.6;
 		case "widget":
 			return width < 7 ? 4.55 : 4.05;
+		case "chart":
+			return width < 7 ? 3.4 : 4.2;
 	}
 };
 
@@ -1316,6 +1397,9 @@ const renderStructuredBlock = async (context: RenderContext, block: SlideBlock) 
 			break;
 		case "stats":
 			addStructuredStats(styledContext, block);
+			break;
+		case "chart":
+			addStructuredChart(styledContext, block, availableHeight);
 			break;
 	}
 	context.cursorY = Math.max(
