@@ -1,19 +1,31 @@
 import { ScaledSlide } from "@slidesage/ui/components/Viewer/ScaledSlide";
 import { SlideRenderer } from "@slidesage/ui/components/Viewer/SlideRenderer";
-import { useEffect, useRef } from "react";
+import { getTemplate } from "@slidesage/ui/lib/templates";
+import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { LANDING_PLATES } from "./slide-examples";
+import { WordmarkOrb } from "./WordmarkOrb";
 
 /* Ring geometry and motion, adapted from the Gallery Heading matte gallery:
-   a tilted ellipse of 4:3 plates that hold still until the pointer arrives,
-   then spring into orbit. */
+   a tilted ellipse of 16:9 plates that hold still until the pointer arrives,
+   then spring into orbit. The ring can also be thrown by dragging, and any
+   plate opens in a hovering preview when clicked. */
 const AXIS = (-25.5 * Math.PI) / 180;
 const ORBIT_SECONDS = 26;
 const SPRING_K = 26;
 const SPRING_D = 5.7;
+/* radians of spin per pixel of horizontal drag */
+const DRAG_SENSITIVITY = 1.15;
+const DRAG_CLICK_SLOP = 6;
+const FLICK_CLAMP = 3;
 
 export function SlideRingHero() {
 	const rootRef = useRef<HTMLDivElement>(null);
 	const plateRefs = useRef<(HTMLDivElement | null)[]>([]);
+	const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+	const [previewShown, setPreviewShown] = useState(false);
+	const previewOpenRef = useRef(false);
+	previewOpenRef.current = previewIndex !== null;
 
 	useEffect(() => {
 		const root = rootRef.current;
@@ -34,6 +46,14 @@ export function SlideRingHero() {
 		let settled = false;
 		let last = performance.now();
 		let frameId = 0;
+
+		/* drag state */
+		let dragging = false;
+		let dragMoved = 0;
+		let dragIndex = -1;
+		let lastX = 0;
+		let lastT = 0;
+		let dragAngularVel = 0;
 
 		const layout = () => {
 			width = root.clientWidth;
@@ -75,8 +95,9 @@ export function SlideRingHero() {
 		const frame = (now: number) => {
 			const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
 			last = now;
-			if (!reducedMotion) {
-				const target = hovering ? 1 : 0;
+			/* while the pointer drags the ring, the move handler owns spin */
+			if (!dragging && !reducedMotion) {
+				const target = previewOpenRef.current ? 0 : hovering ? 1 : 0;
 				velocity += ((target - rate) * SPRING_K - velocity * SPRING_D) * dt;
 				rate += velocity * dt;
 				if (Math.abs(rate) > 0.0004 || Math.abs(velocity) > 0.0004) {
@@ -103,6 +124,50 @@ export function SlideRingHero() {
 			last = performance.now();
 		};
 
+		const onPointerDown = (event: PointerEvent) => {
+			const target = event.target as HTMLElement | null;
+			const plate = target?.closest("[data-plate-index]");
+			dragging = true;
+			dragMoved = 0;
+			dragIndex = plate?.getAttribute("data-plate-index")
+				? Number.parseInt(plate.getAttribute("data-plate-index") ?? "", 10)
+				: -1;
+			lastX = event.clientX;
+			lastT = performance.now();
+			dragAngularVel = 0;
+		};
+
+		const onPointerMove = (event: PointerEvent) => {
+			if (!dragging) return;
+			const now = performance.now();
+			const dx = event.clientX - lastX;
+			const dt = Math.max(1, now - lastT);
+			const radiusX = Math.min(width * 0.4, 540);
+			const dSpin = dx / (radiusX * DRAG_SENSITIVITY);
+			spin += dSpin;
+			dragMoved += Math.abs(dx);
+			dragAngularVel = (dSpin / dt) * 1000;
+			lastX = event.clientX;
+			lastT = now;
+			render();
+			settled = false;
+		};
+
+		const onPointerUp = () => {
+			if (!dragging) return;
+			dragging = false;
+			if (dragMoved < DRAG_CLICK_SLOP) {
+				/* a tap, not a throw: open the plate under the pointer */
+				if (dragIndex >= 0) setPreviewIndex(dragIndex);
+				return;
+			}
+			/* hand the flick to the spring, which carries the momentum and
+			   eases the ring back to its resting pace */
+			rate = Math.max(-FLICK_CLAMP, Math.min(FLICK_CLAMP, dragAngularVel));
+			velocity = 0;
+			settled = false;
+		};
+
 		const observer =
 			typeof ResizeObserver !== "undefined"
 				? new ResizeObserver(() => {
@@ -117,8 +182,12 @@ export function SlideRingHero() {
 		root.addEventListener("pointerenter", onEnter);
 		root.addEventListener("pointermove", onEnter);
 		root.addEventListener("pointerdown", onEnter);
+		root.addEventListener("pointerdown", onPointerDown);
 		root.addEventListener("pointerleave", onLeave);
 		root.addEventListener("pointercancel", onLeave);
+		window.addEventListener("pointermove", onPointerMove);
+		window.addEventListener("pointerup", onPointerUp);
+		window.addEventListener("pointercancel", onPointerUp);
 		window.addEventListener("blur", onBlur);
 		document.addEventListener("visibilitychange", onVisibility);
 		frameId = requestAnimationFrame(frame);
@@ -129,31 +198,60 @@ export function SlideRingHero() {
 			root.removeEventListener("pointerenter", onEnter);
 			root.removeEventListener("pointermove", onEnter);
 			root.removeEventListener("pointerdown", onEnter);
+			root.removeEventListener("pointerdown", onPointerDown);
 			root.removeEventListener("pointerleave", onLeave);
 			root.removeEventListener("pointercancel", onLeave);
+			window.removeEventListener("pointermove", onPointerMove);
+			window.removeEventListener("pointerup", onPointerUp);
+			window.removeEventListener("pointercancel", onPointerUp);
 			window.removeEventListener("blur", onBlur);
 			document.removeEventListener("visibilitychange", onVisibility);
 		};
 	}, []);
+
+	useEffect(() => {
+		if (previewIndex === null) {
+			setPreviewShown(false);
+			return undefined;
+		}
+		const frame = requestAnimationFrame(() => setPreviewShown(true));
+		return () => cancelAnimationFrame(frame);
+	}, [previewIndex]);
+
+	useEffect(() => {
+		if (previewIndex === null) return undefined;
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape") setPreviewIndex(null);
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [previewIndex]);
+
+	const preview = previewIndex === null ? null : LANDING_PLATES[previewIndex];
+	const previewTheme = preview ? getTemplate(preview.themeId) : null;
+	const previewTitle =
+		preview?.slide.type === "content" ? preview.slide.title : preview?.slide.chartConfig.title;
 
 	return (
 		<div
 			ref={rootRef}
 			role="img"
 			aria-label="Slides from finished decks orbiting the SlideSage wordmark"
-			className="relative h-full w-full overflow-hidden"
+			className="relative h-full w-full cursor-grab select-none overflow-hidden active:cursor-grabbing"
 			style={{
 				background: "radial-gradient(120% 90% at 50% -20%, #252a37 0%, #161b27 60%)",
+				touchAction: "pan-y",
 			}}
 		>
 			<div aria-hidden className="pointer-events-none absolute inset-0">
 				{LANDING_PLATES.map((plate, index) => (
 					<div
 						key={plate.id}
+						data-plate-index={index}
 						ref={(el) => {
 							plateRefs.current[index] = el;
 						}}
-						className="absolute top-0 left-0 aspect-video overflow-hidden rounded-[4%] ring-1 ring-white/10 will-change-transform"
+						className="pointer-events-auto absolute top-0 left-0 aspect-video overflow-hidden rounded-[4%] ring-1 ring-white/10 will-change-transform"
 						style={{ boxShadow: "0 18px 44px rgba(0, 0, 0, 0.45)" }}
 					>
 						<ScaledSlide>
@@ -162,48 +260,51 @@ export function SlideRingHero() {
 					</div>
 				))}
 			</div>
-			{/* The wordmark is rendered as text in the icon's script face with
-			    the icon's own sampled colours: deep navy fill, darker outline
-			    under the fill (paint-order stroke), and a soft gray-white halo
-			    from a blurred copy behind. */}
-			<svg
-				aria-label="SlideSage"
-				role="img"
-				className="pointer-events-none absolute top-1/2 left-1/2 z-10 w-[52%] max-w-[620px] -translate-x-1/2 -translate-y-1/2"
-				viewBox="0 0 1200 430"
-			>
-				<defs>
-					<filter id="landing-wordmark-halo" x="-40%" y="-40%" width="180%" height="180%">
-						<feGaussianBlur in="SourceGraphic" stdDeviation="16" />
-					</filter>
-				</defs>
-				<text
-					x="600"
-					y="285"
-					textAnchor="middle"
-					fontFamily="'Yellowtail', 'Brush Script MT', cursive"
-					fontSize="250"
-					fill="#a9b3bd"
-					opacity="0.4"
-					filter="url(#landing-wordmark-halo)"
+			{/* The wordmark lives on a rotating smoke sphere (see WordmarkOrb);
+			    the ring's plates pass over it, and it stays clear of the preview
+			    dialog at z-30. */}
+			<WordmarkOrb />
+
+			{preview && previewTheme && (
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-label={`Slide preview: ${previewTheme.name}`}
+					className="absolute inset-0 z-30 flex items-center justify-center"
 				>
-					SlideSage
-				</text>
-				<text
-					x="600"
-					y="285"
-					textAnchor="middle"
-					fontFamily="'Yellowtail', 'Brush Script MT', cursive"
-					fontSize="250"
-					fill="#0d3762"
-					stroke="#042f5c"
-					strokeWidth="10"
-					paintOrder="stroke"
-					strokeLinejoin="round"
-				>
-					SlideSage
-				</text>
-			</svg>
+					<button
+						type="button"
+						aria-label="Close preview"
+						onClick={() => setPreviewIndex(null)}
+						className={`absolute inset-0 cursor-default bg-[#0c0f16]/70 backdrop-blur-sm transition-opacity duration-300 ${
+							previewShown ? "opacity-100" : "opacity-0"
+						}`}
+					/>
+					<div
+						className={`relative z-10 aspect-video w-[68%] max-w-[880px] transition-all duration-300 ease-out ${
+							previewShown ? "scale-100 opacity-100" : "scale-95 opacity-0"
+						}`}
+					>
+						<div className="h-full w-full overflow-hidden rounded-lg shadow-2xl ring-1 ring-white/15">
+							<ScaledSlide>
+								<SlideRenderer slide={preview.slide} currentTemplate={preview.themeId} isActive />
+							</ScaledSlide>
+						</div>
+						<p className="mt-4 text-center text-xs tracking-wide text-white/50">
+							{previewTheme.name}
+							{previewTitle ? ` · ${previewTitle}` : ""}
+						</p>
+						<button
+							type="button"
+							aria-label="Close preview"
+							onClick={() => setPreviewIndex(null)}
+							className="absolute -top-3 -right-3 rounded-full bg-white p-2 text-neutral-950 shadow-lg transition-transform hover:scale-105"
+						>
+							<X className="size-4" />
+						</button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
