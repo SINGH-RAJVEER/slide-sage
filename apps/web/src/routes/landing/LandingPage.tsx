@@ -1,55 +1,9 @@
-import { GalleryHeading } from "@designcodeio/threeui";
 import { Button } from "@slidesage/ui/components/button";
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
-import { firstPositionOfGallery, galleryAtPosition, LANDING_GALLERIES } from "./landing-galleries";
-import { ThemeSlideCarousel } from "./ThemeSlideCarousel";
-
-const SLIDE_INTERVAL_MS = 5200;
-
-function usePrefersReducedMotion() {
-	const [reducedMotion, setReducedMotion] = useState(
-		() => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-	);
-
-	useEffect(() => {
-		const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-		const update = () => setReducedMotion(query.matches);
-		query.addEventListener("change", update);
-		return () => query.removeEventListener("change", update);
-	}, []);
-
-	return reducedMotion;
-}
+import { SlideRingHero } from "./SlideRingHero";
 
 export default function LandingPage() {
-	const [position, setPosition] = useState(0);
-	const [hovering, setHovering] = useState(false);
-	const [autoPlay, setAutoPlay] = useState(true);
-	const [documentVisible, setDocumentVisible] = useState(!document.hidden);
-	const reducedMotion = usePrefersReducedMotion();
-
-	const playing = autoPlay && !hovering && !reducedMotion && documentVisible;
-	const { galleryIndex, slideIndex } = galleryAtPosition(position);
-	const gallery = LANDING_GALLERIES[galleryIndex] ?? LANDING_GALLERIES[0];
-
-	if (!gallery) return null;
-
-	useEffect(() => {
-		const update = () => setDocumentVisible(!document.hidden);
-		document.addEventListener("visibilitychange", update);
-		return () => document.removeEventListener("visibilitychange", update);
-	}, []);
-
-	useEffect(() => {
-		if (!playing) return undefined;
-		const timer = setInterval(() => {
-			setPosition((current) => current + 1);
-		}, SLIDE_INTERVAL_MS);
-		return () => clearInterval(timer);
-	}, [playing]);
-
 	return (
 		<div className="flex min-h-dvh flex-col bg-[hsl(222_27%_12%)] text-white">
 			<header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
@@ -74,11 +28,8 @@ export default function LandingPage() {
 				</nav>
 			</header>
 
-			<section aria-label="Theme galleries" className="relative h-[58vh] min-h-[420px] w-full">
-				<GalleryHeading variant={gallery.variant} mode="dark" className="absolute inset-0" />
-				<p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-4 py-1.5 text-xs tracking-wide text-white/70 backdrop-blur-sm">
-					Gallery {galleryIndex + 1} · {gallery.themeName}
-				</p>
+			<section aria-label="SlideSage showcase" className="relative h-[56vh] min-h-[420px] w-full">
+				<SlideRingHero />
 			</section>
 
 			<section className="mx-auto w-full max-w-3xl px-6 py-16 text-center">
@@ -86,35 +37,15 @@ export default function LandingPage() {
 					One prompt in. A finished deck out.
 				</h1>
 				<p className="mt-4 text-pretty text-base leading-relaxed text-white/50">
-					SlideSage plans, writes, designs, and exports your presentation. Pick a visual system
-					below — every example here was rendered live by the same engine.
+					SlideSage plans, writes, designs, and exports your presentation. Every plate orbiting
+					above is a real theme, drawn from a finished deck.
 				</p>
-				<div className="mt-8 flex items-center justify-center gap-3">
+				<div className="mt-8 flex items-center justify-center">
 					<Button asChild size="lg" className="bg-white text-neutral-950 hover:bg-white/90">
 						<Link to={ROUTES.signUp}>Start generating</Link>
 					</Button>
-					<Button
-						asChild
-						size="lg"
-						variant="outline"
-						className="border-white/15 bg-transparent text-white/80 hover:bg-white/10 hover:text-white"
-					>
-						<a href="#themes">Browse the themes</a>
-					</Button>
 				</div>
 			</section>
-
-			<ThemeSlideCarousel
-				galleryIndex={galleryIndex}
-				slideIndex={slideIndex}
-				position={position}
-				playing={playing}
-				onHoverChange={setHovering}
-				onToggleAutoPlay={() => setAutoPlay((value) => !value)}
-				onNext={() => setPosition((current) => current + 1)}
-				onPrevious={() => setPosition((current) => current - 1)}
-				onSelectGallery={(index) => setPosition(firstPositionOfGallery(index))}
-			/>
 
 			<section className="border-t border-white/10 bg-white/[0.02]">
 				<div className="mx-auto flex w-full max-w-3xl flex-col items-center px-6 py-20 text-center">
