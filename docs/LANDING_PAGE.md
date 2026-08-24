@@ -1,8 +1,8 @@
 # Landing Page
 
-The landing page is the public entry point at `/` for visitors without a session. It opens on a
-canvas hero: static slide thumbnails orbiting the SlideSage wordmark, in the app's signature
-deep navy.
+The landing page is the public entry point at `/` for visitors without a session. It is a single
+full-viewport hero: real slide thumbnails orbiting the SlideSage wordmark on the app's signature
+deep navy. There is no header, copy, or footer — the ring is the page.
 
 ## Route Behaviour
 
@@ -15,46 +15,39 @@ deep navy.
 
 ## Hero: Slide Ring
 
-`SlideRingHero` (`apps/web/src/routes/landing/SlideRingHero.tsx`) is a single Canvas 2D element,
-adapted from the ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
+`SlideRingHero` (`apps/web/src/routes/landing/SlideRingHero.tsx`) is a DOM ring adapted from the
+ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
 
-- The background is the SlideSage signature navy (`#161b27`) with the app's soft top glow, so
-  the canvas blends into the page shell.
-- The wordmark `slidesage` sits at the center, fitted by measurement to at most 52 percent of
-  the frame width so the ring clears it at rest.
-- Twelve 4:3 plates are arranged on a tilted ellipse. Plates behind the wordmark draw first,
-  the wordmark next, plates in front last, so orbiting plates pass over the text exactly as in
-  the reference.
+- The background is the SlideSage signature navy (`#161b27`) with the app's soft top glow.
+- The wordmark is the shipped `icon.webp` itself — same script face, same halo — centered with
+  layered `drop-shadow` filters, so the mark on the page matches the product icon exactly.
+- Fifteen plates sit on a tilted ellipse. Plates behind the wordmark render at a lower z-index,
+  plates in front above it, so orbiting plates pass over the mark exactly as in the reference.
 - The ring holds still until the pointer arrives, then springs into orbit (stiffness 26,
   damping 5.7) and springs to a stop when the pointer leaves — the reference's own motion
   model. One revolution takes 26 seconds.
 - `prefers-reduced-motion: reduce` disables the orbit entirely; the ring renders one static
   frame.
 
-## Static Slide Plates
+## The Plates
 
-The plates are fixed images, not live slides. At startup each entry in
-`apps/web/src/routes/landing/slide-examples.ts` is painted once into an offscreen canvas
-(640x480) and never re-rendered:
+Each plate is a real slide rendered by the production pipeline — `SlideRenderer` inside
+`ScaledSlide` at the canonical 1280x720 16:9 canvas, scaled down to plate size — the same
+implementation the viewer and the marketplace previews use. Plates are positioned, faded, and
+scaled per frame, but their content never changes.
 
-- The plate background is the theme's own flat colour shaded by a procedural value-noise field
-  (never a gradient), finished with a fine grain overlay — the reference's matte treatment.
-- The slide's content is set in the theme's real visual system from `getTemplate`: eyebrow in
-  the accent colour, title in the theme's display face (shrunk to fit two lines before falling
-  back to an ellipsis), subtitle in the muted tone, and the lower half shows the slide's stats
-  or bullet lines.
-- The twelve examples span eight themes — Midnight Terminal, Neon District, Terra Mesa, Concrete
-  Brutal, Velvet Marquee, Bubblegum Pop, Elegant Serif, and Draft Board — using the sample deck
-  copy authored for the landing page.
+`apps/web/src/routes/landing/slide-examples.ts` defines the plates:
+
+- Nine authored slides across Midnight Terminal, Neon District, Terra Mesa, Concrete Brutal, and
+  Editorial Ledger, using the sample deck copy written for the landing page.
+- All six marketplace themes, reusing each item's own `previewSlide` from the catalog.
+- The list is interleaved round-robin by theme, so two slides from one visual system never sit
+  side by side on the ring (including across the wrap from last to first).
 
 ## Files
 
-- `apps/web/src/routes/landing/LandingPage.tsx` — page composition: header, hero, tagline,
-  calls to action, footer.
-- `apps/web/src/routes/landing/SlideRingHero.tsx` — canvas hero: plate painting, ring
-  geometry, wordmark, spring orbit.
-- `apps/web/src/routes/landing/slide-examples.ts` — the frozen slide examples painted onto the
-  plates.
+- `apps/web/src/routes/landing/LandingPage.tsx` — full-viewport page shell.
+- `apps/web/src/routes/landing/SlideRingHero.tsx` — ring geometry, spring orbit, wordmark.
+- `apps/web/src/routes/landing/slide-examples.ts` — plate definitions and theme interleaving.
 - `apps/web/src/app/router/EntranceRoute.tsx` — auth-aware index route.
-- `apps/web/src/test/routes/landing/LandingPage.test.tsx` — render, route, and example-data
-  tests.
+- `apps/web/src/test/routes/landing/LandingPage.test.tsx` — render, route, and plate tests.
