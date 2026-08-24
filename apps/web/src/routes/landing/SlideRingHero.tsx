@@ -41,7 +41,7 @@ export function SlideRingHero() {
 			const radiusX = Math.min(width * 0.4, 540);
 			/* the plate base size only changes on resize, so layout work stays
 			   out of the frame loop */
-			const plateWidth = radiusX * 0.38;
+			const plateWidth = radiusX * 0.34;
 			for (const plate of plates) {
 				plate.style.width = `${plateWidth}px`;
 			}

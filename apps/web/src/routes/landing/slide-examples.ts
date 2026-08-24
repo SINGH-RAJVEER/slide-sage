@@ -1,15 +1,24 @@
-import type { ContentSlide, ThemeId } from "@slidesage/types";
+import type {
+	ChartConfig,
+	ChartSlide,
+	ContentSlide,
+	StructuredSlide,
+	ThemeId,
+} from "@slidesage/types";
 import { MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
+import { getTemplate } from "@slidesage/ui/lib/templates";
 
 /**
  * The plates orbiting the wordmark. Each is a real slide rendered by the
  * production SlideRenderer at 16:9 and scaled down inside its plate — the
- * same pipeline the viewer and the marketplace previews use.
+ * same pipeline the viewer and the marketplace previews use. The mix spans
+ * content, quotes, charts, tables, and comparisons on purpose, so the ring
+ * shows the range of slides SlideSage can produce.
  */
 export interface LandingPlate {
 	id: string;
 	themeId: ThemeId;
-	slide: ContentSlide;
+	slide: StructuredSlide;
 }
 
 function coverSlide(
@@ -17,7 +26,9 @@ function coverSlide(
 	themeId: ThemeId,
 	title: string,
 	subtitle: string,
-	overrides: Partial<Pick<ContentSlide, "eyebrow" | "tone" | "pattern" | "density">> = {},
+	overrides: Partial<
+		Pick<ContentSlide, "eyebrow" | "tone" | "pattern" | "density" | "regionLabels">
+	> = {},
 ): LandingPlate {
 	return {
 		id,
@@ -44,7 +55,9 @@ function contentSlide(
 	subtitle: string,
 	layout: ContentSlide["layout"],
 	blocks: ContentSlide["blocks"],
-	overrides: Partial<Pick<ContentSlide, "eyebrow" | "tone" | "pattern" | "density">> = {},
+	overrides: Partial<
+		Pick<ContentSlide, "eyebrow" | "tone" | "pattern" | "density" | "regionLabels">
+	> = {},
 ): LandingPlate {
 	return {
 		id,
@@ -62,6 +75,30 @@ function contentSlide(
 			...overrides,
 		},
 	};
+}
+
+function chartSlide(
+	id: string,
+	themeId: ThemeId,
+	type: ChartConfig["type"],
+	title: string,
+	description: string,
+	data: ChartConfig["data"],
+): LandingPlate {
+	const colors = getTemplate(themeId).visual.chartColors;
+	const config: ChartConfig = { type, title, description, data };
+	if (type === "doughnut" || type === "pie" || type === "polarArea") {
+		for (const dataset of config.data.datasets) {
+			dataset.backgroundColor = colors.slice(0, dataset.data.length);
+			dataset.borderColor = colors.slice(0, dataset.data.length);
+		}
+	}
+	const slide: ChartSlide = {
+		id: `${id}-slide`,
+		type: "chart",
+		chartConfig: config,
+	};
+	return { id, themeId, slide };
 }
 
 const authored: LandingPlate[] = [
@@ -231,6 +268,132 @@ const authored: LandingPlate[] = [
 			eyebrow: "The argument",
 			density: "airy",
 		},
+	),
+	chartSlide(
+		"midnight-trend",
+		"modern-dark",
+		"line",
+		"Adoption keeps compounding",
+		"Decks generated per week since launch",
+		{
+			labels: ["W1", "W4", "W8", "W12", "W16"],
+			datasets: [
+				{
+					label: "Decks",
+					data: [42, 96, 188, 340, 610],
+					borderColor: getTemplate("modern-dark").visual.chartColors[0],
+					backgroundColor: `${getTemplate("modern-dark").visual.chartColors[0]}2E`,
+					borderWidth: 3,
+					fill: true,
+				},
+			],
+		},
+	),
+	chartSlide(
+		"neon-mix",
+		"neon-district",
+		"doughnut",
+		"Where the night crowd came from",
+		"Launch traffic by channel",
+		{
+			labels: ["Stream", "Waitlist", "Resellers"],
+			datasets: [{ label: "Share", data: [48, 34, 18] }],
+		},
+	),
+	chartSlide(
+		"terra-harvest",
+		"terra-mesa",
+		"bar",
+		"Two firings, four seasons",
+		"Pieces out of the kiln by season",
+		{
+			labels: ["Spring", "Summer", "Autumn", "Winter"],
+			datasets: [
+				{
+					label: "Pieces",
+					data: [120, 85, 160, 40],
+					backgroundColor: getTemplate("terra-mesa").visual.chartColors[0],
+					borderWidth: 0,
+				},
+			],
+		},
+	),
+	chartSlide(
+		"bubblegum-circle",
+		"bubblegum-pop",
+		"polarArea",
+		"What the members came for",
+		"Club survey, one pick each",
+		{
+			labels: ["Events", "Swaps", "Perks", "Community"],
+			datasets: [{ label: "Votes", data: [214, 168, 96, 240] }],
+		},
+	),
+	contentSlide(
+		"draft-table",
+		"draft-board",
+		"Every tolerance on one sheet",
+		"Spec review for the Mk III assembly",
+		"body",
+		[
+			{
+				id: "draft-spec",
+				type: "table",
+				region: "main",
+				headers: ["Check", "Spec", "Measured", "Status"],
+				rows: [
+					["Bearing seat", "0.02 mm", "0.019 mm", "Pass"],
+					["Load path", "12 kN", "12.4 kN", "Pass"],
+					["Clearance", "0.05 mm", "0.03 mm", "Rev C"],
+				],
+			},
+		],
+		{ eyebrow: "Sheet 01 / Rev C", pattern: "grid" },
+	),
+	contentSlide(
+		"brutal-versus",
+		"concrete-brutal",
+		"Rebuild the line or retool it",
+		"The two options, costed without mercy",
+		"comparison",
+		[
+			{
+				id: "brutal-rebuild",
+				type: "bullets",
+				region: "primary",
+				ordered: false,
+				items: ["Six weeks of downtime", "Full budget hit up front", "Ten-year runway"],
+			},
+			{
+				id: "brutal-retool",
+				type: "bullets",
+				region: "secondary",
+				ordered: false,
+				items: ["Two weekends of work", "A third of the cost", "Five-year runway"],
+			},
+		],
+		{
+			eyebrow: "Straight talk",
+			pattern: "grid",
+			regionLabels: { primary: "Rebuild", secondary: "Retool" },
+		},
+	),
+	contentSlide(
+		"editorial-quote",
+		"elegant-serif",
+		"On the reader's objection",
+		"Notes from the editorial desk",
+		"quote",
+		[
+			{
+				id: "editorial-quote-block",
+				type: "quote",
+				region: "primary",
+				text: "The objection you avoid is the argument you lose. Answer it first, and the room leans in.",
+				attribution: "The editorial desk",
+			},
+		],
+		{ eyebrow: "The argument", density: "airy" },
 	),
 ];
 
