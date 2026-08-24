@@ -1,6 +1,7 @@
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
+import EntranceRoute from "@/app/router/EntranceRoute";
 import RequireSignedInLayout from "@/app/router/RequireSignedInLayout";
 import RootLayout from "@/app/router/RootLayout";
 import ForgotPasswordPage from "@/routes/auth/ForgotPasswordPage";
@@ -9,7 +10,6 @@ import SignInPage from "@/routes/auth/SignInPage";
 import SignUpPage from "@/routes/auth/SignUpPage";
 import VerifyEmailPage from "@/routes/auth/VerifyEmailPage";
 import NotFoundPage from "@/routes/NotFoundPage";
-import HomePage from "@/routes/presentations/HomePage";
 import RouteErrorPage from "@/routes/RouteErrorPage";
 import ProfilePage from "@/routes/settings/ProfilePage";
 import SettingsPage from "@/routes/settings/SettingsPage";
@@ -27,6 +27,7 @@ export const router = createBrowserRouter([
 		errorElement: <RouteErrorPage />,
 		hydrateFallbackElement: <LoadingScreen label="Loading page" />,
 		children: [
+			{ index: true, element: <EntranceRoute /> },
 			{ path: "sign-in/*", element: <SignInPage /> },
 			{ path: "sign-up/*", element: <SignUpPage /> },
 			{ path: "sign-up/verify-email", element: <VerifyEmailPage /> },
@@ -35,7 +36,6 @@ export const router = createBrowserRouter([
 			{
 				element: <RequireSignedInLayout />,
 				children: [
-					{ index: true, element: <HomePage /> },
 					{ path: "profile", element: <ProfilePage /> },
 					{ path: "settings", element: <SettingsPage /> },
 					{
