@@ -23,8 +23,9 @@ ThreeUI Gallery Heading reference (matte variant, rising-diagonal axis):
   face, loaded from Google Fonts), with the icon's steel-blue fill, dark navy outline under the
   fill via `paint-order: stroke`, and a halo from a blurred lighter-blue copy behind. It stays
   crisp at any display size.
-- Fifteen plates sit on a tilted ellipse. Plates behind the wordmark render at a lower z-index,
-  plates in front above it, so orbiting plates pass over the mark exactly as in the reference.
+- Twenty-two plates sit on a tilted ellipse. Plates behind the wordmark render at a lower
+  z-index, plates in front above it, so orbiting plates pass over the mark exactly as in the
+  reference.
 - The ring holds still until the pointer arrives, then springs into orbit (stiffness 26,
   damping 5.7) and springs to a stop when the pointer leaves — the reference's own motion
   model. One revolution takes 26 seconds.
@@ -40,8 +41,11 @@ scaled per frame, but their content never changes.
 
 `apps/web/src/routes/landing/slide-examples.ts` defines the plates:
 
-- Nine authored slides across Midnight Terminal, Neon District, Terra Mesa, Concrete Brutal, and
-  Editorial Ledger, using the sample deck copy written for the landing page.
+- Sixteen authored slides across Midnight Terminal, Neon District, Terra Mesa, Concrete Brutal,
+  Elegant Serif, Draft Board, and Bubblegum Pop, using sample deck copy written for the landing
+  page. The mix deliberately spans slide kinds: covers, bullet and stats pages, a spec table, a
+  side-by-side comparison, quote slides, and live charts (line, doughnut, bar, and polar area,
+  each coloured by its theme's chart palette).
 - All six marketplace themes, reusing each item's own `previewSlide` from the catalog.
 - The list is interleaved round-robin by theme, so two slides from one visual system never sit
   side by side on the ring (including across the wrap from last to first).
