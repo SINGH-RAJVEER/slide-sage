@@ -83,7 +83,7 @@ describe("Landing plates", () => {
 		expect(themeIds.has("bubblegum-pop")).toBe(true);
 		for (const plate of LANDING_PLATES) {
 			expect(getTemplate(plate.themeId)).toBeDefined();
-			expect(plate.slide.type).toBe("content");
+			expect(["content", "chart"]).toContain(plate.slide.type);
 		}
 	});
 
@@ -97,5 +97,18 @@ describe("Landing plates", () => {
 		const first = LANDING_PLATES[0];
 		const last = LANDING_PLATES[LANDING_PLATES.length - 1];
 		expect(first?.themeId).not.toBe(last?.themeId);
+	});
+
+	it("mixes quotes, charts, tables, and comparisons into the ring", () => {
+		const slides = LANDING_PLATES.map((plate) => plate.slide);
+		const chartTypes = new Set(
+			slides.filter((s) => s.type === "chart").map((s) => s.chartConfig.type),
+		);
+		expect(chartTypes.size).toBeGreaterThanOrEqual(3);
+		const blocks = slides.flatMap((s) => (s.type === "content" ? s.blocks : []));
+		expect(blocks.some((block) => block.type === "quote")).toBe(true);
+		expect(blocks.some((block) => block.type === "table")).toBe(true);
+		expect(slides.some((s) => s.type === "content" && s.layout === "comparison")).toBe(true);
+		expect(slides.some((s) => s.type === "content" && s.layout === "quote")).toBe(true);
 	});
 });
