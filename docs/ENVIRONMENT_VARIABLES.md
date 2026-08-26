@@ -79,7 +79,7 @@ continue between HTTP requests.
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | Yes for default generation and embeddings | None | Server OpenRouter authentication; BYOK replaces only generation calls |
-| `OPEN_ROUTER_MODEL` | No | `stealth/ox-alpha` | Generation model; ox-alpha is OpenRouter's stealth preview tier |
+| `OPEN_ROUTER_MODEL` | No | `z-ai/glm-5.2:free` | Generation model; the free GLM 5.2 variant is used because GLM 5.3 Flash is paid |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | Not used | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |
@@ -90,7 +90,7 @@ continue between HTTP requests.
 Presentation requests without a valid user provider connection use OpenRouter
 strict JSON Schema output and consume SlideSage points. OpenRouter provider
 fallback remains enabled so transient outages can route to another compatible
-endpoint. The default model incurs OpenRouter usage charges; set
+endpoint. The default model is OpenRouter's free GLM 5.2 variant; set
 `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is
 required. Valid BYOK connections replace this generation path but do not replace
 the server embedding configuration.
