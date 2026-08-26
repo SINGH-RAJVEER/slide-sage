@@ -1,9 +1,5 @@
 # build
-arg BUILDPLATFORM=linux/amd64
-from --platform=$BUILDPLATFORM golang:1.26-alpine as build
-
-arg TARGETOS=linux
-arg TARGETARCH=amd64
+from --platform=$BUILDPLATFORM docker.io/library/golang:1.26-alpine as build
 
 workdir /src/apps/api
 
