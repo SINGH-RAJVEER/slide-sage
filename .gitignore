@@ -7,6 +7,11 @@ node_modules/
 .direnv/
 .DS_Store
 
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+
 # web
 apps/web/node_modules
 apps/web/out

@@ -30,6 +30,7 @@ Justfile        Common development commands
 - [Development setup](docs/DEVELOPMENT_SETUP.md)
 - [Environment variables](docs/ENVIRONMENT_VARIABLES.md)
 - [CI/CD: Artifact Registry and Cloud Run](docs/CI_CD.md)
+- [Production infrastructure](docs/PRODUCTION_INFRASTRUCTURE.md)
 - [Architecture](docs/API_ARCHITECTURE.md)
 - [API reference](docs/API_OVERVIEW.md)
 - [Authentication](docs/AUTH_API.md)
