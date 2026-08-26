@@ -1,16 +1,10 @@
 # Authentication
 
-SlideSage exposes a JWT-backed browser contract at `/auth`. It supports email and
-password sign-in, six-digit email OTP verification, password reset, Google OAuth,
-GitHub OAuth, an HTTP-only JWT cookie, and sign-out.
+SlideSage exposes a JWT-backed browser contract at `/auth`. It supports email and password sign-in, six-digit email OTP verification, password reset, Google OAuth, GitHub OAuth, an HTTP-only JWT cookie, and sign-out.
 
 The implementation is owned by the Go API in `apps/api/internal/auth`.
 
-Auth tokens are short-lived HS256 JWTs generated and verified by the Go service
-via `github.com/golang-jwt/jwt/v5` (`apps/api/internal/auth/jwt.go`) and stored
-as an HTTP-only cookie. The JWT carries the user id as the `sub`
-claim, the user email, and `exp`/`iat` registered claims. Sign-in, email
-verification, and OAuth callbacks all issue a JWT.
+Auth tokens are short-lived HS256 JWTs generated and verified by the Go service via `github.com/golang-jwt/jwt/v5` (`apps/api/internal/auth/jwt.go`) and stored as an HTTP-only cookie. The JWT carries the user id as the `sub` claim, the user email, and `exp`/`iat` registered claims. Sign-in, email verification, and OAuth callbacks all issue a JWT.
 
 ## Configuration
 
@@ -39,160 +33,75 @@ Register these callback URLs with the providers:
 - `${BASE_URL}/auth/callback/google`
 - `${BASE_URL}/auth/callback/github`
 
-The production frontend uses `https://slidesage.app`, while the browser-facing API
-uses `https://api.slidesage.app`. Set `VITE_API_URL=https://api.slidesage.app` in
-the web build without a trailing `/api`; the client sends requests directly to endpoint paths.
-The API must allow the frontend in `CORS_ORIGINS` and in the trusted-origin list
-used to validate OAuth `callbackURL` values (configured via
-`BETTER_AUTH_TRUSTED_ORIGINS`, falling back to `CORS_ORIGINS`). Authentication
-fetches include credentials, and production JWT cookies use `Secure` and
-`SameSite=None` for the cross-origin requests.
-The web build script also pins `NODE_ENV=production` so production bundles use
-React's production runtime and Bun's production environment flags even when the
-calling shell defaults to development.
+The production frontend uses `https://slidesage.app`, while the browser-facing API uses `https://api.slidesage.app`. Set `VITE_API_URL=https://api.slidesage.app` in the web build without a trailing `/api`; the client sends requests directly to endpoint paths. The API must allow the frontend in `CORS_ORIGINS` and in the trusted-origin list used to validate OAuth `callbackURL` values (configured via `BETTER_AUTH_TRUSTED_ORIGINS`, falling back to `CORS_ORIGINS`). Authentication fetches include credentials, and production JWT cookies use `Secure` and `SameSite=None` for the cross-origin requests. The web build script also pins `NODE_ENV=production` so production bundles use React's production runtime and Bun's production environment flags even when the calling shell defaults to development.
 
-Google and GitHub authentication buttons, along with the email sign-up and
-sign-in actions, provide immediate press feedback while respecting
-reduced-motion preferences.
-Email sign-in includes a Remember me checkbox. It is enabled by default and gives
-the JWT cookie an expiry. Clearing it makes the cookie last only for the current
-browser session. The server still authenticates only the JWT.
+Google and GitHub authentication buttons, along with the email sign-up and sign-in actions, provide immediate press feedback while respecting reduced-motion preferences. Email sign-in includes a Remember me checkbox. It is enabled by default and gives the JWT cookie an expiry. Clearing it makes the cookie last only for the current browser session. The server still authenticates only the JWT.
 
-For local development, `BASE_URL` defaults to `http://localhost:8000` and the
-trusted origin defaults to `http://localhost:5173`.
+For local development, `BASE_URL` defaults to `http://localhost:8000` and the trusted origin defaults to `http://localhost:5173`.
 
-The JWT cookie is HTTP-only. Local HTTP development uses `SameSite=Lax`;
-HTTPS deployments use `Secure` and `SameSite=None` so configured cross-origin web
-deployments can send the JWT cookie. The Go service rejects HTTPS auth
-initialization when `AUTH_SECRET` is missing or shorter than 32 characters,
-preventing deployment from silently using a development secret.
+The JWT cookie is HTTP-only. Local HTTP development uses `SameSite=Lax`; HTTPS deployments use `Secure` and `SameSite=None` so configured cross-origin web deployments can send the JWT cookie. The Go service rejects HTTPS auth initialization when `AUTH_SECRET` is missing or shorter than 32 characters, preventing deployment from silently using a development secret.
 
-The frontend retries transient auth lookup failures before treating a user
-as signed out, preventing route-guard loops during brief API or database startup
-failures.
+The frontend retries transient auth lookup failures before treating a user as signed out, preventing route-guard loops during brief API or database startup failures.
 
-The frontend checks the JWT once at startup. Returning focus to the app only
-revalidates the token when its last check is at least five minutes old, and
-overlapping background checks share one request. Authentication transitions
-bypass an older in-flight check so a pre-sign-in response cannot overwrite the
-new auth result. Point balance changes from generation and payment verification are
-applied from those operations' server responses instead of fetching the entire
-user record again.
+The frontend checks the JWT once at startup. Returning focus to the app only revalidates the token when its last check is at least five minutes old, and overlapping background checks share one request. Authentication transitions bypass an older in-flight check so a pre-sign-in response cannot overwrite the new auth result. Point balance changes from generation and payment verification are applied from those operations' server responses instead of fetching the entire user record again.
 
-Sign-out invalidates pending auth refreshes before clearing the JWT
-cookie. This prevents an older auth response from restoring the signed-out
-user in the frontend.
+Sign-out invalidates pending auth refreshes before clearing the JWT cookie. This prevents an older auth response from restoring the signed-out user in the frontend.
 
 ## Primary endpoints
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/auth/sign-up/email` | Create an email/password account |
-| `POST` | `/auth/email-otp/send-verification-otp` | Send or replace an email OTP |
-| `POST` | `/auth/email-otp/verify-email` | Verify an email OTP |
-| `POST` | `/auth/sign-in/email` | Sign in with email and password |
-| `POST` | `/auth/email-otp/request-password-reset` | Send or replace a reset OTP |
-| `POST` | `/auth/email-otp/reset-password` | Set a password using the OTP |
-| `GET` | `/auth/get-session` | Validate the JWT and return the current user |
-| `POST` | `/auth/sign-out` | Clear the JWT cookie |
-| `GET` | `/auth/callback/google` | Google callback |
-| `GET` | `/auth/callback/github` | GitHub callback |
-| `POST` | `/profile/email/verify` | Complete a pending authenticated email change |
+| Method | Path                                     | Purpose                                       |
+| ------ | ---------------------------------------- | --------------------------------------------- |
+| `POST` | `/auth/sign-up/email`                    | Create an email/password account              |
+| `POST` | `/auth/email-otp/send-verification-otp`  | Send or replace an email OTP                  |
+| `POST` | `/auth/email-otp/verify-email`           | Verify an email OTP                           |
+| `POST` | `/auth/sign-in/email`                    | Sign in with email and password               |
+| `POST` | `/auth/email-otp/request-password-reset` | Send or replace a reset OTP                   |
+| `POST` | `/auth/email-otp/reset-password`         | Set a password using the OTP                  |
+| `GET`  | `/auth/get-session`                      | Validate the JWT and return the current user  |
+| `POST` | `/auth/sign-out`                         | Clear the JWT cookie                          |
+| `GET`  | `/auth/callback/google`                  | Google callback                               |
+| `GET`  | `/auth/callback/github`                  | GitHub callback                               |
+| `POST` | `/profile/email/verify`                  | Complete a pending authenticated email change |
 
-The web application uses the endpoints listed above plus
-`POST /auth/sign-in/social` to start OAuth flows. Use the custom fetch-based
-client in `libs/ui/lib/auth-client.ts` for supported browser flows; it sends
-credentials with every request and throws an `AuthError` carrying the backend
-`code` (for example `EMAIL_NOT_VERIFIED` or `INVALID_EMAIL_OR_PASSWORD`).
+The web application uses the endpoints listed above plus `POST /auth/sign-in/social` to start OAuth flows. Use the custom fetch-based client in `libs/ui/lib/auth-client.ts` for supported browser flows; it sends credentials with every request and throws an `AuthError` carrying the backend `code` (for example `EMAIL_NOT_VERIFIED` or `INVALID_EMAIL_OR_PASSWORD`).
 
 ## Password and email changes
 
-`PUT /profile` keeps account-security mutations behind a valid JWT
-and current-password verification:
+`PUT /profile` keeps account-security mutations behind a valid JWT and current-password verification:
 
-- A password-only request must include non-empty `currentPassword` and
-  `newPassword`. The route verifies the current password, writes an
-  scrypt hash. Existing JWTs remain valid until they expire. Password changes cannot be combined with name or email
-  changes in the same request.
-- Starting an email change must include `currentPassword`. The route calls the
-  compatible password verifier, leaves the existing verified email unchanged, and
-  sends a user-bound six-digit code to the normalized new address. The response
-  returns `pending_email` and `verification_required`. A successfully delivered
-  replacement invalidates every older pending email-change code for that user.
-- `POST /profile/email/verify` accepts that pending `email` and `otp` from the
-  authenticated JWT. It atomically consumes the code, changes the email,
-  keeps the account verified because the new address has just been proven, and
-  invalidates sign-in, reset, and verification OTPs for the old and new address.
-- A user who cannot verify the current password must first complete the
-  password-reset OTP flow. Reset verifies the emailed OTP before accepting a new
-  password. Existing JWTs remain valid until they expire. The new password can then be used as
-  the current-password proof for an email change.
+- A password-only request must include non-empty `currentPassword` and `newPassword`. The route verifies the current password, writes an scrypt hash. Existing JWTs remain valid until they expire. Password changes cannot be combined with name or email changes in the same request.
+- Starting an email change must include `currentPassword`. The route calls the compatible password verifier, leaves the existing verified email unchanged, and sends a user-bound six-digit code to the normalized new address. The response returns `pending_email` and `verification_required`. A successfully delivered replacement invalidates every older pending email-change code for that user.
+- `POST /profile/email/verify` accepts that pending `email` and `otp` from the authenticated JWT. It atomically consumes the code, changes the email, keeps the account verified because the new address has just been proven, and invalidates sign-in, reset, and verification OTPs for the old and new address.
+- A user who cannot verify the current password must first complete the password-reset OTP flow. Reset verifies the emailed OTP before accepting a new password. Existing JWTs remain valid until they expire. The new password can then be used as the current-password proof for an email change.
 
-For older accounts, the password verifier can read a 64-character
-SHA-256 hash or a legacy `pbkdf2-sha256` hash. A successful email/password sign-in lazily replaces
-that hash with a new scrypt hash. It also converts the old `email` provider
-account record to the `credential` provider format when necessary. Failed
-password checks never trigger an upgrade.
+For older accounts, the password verifier can read a 64-character SHA-256 hash or a legacy `pbkdf2-sha256` hash. A successful email/password sign-in lazily replaces that hash with a new scrypt hash. It also converts the old `email` provider account record to the `credential` provider format when necessary. Failed password checks never trigger an upgrade.
 
 ## OTP delivery
 
-OTP email addresses are trimmed and lowercased. Verification and password-reset
-codes contain six digits and expire after 15 minutes.
+OTP email addresses are trimmed and lowercased. Verification and password-reset codes contain six digits and expire after 15 minutes.
 
-When replacing an OTP, including an authenticated email-change code, the API
-serializes replacement by identifier and keeps the previous record until Resend
-has accepted the replacement email. Success removes the superseded record. An
-email delivery failure removes only the newly-created, unusable record,
-preserving a previously valid code.
+When replacing an OTP, including an authenticated email-change code, the API serializes replacement by identifier and keeps the previous record until Resend has accepted the replacement email. Success removes the superseded record. An email delivery failure removes only the newly-created, unusable record, preserving a previously valid code.
 
-If Resend reports an error, exceeds `EMAIL_DELIVERY_TIMEOUT_MS` (10 seconds by
-default), or if `RESEND_API_KEY` is missing in production, the
-send and reset-request wrappers return `503` with `Email delivery is temporarily
-unavailable`; those error cases do not report success for an undelivered code.
-Development without a Resend key skips delivery and logs a warning without
-logging the OTP. The API can still return success and replace the previous
-OTP in that development-only case even though no email was sent. Use a configured
-test sender when the code must be received.
+If Resend reports an error, exceeds `EMAIL_DELIVERY_TIMEOUT_MS` (10 seconds by default), or if `RESEND_API_KEY` is missing in production, the send and reset-request wrappers return `503` with `Email delivery is temporarily unavailable`; those error cases do not report success for an undelivered code. Development without a Resend key skips delivery and logs a warning without logging the OTP. The API can still return success and replace the previous OTP in that development-only case even though no email was sent. Use a configured test sender when the code must be received.
 
-OTP, sign-in, and sign-up routes are rate limited by normalized email and client
-IP. See [RATE_LIMITING.md](RATE_LIMITING.md) for the exact limits, `429` response,
-and deployment caveat.
+OTP, sign-in, and sign-up routes are rate limited by normalized email and client IP. See [RATE_LIMITING.md](RATE_LIMITING.md) for the exact limits, `429` response, and deployment caveat.
 
 ## Behavior
 
 - Email/password accounts must verify their email before normal use.
-- Sign-in with a correct password and repeated sign-up for an existing unverified
-  address both send a fresh OTP and continue on the verification page. A verified
-  address still receives the normal `Email already in use` response during sign-up.
-  Coded authentication failures use a top-level `code` and `message`
-  response shape so the browser can distinguish `EMAIL_NOT_VERIFIED`.
+- Sign-in with a correct password and repeated sign-up for an existing unverified address both send a fresh OTP and continue on the verification page. A verified address still receives the normal `Email already in use` response during sign-up. Coded authentication failures use a top-level `code` and `message` response shape so the browser can distinguish `EMAIL_NOT_VERIFIED`.
 - Verification OTPs expire after 15 minutes.
-- Unverified credential-only accounts are retained for 24 hours. Cleanup runs at
-  API startup and hourly, deleting expired accounts only when they have no active
-   verification code or linked OAuth provider. Associated email
-  verification and password-reset records are removed with the account.
-- Resending a verification OTP disables the resend action during its cooldown;
-  the cooldown text is the resend confirmation.
+- Unverified credential-only accounts are retained for 24 hours. Cleanup runs at API startup and hourly, deleting expired accounts only when they have no active verification code or linked OAuth provider. Associated email verification and password-reset records are removed with the account.
+- Resending a verification OTP disables the resend action during its cooldown; the cooldown text is the resend confirmation.
 - Successful verification signs the user in.
-- Development without `RESEND_API_KEY` logs only that delivery was skipped; it
-  never logs the code.
+- Development without `RESEND_API_KEY` logs only that delivery was skipped; it never logs the code.
 - The authenticated user includes the server-owned `slideTokens` field.
-- API authorization uses the JWT cookie or an `Authorization: Bearer <jwt>`
-  header; both resolve to the same user identity.
-- Password-reset completion changes the password but cannot revoke already-issued
-  JWTs. Those tokens remain valid until they expire.
-- The sign-in wrapper upgrades older email credential records only when the
-  supplied password matches their old hash.
+- API authorization uses the JWT cookie or an `Authorization: Bearer <jwt>` header; both resolve to the same user identity.
+- Password-reset completion changes the password but cannot revoke already-issued JWTs. Those tokens remain valid until they expire.
+- The sign-in wrapper upgrades older email credential records only when the supplied password matches their old hash.
 
 Browser requests must send credentials.
 
 ## JWT tokens
 
-Auth tokens are HS256 JWTs from `github.com/golang-jwt/jwt/v5`, signed with
-`AUTH_SECRET`, carrying the user id as the `sub` claim, the user email, and
-`exp`/`iat` registered claims. Verification enforces the HS256 signing method
-and requires a present, unexpired `exp`. The same
-The HTTP-only `slidesage_token` cookie contains the JWT itself. `GET
-/auth/get-session` validates that JWT from the cookie or bearer header and returns
-the current user. Sign-out clears the cookie. A bearer token remains usable until
-its `exp` claim expires because the API has no server-side session store.
+Auth tokens are HS256 JWTs from `github.com/golang-jwt/jwt/v5`, signed with `AUTH_SECRET`, carrying the user id as the `sub` claim, the user email, and `exp`/`iat` registered claims. Verification enforces the HS256 signing method and requires a present, unexpired `exp`. The same The HTTP-only `slidesage_token` cookie contains the JWT itself. `GET /auth/get-session` validates that JWT from the cookie or bearer header and returns the current user. Sign-out clears the cookie. A bearer token remains usable until its `exp` claim expires because the API has no server-side session store.

@@ -134,16 +134,16 @@ Remove unexpected `roles/run.admin`, `roles/run.developer`, or `roles/run.invoke
 
 Create secrets in Settings -> Secrets and variables -> Actions:
 
-| Secret | Value |
-| --- | --- |
-| `GCP_PROJECT_ID` | `slidesage-504414` |
-| `GCP_WIF_PROVIDER` | `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/slidesage/providers/github` |
+| Secret                | Value                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| `GCP_PROJECT_ID`      | `slidesage-504414`                                          |
+| `GCP_WIF_PROVIDER`    | `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/slidesage/providers/github` |
 | `GCP_SERVICE_ACCOUNT` | `slidesage-deploy@slidesage-504414.iam.gserviceaccount.com` |
 
 Optional variable:
 
-| Variable | Value | Purpose |
-| --- | --- | --- |
+| Variable        | Value                                                               | Purpose                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `API_AUTH_FLAG` | `--allow-unauthenticated` (default) or `--no-allow-unauthenticated` | Whether Cloud Run requires Google IAM authentication before requests reach the API. Keep the default while browsers and external webhooks call the public API. Application authentication still protects private routes. |
 
 ## Secret Manager
@@ -183,10 +183,10 @@ If the database is Cloud SQL, add `--add-cloudsql-instances=<INSTANCE_CONNECTION
 
 ## Cloud Run service settings
 
-| Service | Port | Instances | Concurrency | Notes |
-| --- | --- | --- | --- | --- |
-| `api` | 8000 | min 0, max 10 | 80 | Scales from zero on traffic |
-| `worker` | 8080 | min 1, max 1 | 1 | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`; one always-warm instance is billed continuously. |
+| Service | Port | Instances     | Concurrency | Notes                       |
+| ------- | ---- | ------------- | ----------- | --------------------------- |
+| `api`   | 8000 | min 0, max 10 | 80          | Scales from zero on traffic |
+| `worker` | 8080 | min 1, max 1  | 1           | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`; one always-warm instance is billed continuously. |
 
 The worker is not request-driven, so a `min-instances=1` keeps a warm, always-on instance polling Postgres. River uses row-level `SKIP LOCKED` so scaling out further is safe if needed.
 
@@ -194,11 +194,11 @@ The worker is not request-driven, so a `min-instances=1` keeps a warm, always-on
 
 The deployment workflow pins each service's ingress instead of inheriting a mutable Cloud Run default:
 
-| Resource | Ingress | Invocation policy |
-| --- | --- | --- |
-| `api` | `internal-and-cloud-load-balancing` | Public at the Cloud Run IAM layer by default because browsers and external webhooks call it; application authentication protects private routes. Internet traffic must pass through the external HTTPS load balancer. |
-| `worker` | `internal` | Private. It polls PostgreSQL and has no Pub/Sub, Cloud Tasks, Eventarc, or API invoker, so it needs no `roles/run.invoker` binding. |
-| `slidesage-migrate` | Not applicable | Cloud Run Job executed by the authenticated CI/CD identity. Jobs do not have service ingress settings. |
+| Resource            | Ingress                             | Invocation policy                                                                                                                                                                                                     |
+| ------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api`               | `internal-and-cloud-load-balancing` | Public at the Cloud Run IAM layer by default because browsers and external webhooks call it; application authentication protects private routes. Internet traffic must pass through the external HTTPS load balancer. |
+| `worker`            | `internal`                          | Private. It polls PostgreSQL and has no Pub/Sub, Cloud Tasks, Eventarc, or API invoker, so it needs no `roles/run.invoker` binding.                                                                                   |
+| `slidesage-migrate` | Not applicable                      | Cloud Run Job executed by the authenticated CI/CD identity. Jobs do not have service ingress settings.                                                                                                                |
 
 The API ingress setting blocks direct internet requests to its `run.app` URL. It also makes the external load balancer the enforcement point for any attached Cloud Armor policy. Do not change the API to `ingress=all` while the load balancer is the documented production entry point.
 

@@ -2,8 +2,7 @@
 
 ## Workspace
 
-SlideSage consists of a Go API, a durable Go generation worker, a React web
-application, shared TypeScript contracts, and shared UI components.
+SlideSage consists of a Go API, a durable Go generation worker, a React web application, shared TypeScript contracts, and shared UI components.
 
 ```text
 apps/api   Go API, River generation worker, migrations, repositories, providers
@@ -12,10 +11,7 @@ libs/types Shared API and presentation contracts
 libs/ui    Shared React UI primitives and slide renderer
 ```
 
-The Go API is the only application HTTP API. It owns authentication and JWT
-tokens, presentations, research submission, generation submission and event delivery,
-billing, BYOK connections, rate limiting, and PostgreSQL persistence. The
-generation worker owns queued AI provider execution.
+The Go API is the only application HTTP API. It owns authentication and JWT tokens, presentations, research submission, generation submission and event delivery, billing, BYOK connections, rate limiting, and PostgreSQL persistence. The generation worker owns queued AI provider execution.
 
 ## Runtime
 
@@ -38,85 +34,40 @@ The API entry point is `apps/api/cmd/api/main.go`. It exposes:
 - `/generation-jobs/{id}/cancel`
 - `/billing`
 
-The worker entry point is `apps/api/cmd/worker/main.go`. It consumes River v0.43
-jobs from PostgreSQL, executes generation and iteration, and exposes `/live` and
-`/ready` on its health port. API-to-worker communication is PostgreSQL-only.
+The worker entry point is `apps/api/cmd/worker/main.go`. It consumes River v0.43 jobs from PostgreSQL, executes generation and iteration, and exposes `/live` and `/ready` on its health port. API-to-worker communication is PostgreSQL-only.
 
-The API and worker use `database/sql` with PostgreSQL and pgvector. The migration
-entry point, `apps/api/cmd/migrate/main.go`, applies embedded Goose migrations
-from `apps/api/migrations` and then River's migrations. Migrations must complete
-before either runtime starts.
+The API and worker use `database/sql` with PostgreSQL and pgvector. The migration entry point, `apps/api/cmd/migrate/main.go`, applies embedded Goose migrations from `apps/api/migrations` and then River's migrations. Migrations must complete before either runtime starts.
 
 ## Generation
 
-Generation validates the request and performs a durable handoff before opening
-an SSE stream. One transaction reserves points, creates or updates the generating
-presentation state, creates the `generation_jobs` record and initial
-`generation_job_events`, and inserts the River queue job with `InsertTx`. The API
-then tails persisted events; a client or API stream disconnect does not stop the
-queued work.
+Generation validates the request and performs a durable handoff before opening an SSE stream. One transaction reserves points, creates or updates the generating presentation state, creates the `generation_jobs` record and initial `generation_job_events`, and inserts the River queue job with `InsertTx`. The API then tails persisted events; a client or API stream disconnect does not stop the queued work.
 
-The worker resolves the server OpenRouter model or encrypted user provider
-connection, calls the provider, and normalizes output to the bounded current
-presentation document. Output without substantive content is rejected.
-River bounds generation concurrency. Recovery uses a separate two-task limit,
-and the API validates independent BYOK provider catalogs concurrently with a
-limit of three requests. A process-wide one-request slot per provider prevents
-simultaneous configuration requests from flooding the same provider catalog.
-Successful generation settles the point reservation and persists the final
-document transactionally. Provider, validation, cancellation, and save failures
-finalize the operation and refund its active reservation transactionally.
+The worker resolves the server OpenRouter model or encrypted user provider connection, calls the provider, and normalizes output to the bounded current presentation document. Output without substantive content is rejected. River bounds generation concurrency. Recovery uses a separate two-task limit, and the API validates independent BYOK provider catalogs concurrently with a limit of three requests. A process-wide one-request slot per provider prevents simultaneous configuration requests from flooding the same provider catalog. Successful generation settles the point reservation and persists the final document transactionally. Provider, validation, cancellation, and save failures finalize the operation and refund its active reservation transactionally.
 
-River retries mean external provider execution is at-least-once. A provider can
-receive the same work more than once after an interruption, while operation
-status and ledger transactions ensure SlideSage settles or refunds the point
-reservation only once. See [GENERATION_WORKER.md](GENERATION_WORKER.md).
+River retries mean external provider execution is at-least-once. A provider can receive the same work more than once after an interruption, while operation status and ledger transactions ensure SlideSage settles or refunds the point reservation only once. See [GENERATION_WORKER.md](GENERATION_WORKER.md).
 
-Research preview uses Exa. Reviewed sources can be attached to generation and are
-persisted with the presentation for attribution.
+Research preview uses Exa. Reviewed sources can be attached to generation and are persisted with the presentation for attribution.
 
 ## Authentication
 
-Authentication is implemented in `apps/api/internal/auth`. The API supports
-email/password accounts, email verification OTPs, password reset OTPs, Google and
-GitHub OAuth, HTTP-only JWT cookies, sign-out, and authenticated
-profile security changes.
+Authentication is implemented in `apps/api/internal/auth`. The API supports email/password accounts, email verification OTPs, password reset OTPs, Google and GitHub OAuth, HTTP-only JWT cookies, sign-out, and authenticated profile security changes.
 
 ## Presentation Documents
 
-Presentation contracts shared with the web application live in `libs/types`.
-Schema-v5 content slides use bounded layouts, tones, densities, patterns, regions,
-and block types. The Go normalizer validates and limits provider and user-authored
-documents before persistence and rendering.
+Presentation contracts shared with the web application live in `libs/types`. Schema-v5 content slides use bounded layouts, tones, densities, patterns, regions, and block types. The Go normalizer validates and limits provider and user-authored documents before persistence and rendering.
 
-The web renderer displays content, chart, and scene slides. The viewer exports
-editable PowerPoint files from the presentation model and captures fixed-size
-rendered slides for PDF output.
+The web renderer displays content, chart, and scene slides. The viewer exports editable PowerPoint files from the presentation model and captures fixed-size rendered slides for PDF output.
 
 ## Persistence
 
-Repositories in `apps/api/internal` own SQL access. Route handlers validate HTTP
-input and translate service results; authentication, generation, research, AI
-provider, billing, and presentation logic remain in their respective packages.
+Repositories in `apps/api/internal` own SQL access. Route handlers validate HTTP input and translate service results; authentication, generation, research, AI provider, billing, and presentation logic remain in their respective packages.
 
-Point reservations use `generation_point_operations`. Reservation, final save,
-settlement, and refund paths use transactions and compare-and-swap revisions to
-prevent concurrent generation from overwriting a presentation.
+Point reservations use `generation_point_operations`. Reservation, final save, settlement, and refund paths use transactions and compare-and-swap revisions to prevent concurrent generation from overwriting a presentation.
 
-Migration `00015_add_generation_jobs.sql` adds the application job and event
-tables. River owns separate queue tables managed by `cmd/migrate`; queue rows are
-not the source of truth for user-visible job status or events.
+Migration `00015_add_generation_jobs.sql` adds the application job and event tables. River owns separate queue tables managed by `cmd/migrate`; queue rows are not the source of truth for user-visible job status or events.
 
-Generation SSE handlers copy event rows and close the query before writing to a
-client. Per-process and per-user stream limits bound handler and polling load.
-Expired rate-limit rows, expired generation reservations, terminated queue jobs,
-and unverified accounts are maintained by the worker rather than API request
-goroutines.
+Generation SSE handlers copy event rows and close the query before writing to a client. Per-process and per-user stream limits bound handler and polling load. Expired rate-limit rows, expired generation reservations, terminated queue jobs, and unverified accounts are maintained by the worker rather than API request goroutines.
 
 ## Deployment
 
-`apps/api/Dockerfile` has `api`, `worker`, and `migrate` targets. Production is
-intended to run the API as a Cloud Run service and the worker as a Cloud Run
-Worker Pool. Worker Pools have fixed/manual scaling rather than request-driven
-autoscaling; deploy one worker instance initially and increase it deliberately.
-Run the `migrate` target before deploying either runtime.
+`apps/api/Dockerfile` has `api`, `worker`, and `migrate` targets. Production is intended to run the API as a Cloud Run service and the worker as a Cloud Run Worker Pool. Worker Pools have fixed/manual scaling rather than request-driven autoscaling; deploy one worker instance initially and increase it deliberately. Run the `migrate` target before deploying either runtime.

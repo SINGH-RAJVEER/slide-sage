@@ -1,7 +1,6 @@
 # Web research
 
-Web research is an optional input to generation. The API does not run a separate
-retrieval or memory system.
+Web research is an optional input to generation. The API does not run a separate retrieval or memory system.
 
 ## Research flow
 
@@ -11,9 +10,7 @@ retrieval or memory system.
 4. The Go generation route includes those sources in the provider prompt.
 5. The resulting presentation stores the reviewed sources for attribution.
 
-Research requests use `EXA_API_KEY` and `EXA_REQUEST_TIMEOUT_MS`. The API stores
-reviewed source records with the presentation. User BYOK keys are used for
-generation only, never for research or embeddings.
+Research requests use `EXA_API_KEY` and `EXA_REQUEST_TIMEOUT_MS`. The API stores reviewed source records with the presentation. User BYOK keys are used for generation only, never for research or embeddings.
 
 ## Schema changes
 
