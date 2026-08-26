@@ -1,5 +1,6 @@
 import { Button } from "@slidesage/ui/components/button";
 import { DialogHeader } from "@slidesage/ui/components/dialog";
+import { Slider, SliderThumb } from "@slidesage/ui/components/slider";
 import { Textarea } from "@slidesage/ui/components/textarea";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { Globe, Sparkles, X } from "lucide-react";
@@ -33,8 +34,6 @@ export default function IterateModal({
 }: IterateModalProps) {
 	const [iteratePrompt, setIteratePrompt] = useState("");
 	const [slideCount, setSlideCount] = useState("5");
-	const [slideCountMode, setSlideCountMode] = useState("preset");
-	const [customSlideCount, setCustomSlideCount] = useState("5");
 	const [detailLevel, setDetailLevel] = useState("balanced");
 	const [tonality, setTonality] = useState("professional");
 	const [useWebResearch, setUseWebResearch] = useState(false);
@@ -62,9 +61,7 @@ export default function IterateModal({
 
 	const handleSubmit = () => {
 		if (iteratePrompt.trim()) {
-			const selectedCount =
-				slideCountMode === "preset" ? parseInt(slideCount, 10) : parseInt(customSlideCount, 10);
-			const count = Math.min(40, Math.max(1, selectedCount || 1));
+			const count = Math.min(40, Math.max(5, parseInt(slideCount, 10) || 5));
 			onIterate(iteratePrompt, count, detailLevel, tonality, useWebResearch);
 			setIteratePrompt("");
 		}
@@ -100,36 +97,27 @@ export default function IterateModal({
 						className="min-h-40 resize-none rounded-lg border-white/10 bg-black/20 p-4 text-base leading-6 text-white placeholder:text-white/35 focus-visible:border-white/25 focus-visible:ring-0"
 						disabled={isStreaming}
 					/>
-					<p className="text-xs leading-5 text-white/35">
-						Press Enter to generate. Use Shift + Enter for a new line.
-					</p>
 				</div>
 
 				<div className="border-t border-white/10 pt-6">
-					<p className="mb-4 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
-						Generation settings
-					</p>
 					<div className="grid gap-6">
-						<div className="space-y-3">
-							<p className="text-sm font-medium text-white/60">Web research</p>
-							<Button
-								type="button"
-								variant="ghost"
-								disabled={isStreaming}
-								aria-pressed={useWebResearch}
-								onClick={() => setUseWebResearch((prev) => !prev)}
-								className={`h-10 w-full justify-center rounded-lg border px-4 transition-colors ${
-									useWebResearch
-										? "border-white/20 bg-white/10 text-white"
-										: "border-transparent bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
-								}`}
-							>
-								<span className="flex items-center gap-2">
-									<Globe className="h-4 w-4" />
-									{useWebResearch ? "On" : "Off"}
-								</span>
-							</Button>
-						</div>
+						<Button
+							type="button"
+							variant="ghost"
+							disabled={isStreaming}
+							aria-pressed={useWebResearch}
+							onClick={() => setUseWebResearch((prev) => !prev)}
+							className={`h-10 self-start rounded-md border px-4 transition-colors ${
+								useWebResearch
+									? "border-white/20 bg-white/10 text-white"
+									: "border-transparent bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
+							}`}
+						>
+							<span className="flex items-center gap-2 text-sm font-medium">
+								<Globe className="h-4 w-4" />
+								Web Research
+							</span>
+						</Button>
 						<div className="space-y-3">
 							<p className="text-sm font-medium text-white/60">Detail level</p>
 							<div className="grid grid-cols-2 gap-2">
@@ -174,81 +162,19 @@ export default function IterateModal({
 							</div>
 						</div>
 
-						<div className="space-y-3">
-							<div className="flex items-center justify-between gap-4">
-								<p className="text-sm font-medium text-white/60">Slide count</p>
-								<span className="text-sm tabular-nums text-white">
-									{slideCountMode === "custom" ? customSlideCount || "1" : slideCount} slides
-								</span>
-							</div>
-							<div className="flex rounded-lg border border-white/10 bg-black/20 p-1">
-								<button
-									type="button"
-									disabled={isStreaming}
-									onClick={() => setSlideCountMode("preset")}
-									className={`flex-1 rounded-md px-3 py-1.5 text-xs transition-colors ${slideCountMode === "preset" ? "bg-white/10 text-white" : "text-white/45 hover:text-white/75"}`}
-								>
-									Slider
-								</button>
-								<button
-									type="button"
-									disabled={isStreaming}
-									onClick={() => setSlideCountMode("custom")}
-									className={`flex-1 rounded-md px-3 py-1.5 text-xs transition-colors ${slideCountMode === "custom" ? "bg-white/10 text-white" : "text-white/45 hover:text-white/75"}`}
-								>
-									Custom
-								</button>
-							</div>
-							{slideCountMode === "preset" ? (
-								<div className="space-y-2">
-									<input
-										type="range"
-										min={1}
-										max={40}
-										step={1}
-										value={slideCount}
-										disabled={isStreaming}
-										aria-label="Slide count"
-										onChange={(event) => {
-											setSlideCount(event.target.value);
-											setCustomSlideCount(event.target.value);
-										}}
-										className="h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-white disabled:cursor-not-allowed disabled:opacity-50"
-									/>
-									<div className="flex justify-between text-[11px] tabular-nums text-white/30">
-										<span>1</span>
-										<span>20</span>
-										<span>40</span>
-									</div>
-								</div>
-							) : (
-								<label className="grid gap-2 text-xs text-white/45">
-									Number of slides
-									<input
-										type="number"
-										min={1}
-										max={40}
-										value={customSlideCount}
-										onChange={(event) => {
-											const value = event.target.value;
-											if (/^\d{0,2}$/.test(value) && Number(value) <= 40) {
-												setCustomSlideCount(value);
-											}
-										}}
-										onBlur={() => {
-											const value = Math.min(
-												40,
-												Math.max(1, Number(customSlideCount) || 1),
-											).toString();
-											setCustomSlideCount(value);
-											setSlideCount(value);
-										}}
-										disabled={isStreaming}
-										className="hide-number-spin h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-white/25 disabled:cursor-not-allowed disabled:opacity-50"
-										inputMode="numeric"
-									/>
-								</label>
-							)}
+						<div className="flex items-center gap-3">
+							<p className="text-sm font-light whitespace-nowrap text-white/50">Slide count</p>
+							<Slider
+								value={[Number(slideCount)]}
+								min={5}
+								max={40}
+								step={1}
+								disabled={isStreaming}
+								className="flex-1"
+								onValueChange={(values) => setSlideCount(values[0]?.toString() ?? "5")}
+							>
+								<SliderThumb aria-label="Slide count">{slideCount}</SliderThumb>
+							</Slider>
 						</div>
 					</div>
 				</div>

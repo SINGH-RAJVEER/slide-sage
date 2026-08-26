@@ -9,30 +9,22 @@ interface GenerateOptionsBarProps {
 	detailLevel: string;
 	tonality: string;
 	useWebResearch: boolean;
-	slideCountMode: string;
 	slideCount: string;
-	customSlideCount: string;
 	onDetailLevelChange: (level: string) => void;
 	onTonalityChange: (tonality: string) => void;
 	onUseWebResearchChange: (enabled: boolean) => void;
-	onSlideCountModeChange: (mode: string) => void;
 	onSlideCountChange: (count: string) => void;
-	onCustomSlideCountChange: (count: string) => void;
 }
 
 export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 	detailLevel,
 	tonality,
 	useWebResearch,
-	slideCountMode,
 	slideCount,
-	customSlideCount,
 	onDetailLevelChange,
 	onTonalityChange,
 	onUseWebResearchChange,
-	onSlideCountModeChange,
 	onSlideCountChange,
-	onCustomSlideCountChange,
 }) => {
 	return (
 		<div className="mb-2 w-full flex items-center justify-center">
@@ -57,14 +49,7 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 
 				<DetailLevelSelector detailLevel={detailLevel} onDetailLevelChange={onDetailLevelChange} />
 				<TonalitySelector tonality={tonality} onTonalityChange={onTonalityChange} />
-				<SlideCountSelector
-					slideCountMode={slideCountMode}
-					slideCount={slideCount}
-					customSlideCount={customSlideCount}
-					onSlideCountModeChange={onSlideCountModeChange}
-					onSlideCountChange={onSlideCountChange}
-					onCustomSlideCountChange={onCustomSlideCountChange}
-				/>
+				<SlideCountSelector slideCount={slideCount} onSlideCountChange={onSlideCountChange} />
 			</div>
 		</div>
 	);

@@ -24,7 +24,7 @@ it("renders a single accessible form only while open", () => {
 	expect(closedPanel).toHaveAttribute("aria-hidden", "true");
 });
 
-it("submits the selected generation settings and clamps a custom slide count", () => {
+it("submits the selected generation settings including the slide count", () => {
 	const onIterate = mock(() => {});
 	const view = render(
 		<IterateModal open={true} onOpenChange={mock()} onIterate={onIterate} isStreaming={false} />,
@@ -33,14 +33,15 @@ it("submits the selected generation settings and clamps a custom slide count", (
 	fireEvent.input(view.getByRole("textbox"), { target: { value: "Strengthen the evidence" } });
 	fireEvent.click(view.getByRole("button", { name: "Detailed" }));
 	fireEvent.click(view.getByRole("button", { name: "Casual" }));
-	fireEvent.click(view.getByRole("button", { name: "Off" }));
-	fireEvent.click(view.getByRole("button", { name: "Custom" }));
-	const count = view.getByRole("spinbutton", { name: "Number of slides" });
-	fireEvent.input(count, { target: { value: "0" } });
-	fireEvent.blur(count);
+	fireEvent.click(view.getByRole("button", { name: "Web Research" }));
+	const count = view.getByRole("slider", { name: "Slide count" });
+	expect(count).toHaveTextContent("5");
+	fireEvent.keyDown(count, { key: "ArrowRight" });
+	fireEvent.keyDown(count, { key: "ArrowRight" });
+	expect(count).toHaveTextContent("7");
 	fireEvent.click(view.getByRole("button", { name: "Generate revision" }));
 
-	expect(onIterate).toHaveBeenCalledWith("Strengthen the evidence", 1, "detailed", "casual", true);
+	expect(onIterate).toHaveBeenCalledWith("Strengthen the evidence", 7, "detailed", "casual", true);
 	expect(view.getByRole("textbox")).toHaveValue("");
 });
 
