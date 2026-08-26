@@ -116,7 +116,7 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 	var placeholder []byte
 	create := false
 	if input.ParentID != "" {
-		job, err = h.iterationJob(request.Context(), userID, input)
+		job, err = h.iterationJob(request.Context(), userID, input, jobID)
 	} else {
 		job, placeholder, err = h.generationJob(request.Context(), userID, input, jobID, requestHashValue)
 		create = input.RetryID == ""
@@ -241,7 +241,7 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 	return job, placeholder, nil
 }
 
-func (h *handler) iterationJob(ctx context.Context, userID string, input submitInput) (streamJob, error) {
+func (h *handler) iterationJob(ctx context.Context, userID string, input submitInput, jobID string) (streamJob, error) {
 	base, err := h.ownedPresentation(ctx, input.ParentID, userID)
 	if err != nil {
 		return streamJob{}, writeStatusError{http.StatusNotFound, "Presentation not found"}
@@ -269,8 +269,12 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 	if selection != nil {
 		quote = 0
 	}
-	job := streamJob{userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
+	job := buildIterationJob(jobID, userID, operationID, base, input, count, quote, selection)
 	return job, nil
+}
+
+func buildIterationJob(jobID, userID, operationID string, base persistedPresentation, input submitInput, count int, quote int64, selection *ai.Selection) streamJob {
+	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
 }
 
 type streamJob struct {

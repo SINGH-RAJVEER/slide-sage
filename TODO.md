@@ -35,3 +35,4 @@
 - Current export functionality is a liability
 - The nav controls in fullscreen view should dissapear after a delay and also be narrower
 - Iterations not working
+- When a user has just retreved a web result switching away from it should retain it in the generate page still

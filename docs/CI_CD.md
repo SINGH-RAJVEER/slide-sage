@@ -148,7 +148,7 @@ Optional variable:
 
 ## Secret Manager
 
-`DATABASE_URL`, `AUTH_SECRET`, `RATE_LIMIT_HASH_SECRET`, OAuth credentials, `EXA_API_KEY`, and `OPEN_ROUTER_API_KEY` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
+`DATABASE_URL`, `AUTH_SECRET`, `RATE_LIMIT_HASH_SECRET`, OAuth credentials, `EXA_API_KEY`, `OPEN_ROUTER_API_KEY`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL` are referenced by the pipeline and must exist as Secret Manager secrets (secret name + `:latest` version):
 
 ```bash
 printf "postgresql://user:pass@.../slidesage" | \
@@ -169,6 +169,10 @@ printf "<Exa API key>" | \
   gcloud secrets create EXA_API_KEY --data-file=- --project=$PROJECT_ID
 printf "<OpenRouter API key>" | \
   gcloud secrets create OPEN_ROUTER_API_KEY --data-file=- --project=$PROJECT_ID
+printf "<Resend API key>" | \
+  gcloud secrets create RESEND_API_KEY --data-file=- --project=$PROJECT_ID
+printf "<verified SlideSage sender on slidesage.app>" | \
+  gcloud secrets create RESEND_FROM_EMAIL --data-file=- --project=$PROJECT_ID
 ```
 
 The API deployment sets `BASE_URL=https://api.slidesage.app` and trusts `https://slidesage.app`, `https://www.slidesage.app`, and `https://slide-sage.pages.dev` for browser authentication callbacks. Configure the provider callback URLs as `https://api.slidesage.app/auth/callback/google` and `https://api.slidesage.app/auth/callback/github`.
