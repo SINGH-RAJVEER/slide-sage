@@ -42,7 +42,11 @@ saved selection is missing or no longer listed. A selection is checked against a
 fresh provider response before it is saved or used for generation.
 
 Catalog refresh failures are isolated per provider so the settings page remains
-responsive. Generation requests fund model reasoning separately from the answer
+responsive. Enabling a connected provider selects the first model in its catalog
+as the generation default until the user chooses a different model. Its model
+selector becomes available as soon as that provider is enabled, even when
+another provider is the current selection.
+Generation requests fund model reasoning separately from the answer
 on every provider: reasoning and thinking tokens count against each provider's
 output bound, so a fixed allowance (`reasoningBudget`) is reserved on top of the
 requested output limit whenever the selected model supports it. Google Gemini

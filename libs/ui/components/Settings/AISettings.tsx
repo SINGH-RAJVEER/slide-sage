@@ -50,7 +50,11 @@ export function AISettings({
 	const [notice, setNotice] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
-	const refresh = async () => setConfig(await fetchConfiguration());
+	const refresh = async () => {
+		const next = await fetchConfiguration();
+		setConfig(next);
+		return next;
+	};
 
 	useEffect(() => {
 		void fetchConfiguration()
@@ -86,7 +90,14 @@ export function AISettings({
 		setMessage(null);
 		try {
 			await setProviderEnabled(provider, enabled);
-			await refresh();
+			const next = await refresh();
+			if (enabled) {
+				const defaultModel = next.models.find((model) => model.provider === provider);
+				if (defaultModel) {
+					await saveModel({ provider, model: defaultModel.model });
+					await refresh();
+				}
+			}
 			setMessage(
 				enabled
 					? `${PROVIDER_LABELS[provider]} will be used for generation.`
@@ -138,8 +149,6 @@ export function AISettings({
 			</div>
 		);
 	}
-
-	const isByok = config.generation.mode === "byok";
 
 	return (
 		<div className="space-y-10">
@@ -228,12 +237,10 @@ export function AISettings({
 								</div>
 								{connection && providerModels.length > 0 ? (
 									<Select
-										value={
-											config.selection?.provider === provider.id
-												? config.selection.model
-												: undefined
-										}
-										disabled={!isByok || !config.eligibility.eligible || busy === "selection"}
+								value={
+									config.selection?.provider === provider.id ? config.selection.model : ""
+								}
+								disabled={!connection.enabled || !config.eligibility.eligible || busy === "selection"}
 										onValueChange={(model) => void selectModel({ provider: provider.id, model })}
 									>
 										<SelectTrigger
