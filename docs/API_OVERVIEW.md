@@ -69,7 +69,7 @@ responses so the client can route without an extra request.
 | `DELETE` | `/presentations/:id` | Delete one owned deck and its associated memory |
 
 Generation requires `topic` and `slide_count`; the web client supports custom
-slide counts from 1 through 40. Generation also accepts `detail_level`,
+ slide counts from 5 through 40. Generation also accepts `detail_level`,
 `tonality`, `research`, and an optional `research_payload`. New presentations
 start with `corporate-blue`; users can change the saved theme in the viewer.
 Research options can include `freshness`,
@@ -106,7 +106,7 @@ mutation bodies to 1 MiB. An oversized body returns `413`; malformed JSON,
 non-object bodies, invalid types, and out-of-range values return `400`.
 
 Topics and iteration feedback contain 1 through 400 trimmed characters. Slide
-counts are integers from 1 through 40. Detail level is `brief`, `concise`,
+ counts are integers from 5 through 40. Detail level is `brief`, `concise`,
 `balanced`, `detailed`, or `comprehensive`; tonality is `casual`, `professional`,
 `enthusiastic`, or `persuasive`. A direct-provider model identifier is limited
 to 200 characters.
