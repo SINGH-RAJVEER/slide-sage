@@ -82,6 +82,22 @@ func TestSubmitInputRejectsLegacyFieldNames(t *testing.T) {
 	}
 }
 
+func TestIterationJobRetainsTheSubmissionJobID(t *testing.T) {
+	job := buildIterationJob(
+		"iteration-job-123456789",
+		"user-1",
+		"operation-1",
+		persistedPresentation{ID: "presentation-1"},
+		submitInput{Topic: "Revise this deck"},
+		5,
+		1000,
+		nil,
+	)
+	if job.jobID != "iteration-job-123456789" {
+		t.Fatalf("iteration job ID = %q", job.jobID)
+	}
+}
+
 func TestGenerationPromptDefinesExactBlockFields(t *testing.T) {
 	for _, contract := range []string{
 		`{"type":"paragraph","region":"main","text":"Concise presentation copy"}`,

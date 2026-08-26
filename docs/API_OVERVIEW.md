@@ -31,7 +31,7 @@ formats used by existing accounts. See [AUTH_API.md](AUTH_API.md).
 | Method | Path | Body | Description |
 | --- | --- | --- | --- |
 | `GET` | `/profile` | None | Get the signed-in user's profile |
-| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or change the password |
+| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword`, `landingPage` | Update profile fields or change the password |
 | `POST` | `/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
 | `POST` | `/profile/avatar/upload` | Multipart `file` field | Upload and use a local image |
 | `GET` | `/profile/avatar/image/{id}` | None | Serve an uploaded avatar image |
@@ -49,6 +49,12 @@ embedded credentials or control characters are rejected. Local uploads accept
 PNG, JPEG, WebP, and GIF files up to 800 KB. Uploads replace the previous stored
 avatar and return the same profile-avatar response as URL updates.
 
+The profile carries a `landingPage` preference (`generate` or `presentations`,
+defaulting to `generate`) that controls where a signed-in user lands on the app
+home route. It is updated on its own through `PUT /profile`, cannot be combined
+with name, email, or password changes, and is included in session and profile
+responses so the client can route without an extra request.
+
 ## Presentations
 
 | Method | Path | Description |
@@ -63,7 +69,7 @@ avatar and return the same profile-avatar response as URL updates.
 | `DELETE` | `/presentations/:id` | Delete one owned deck and its associated memory |
 
 Generation requires `topic` and `slide_count`; the web client supports custom
-slide counts from 1 through 40. Generation also accepts `detail_level`,
+ slide counts from 5 through 40. Generation also accepts `detail_level`,
 `tonality`, `research`, and an optional `research_payload`. New presentations
 start with `corporate-blue`; users can change the saved theme in the viewer.
 Research options can include `freshness`,
@@ -100,7 +106,7 @@ mutation bodies to 1 MiB. An oversized body returns `413`; malformed JSON,
 non-object bodies, invalid types, and out-of-range values return `400`.
 
 Topics and iteration feedback contain 1 through 400 trimmed characters. Slide
-counts are integers from 1 through 40. Detail level is `brief`, `concise`,
+ counts are integers from 5 through 40. Detail level is `brief`, `concise`,
 `balanced`, `detailed`, or `comprehensive`; tonality is `casual`, `professional`,
 `enthusiastic`, or `persuasive`. A direct-provider model identifier is limited
 to 200 characters.
@@ -212,7 +218,12 @@ queued, running, or retrying. A terminally failed generation remains in the
 presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
 the original prompt, slide count, detail level, tonality, research setting,
-error message, and any sources collected before the failure. Failed and cancelled
+error message, and any sources collected before the failure. When a provider
+stops mid-JSON because it hit its output token limit or dropped the stream,
+the stored message says so explicitly and includes how many bytes arrived;
+near-complete responses are repaired by closing unterminated strings and
+containers so partial truncation does not fail an otherwise finished deck.
+Failed and cancelled
 jobs release their active authorization. Clients fetch the full presentation on
 click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they

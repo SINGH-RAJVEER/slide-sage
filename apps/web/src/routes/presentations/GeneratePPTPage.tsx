@@ -18,15 +18,10 @@ export default function GeneratePPTPage() {
 	const retry = (location.state as GenerateRouteState | null)?.retry;
 	const retryPresentationId = (location.state as GenerateRouteState | null)?.retryPresentationId;
 	const retryPrompt = retry?.prompt.trim() ?? "";
-	const retrySlideCount = retry?.slide_count.toString() ?? "5";
-	const presetSlideCounts = ["5", "10", "15", "20", "25", "30"];
+	const retrySlideCount = Math.min(40, Math.max(5, retry?.slide_count ?? 5)).toString();
 	const [prompt, setPrompt] = useState(retryPrompt);
 	const [loading, setLoading] = useState(false);
 	const [slideCount, setSlideCount] = useState(retrySlideCount);
-	const [slideCountMode, setSlideCountMode] = useState(
-		presetSlideCounts.includes(retrySlideCount) ? "preset" : "custom",
-	);
-	const [customSlideCount, setCustomSlideCount] = useState(retrySlideCount);
 	const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
@@ -68,8 +63,7 @@ export default function GeneratePPTPage() {
 
 		setLoading(true);
 
-		const count =
-			slideCountMode === "preset" ? parseInt(slideCount, 10) : parseInt(customSlideCount, 10);
+		const count = parseInt(slideCount, 10);
 
 		if (useWebResearch) {
 			navigate(ROUTES.research, {
@@ -115,11 +109,6 @@ export default function GeneratePPTPage() {
 		debouncedGenerate(prompt);
 	};
 
-	// Plain Enter anywhere on the generate page starts generation when a prompt
-	// is present, or moves focus to the prompt box when it is not. The listener
-	// runs in the capture phase so it wins over focused dropdown triggers whose
-	// default activation would otherwise reopen a menu, and generation is
-	// deferred one task so option-bar commit handlers run first.
 	const enterActionRef = useRef<() => void>(() => {});
 	enterActionRef.current = () => {
 		if (!prompt.trim()) {
@@ -161,15 +150,11 @@ export default function GeneratePPTPage() {
 					detailLevel={detailLevel}
 					tonality={tonality}
 					useWebResearch={useWebResearch}
-					slideCountMode={slideCountMode}
 					slideCount={slideCount}
-					customSlideCount={customSlideCount}
 					onDetailLevelChange={setDetailLevel}
 					onTonalityChange={setTonality}
 					onUseWebResearchChange={setUseWebResearch}
-					onSlideCountModeChange={setSlideCountMode}
 					onSlideCountChange={setSlideCount}
-					onCustomSlideCountChange={setCustomSlideCount}
 				/>
 			</div>
 

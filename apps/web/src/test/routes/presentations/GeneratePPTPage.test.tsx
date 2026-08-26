@@ -38,10 +38,8 @@ it("prefills a failed presentation prompt and generation options", () => {
 		</MemoryRouter>,
 	);
 
-	expect(view.getByRole("textbox", { name: "Presentation prompt" })).toHaveValue(
-		"Retry this market analysis",
-	);
-	expect(view.getByDisplayValue("12")).toBeInTheDocument();
+	expect(view.getByRole("textbox", { name: "Prompt" })).toHaveValue("Retry this market analysis");
+	expect(view.getByRole("slider", { name: "Slide count" })).toHaveTextContent("12");
 	expect(view.getByText("Comprehensive")).toBeInTheDocument();
 	expect(view.getByText("Casual")).toBeInTheDocument();
 	expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
@@ -268,10 +266,10 @@ it("starts generation on Enter even when focus sits on an options-bar control", 
 			</MemoryRouter>,
 		);
 
-		// Focus a dropdown trigger as if the user had just picked an option.
+		// Focus the slide count slider as if the user had just moved it.
 		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
-		fireEvent.click(view.getByRole("button", { name: /Length:/ }));
-		fireEvent.keyDown(view.getByRole("button", { name: /Length:/ }), { key: "Enter" });
+		fireEvent.focus(view.getByRole("slider", { name: "Slide count" }));
+		fireEvent.keyDown(view.getByRole("slider", { name: "Slide count" }), { key: "Enter" });
 
 		await waitFor(() => expect(generationBody?.["topic"]).toBe("Enter submits from anywhere"));
 		expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
@@ -304,7 +302,8 @@ it("focuses the prompt box on Enter when the prompt is empty", async () => {
 		);
 
 		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
-		fireEvent.keyDown(view.getByRole("button", { name: /Length:/ }), { key: "Enter" });
+		fireEvent.focus(view.getByRole("slider", { name: "Slide count" }));
+		fireEvent.keyDown(view.getByRole("slider", { name: "Slide count" }), { key: "Enter" });
 		expect(document.getElementById("prompt")).toHaveFocus();
 	} finally {
 		globalThis.fetch = originalFetch;

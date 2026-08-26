@@ -79,7 +79,7 @@ continue between HTTP requests.
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
 | `OPEN_ROUTER_API_KEY` | Yes for default generation and embeddings | None | Server OpenRouter authentication; BYOK replaces only generation calls |
-| `OPEN_ROUTER_MODEL` | No | `google/gemma-4-26b-a4b-it` | Generation model; the default is a paid OpenRouter endpoint for production reliability |
+| `OPEN_ROUTER_MODEL` | No | `stealth/ox-alpha` | Generation model; ox-alpha is OpenRouter's stealth preview tier |
 | `OPEN_ROUTER_API_BASE` | No | OpenRouter chat completions endpoint | Chat endpoint override |
 | `OPEN_ROUTER_EMBEDDINGS_URL` | No | OpenRouter embeddings endpoint | Embedding endpoint override |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No | Not used | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |

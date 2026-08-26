@@ -40,7 +40,8 @@ it("shows point-funded OpenRouter until a provider is connected", async () => {
 
 	const view = render(<AISettings />);
 
-	expect(await view.findByText("SlideSage")).toBeInTheDocument();
+	await view.findByRole("heading", { name: "API keys" });
+	expect(view.queryByText("SlideSage")).not.toBeInTheDocument();
 	expect(view.queryByText(/billing/i)).not.toBeInTheDocument();
 	expect(view.getByRole("button", { name: "About API key security" })).toBeInTheDocument();
 	expect(view.queryByRole("combobox")).not.toBeInTheDocument();

@@ -29,7 +29,7 @@ PostgreSQL transaction, the API:
 
 1. Locks and validates the idempotent point operation.
 2. Reserves SlideSage points and records the ledger entry when the server model is used.
-3. Creates the generating presentation placeholder for a new deck, or captures the expected revision for iteration or retry.
+3. Creates the generating presentation placeholder for a new deck, or captures the expected revision for iteration or retry. Every submission, including an iteration, retains its client-supplied job ID through the durable job and point-operation records.
 4. Creates the `generation_jobs` row and initial `generation_job_events` rows.
 5. Calls River `InsertTx`, storing the River queue record in the same transaction.
 

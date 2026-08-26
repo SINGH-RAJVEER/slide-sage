@@ -1,49 +1,59 @@
 /// <reference lib="dom" />
 
-import { expect, it, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { render } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import HomePage from "@/routes/presentations/HomePage";
 
-it("checks only one presentation and routes from the response list", async () => {
-	const originalFetch = globalThis.fetch;
-	const fetchMock = mock(async () =>
-		Response.json({
-			presentations: [
-				{
-					id: "presentation_1",
-					title: "Existing deck",
-					prompt: "Existing prompt",
-					slide_count: 5,
-					status: "ready",
-					has_research: false,
-					created_at: "2026-07-14T10:00:00.000Z",
-					updated_at: "2026-07-14T10:00:00.000Z",
-				},
-			],
-			total: 1,
-			limit: 1,
-			offset: 0,
-			has_more: false,
-		}),
+const authState = {
+	user: null as { landingPage?: "generate" | "presentations" } | null,
+};
+
+mock.module("@/contexts/AuthContext", () => ({
+	useAuth: () => ({
+		user: authState.user,
+		loading: false,
+		isSignedIn: authState.user !== null,
+		refreshSession: async () => {},
+		signOut: async () => {},
+	}),
+}));
+
+const { default: HomePage } = await import("@/routes/presentations/HomePage");
+
+function renderHome() {
+	return render(
+		<MemoryRouter initialEntries={["/"]}>
+			<Routes>
+				<Route path="/" element={<HomePage />} />
+				<Route path="/generate" element={<div>Generate page</div>} />
+				<Route path="/presentations" element={<div>Presentation library</div>} />
+			</Routes>
+		</MemoryRouter>,
 	);
-	globalThis.fetch = fetchMock as unknown as typeof fetch;
+}
 
-	try {
-		const view = render(
-			<MemoryRouter initialEntries={["/"]}>
-				<Routes>
-					<Route path="/" element={<HomePage />} />
-					<Route path="/presentations" element={<div>Presentation library</div>} />
-				</Routes>
-			</MemoryRouter>,
-		);
+describe("HomePage", () => {
+	it("routes to generate by default when no preference is stored", async () => {
+		authState.user = {};
+
+		const view = renderHome();
+
+		expect(await view.findByText("Generate page")).toBeInTheDocument();
+	});
+
+	it("routes to presentations when the user picked it as their default page", async () => {
+		authState.user = { landingPage: "presentations" };
+
+		const view = renderHome();
 
 		expect(await view.findByText("Presentation library")).toBeInTheDocument();
-		expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("?limit=1"), {
-			credentials: "include",
-		});
-	} finally {
-		globalThis.fetch = originalFetch;
-	}
+	});
+
+	it("routes to generate when the user explicitly picked generate", async () => {
+		authState.user = { landingPage: "generate" };
+
+		const view = renderHome();
+
+		expect(await view.findByText("Generate page")).toBeInTheDocument();
+	});
 });

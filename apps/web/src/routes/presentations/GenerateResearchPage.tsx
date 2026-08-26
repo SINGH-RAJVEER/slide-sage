@@ -357,9 +357,6 @@ export default function GenerateResearchPage() {
 									)}
 								</span>
 							</Button>
-							<p className="text-center text-sm text-white/45">
-								Press <span className="text-white/50">Enter</span> to generate
-							</p>
 						</div>
 					</div>
 				</div>

@@ -277,6 +277,27 @@ func (service *Service) UpdateName(ctx context.Context, userID, name string) (Us
 	return service.repository.UpdateName(ctx, userID, name)
 }
 
+// LandingPages enumerates the pages a signed-in user can choose as the place
+// they land after signing in.
+var LandingPages = []string{"generate", "presentations"}
+
+func isValidLandingPage(value string) bool {
+	for _, landingPage := range LandingPages {
+		if value == landingPage {
+			return true
+		}
+	}
+	return false
+}
+
+func (service *Service) UpdateLandingPage(ctx context.Context, userID, landingPage string) (User, error) {
+	landingPage = strings.TrimSpace(landingPage)
+	if !isValidLandingPage(landingPage) {
+		return User{}, errors.New("landing page must be generate or presentations")
+	}
+	return service.repository.UpdateLandingPage(ctx, userID, landingPage)
+}
+
 func (service *Service) UpdateAvatar(ctx context.Context, userID, image string) (User, error) {
 	image = strings.TrimSpace(image)
 	parsed, err := url.Parse(image)

@@ -49,11 +49,6 @@ lint-fix:
 format:
     bun run format
 
-docker-build:
-	docker build --target api --file docker/Dockerfile.api --tag slidesage-api .
-
-docker-worker:
-	docker build --target worker --file docker/Dockerfile.api --tag slidesage-worker .
-
-docker-migrate:
-	docker build --target migrate --file docker/Dockerfile.api --tag slidesage-migrate .
+# Build a container image from the repo root context
+image target="api":
+	docker build --target {{target}} --file apps/api/Dockerfile --tag slidesage-{{target}} .
