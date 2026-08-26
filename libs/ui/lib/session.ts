@@ -1,4 +1,5 @@
 import { API_URL } from "./api";
+import type { LandingPage } from "@slidesage/types";
 
 export interface SessionUser {
 	id: string;
@@ -7,6 +8,7 @@ export interface SessionUser {
 	image: string | null;
 	emailVerified: boolean;
 	slideTokens: number;
+	landingPage?: LandingPage;
 	createdAt: string;
 	updatedAt: string;
 }

@@ -12,6 +12,7 @@ type User struct {
 	EmailVerified bool      `json:"emailVerified"`
 	Image         *string   `json:"image"`
 	SlideTokens   float64   `json:"slideTokens"`
+	LandingPage   string    `json:"landingPage"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 }

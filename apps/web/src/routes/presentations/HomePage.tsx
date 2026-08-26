@@ -1,58 +1,22 @@
-import type { ApiErrorResponse, PresentationsResponse } from "@slidesage/types";
-import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
-import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
-import { useCallback, useEffect, useState } from "react";
+import { LoadingScreen, useAuth } from "@slidesage/ui";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
 
+/**
+ * Signed-in visitors land on the page they picked in settings. The generate
+ * page is the default; the presentation library is opt-in.
+ */
 export default function HomePage() {
-	const [loading, setLoading] = useState(true);
-	const [hasPresentations, setHasPresentations] = useState(false);
+	const { user } = useAuth();
 	const navigate = useNavigate();
 
-	const checkPresentations = useCallback(async () => {
-		try {
-			const response = await fetch(`${API_URL}/presentations?limit=1`, {
-				credentials: "include",
-			});
-			const result = await readJsonResponse<PresentationsResponse | ApiErrorResponse>(response);
-
-			if (!response.ok) {
-				if (response.status === 401) {
-					setHasPresentations(false);
-					return;
-				}
-
-				const message = result && "error" in result ? result.error.message : undefined;
-				throw new Error(message || `Failed to load presentations (${response.status})`);
-			}
-
-			setHasPresentations(
-				Boolean(result && "presentations" in result && result.presentations.length > 0),
-			);
-		} catch (err) {
-			console.error("Error checking presentations:", err);
-			setHasPresentations(false);
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
 	useEffect(() => {
-		checkPresentations();
-	}, [checkPresentations]);
-
-	useEffect(() => {
-		if (loading) return;
-		navigate(hasPresentations ? ROUTES.presentations : ROUTES.generate, {
+		navigate(user?.landingPage === "presentations" ? ROUTES.presentations : ROUTES.generate, {
 			replace: true,
 		});
-	}, [loading, hasPresentations, navigate]);
-
-	if (loading) {
-		return <LoadingScreen label="Loading presentations" />;
-	}
+	}, [user?.landingPage, navigate]);
 
 	// Navigation effect will replace this route with the target page.
-	return null;
+	return <LoadingScreen label="Opening SlideSage" />;
 }

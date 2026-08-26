@@ -186,11 +186,12 @@ func (service *Service) updateProfileHandler(writer http.ResponseWriter, request
 		Email           *string `json:"email"`
 		CurrentPassword string  `json:"currentPassword"`
 		NewPassword     *string `json:"newPassword"`
+		LandingPage     *string `json:"landingPage"`
 	}
 	if !decodeJSON(writer, request, &body) {
 		return
 	}
-	if body.NewPassword != nil && (body.Name != nil || body.Email != nil) {
+	if body.NewPassword != nil && (body.Name != nil || body.Email != nil || body.LandingPage != nil) {
 		writeError(writer, http.StatusBadRequest, "Password changes cannot be combined with profile updates")
 		return
 	}
@@ -217,6 +218,19 @@ func (service *Service) updateProfileHandler(writer http.ResponseWriter, request
 			return
 		}
 		writeJSON(writer, http.StatusOK, map[string]any{"user": pending, "pending_email": normalizeEmail(*body.Email), "verification_required": true})
+		return
+	}
+	if body.LandingPage != nil {
+		if body.Name != nil || body.Email != nil {
+			writeError(writer, http.StatusBadRequest, "Landing page changes cannot be combined with name or email updates")
+			return
+		}
+		updated, err := service.UpdateLandingPage(request.Context(), user.ID, *body.LandingPage)
+		if err != nil {
+			writeError(writer, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeJSON(writer, http.StatusOK, map[string]any{"user": updated})
 		return
 	}
 	if body.Name == nil {

@@ -33,3 +33,5 @@
 - The indicator for a generating ppt shows as retry instead of generating in the viewer page
 - Figure out what a better auth session token is doing being assigned during login
 - Current export functionality is a liability
+- The nav controls in fullscreen view should dissapear after a delay and also be narrower
+- Iterations not working

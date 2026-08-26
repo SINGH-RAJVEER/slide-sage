@@ -716,6 +716,9 @@ export interface PresentationResponse {
 	presentation: SavedPresentation;
 }
 
+export const LANDING_PAGES = ["generate", "presentations"] as const;
+export type LandingPage = (typeof LANDING_PAGES)[number];
+
 export interface UserProfile {
 	id: string;
 	name: string | null;
@@ -723,6 +726,7 @@ export interface UserProfile {
 	image: string | null;
 	emailVerified: boolean;
 	slideTokens: number;
+	landingPage: LandingPage;
 	createdAt: string;
 }
 
@@ -735,6 +739,7 @@ export interface UpdateProfileRequest {
 	email?: string;
 	currentPassword?: string;
 	newPassword?: string;
+	landingPage?: LandingPage;
 }
 
 export interface UpdateAvatarRequest {

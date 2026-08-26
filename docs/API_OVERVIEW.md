@@ -31,7 +31,7 @@ formats used by existing accounts. See [AUTH_API.md](AUTH_API.md).
 | Method | Path | Body | Description |
 | --- | --- | --- | --- |
 | `GET` | `/profile` | None | Get the signed-in user's profile |
-| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword` | Update profile fields or change the password |
+| `PUT` | `/profile` | `name`, `email`, `currentPassword`, `newPassword`, `landingPage` | Update profile fields or change the password |
 | `POST` | `/profile/avatar` | `{ "imageUrl": "..." }` | Update the avatar URL |
 | `POST` | `/profile/avatar/upload` | Multipart `file` field | Upload and use a local image |
 | `GET` | `/profile/avatar/image/{id}` | None | Serve an uploaded avatar image |
@@ -48,6 +48,12 @@ Avatar URLs must be valid HTTPS URLs no longer than 2,048 characters. URLs with
 embedded credentials or control characters are rejected. Local uploads accept
 PNG, JPEG, WebP, and GIF files up to 800 KB. Uploads replace the previous stored
 avatar and return the same profile-avatar response as URL updates.
+
+The profile carries a `landingPage` preference (`generate` or `presentations`,
+defaulting to `generate`) that controls where a signed-in user lands on the app
+home route. It is updated on its own through `PUT /profile`, cannot be combined
+with name, email, or password changes, and is included in session and profile
+responses so the client can route without an extra request.
 
 ## Presentations
 
@@ -212,7 +218,12 @@ queued, running, or retrying. A terminally failed generation remains in the
 presentation library with an
 empty slide list and a `failure.retry` object in `slides_data`. That object stores
 the original prompt, slide count, detail level, tonality, research setting,
-error message, and any sources collected before the failure. Failed and cancelled
+error message, and any sources collected before the failure. When a provider
+stops mid-JSON because it hit its output token limit or dropped the stream,
+the stored message says so explicitly and includes how many bytes arrived;
+near-complete responses are repaired by closing unterminated strings and
+containers so partial truncation does not fail an otherwise finished deck.
+Failed and cancelled
 jobs release their active authorization. Clients fetch the full presentation on
 click, then open the saved
 sources on `/generate/research` when they exist or prefill `/generate` when they

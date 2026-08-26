@@ -59,11 +59,11 @@ func (repository *Repository) CreateUserWithCredential(ctx context.Context, user
 }
 
 func (repository *Repository) UserByID(ctx context.Context, id string) (User, error) {
-	return scanUser(repository.database.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at FROM users WHERE id = $1`, id))
+	return scanUser(repository.database.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at FROM users WHERE id = $1`, id))
 }
 
 func (repository *Repository) UserByEmail(ctx context.Context, email string) (User, error) {
-	return scanUser(repository.database.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at FROM users WHERE email = $1`, email))
+	return scanUser(repository.database.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at FROM users WHERE email = $1`, email))
 }
 
 func (repository *Repository) DeleteExpiredUnverifiedUsers(ctx context.Context, cutoff, now time.Time) (int64, error) {
@@ -118,7 +118,11 @@ func (repository *Repository) UpdateCredentialPassword(ctx context.Context, id, 
 }
 
 func (repository *Repository) UpdateName(ctx context.Context, userID, name string) (User, error) {
-	return scanUser(repository.database.QueryRowContext(ctx, `UPDATE users SET name = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, name))
+	return scanUser(repository.database.QueryRowContext(ctx, `UPDATE users SET name = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at`, userID, name))
+}
+
+func (repository *Repository) UpdateLandingPage(ctx context.Context, userID, landingPage string) (User, error) {
+	return scanUser(repository.database.QueryRowContext(ctx, `UPDATE users SET landing_page = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at`, userID, landingPage))
 }
 
 func (repository *Repository) UpdateImage(ctx context.Context, userID, image string) (User, error) {
@@ -130,7 +134,7 @@ func (repository *Repository) UpdateImage(ctx context.Context, userID, image str
 	if _, err = transaction.ExecContext(ctx, `DELETE FROM avatar_images WHERE user_id = $1`, userID); err != nil {
 		return User{}, err
 	}
-	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, image))
+	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at`, userID, image))
 	if err != nil {
 		return User{}, err
 	}
@@ -160,7 +164,7 @@ func (repository *Repository) ReplaceAvatarImage(ctx context.Context, userID, im
 	`, imageID, userID, contentType, data); err != nil {
 		return User{}, err
 	}
-	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, publicURL))
+	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET image = $2, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at`, userID, publicURL))
 	if err != nil {
 		return User{}, err
 	}
@@ -222,7 +226,7 @@ func (repository *Repository) VerifyUserEmail(ctx context.Context, userID, verif
 	if err != nil || affected != 1 {
 		return User{}, ErrNotFound
 	}
-	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID))
+	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at`, userID))
 	if err != nil {
 		return User{}, err
 	}
@@ -253,7 +257,7 @@ func (repository *Repository) CompleteEmailChange(ctx context.Context, userID, e
 	if err != nil || affected != 1 {
 		return User{}, ErrNotFound
 	}
-	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET email = $2, email_verified = true, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at`, userID, email))
+	user, err := scanUser(transaction.QueryRowContext(ctx, `UPDATE users SET email = $2, email_verified = true, updated_at = NOW() WHERE id = $1 RETURNING id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at`, userID, email))
 	if err != nil {
 		return User{}, err
 	}
@@ -269,7 +273,7 @@ type rowScanner interface {
 
 func scanUser(row rowScanner) (User, error) {
 	var user User
-	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.EmailVerified, &user.Image, &user.SlideTokens, &user.CreatedAt, &user.UpdatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.EmailVerified, &user.Image, &user.SlideTokens, &user.LandingPage, &user.CreatedAt, &user.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return User{}, ErrNotFound
 	}
@@ -302,7 +306,7 @@ func (repository *Repository) UpsertOAuthUser(ctx context.Context, provider, pro
 		return User{}, err
 	}
 	defer transaction.Rollback()
-	existing := transaction.QueryRowContext(ctx, `SELECT u.id, u.name, u.email, u.email_verified, u.image, u.balance_millis::double precision / 1000, u.created_at, u.updated_at FROM accounts a JOIN users u ON u.id = a.user_id WHERE a.provider_id = $1 AND a.account_id = $2`, provider, providerAccountID)
+	existing := transaction.QueryRowContext(ctx, `SELECT u.id, u.name, u.email, u.email_verified, u.image, u.balance_millis::double precision / 1000, u.landing_page, u.created_at, u.updated_at FROM accounts a JOIN users u ON u.id = a.user_id WHERE a.provider_id = $1 AND a.account_id = $2`, provider, providerAccountID)
 	user, err := scanUser(existing)
 	if err == nil {
 		if _, err = transaction.ExecContext(ctx, `UPDATE accounts SET access_token = $1, refresh_token = NULLIF($2, ''), updated_at = NOW() WHERE provider_id = $3 AND account_id = $4`, accessToken, refreshToken, provider, providerAccountID); err != nil {
@@ -316,7 +320,7 @@ func (repository *Repository) UpsertOAuthUser(ctx context.Context, provider, pro
 	if !errors.Is(err, ErrNotFound) {
 		return User{}, err
 	}
-	user, err = scanUser(transaction.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, balance_millis::double precision / 1000, created_at, updated_at FROM users WHERE email = $1 FOR UPDATE`, email))
+	user, err = scanUser(transaction.QueryRowContext(ctx, `SELECT id, name, email, email_verified, image, balance_millis::double precision / 1000, landing_page, created_at, updated_at FROM users WHERE email = $1 FOR UPDATE`, email))
 	if errors.Is(err, ErrNotFound) {
 		userID, idErr := randomID()
 		if idErr != nil {

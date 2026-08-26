@@ -1,6 +1,8 @@
 import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
+import { FloatingSettingsNotice } from "@slidesage/ui/components/Settings/FloatingSettingsNotice";
+
 import {
 	Select,
 	SelectContent,
@@ -45,6 +47,7 @@ export function AISettings({
 	const [keys, setKeys] = useState<Partial<Record<AIProvider, string>>>({});
 	const [busy, setBusy] = useState<AIProvider | "selection" | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
+	const [notice, setNotice] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const refresh = async () => setConfig(await fetchConfiguration());
@@ -55,6 +58,11 @@ export function AISettings({
 			.catch((error) => setMessage(error instanceof Error ? error.message : String(error)))
 			.finally(() => setIsLoading(false));
 	}, [fetchConfiguration]);
+
+	useEffect(() => () => setNotice(null), []);
+
+	const reportError = (error: unknown) =>
+		setNotice(error instanceof Error ? error.message : String(error));
 
 	const connect = async (provider: AIProvider) => {
 		const apiKey = keys[provider]?.trim();
@@ -67,7 +75,7 @@ export function AISettings({
 			await refresh();
 			setMessage("Provider connected. New generations will use your saved model.");
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : String(error));
+			reportError(error);
 		} finally {
 			setBusy(null);
 		}
@@ -82,10 +90,10 @@ export function AISettings({
 			setMessage(
 				enabled
 					? `${PROVIDER_LABELS[provider]} will be used for generation.`
-					: `${PROVIDER_LABELS[provider]} paused. Generation uses SlideSage points; your key stays connected.`,
+					: `${PROVIDER_LABELS[provider]} paused.`,
 			);
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : String(error));
+			reportError(error);
 		} finally {
 			setBusy(null);
 		}
@@ -99,7 +107,7 @@ export function AISettings({
 			await refresh();
 			setMessage("Provider removed. OpenRouter resumes when no connections remain.");
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : String(error));
+			reportError(error);
 		} finally {
 			setBusy(null);
 		}
@@ -113,7 +121,7 @@ export function AISettings({
 			await refresh();
 			setMessage("Default generation model updated.");
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : String(error));
+			reportError(error);
 		} finally {
 			setBusy(null);
 		}
@@ -135,21 +143,8 @@ export function AISettings({
 
 	return (
 		<div className="space-y-10">
+			<FloatingSettingsNotice error={notice} onDismiss={() => setNotice(null)} />
 			<section>
-				<div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
-					Generation runtime
-				</div>
-				<h2 className="mt-2 text-xl font-semibold text-white">
-					{isByok ? "Your provider connection" : "SlideSage"}
-				</h2>
-				<p className="mt-1 max-w-xl text-sm leading-6 text-white/55">
-					{isByok
-						? "Generation is billed directly by your selected provider."
-						: "Generation uses SlideSage points until you connect a provider key."}
-				</p>
-			</section>
-
-			<section className="border-t border-white/10 pt-10">
 				<div className="flex items-center gap-2">
 					<h2 className="text-lg font-semibold text-white">API keys</h2>
 					<Tooltip>
@@ -162,7 +157,8 @@ export function AISettings({
 						</TooltipTrigger>
 						<TooltipContent>
 							Keys are validated server-side and encrypted at rest. Plaintext values are never
-							returned to this page.
+							returned to this page. Web research is billed by SlideSage and still costs points even
+							when generating with your own provider key.
 						</TooltipContent>
 					</Tooltip>
 				</div>
