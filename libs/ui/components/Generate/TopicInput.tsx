@@ -186,9 +186,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 						: undefined
 				}
 			>
-				<legend className="sr-only">
-					{expanded ? "Expanded presentation prompt" : "Presentation prompt composer"}
-				</legend>
+				<legend className="sr-only">{expanded ? "Expanded prompt" : "Prompt composer"}</legend>
 				<div
 					className={
 						expanded
@@ -197,13 +195,12 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 					}
 				>
 					<label htmlFor="prompt" className="sr-only">
-						Presentation prompt
+						Prompt
 					</label>
 					<textarea
 						ref={textareaRef}
 						id="prompt"
 						rows={1}
-						aria-describedby="prompt-editor-hint"
 						placeholder="What's on your mind ?"
 						value={prompt}
 						onChange={(event) => onPromptChange(event.target.value)}
@@ -238,23 +235,6 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 							: "flex flex-col items-center gap-4"
 					}
 				>
-					<p
-						id="prompt-editor-hint"
-						className={
-							expanded
-								? "max-w-[calc(100%-8rem)] text-left text-xs text-white/40"
-								: "text-center text-xs text-white/40 md:text-sm"
-						}
-					>
-						{expanded ? (
-							"Shift + Enter for a new line. Enter to generate."
-						) : (
-							<>
-								Press <span className="text-white/60">Enter</span> to generate
-							</>
-						)}
-					</p>
-
 					<Button
 						type="button"
 						onClick={() => {

@@ -38,9 +38,7 @@ it("prefills a failed presentation prompt and generation options", () => {
 		</MemoryRouter>,
 	);
 
-	expect(view.getByRole("textbox", { name: "Presentation prompt" })).toHaveValue(
-		"Retry this market analysis",
-	);
+	expect(view.getByRole("textbox", { name: "Prompt" })).toHaveValue("Retry this market analysis");
 	expect(view.getByRole("slider", { name: "Slide count" })).toHaveTextContent("12");
 	expect(view.getByText("Comprehensive")).toBeInTheDocument();
 	expect(view.getByText("Casual")).toBeInTheDocument();

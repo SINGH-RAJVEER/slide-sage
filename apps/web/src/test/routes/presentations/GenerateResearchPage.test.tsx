@@ -143,7 +143,6 @@ describe("GenerateResearchPage", () => {
 			expect(sourceLink).toHaveAttribute("href", "https://example.com/storage");
 			expect(sourceLink).toHaveAttribute("target", "_blank");
 			expect(view.getByText("Proceed to Generate").closest("button")).not.toBeDisabled();
-			expect(view.getByText("Enter").parentElement).toHaveTextContent("Press Enter to generate");
 
 			fireEvent.keyDown(sourceLink, { key: "Enter" });
 			expect(requestCount).toBe(1);
