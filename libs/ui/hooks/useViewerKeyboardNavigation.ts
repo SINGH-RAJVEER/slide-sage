@@ -18,11 +18,13 @@ export function getViewerKeyboardDestination(
 }
 
 export function useViewerKeyboardNavigation({
+	enabled = true,
 	currentSlide,
 	slideCount,
 	onNavigate,
 	onStopPlayback,
 }: {
+	enabled?: boolean;
 	currentSlide: number;
 	slideCount: number;
 	onNavigate: (index: number) => void;
@@ -51,7 +53,9 @@ export function useViewerKeyboardNavigation({
 			navigate(nextIndex);
 		};
 		const handleKeyDown = (event: KeyboardEvent) => {
+			if (!enabled && ["j", "l"].includes(event.key.toLowerCase())) return;
 			if (slideCount <= 0) return;
+			if (document.querySelector(".viewer-iterate-panel[aria-hidden='false']")) return;
 			const target = event.target;
 			if (
 				target instanceof HTMLElement &&
@@ -92,5 +96,5 @@ export function useViewerKeyboardNavigation({
 			window.removeEventListener("keyup", handleKeyUp);
 			window.removeEventListener("blur", stopRepeating);
 		};
-	}, [slideCount]);
+	}, [enabled, slideCount]);
 }

@@ -16,6 +16,7 @@ if (typeof document === "undefined") {
 afterEach(() => {
 	cleanup();
 	window.localStorage.removeItem("slidesage-active-generation");
+	window.localStorage.removeItem("slidesage-vim-mode");
 	document.body.innerHTML = "";
 });
 
