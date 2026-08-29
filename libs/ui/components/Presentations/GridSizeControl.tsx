@@ -10,7 +10,6 @@ interface GridSizeControlProps {
 export const GridSizeControl: React.FC<GridSizeControlProps> = ({ gridSize, onGridSizeChange }) => {
 	return (
 		<div className="flex items-center gap-2">
-			<span className="text-white/70 text-sm mr-2">Grid Size:</span>
 			<Button
 				variant="ghost"
 				size="icon"
