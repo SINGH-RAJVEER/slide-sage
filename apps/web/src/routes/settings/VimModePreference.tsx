@@ -7,14 +7,14 @@ export function VimModePreference() {
 	return (
 		<section aria-labelledby="vim-mode-heading">
 			<div className="flex items-start justify-between gap-6">
-				<div>
+				<div className="flex-1">
 					<div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
 						Keyboard navigation
 					</div>
 					<h2 id="vim-mode-heading" className="mt-2 text-lg font-semibold text-white">
 						Vim mode
 					</h2>
-					<p className="mt-2 max-w-xl text-sm leading-6 text-white/60">
+					<p className="mt-2 text-sm leading-6 text-white/60">
 						Use familiar Vim keys to move through SlideSage. Typing fields and open dialogs keep
 						their normal keyboard behavior.
 					</p>
