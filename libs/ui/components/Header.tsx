@@ -171,11 +171,11 @@ export function Header({
 											</LinkComponent>
 										</DropdownMenuItem>
 									))}
-									<DropdownMenuSeparator className="my-1 bg-white/10" />
+									<DropdownMenuSeparator className="my-0 bg-white/10" />
 									<DropdownMenuItem
 										disabled={signingOut}
 										onSelect={() => void handleSignOut()}
-										className="mx-1 my-1 cursor-pointer rounded-lg px-3 py-2 text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
+										className="mx-1 mt-2 mb-1 cursor-pointer rounded-lg px-3 py-2 text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
 									>
 										{signingOut ? "Signing out..." : "Sign Out"}
 									</DropdownMenuItem>
