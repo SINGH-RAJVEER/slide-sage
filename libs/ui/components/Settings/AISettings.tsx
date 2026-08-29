@@ -1,7 +1,7 @@
 import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
-import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { FloatingSettingsNotice } from "@slidesage/ui/components/Settings/FloatingSettingsNotice";
+import { Skeleton } from "@slidesage/ui/components/skeleton";
 
 import {
 	Select,
@@ -139,7 +139,28 @@ export function AISettings({
 	};
 
 	if (isLoading) {
-		return <LoadingScreen label="Loading AI settings" />;
+		return (
+			<section aria-label="Loading API key settings">
+				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+					External providers
+				</div>
+				<Skeleton className="mt-2 h-6 w-24" />
+				<div className="mt-5 space-y-6">
+					{Array.from({ length: 3 }, (_, index) => (
+						<div key={index} className="space-y-3">
+							<div className="flex items-start justify-between gap-4">
+								<div className="space-y-2">
+									<Skeleton className="h-4 w-28" />
+									<Skeleton className="h-3 w-20" />
+								</div>
+								<Skeleton className="h-6 w-11 rounded-full" />
+							</div>
+							<Skeleton className="h-10 w-full sm:w-72" />
+						</div>
+					))}
+				</div>
+			</section>
+		);
 	}
 
 	if (!config) {
@@ -240,10 +261,10 @@ export function AISettings({
 								</div>
 								{connection && providerModels.length > 0 ? (
 									<Select
-								value={
-									config.selection?.provider === provider.id ? config.selection.model : ""
-								}
-								disabled={!connection.enabled || !config.eligibility.eligible || busy === "selection"}
+										value={config.selection?.provider === provider.id ? config.selection.model : ""}
+										disabled={
+											!connection.enabled || !config.eligibility.eligible || busy === "selection"
+										}
 										onValueChange={(model) => void selectModel({ provider: provider.id, model })}
 									>
 										<SelectTrigger

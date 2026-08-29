@@ -270,7 +270,10 @@ it("selects the top model when enabling OpenAI or Anthropic", async () => {
 			selection,
 		});
 		globalThis.fetch = mock((url: string | URL | Request, init?: RequestInit) => {
-			if (init?.method === "PUT" && String(url).includes(`/ai/connections/${provider.id}/enabled`)) {
+			if (
+				init?.method === "PUT" &&
+				String(url).includes(`/ai/connections/${provider.id}/enabled`)
+			) {
 				enabled = Boolean(JSON.parse(String(init.body)).enabled);
 				return Promise.resolve(jsonResponse({ provider: provider.id, enabled }));
 			}
@@ -285,7 +288,9 @@ it("selects the top model when enabling OpenAI or Anthropic", async () => {
 		fireEvent.click(
 			await view.findByRole("switch", { name: `Use ${provider.label} for generation` }),
 		);
-		await waitFor(() => expect(selection).toEqual({ provider: provider.id, model: provider.model }));
+		await waitFor(() =>
+			expect(selection).toEqual({ provider: provider.id, model: provider.model }),
+		);
 		view.unmount();
 	}
 });
@@ -348,9 +353,9 @@ it("replaces the loading indicator with an error when settings fail to load", as
 
 	const view = render(<AISettings />);
 
-	expect(view.getByLabelText("Loading AI settings")).toBeInTheDocument();
+	expect(view.getByLabelText("Loading API key settings")).toBeInTheDocument();
 	expect(await view.findByRole("alert")).toHaveTextContent("Settings service unavailable");
-	expect(view.queryByLabelText("Loading AI settings")).toBeNull();
+	expect(view.queryByLabelText("Loading API key settings")).toBeNull();
 });
 
 it("reports a Cloudflare HTML fallback instead of treating it as settings", async () => {
