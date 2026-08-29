@@ -217,11 +217,7 @@ export default function PurchaseTokensPage() {
 			{/* Main Content */}
 			<div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:px-8 md:py-8">
 				<div className="w-full max-w-[1800px] mx-auto relative">
-					<div className="mb-6 flex items-center justify-start gap-4">
-						<h1 className="text-2xl font-semibold text-white md:text-3xl">Purchase Points</h1>
-					</div>
-
-					<div className="mb-10 flex flex-col items-center justify-center space-y-2 rounded-xl border border-white/10 bg-black/20 px-4 py-6">
+					<div className="mb-10 flex flex-col items-center justify-center space-y-2">
 						<h2 className="text-white/40 text-sm uppercase tracking-widest font-medium">
 							Current Balance
 						</h2>
