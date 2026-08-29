@@ -19,6 +19,11 @@ export function VimModeProvider({ children }: { children: React.ReactNode }) {
 		setIsVimMode(window.localStorage.getItem(STORAGE_KEY) === "true");
 	}, []);
 
+	useEffect(() => {
+		document.documentElement.toggleAttribute("data-vim-mode", isVimMode);
+		return () => document.documentElement.removeAttribute("data-vim-mode");
+	}, [isVimMode]);
+
 	const setVimMode = (enabled: boolean) => {
 		setIsVimMode(enabled);
 		window.localStorage.setItem(STORAGE_KEY, String(enabled));

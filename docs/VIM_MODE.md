@@ -1,6 +1,6 @@
 # Vim mode
 
-Vim mode is an optional, local browser preference. Enable it from **Settings → Keyboard navigation → Vim mode**. It takes effect immediately, is retained after reloads, and does not affect text fields, selects, textareas, editable content, or open dialogs.
+Vim mode is an optional, local browser preference. Enable it at the bottom of **Settings**. It takes effect immediately, is retained after reloads, and does not affect text fields, selects, textareas, editable content, or open dialogs. Editable fields use a block caret while the browser supports it.
 
 | Keys | Action |
 | --- | --- |

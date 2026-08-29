@@ -20,4 +20,5 @@ it("persists the Vim mode setting", () => {
 
 	expect(toggle).toHaveAttribute("data-state", "checked");
 	expect(window.localStorage.getItem("slidesage-vim-mode")).toBe("true");
+	expect(document.documentElement).toHaveAttribute("data-vim-mode");
 });

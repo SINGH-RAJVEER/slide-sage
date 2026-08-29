@@ -11,10 +11,10 @@ export default function SettingsPage() {
 				<div className="mx-auto w-full max-w-3xl space-y-10">
 					<LandingPreference />
 					<div className="border-t border-white/10 pt-10">
-						<VimModePreference />
+						<AISettings />
 					</div>
 					<div className="border-t border-white/10 pt-10">
-						<AISettings />
+						<VimModePreference />
 					</div>
 				</div>
 			</main>
