@@ -22,7 +22,7 @@ it("renders the page shell while presentations are loading", () => {
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("Generated Presentations")).toBeInTheDocument();
+		expect(view.queryByText("Generated Presentations")).not.toBeInTheDocument();
 		expect(view.getByPlaceholderText("Search by title, prompt, or date...")).toBeInTheDocument();
 		expect(view.getByLabelText("Loading presentations")).toBeInTheDocument();
 		expect(view.queryByText("No Presentations Generated Yet")).not.toBeInTheDocument();
