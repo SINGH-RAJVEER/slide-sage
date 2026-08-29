@@ -182,7 +182,7 @@ export function AISettings({
 						{message}
 					</p>
 				) : null}
-				<div className="mt-5 divide-y divide-white/10 border-b border-white/10">
+				<div className="mt-5">
 					{PROVIDERS.map((provider) => {
 						const connection = config.connections.find((item) => item.provider === provider.id);
 						const providerModels = config.models.filter((model) => model.provider === provider.id);
