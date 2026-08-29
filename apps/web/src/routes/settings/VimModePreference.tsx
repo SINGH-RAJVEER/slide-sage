@@ -24,25 +24,25 @@ export function VimModePreference() {
 			<table className="mt-5 w-full text-left text-sm text-white/60">
 				<tbody className="divide-y divide-white/[0.06]">
 					<tr>
-						<td className="w-px py-2 pr-4 font-mono whitespace-nowrap text-white/85">j / k</td>
+						<td className="w-48 py-2 pr-4 font-mono whitespace-nowrap text-white/85">j / k</td>
 						<td className="w-full py-2">Scroll down / up</td>
 					</tr>
 					<tr>
-						<td className="w-px py-2 pr-4 font-mono whitespace-nowrap text-white/85">
+						<td className="w-48 py-2 pr-4 font-mono whitespace-nowrap text-white/85">
 							Ctrl-d / Ctrl-u
 						</td>
 						<td className="w-full py-2">Half page down / up</td>
 					</tr>
 					<tr>
-						<td className="w-px py-2 pr-4 font-mono whitespace-nowrap text-white/85">gg / G</td>
+						<td className="w-48 py-2 pr-4 font-mono whitespace-nowrap text-white/85">gg / G</td>
 						<td className="w-full py-2">Top / bottom of page</td>
 					</tr>
 					<tr>
-						<td className="w-px py-2 pr-4 font-mono whitespace-nowrap text-white/85">[ / ]</td>
+						<td className="w-48 py-2 pr-4 font-mono whitespace-nowrap text-white/85">[ / ]</td>
 						<td className="w-full py-2">Previous / next control</td>
 					</tr>
 					<tr>
-						<td className="w-px py-2 pr-4 font-mono whitespace-nowrap text-white/85">
+						<td className="w-48 py-2 pr-4 font-mono whitespace-nowrap text-white/85">
 							gh gn gp gm gr gs
 						</td>
 						<td className="w-full py-2">
@@ -50,7 +50,7 @@ export function VimModePreference() {
 						</td>
 					</tr>
 					<tr>
-						<td className="w-px py-2 pr-4 font-mono whitespace-nowrap text-white/85">
+						<td className="w-48 py-2 pr-4 font-mono whitespace-nowrap text-white/85">
 							j / l in a deck
 						</td>
 						<td className="w-full py-2">Previous / next slide</td>
