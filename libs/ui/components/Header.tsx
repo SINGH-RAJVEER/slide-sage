@@ -4,7 +4,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./dropdown-menu";
 
@@ -164,27 +163,26 @@ export function Header({
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									align="end"
-									className="min-w-36 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-2 text-white shadow-2xl"
+									className="min-w-36 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
 								>
 									{[routes.profile, routes.settings].map((path) => (
 										<DropdownMenuItem
 											key={path}
 											asChild
-											className="m-1 cursor-pointer rounded-lg text-white/80 focus:bg-white/10 focus:text-white"
+											className="w-full justify-center rounded-lg px-0 py-0 text-center text-white/80 focus:bg-white/10 focus:text-white"
 										>
 											<LinkComponent
 												to={path}
-												className="flex w-full justify-center border-none px-3 py-2 text-center text-sm outline-none transition-colors"
+												className="flex w-full justify-center px-3 py-2 text-center text-sm outline-none transition-colors"
 											>
 												{path === routes.profile ? "Profile" : "Settings"}
 											</LinkComponent>
 										</DropdownMenuItem>
 									))}
-									<DropdownMenuSeparator className="my-1 bg-white/10" />
 									<DropdownMenuItem
 										disabled={signingOut}
 										onSelect={() => void handleSignOut()}
-										className="m-1 justify-center rounded-lg px-3 py-2 text-center text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
+										className="w-full justify-center rounded-lg px-3 py-2 text-center text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
 									>
 										{signingOut ? "Signing out..." : "Sign Out"}
 									</DropdownMenuItem>
