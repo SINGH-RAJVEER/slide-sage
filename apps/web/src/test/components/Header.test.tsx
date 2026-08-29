@@ -36,10 +36,7 @@ describe("Header", () => {
 			</MemoryRouter>,
 		);
 
-		expect(getByRole("link", { name: "SlideSage — landing" })).toHaveAttribute(
-			"href",
-			"/landing",
-		);
+		expect(getByRole("link", { name: "SlideSage — landing" })).toHaveAttribute("href", "/landing");
 	});
 
 	it("renders header component", async () => {
@@ -125,7 +122,7 @@ describe("Header", () => {
 		expect(getByText("RS")).toBeInTheDocument();
 	});
 
-	it("uses initials instead of loading a third-party profile image", async () => {
+	it("renders the saved profile picture", async () => {
 		mockAuthState.user = {
 			id: "user_1",
 			name: "Rajveer Singh",
@@ -138,14 +135,16 @@ describe("Header", () => {
 		};
 
 		const { default: Header } = await import("@/app/Header");
-		const { container, getByText } = render(
+		const { container, queryByText } = render(
 			<BrowserRouter>
 				<Header />
 			</BrowserRouter>,
 		);
 
-		expect(getByText("RS")).toBeInTheDocument();
-		expect(container.querySelector('img[src^="https://lh3.googleusercontent.com"]')).toBeNull();
+		expect(queryByText("RS")).toBeNull();
+		expect(
+			container.querySelector('img[src="https://lh3.googleusercontent.com/a/profile=s96-c"]'),
+		).toBeInTheDocument();
 	});
 
 	it("links to settings from the account menu", async () => {

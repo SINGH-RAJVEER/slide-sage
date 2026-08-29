@@ -11,6 +11,7 @@ import {
 export interface HeaderUser {
 	name?: string | null;
 	email: string;
+	image?: string | null;
 	slideTokens?: number | null;
 }
 
@@ -148,9 +149,17 @@ export function Header({
 									className="rounded-full ring-offset-black transition-all focus:outline-none focus:ring-2 focus:ring-white/20"
 								>
 									<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-sm transition-colors hover:border-white/40">
-										<span className="flex-shrink-0 text-base font-semibold uppercase text-white/90">
-											{getUserInitials()}
-										</span>
+										{user.image ? (
+											<img
+												src={user.image}
+												alt="Profile picture"
+												className="size-full object-cover"
+											/>
+										) : (
+											<span className="flex-shrink-0 text-base font-semibold uppercase text-white/90">
+												{getUserInitials()}
+											</span>
+										)}
 									</div>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
