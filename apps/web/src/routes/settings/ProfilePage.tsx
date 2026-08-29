@@ -366,18 +366,15 @@ export default function ProfilePage() {
 						<h2 className="text-lg font-semibold text-white">Profile Picture</h2>
 
 						{profile.image ? (
-							<div className="flex gap-4 items-start">
+							<div className="flex justify-center">
 								<img
 									src={profile.image}
 									alt="Profile"
-									className="w-24 h-24 rounded-full object-cover border border-white/20"
+									className="size-32 rounded-full border border-white/20 object-cover"
 								/>
-								<div className="flex-1">
-									<p className="text-white/60 text-sm mb-2">Current profile picture</p>
-								</div>
 							</div>
 						) : (
-							<div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+							<div className="mx-auto flex size-32 items-center justify-center rounded-full border border-white/20 bg-white/10">
 								<span className="text-white/40 text-2xl">👤</span>
 							</div>
 						)}
