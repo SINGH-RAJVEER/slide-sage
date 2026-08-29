@@ -416,7 +416,7 @@ export default function PurchaseTokensPage() {
 														e.preventDefault();
 													}
 												}}
-												className="hide-number-spin h-auto appearance-none border-0 bg-transparent px-0 py-0 text-center text-5xl font-bold text-white placeholder:text-white/25 shadow-none focus-visible:ring-0 md:text-5xl"
+												className="hide-number-spin h-20 appearance-none border-0 bg-transparent px-0 py-0 text-center text-5xl font-bold text-white placeholder:text-white/25 shadow-none focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 md:text-5xl"
 											/>
 											{customAmount && !isCustomAmountValid() && (
 												<p className="text-red-400 text-sm">Must be 25-2500</p>
