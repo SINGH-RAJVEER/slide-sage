@@ -42,7 +42,7 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 					>
 						<span className="flex items-center gap-2 text-sm leading-4 font-medium">
 							<Globe className="size-4 shrink-0" />
-							Web Research
+							<span className="translate-y-px">Web Research</span>
 						</span>
 					</Button>
 				</div>
