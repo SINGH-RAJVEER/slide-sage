@@ -423,39 +423,43 @@ export default function PurchaseTokensPage() {
 											)}
 										</div>
 									</div>
-									{customAmount && isCustomAmountValid() && (
-										<div className="text-center">
-											<div className="text-3xl font-bold text-blue-400">
-												₹{calculateCustomPrice(customAmount).toFixed(0)}
-											</div>
-											{parseInt(customAmount, 10) >= 625 && (
-												<div className="text-sm text-green-400 mt-1">20% Discount Applied</div>
-											)}
-											{parseInt(customAmount, 10) >= 250 && parseInt(customAmount, 10) < 625 && (
-												<div className="text-sm text-green-400 mt-1">10% Discount Applied</div>
-											)}
-										</div>
-									)}
-									{customAmount && isCustomAmountValid() && parseInt(customAmount, 10) >= 30 && (
-										<div className="pt-4 space-y-3 border-t border-white/10">
-											{parseInt(customAmount, 10) >= 30 && (
-												<div className="text-sm text-white/80 flex items-start gap-2">
-													<span className="text-green-400 mt-0.5">✓</span>
-													<span>
-														<span className="font-semibold">Ad-Free Experience</span>
-													</span>
+									<div className="min-h-16 text-center">
+										{customAmount && isCustomAmountValid() && (
+											<>
+												<div className="text-3xl font-bold text-blue-400">
+													₹{calculateCustomPrice(customAmount).toFixed(0)}
 												</div>
-											)}
-											{parseInt(customAmount, 10) >= 100 && (
-												<div className="text-sm text-white/80 flex items-start gap-2">
-													<span className="text-green-400 mt-0.5">✓</span>
-													<span>
-														<span className="font-semibold">Priority Throughput</span>
-													</span>
-												</div>
-											)}
-										</div>
-									)}
+												{parseInt(customAmount, 10) >= 625 && (
+													<div className="text-sm text-green-400 mt-1">20% Discount Applied</div>
+												)}
+												{parseInt(customAmount, 10) >= 250 && parseInt(customAmount, 10) < 625 && (
+													<div className="text-sm text-green-400 mt-1">10% Discount Applied</div>
+												)}
+											</>
+										)}
+									</div>
+									<div className="mt-6 space-y-3 border-t border-white/10 pt-4">
+										{customAmount && isCustomAmountValid() && parseInt(customAmount, 10) >= 30 && (
+											<>
+												{parseInt(customAmount, 10) >= 30 && (
+													<div className="text-sm text-white/80 flex items-start gap-2">
+														<span className="text-green-400 mt-0.5">✓</span>
+														<span>
+															<span className="font-semibold">Ad-Free Experience</span>
+														</span>
+													</div>
+												)}
+												{parseInt(customAmount, 10) >= 100 && (
+													<div className="text-sm text-white/80 flex items-start gap-2">
+														<span className="text-green-400 mt-0.5">✓</span>
+														<span>
+															<span className="font-semibold">Priority Throughput</span>
+														</span>
+													</div>
+												)}
+											</>
+										)}
+									</div>
 								</div>
 								<Button
 									className="w-full bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/10 text-white transition-all duration-300 h-12 font-semibold mt-4"
