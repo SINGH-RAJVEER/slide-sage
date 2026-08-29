@@ -217,7 +217,7 @@ export default function PurchaseTokensPage() {
 			{/* Main Content */}
 			<div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:px-8 md:py-8">
 				<div className="w-full max-w-[1800px] mx-auto relative">
-					<div className="mb-10 flex flex-col items-center justify-center space-y-2">
+					<div className="mb-14 flex min-h-48 flex-col items-center justify-center space-y-2 py-10">
 						<h2 className="text-white/40 text-sm uppercase tracking-widest font-medium">
 							Current Balance
 						</h2>
