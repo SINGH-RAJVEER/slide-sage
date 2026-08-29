@@ -109,12 +109,14 @@ export default function SignUpPage() {
 	return (
 		<div className="min-h-screen bg-transparent flex flex-col">
 			<Header />
-			<div className="flex-1 flex items-center justify-center px-4 py-8 md:px-8">
-				<div className="max-w-md w-full">
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
-						<h1 className="mb-1 text-2xl font-semibold text-white">Create account</h1>
-						<p className="mb-6 text-white/65">Start generating presentations.</p>
-
+			<div className="flex flex-1 flex-col">
+				<div className="px-4 py-6 md:px-8 md:py-8">
+					<div className="mx-auto max-w-7xl">
+						<h1 className="text-2xl font-semibold text-white md:text-3xl">Sign Up</h1>
+					</div>
+				</div>
+				<div className="flex flex-1 items-center justify-center px-4 py-8 md:px-8">
+					<div className="max-w-md w-full">
 						<form className="space-y-4" onSubmit={handleEmailSignUp}>
 							<div className="space-y-2">
 								<label htmlFor="name" className="text-sm font-medium text-white/80">

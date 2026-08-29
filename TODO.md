@@ -20,6 +20,7 @@
 - User beyond a certain number of tokens can have multiple generations going at once
 - Implement adding AI generated animations to slides
 - Implement ability to add presenter notes.
+- Add passkeys auth
 
 ## Issues
 
