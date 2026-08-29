@@ -21,20 +21,34 @@ export function VimModePreference() {
 				</div>
 				<Switch aria-label="Enable Vim mode" checked={isVimMode} onCheckedChange={setVimMode} />
 			</div>
-			<dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm text-white/60">
-				<dt className="font-mono text-white/85">j / k</dt>
-				<dd>Scroll down / up</dd>
-				<dt className="font-mono text-white/85">Ctrl-d / Ctrl-u</dt>
-				<dd>Half page down / up</dd>
-				<dt className="font-mono text-white/85">gg / G</dt>
-				<dd>Top / bottom of page</dd>
-				<dt className="font-mono text-white/85">[ / ]</dt>
-				<dd>Previous / next control</dd>
-				<dt className="font-mono text-white/85">gh gn gp gm gr gs</dt>
-				<dd>Home, generate, presentations, marketplace, research, settings</dd>
-				<dt className="font-mono text-white/85">j / l in a deck</dt>
-				<dd>Previous / next slide</dd>
-			</dl>
+			<table className="mt-5 w-full text-left text-sm text-white/60">
+				<tbody className="divide-y divide-white/[0.06]">
+					<tr>
+						<td className="py-2 pr-4 font-mono text-white/85">j / k</td>
+						<td className="py-2">Scroll down / up</td>
+					</tr>
+					<tr>
+						<td className="py-2 pr-4 font-mono text-white/85">Ctrl-d / Ctrl-u</td>
+						<td className="py-2">Half page down / up</td>
+					</tr>
+					<tr>
+						<td className="py-2 pr-4 font-mono text-white/85">gg / G</td>
+						<td className="py-2">Top / bottom of page</td>
+					</tr>
+					<tr>
+						<td className="py-2 pr-4 font-mono text-white/85">[ / ]</td>
+						<td className="py-2">Previous / next control</td>
+					</tr>
+					<tr>
+						<td className="py-2 pr-4 font-mono text-white/85">gh gn gp gm gr gs</td>
+						<td className="py-2">Home, generate, presentations, marketplace, research, settings</td>
+					</tr>
+					<tr>
+						<td className="py-2 pr-4 font-mono text-white/85">j / l in a deck</td>
+						<td className="py-2">Previous / next slide</td>
+					</tr>
+				</tbody>
+			</table>
 		</section>
 	);
 }
