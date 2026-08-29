@@ -9,6 +9,7 @@ import type {
 import { useAuth } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
+import { FloatingSettingsNotice } from "@slidesage/ui/components/Settings/FloatingSettingsNotice";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
 import { FolderOpen } from "lucide-react";
@@ -350,15 +351,9 @@ export default function ProfilePage() {
 	return (
 		<div className="min-h-screen bg-transparent flex flex-col">
 			<Header />
+			<FloatingSettingsNotice error={null} success={success} onDismiss={() => setSuccess(null)} />
 			<div className="flex-1 px-4 py-6 md:px-8 md:py-8">
 				<div className="mx-auto w-full max-w-2xl space-y-4">
-					{/* Success Alert */}
-					{success ? (
-						<div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-100">
-							✓ {success}
-						</div>
-					) : null}
-
 					{/* Error Alert */}
 					{error ? (
 						<div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
@@ -371,18 +366,15 @@ export default function ProfilePage() {
 						<h2 className="text-lg font-semibold text-white">Profile Picture</h2>
 
 						{profile.image ? (
-							<div className="flex gap-4 items-start">
+							<div className="flex justify-center">
 								<img
 									src={profile.image}
 									alt="Profile"
-									className="w-24 h-24 rounded-full object-cover border border-white/20"
+									className="size-32 rounded-full border border-white/20 object-cover"
 								/>
-								<div className="flex-1">
-									<p className="text-white/60 text-sm mb-2">Current profile picture</p>
-								</div>
 							</div>
 						) : (
-							<div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+							<div className="mx-auto flex size-32 items-center justify-center rounded-full border border-white/20 bg-white/10">
 								<span className="text-white/40 text-2xl">👤</span>
 							</div>
 						)}
@@ -490,14 +482,7 @@ export default function ProfilePage() {
 					{/* Email Section */}
 					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
-							<div>
-								<h2 className="text-lg font-semibold text-white">Email</h2>
-								{profile.emailVerified ? (
-									<p className="text-xs text-green-400/80 mt-1">✓ Verified</p>
-								) : (
-									<p className="text-xs text-yellow-400/80 mt-1">⚠ Not verified</p>
-								)}
-							</div>
+							<h2 className="text-lg font-semibold text-white">Email</h2>
 							{!editingEmail ? (
 								<button
 									type="button"
@@ -553,7 +538,18 @@ export default function ProfilePage() {
 								</div>
 							</form>
 						) : (
-							<p className="text-white/80">{profile.email}</p>
+							<div className="flex items-center gap-2">
+								<p className="text-white/80">{profile.email}</p>
+								<span
+									className={
+										profile.emailVerified
+											? "text-xs text-green-400/80"
+											: "text-xs text-yellow-400/80"
+									}
+								>
+									{profile.emailVerified ? "Verified" : "Not verified"}
+								</span>
+							</div>
 						)}
 					</div>
 

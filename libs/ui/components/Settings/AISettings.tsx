@@ -1,7 +1,7 @@
 import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
-import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { FloatingSettingsNotice } from "@slidesage/ui/components/Settings/FloatingSettingsNotice";
+import { Skeleton } from "@slidesage/ui/components/skeleton";
 
 import {
 	Select,
@@ -50,7 +50,11 @@ export function AISettings({
 	const [notice, setNotice] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
-	const refresh = async () => setConfig(await fetchConfiguration());
+	const refresh = async () => {
+		const next = await fetchConfiguration();
+		setConfig(next);
+		return next;
+	};
 
 	useEffect(() => {
 		void fetchConfiguration()
@@ -86,7 +90,14 @@ export function AISettings({
 		setMessage(null);
 		try {
 			await setProviderEnabled(provider, enabled);
-			await refresh();
+			const next = await refresh();
+			if (enabled) {
+				const defaultModel = next.models.find((model) => model.provider === provider);
+				if (defaultModel) {
+					await saveModel({ provider, model: defaultModel.model });
+					await refresh();
+				}
+			}
 			setMessage(
 				enabled
 					? `${PROVIDER_LABELS[provider]} will be used for generation.`
@@ -128,7 +139,28 @@ export function AISettings({
 	};
 
 	if (isLoading) {
-		return <LoadingScreen label="Loading AI settings" />;
+		return (
+			<section aria-label="Loading API key settings">
+				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+					External providers
+				</div>
+				<Skeleton className="mt-2 h-6 w-24" />
+				<div className="mt-5 space-y-6">
+					{Array.from({ length: 3 }, (_, index) => (
+						<div key={index} className="space-y-3">
+							<div className="flex items-start justify-between gap-4">
+								<div className="space-y-2">
+									<Skeleton className="h-4 w-28" />
+									<Skeleton className="h-3 w-20" />
+								</div>
+								<Skeleton className="h-6 w-11 rounded-full" />
+							</div>
+							<Skeleton className="h-10 w-full sm:w-72" />
+						</div>
+					))}
+				</div>
+			</section>
+		);
 	}
 
 	if (!config) {
@@ -139,13 +171,14 @@ export function AISettings({
 		);
 	}
 
-	const isByok = config.generation.mode === "byok";
-
 	return (
 		<div className="space-y-10">
 			<FloatingSettingsNotice error={notice} onDismiss={() => setNotice(null)} />
 			<section>
-				<div className="flex items-center gap-2">
+				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+					External providers
+				</div>
+				<div className="mt-2 flex items-center gap-2">
 					<h2 className="text-lg font-semibold text-white">API keys</h2>
 					<Tooltip>
 						<TooltipTrigger
@@ -173,7 +206,7 @@ export function AISettings({
 						{message}
 					</p>
 				) : null}
-				<div className="mt-5 divide-y divide-white/10 border-b border-white/10">
+				<div className="mt-5">
 					{PROVIDERS.map((provider) => {
 						const connection = config.connections.find((item) => item.provider === provider.id);
 						const providerModels = config.models.filter((model) => model.provider === provider.id);
@@ -228,12 +261,10 @@ export function AISettings({
 								</div>
 								{connection && providerModels.length > 0 ? (
 									<Select
-										value={
-											config.selection?.provider === provider.id
-												? config.selection.model
-												: undefined
+										value={config.selection?.provider === provider.id ? config.selection.model : ""}
+										disabled={
+											!connection.enabled || !config.eligibility.eligible || busy === "selection"
 										}
-										disabled={!isByok || !config.eligibility.eligible || busy === "selection"}
 										onValueChange={(model) => void selectModel({ provider: provider.id, model })}
 									>
 										<SelectTrigger

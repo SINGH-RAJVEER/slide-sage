@@ -25,7 +25,7 @@ export const TonalitySelector: React.FC<TonalitySelectorProps> = ({
 						variant="ghost"
 						className="h-12 px-5 text-white/70 hover:text-white hover:bg-white/5 transition-all text-base font-light flex gap-3 items-center rounded-lg"
 					>
-						<span className="opacity-50">Tonality:</span>
+						<span className="opacity-50">Tonality</span>
 						<span className="text-white">
 							{tonality.charAt(0).toUpperCase() + tonality.slice(1)}
 						</span>

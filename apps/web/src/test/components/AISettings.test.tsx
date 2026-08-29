@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { afterEach, expect, it, mock } from "bun:test";
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { AISettings } from "@/routes/settings/AISettings";
 
 const originalFetch = globalThis.fetch;
@@ -194,6 +194,107 @@ it("toggles a connected provider from the row without showing replacement contro
 	expect(view.getByText("Connected ••••1234")).toBeInTheDocument();
 });
 
+it("allows selecting a Gemini model after enabling its connected provider", async () => {
+	let enabled = false;
+	let selection: { provider: "google"; model: string } | null = null;
+	const config = () => ({
+		generation: { mode: "openrouter" as const, model: null, billing: "points" as const },
+		eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+		connections: [
+			{
+				provider: "google" as const,
+				status: "valid" as const,
+				enabled,
+				keyHint: "••••1234",
+				validatedAt: "2026-01-01T00:00:00.000Z",
+			},
+		],
+		models: [
+			{
+				provider: "google" as const,
+				model: "gemini-2.5-flash",
+				label: "Gemini 2.5 Flash",
+				description: "Fast",
+			},
+		],
+		selection,
+	});
+	globalThis.fetch = mock((url: string | URL | Request, init?: RequestInit) => {
+		if (init?.method === "PUT" && String(url).includes("/ai/connections/google/enabled")) {
+			enabled = Boolean(JSON.parse(String(init.body)).enabled);
+			return Promise.resolve(jsonResponse({ provider: "google", enabled }));
+		}
+		if (init?.method === "PUT" && String(url).includes("/ai/selection")) {
+			selection = JSON.parse(String(init.body)) as { provider: "google"; model: string };
+			return Promise.resolve(jsonResponse({ selection }));
+		}
+		return Promise.resolve(jsonResponse(config()));
+	}) as unknown as typeof fetch;
+
+	const view = render(<AISettings />);
+	const toggle = await view.findByRole("switch", { name: "Use Google Gemini for generation" });
+	fireEvent.click(toggle);
+
+	await waitFor(() => expect(toggle).toBeChecked());
+	await waitFor(() => expect(selection).toEqual({ provider: "google", model: "gemini-2.5-flash" }));
+	expect(view.getByRole("combobox", { name: "Google Gemini model" })).toBeEnabled();
+});
+
+it("selects the top model when enabling OpenAI or Anthropic", async () => {
+	for (const provider of [
+		{ id: "openai" as const, label: "OpenAI", model: "gpt-5-mini" },
+		{ id: "anthropic" as const, label: "Anthropic", model: "claude-haiku-4-5" },
+	]) {
+		let enabled = false;
+		let selection: { provider: typeof provider.id; model: string } | null = null;
+		const config = () => ({
+			generation: { mode: "openrouter" as const, model: null, billing: "points" as const },
+			eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
+			connections: [
+				{
+					provider: provider.id,
+					status: "valid" as const,
+					enabled,
+					keyHint: "••••1234",
+					validatedAt: "2026-01-01T00:00:00.000Z",
+				},
+			],
+			models: [
+				{
+					provider: provider.id,
+					model: provider.model,
+					label: provider.model,
+					description: "Default",
+				},
+			],
+			selection,
+		});
+		globalThis.fetch = mock((url: string | URL | Request, init?: RequestInit) => {
+			if (
+				init?.method === "PUT" &&
+				String(url).includes(`/ai/connections/${provider.id}/enabled`)
+			) {
+				enabled = Boolean(JSON.parse(String(init.body)).enabled);
+				return Promise.resolve(jsonResponse({ provider: provider.id, enabled }));
+			}
+			if (init?.method === "PUT" && String(url).includes("/ai/selection")) {
+				selection = JSON.parse(String(init.body)) as typeof selection;
+				return Promise.resolve(jsonResponse({ selection }));
+			}
+			return Promise.resolve(jsonResponse(config()));
+		}) as unknown as typeof fetch;
+
+		const view = render(<AISettings />);
+		fireEvent.click(
+			await view.findByRole("switch", { name: `Use ${provider.label} for generation` }),
+		);
+		await waitFor(() =>
+			expect(selection).toEqual({ provider: provider.id, model: provider.model }),
+		);
+		view.unmount();
+	}
+});
+
 it("removes a connected provider from the delete icon", async () => {
 	let connected = true;
 	const config = () => ({
@@ -252,9 +353,9 @@ it("replaces the loading indicator with an error when settings fail to load", as
 
 	const view = render(<AISettings />);
 
-	expect(view.getByLabelText("Loading AI settings")).toBeInTheDocument();
+	expect(view.getByLabelText("Loading API key settings")).toBeInTheDocument();
 	expect(await view.findByRole("alert")).toHaveTextContent("Settings service unavailable");
-	expect(view.queryByLabelText("Loading AI settings")).toBeNull();
+	expect(view.queryByLabelText("Loading API key settings")).toBeNull();
 });
 
 it("reports a Cloudflare HTML fallback instead of treating it as settings", async () => {

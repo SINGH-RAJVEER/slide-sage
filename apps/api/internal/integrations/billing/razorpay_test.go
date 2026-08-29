@@ -20,3 +20,13 @@ func TestResolvePackPrice(t *testing.T) {
 		t.Fatalf("price: %#v", price)
 	}
 }
+
+func TestResolvePackPriceAllowsMaximumCustomQuantity(t *testing.T) {
+	price, err := ResolvePackPrice(PackCustom, maxCustomQuantity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if price.Tokens != maxCustomQuantity || price.AmountPaise != 1600000 {
+		t.Fatalf("price: %#v", price)
+	}
+}

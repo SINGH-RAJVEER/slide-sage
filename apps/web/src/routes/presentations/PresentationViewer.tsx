@@ -38,6 +38,7 @@ import { findTemplate } from "@slidesage/ui/lib/templates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
+import { useVimMode } from "@/context/VimModeContext";
 
 export default function PresentationViewerPage() {
 	const location = useLocation();
@@ -46,6 +47,7 @@ export default function PresentationViewerPage() {
 	const { streamingState, getPresentation, generate, cancelGeneration } = useStreaming();
 	const { currentTemplate, changeTemplate } = useTemplate();
 	const installedThemes = useInstalledMarketplaceThemes();
+	const { isVimMode } = useVimMode();
 
 	const locationState = location.state as ViewerLocationState | undefined;
 
@@ -143,6 +145,7 @@ export default function PresentationViewerPage() {
 	});
 
 	useViewerKeyboardNavigation({
+		enabled: isVimMode,
 		currentSlide: navigation.currentSlide,
 		slideCount,
 		onNavigate: (index) => navigation.scrollToSlide(index, "auto"),

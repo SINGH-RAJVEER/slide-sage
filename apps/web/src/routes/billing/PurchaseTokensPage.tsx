@@ -188,14 +188,14 @@ export default function PurchaseTokensPage() {
 
 	const handleCustomPurchase = () => {
 		const amount = parseInt(customAmount, 10);
-		if (amount >= 25 && amount <= 2500) {
+		if (amount >= 25 && amount <= 10000) {
 			handlePurchase(amount, "custom");
 		}
 	};
 
 	const isCustomAmountValid = () => {
 		const amount = parseInt(customAmount, 10);
-		return !Number.isNaN(amount) && amount >= 25 && amount <= 2500;
+		return !Number.isNaN(amount) && amount >= 25 && amount <= 10000;
 	};
 
 	const calculateCustomPrice = (amountStr: string) => {
@@ -217,11 +217,7 @@ export default function PurchaseTokensPage() {
 			{/* Main Content */}
 			<div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:px-8 md:py-8">
 				<div className="w-full max-w-[1800px] mx-auto relative">
-					<div className="mb-6 flex items-center justify-start gap-4">
-						<h1 className="text-2xl font-semibold text-white md:text-3xl">Purchase Points</h1>
-					</div>
-
-					<div className="mb-10 flex flex-col items-center justify-center space-y-2 rounded-xl border border-white/10 bg-black/20 px-4 py-6">
+					<div className="mb-14 flex min-h-48 flex-col items-center justify-center space-y-2 py-10">
 						<h2 className="text-white/40 text-sm uppercase tracking-widest font-medium">
 							Current Balance
 						</h2>
@@ -253,11 +249,14 @@ export default function PurchaseTokensPage() {
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
 								<div className="flex-1 space-y-4">
-									<div className="text-center py-4">
+									<div className="pb-7 pt-4 text-center">
 										<div className="text-5xl font-bold text-white mb-2">25</div>
 										<div className="text-white/60">points</div>
 									</div>
-									<div className="text-center text-3xl font-bold text-blue-400">₹50</div>
+									<div className="text-center">
+										<div className="text-3xl font-bold text-blue-400">₹50</div>
+										<div className="mt-1 h-5" aria-hidden="true" />
+									</div>
 									<div className="pt-4 space-y-3 border-t border-white/10 mt-6">
 										<div className="text-sm text-white/70">
 											<span className="text-white/50">• Standard generation speed</span>
@@ -292,7 +291,7 @@ export default function PurchaseTokensPage() {
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
 								<div className="flex-1 space-y-4">
-									<div className="text-center py-4">
+									<div className="pb-7 pt-4 text-center">
 										<div className="text-5xl font-bold text-white mb-2">250</div>
 										<div className="text-white/60">points</div>
 									</div>
@@ -341,7 +340,7 @@ export default function PurchaseTokensPage() {
 								</CardHeader>
 								<CardContent className="flex-1 flex flex-col">
 									<div className="flex-1 space-y-4">
-										<div className="text-center py-4">
+										<div className="pb-7 pt-4 text-center">
 											<div className="text-5xl font-bold text-white mb-2">625</div>
 											<div className="text-white/60">points</div>
 										</div>
@@ -390,7 +389,7 @@ export default function PurchaseTokensPage() {
 							<CardHeader>
 								<CardTitle className="text-white text-2xl">Custom Amount</CardTitle>
 								<CardDescription className="text-white/60">
-									Choose your own (25-2500)
+									Choose your own (25-10000)
 								</CardDescription>
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
@@ -401,15 +400,15 @@ export default function PurchaseTokensPage() {
 												id="customAmount"
 												type="number"
 												min="25"
-												max="2500"
-												placeholder="Enter number of points"
+												max="10000"
+												placeholder="0"
 												value={customAmount}
 												onChange={(e) => setCustomAmount(e.target.value)}
 												onInput={(e) => {
 													const target = e.target as HTMLInputElement;
-													if (parseInt(target.value, 10) > 2500) {
-														target.value = "2500";
-														setCustomAmount("2500");
+													if (parseInt(target.value, 10) > 10000) {
+														target.value = "10000";
+														setCustomAmount("10000");
 													}
 												}}
 												onKeyPress={(e) => {
@@ -417,46 +416,50 @@ export default function PurchaseTokensPage() {
 														e.preventDefault();
 													}
 												}}
-												className="bg-white/5 border-white/20 text-white placeholder:text-white/40 text-center text-5xl h-20 font-bold"
+												className="hide-number-spin h-[5.75rem] appearance-none border-0 bg-transparent px-0 py-0 text-center text-5xl font-bold text-white placeholder:text-white/25 shadow-none focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 md:text-5xl"
 											/>
 											{customAmount && !isCustomAmountValid() && (
-												<p className="text-red-400 text-sm">Must be 25-2500</p>
+												<p className="text-red-400 text-sm">Must be 25-10000</p>
 											)}
 										</div>
 									</div>
-									{customAmount && isCustomAmountValid() && (
-										<div className="text-center">
-											<div className="text-3xl font-bold text-blue-400">
-												₹{calculateCustomPrice(customAmount).toFixed(0)}
-											</div>
-											{parseInt(customAmount, 10) >= 625 && (
-												<div className="text-sm text-green-400 mt-1">20% Discount Applied</div>
-											)}
-											{parseInt(customAmount, 10) >= 250 && parseInt(customAmount, 10) < 625 && (
-												<div className="text-sm text-green-400 mt-1">10% Discount Applied</div>
-											)}
-										</div>
-									)}
-									{customAmount && isCustomAmountValid() && parseInt(customAmount, 10) >= 30 && (
-										<div className="pt-4 space-y-3 border-t border-white/10">
-											{parseInt(customAmount, 10) >= 30 && (
-												<div className="text-sm text-white/80 flex items-start gap-2">
-													<span className="text-green-400 mt-0.5">✓</span>
-													<span>
-														<span className="font-semibold">Ad-Free Experience</span>
-													</span>
+									<div className="min-h-[3.75rem] text-center">
+										{customAmount && isCustomAmountValid() && (
+											<>
+												<div className="text-3xl font-bold text-blue-400">
+													₹{calculateCustomPrice(customAmount).toFixed(0)}
 												</div>
-											)}
-											{parseInt(customAmount, 10) >= 100 && (
-												<div className="text-sm text-white/80 flex items-start gap-2">
-													<span className="text-green-400 mt-0.5">✓</span>
-													<span>
-														<span className="font-semibold">Priority Throughput</span>
-													</span>
-												</div>
-											)}
-										</div>
-									)}
+												{parseInt(customAmount, 10) >= 625 && (
+													<div className="text-sm text-green-400 mt-1">20% Discount Applied</div>
+												)}
+												{parseInt(customAmount, 10) >= 250 && parseInt(customAmount, 10) < 625 && (
+													<div className="text-sm text-green-400 mt-1">10% Discount Applied</div>
+												)}
+											</>
+										)}
+									</div>
+									<div className="mt-6 space-y-3 border-t border-white/10 pt-4">
+										{customAmount && isCustomAmountValid() && parseInt(customAmount, 10) >= 30 && (
+											<>
+												{parseInt(customAmount, 10) >= 30 && (
+													<div className="text-sm text-white/80 flex items-start gap-2">
+														<span className="text-green-400 mt-0.5">✓</span>
+														<span>
+															<span className="font-semibold">Ad-Free Experience</span>
+														</span>
+													</div>
+												)}
+												{parseInt(customAmount, 10) >= 100 && (
+													<div className="text-sm text-white/80 flex items-start gap-2">
+														<span className="text-green-400 mt-0.5">✓</span>
+														<span>
+															<span className="font-semibold">Priority Throughput</span>
+														</span>
+													</div>
+												)}
+											</>
+										)}
+									</div>
 								</div>
 								<Button
 									className="w-full bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/10 text-white transition-all duration-300 h-12 font-semibold mt-4"

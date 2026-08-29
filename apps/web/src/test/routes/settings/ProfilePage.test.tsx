@@ -59,6 +59,7 @@ it("sends a pending email change to its verification route", async () => {
 		);
 
 		await view.findByText("old@example.com");
+		expect(view.getByText("Verified")).toBeInTheDocument();
 		const editButtons = view.getAllByRole("button", { name: "Edit" });
 		fireEvent.click(editButtons[1] as HTMLButtonElement);
 		fireEvent.change(view.getByDisplayValue("old@example.com"), {

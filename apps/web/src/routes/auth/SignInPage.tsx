@@ -105,12 +105,14 @@ export default function SignInPage() {
 	return (
 		<div className="min-h-screen bg-transparent flex flex-col">
 			<Header />
-			<div className="flex-1 flex items-center justify-center px-4 py-8 md:px-8">
-				<div className="max-w-md w-full">
-					<div className="rounded-xl border border-white/10 bg-black/20 p-6">
-						<h1 className="text-2xl font-semibold text-white mb-1">Sign in</h1>
-						<p className="text-white/65 mb-6">Access your SlideSage account.</p>
-
+			<div className="flex flex-1 flex-col">
+				<div className="px-4 py-6 md:px-8 md:py-8">
+					<div className="mx-auto max-w-7xl">
+						<h1 className="text-2xl font-semibold text-white md:text-3xl">Sign In</h1>
+					</div>
+				</div>
+				<div className="flex flex-1 items-center justify-center px-4 py-8 md:px-8">
+					<div className="max-w-md w-full">
 						<form className="space-y-4" onSubmit={handleEmailSignIn}>
 							<div className="space-y-2">
 								<label htmlFor="email" className="text-sm font-medium text-white/80">
@@ -243,7 +245,7 @@ export default function SignInPage() {
 						<p className="mt-6 text-center text-sm text-white/55">
 							Don't have an account?{" "}
 							<a href="/sign-up" className="text-white hover:underline font-semibold">
-								Create one
+								Sign up
 							</a>
 						</p>
 					</div>

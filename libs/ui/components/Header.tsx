@@ -4,13 +4,13 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./dropdown-menu";
 
 export interface HeaderUser {
 	name?: string | null;
 	email: string;
+	image?: string | null;
 	slideTokens?: number | null;
 }
 
@@ -148,41 +148,41 @@ export function Header({
 									className="rounded-full ring-offset-black transition-all focus:outline-none focus:ring-2 focus:ring-white/20"
 								>
 									<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-sm transition-colors hover:border-white/40">
-										<span className="flex-shrink-0 text-base font-semibold uppercase text-white/90">
-											{getUserInitials()}
-										</span>
+										{user.image ? (
+											<img
+												src={user.image}
+												alt="Profile picture"
+												className="size-full object-cover"
+											/>
+										) : (
+											<span className="flex-shrink-0 text-base font-semibold uppercase text-white/90">
+												{getUserInitials()}
+											</span>
+										)}
 									</div>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									align="end"
-									className="min-w-48 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-2 text-white shadow-2xl"
+									className="min-w-36 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
 								>
-									<div className="px-3 py-2">
-										<p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/60">
-											Signed in as
-										</p>
-										<p className="truncate text-sm font-normal text-white/90">{user.email}</p>
-									</div>
-									<DropdownMenuSeparator className="my-1 bg-white/10" />
 									{[routes.profile, routes.settings].map((path) => (
 										<DropdownMenuItem
 											key={path}
 											asChild
-											className="mx-1 my-1 cursor-pointer rounded-lg text-white/80 focus:bg-white/10 focus:text-white"
+											className="w-full justify-center rounded-lg px-0 py-0 text-center text-white/80 focus:bg-white/10 focus:text-white"
 										>
 											<LinkComponent
 												to={path}
-												className="flex w-full border-none px-3 py-2 text-sm outline-none transition-colors"
+												className="flex w-full justify-center px-3 py-2 text-center text-sm outline-none transition-colors"
 											>
 												{path === routes.profile ? "Profile" : "Settings"}
 											</LinkComponent>
 										</DropdownMenuItem>
 									))}
-									<DropdownMenuSeparator className="my-1 bg-white/10" />
 									<DropdownMenuItem
 										disabled={signingOut}
 										onSelect={() => void handleSignOut()}
-										className="mx-1 my-1 cursor-pointer rounded-lg px-3 py-2 text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
+										className="w-full justify-center rounded-lg px-3 py-2 text-center text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
 									>
 										{signingOut ? "Signing out..." : "Sign Out"}
 									</DropdownMenuItem>

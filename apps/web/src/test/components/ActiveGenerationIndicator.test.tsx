@@ -81,7 +81,7 @@ it("shows a running generation and opens it, even after navigating away", async 
 			name: "solar policy deck is generating. Open it",
 		});
 		expect(view.getByText("solar policy deck")).toBeInTheDocument();
-		expect(pill).toHaveClass("hover:w-72", "focus-visible:w-72");
+		expect(pill).toHaveClass("hover:w-fit", "focus-visible:w-fit");
 		fireEvent.click(pill);
 		expect(onOpen).toHaveBeenCalledWith("pres_9");
 	} finally {

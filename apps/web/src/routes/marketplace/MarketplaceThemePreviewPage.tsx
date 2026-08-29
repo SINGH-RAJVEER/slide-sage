@@ -15,9 +15,11 @@ import { createMarketplacePreviewPresentation, MARKETPLACE_ITEMS } from "@slides
 import { useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
+import { useVimMode } from "@/context/VimModeContext";
 
 export default function MarketplaceThemePreviewPage() {
 	const navigate = useNavigate();
+	const { isVimMode } = useVimMode();
 	const { marketplaceId } = useParams();
 	const item = MARKETPLACE_ITEMS.find((candidate) => candidate.id === marketplaceId);
 	const presentation = item ? createMarketplacePreviewPresentation(item) : undefined;
@@ -40,6 +42,7 @@ export default function MarketplaceThemePreviewPage() {
 		onAdvance: (nextIndex) => navigation.scrollToSlide(nextIndex, "smooth"),
 	});
 	useViewerKeyboardNavigation({
+		enabled: isVimMode,
 		currentSlide: navigation.currentSlide,
 		slideCount: presentation?.slides.length ?? 0,
 		onNavigate: (index) => navigation.scrollToSlide(index, "auto"),

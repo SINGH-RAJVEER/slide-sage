@@ -32,8 +32,8 @@ export function PresentationSearchBar({ onSearch }: PresentationSearchBarProps) 
 	const hasActiveFilters = filters.query.length > 0;
 
 	return (
-		<div className="mb-8 flex justify-center">
-			<div className="relative w-full max-w-2xl">
+		<div className="w-full min-w-0">
+			<div className="relative w-full">
 				<div className="relative flex items-center rounded-lg border border-white/10 bg-black/20 px-4 py-2.5 transition-colors focus-within:border-white/25">
 					<Search className="h-5 w-5 text-white/40 transition-colors group-focus-within:text-white/70" />
 					<Input

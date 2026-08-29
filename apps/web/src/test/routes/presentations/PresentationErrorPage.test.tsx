@@ -36,8 +36,8 @@ describe("PresentationErrorPage", () => {
 		expect(view.getByRole("heading", { level: 1 })).toHaveTextContent(
 			"We couldn't finish this presentation",
 		);
-		expect(view.getByText("Generation unavailable")).toBeInTheDocument();
-		expect(view.getByText("The generation stream was interrupted.")).toBeInTheDocument();
+		expect(view.queryByText("Generation unavailable")).toBeNull();
+		expect(view.queryByText("The generation stream was interrupted.")).toBeNull();
 		expect(view.queryByText("Delete unfinished presentation")).toBeNull();
 		expect(view.queryByText("Retry presentation")).toBeNull();
 		expect(view.queryByRole("button", { name: "My Presentations" })).toBeNull();
@@ -149,7 +149,7 @@ describe("PresentationErrorPage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("Saved for retry")).toBeInTheDocument();
+		expect(view.queryByText("Saved for retry")).toBeNull();
 
 		fireEvent.click(view.getByRole("button", { name: "Delete unfinished presentation" }));
 
