@@ -401,7 +401,7 @@ export default function PurchaseTokensPage() {
 												type="number"
 												min="25"
 												max="2500"
-												placeholder="Enter number of points"
+												placeholder="0"
 												value={customAmount}
 												onChange={(e) => setCustomAmount(e.target.value)}
 												onInput={(e) => {
@@ -416,7 +416,7 @@ export default function PurchaseTokensPage() {
 														e.preventDefault();
 													}
 												}}
-												className="bg-white/5 border-white/20 text-white placeholder:text-white/40 text-center text-5xl h-20 font-bold"
+												className="h-auto border-0 bg-transparent px-0 py-0 text-center text-5xl font-bold text-white placeholder:text-white/25 shadow-none focus-visible:ring-0"
 											/>
 											{customAmount && !isCustomAmountValid() && (
 												<p className="text-red-400 text-sm">Must be 25-2500</p>
