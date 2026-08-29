@@ -40,8 +40,8 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 								: "border-transparent bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
 						}`}
 					>
-						<span className="flex items-center gap-2 text-sm font-medium">
-							<Globe className="h-4 w-4" />
+						<span className="flex items-center gap-2 text-sm leading-4 font-medium">
+							<Globe className="size-4 shrink-0" />
 							Web Research
 						</span>
 					</Button>
