@@ -13,7 +13,9 @@ export default function SettingsPage() {
 					<div className="border-t border-white/10 pt-10">
 						<AISettings />
 					</div>
-					<VimModePreference />
+					<div className="border-t border-white/10 pt-10">
+						<VimModePreference />
+					</div>
 				</div>
 			</main>
 		</div>

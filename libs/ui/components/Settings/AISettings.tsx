@@ -154,7 +154,10 @@ export function AISettings({
 		<div className="space-y-10">
 			<FloatingSettingsNotice error={notice} onDismiss={() => setNotice(null)} />
 			<section>
-				<div className="flex items-center gap-2">
+				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+					External providers
+				</div>
+				<div className="mt-2 flex items-center gap-2">
 					<h2 className="text-lg font-semibold text-white">API keys</h2>
 					<Tooltip>
 						<TooltipTrigger
