@@ -157,13 +157,6 @@ export function Header({
 									align="end"
 									className="min-w-48 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-2 text-white shadow-2xl"
 								>
-									<div className="px-3 py-2">
-										<p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/60">
-											Signed in as
-										</p>
-										<p className="truncate text-sm font-normal text-white/90">{user.email}</p>
-									</div>
-									<DropdownMenuSeparator className="my-1 bg-white/10" />
 									{[routes.profile, routes.settings].map((path) => (
 										<DropdownMenuItem
 											key={path}
