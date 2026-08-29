@@ -3,7 +3,7 @@ import { Button } from "@slidesage/ui/components/button";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
 import { getPresentationRetryDestination } from "@slidesage/ui/lib/presentation-retry";
-import { CircleAlert, RotateCcw, Trash2 } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/app/Header";
@@ -11,13 +11,11 @@ import { ROUTES } from "@/app/router/paths";
 
 interface PresentationErrorPageProps {
 	presentationId?: number | string;
-	error?: string;
 	onDelete?: () => void;
 }
 
 export default function PresentationErrorPage({
 	presentationId: propPresentationId,
-	error: propError,
 	onDelete,
 }: PresentationErrorPageProps = {}) {
 	const navigate = useNavigate();
@@ -26,9 +24,6 @@ export default function PresentationErrorPage({
 	const [retryError, setRetryError] = useState("");
 
 	const presentationId = location.state?.presentationId || propPresentationId;
-	const error =
-		location.state?.error || propError || "This presentation has no content or failed to generate.";
-	const StatusIcon = presentationId ? RotateCcw : CircleAlert;
 
 	const handleRetry = async () => {
 		if (!presentationId || isRetrying) return;
@@ -103,19 +98,13 @@ export default function PresentationErrorPage({
 			<Header />
 			<main className="flex flex-1 items-center px-6 py-12 md:px-10 md:py-16">
 				<section aria-labelledby="presentation-error-title" className="mx-auto w-full max-w-3xl">
-					<div className="flex items-center gap-2 text-sm font-medium text-red-300">
-						<StatusIcon className="h-4 w-4" aria-hidden="true" />
-						<span>{presentationId ? "Saved for retry" : "Generation unavailable"}</span>
-					</div>
-
-					<div className="mt-5 max-w-2xl">
+					<div className="max-w-2xl">
 						<h1
 							id="presentation-error-title"
 							className="text-3xl font-semibold text-white md:text-4xl"
 						>
 							We couldn&apos;t finish this presentation
 						</h1>
-						<p className="mt-4 text-base leading-7 text-white/60 md:text-lg">{error}</p>
 						{presentationId && (
 							<p className="mt-3 text-sm leading-6 text-white/45">
 								Your prompt, generation settings, and available research sources are saved with this
