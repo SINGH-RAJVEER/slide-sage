@@ -482,14 +482,7 @@ export default function ProfilePage() {
 					{/* Email Section */}
 					<div className="border-t border-white/10 py-8">
 						<div className="flex items-center justify-between mb-4">
-							<div>
-								<h2 className="text-lg font-semibold text-white">Email</h2>
-								{profile.emailVerified ? (
-									<p className="text-xs text-green-400/80 mt-1">✓ Verified</p>
-								) : (
-									<p className="text-xs text-yellow-400/80 mt-1">⚠ Not verified</p>
-								)}
-							</div>
+							<h2 className="text-lg font-semibold text-white">Email</h2>
 							{!editingEmail ? (
 								<button
 									type="button"
@@ -545,7 +538,18 @@ export default function ProfilePage() {
 								</div>
 							</form>
 						) : (
-							<p className="text-white/80">{profile.email}</p>
+							<div className="flex items-center gap-2">
+								<p className="text-white/80">{profile.email}</p>
+								<span
+									className={
+										profile.emailVerified
+											? "text-xs text-green-400/80"
+											: "text-xs text-yellow-400/80"
+									}
+								>
+									{profile.emailVerified ? "Verified" : "Not verified"}
+								</span>
+							</div>
 						)}
 					</div>
 
