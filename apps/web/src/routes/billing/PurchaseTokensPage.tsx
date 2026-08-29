@@ -249,7 +249,7 @@ export default function PurchaseTokensPage() {
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
 								<div className="flex-1 space-y-4">
-									<div className="text-center py-4">
+									<div className="pb-7 pt-4 text-center">
 										<div className="text-5xl font-bold text-white mb-2">25</div>
 										<div className="text-white/60">points</div>
 									</div>
@@ -291,7 +291,7 @@ export default function PurchaseTokensPage() {
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
 								<div className="flex-1 space-y-4">
-									<div className="text-center py-4">
+									<div className="pb-7 pt-4 text-center">
 										<div className="text-5xl font-bold text-white mb-2">250</div>
 										<div className="text-white/60">points</div>
 									</div>
@@ -340,7 +340,7 @@ export default function PurchaseTokensPage() {
 								</CardHeader>
 								<CardContent className="flex-1 flex flex-col">
 									<div className="flex-1 space-y-4">
-										<div className="text-center py-4">
+										<div className="pb-7 pt-4 text-center">
 											<div className="text-5xl font-bold text-white mb-2">625</div>
 											<div className="text-white/60">points</div>
 										</div>
