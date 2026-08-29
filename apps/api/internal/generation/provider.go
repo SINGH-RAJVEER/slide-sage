@@ -18,7 +18,7 @@ import (
 )
 
 // defaultModel is used when no model is configured and no per-user AI selection exists.
-const defaultModel = "z-ai/glm-5.2:free"
+const defaultModel = "google/gemma-4-26b-a4b-it:free"
 
 // doProviderRequest sends a provider request and retries transient failures (429 and 5xx) with exponential backoff, honoring Retry-After when present.
 func (h *handler) doProviderRequest(ctx context.Context, send func() (*http.Response, error)) (*http.Response, error) {
