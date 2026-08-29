@@ -21,6 +21,8 @@ import (
 	"time"
 )
 
+const maxCustomQuantity = 10000
+
 const razorpayBaseURL = "https://api.razorpay.com/v1"
 
 var paymentIDPattern = regexp.MustCompile(`^pay_[A-Za-z0-9]{6,80}$`)
@@ -71,8 +73,8 @@ func ResolvePackPrice(pack Pack, quantity int) (Price, error) {
 	case PackPremium:
 		return Price{625, 100000}, nil
 	case PackCustom:
-		if quantity < 25 || quantity > 2500 {
-			return Price{}, errors.New("custom quantity must be an integer between 25 and 2500")
+		if quantity < 25 || quantity > maxCustomQuantity {
+			return Price{}, errors.New("custom quantity must be an integer between 25 and 10000")
 		}
 		amount := quantity * 200
 		if quantity >= 625 {

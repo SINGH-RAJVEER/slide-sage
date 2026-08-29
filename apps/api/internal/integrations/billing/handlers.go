@@ -72,8 +72,8 @@ func (r billingRouter) checkout(w http.ResponseWriter, request *http.Request) {
 	if input.Quantity != nil {
 		quantity = *input.Quantity
 	}
-	if pack == PackCustom && (input.Quantity == nil || quantity < 25 || quantity > 2500) {
-		writeError(w, http.StatusBadRequest, "Custom quantity must be 25-2500")
+	if pack == PackCustom && (input.Quantity == nil || quantity < 25 || quantity > maxCustomQuantity) {
+		writeError(w, http.StatusBadRequest, "Custom quantity must be 25-10000")
 		return
 	}
 	if r.razorpay == nil {

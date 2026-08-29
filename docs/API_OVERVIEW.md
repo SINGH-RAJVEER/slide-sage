@@ -116,7 +116,7 @@ Generation assigns `corporate-blue` without accepting a theme request field. Ite
 | `POST` | `/billing/verify`  | Yes  | Verify a captured provider payment and grant points idempotently |
 | `POST` | `/billing/webhook` | Signature | Process `payment.captured`                                       |
 
-Checkout accepts `starter`, `pro`, `premium`, or `custom`. Starter grants 25 points for ₹50, Pro grants 250 points for ₹450, and Premium grants 625 points for ₹1000. Custom quantities must be between 25 and 2500 points and use the same ₹2-per-point base rate with 10% and 20% volume discounts at 250 and 625 points.
+Checkout accepts `starter`, `pro`, `premium`, or `custom`. Starter grants 25 points for ₹50, Pro grants 250 points for ₹450, and Premium grants 625 points for ₹1000. Custom quantities must be between 25 and 10,000 points and use the same ₹2-per-point base rate with 10% and 20% volume discounts at 250 and 625 points.
 
 Checkout rejects Razorpay orders whose entity, amount, amount due, amount paid, currency, receipt, status, or partial-payment flag differs from the request. Browser verification first checks the strict hexadecimal HMAC signature, then fetches the payment from Razorpay and requires a captured INR payment whose payment ID, order ID, and amount match the local order. Webhooks verify the HMAC against the exact raw request body and accept only complete `payment.captured` entities.
 

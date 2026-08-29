@@ -188,14 +188,14 @@ export default function PurchaseTokensPage() {
 
 	const handleCustomPurchase = () => {
 		const amount = parseInt(customAmount, 10);
-		if (amount >= 25 && amount <= 2500) {
+		if (amount >= 25 && amount <= 10000) {
 			handlePurchase(amount, "custom");
 		}
 	};
 
 	const isCustomAmountValid = () => {
 		const amount = parseInt(customAmount, 10);
-		return !Number.isNaN(amount) && amount >= 25 && amount <= 2500;
+		return !Number.isNaN(amount) && amount >= 25 && amount <= 10000;
 	};
 
 	const calculateCustomPrice = (amountStr: string) => {
@@ -389,7 +389,7 @@ export default function PurchaseTokensPage() {
 							<CardHeader>
 								<CardTitle className="text-white text-2xl">Custom Amount</CardTitle>
 								<CardDescription className="text-white/60">
-									Choose your own (25-2500)
+									Choose your own (25-10000)
 								</CardDescription>
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
@@ -400,15 +400,15 @@ export default function PurchaseTokensPage() {
 												id="customAmount"
 												type="number"
 												min="25"
-												max="2500"
+												max="10000"
 												placeholder="0"
 												value={customAmount}
 												onChange={(e) => setCustomAmount(e.target.value)}
 												onInput={(e) => {
 													const target = e.target as HTMLInputElement;
-													if (parseInt(target.value, 10) > 2500) {
-														target.value = "2500";
-														setCustomAmount("2500");
+													if (parseInt(target.value, 10) > 10000) {
+														target.value = "10000";
+														setCustomAmount("10000");
 													}
 												}}
 												onKeyPress={(e) => {
@@ -416,14 +416,14 @@ export default function PurchaseTokensPage() {
 														e.preventDefault();
 													}
 												}}
-												className="hide-number-spin h-20 appearance-none border-0 bg-transparent px-0 py-0 text-center text-5xl font-bold text-white placeholder:text-white/25 shadow-none focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 md:text-5xl"
+												className="hide-number-spin h-[5.75rem] appearance-none border-0 bg-transparent px-0 py-0 text-center text-5xl font-bold text-white placeholder:text-white/25 shadow-none focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 md:text-5xl"
 											/>
 											{customAmount && !isCustomAmountValid() && (
-												<p className="text-red-400 text-sm">Must be 25-2500</p>
+												<p className="text-red-400 text-sm">Must be 25-10000</p>
 											)}
 										</div>
 									</div>
-									<div className="min-h-16 text-center">
+									<div className="min-h-[3.75rem] text-center">
 										{customAmount && isCustomAmountValid() && (
 											<>
 												<div className="text-3xl font-bold text-blue-400">
