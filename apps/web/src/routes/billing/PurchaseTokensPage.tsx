@@ -253,7 +253,10 @@ export default function PurchaseTokensPage() {
 										<div className="text-5xl font-bold text-white mb-2">25</div>
 										<div className="text-white/60">points</div>
 									</div>
-									<div className="text-center text-3xl font-bold text-blue-400">₹50</div>
+									<div className="text-center">
+										<div className="text-3xl font-bold text-blue-400">₹50</div>
+										<div className="mt-1 h-5" aria-hidden="true" />
+									</div>
 									<div className="pt-4 space-y-3 border-t border-white/10 mt-6">
 										<div className="text-sm text-white/70">
 											<span className="text-white/50">• Standard generation speed</span>
