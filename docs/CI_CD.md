@@ -226,6 +226,8 @@ gcloud run jobs deploy slidesage-migrate \
   --project=slidesage-504414 \
   --image="$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION" \
   --region=asia-south1 \
+	--service-account="slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com" \
+	--add-cloudsql-instances="$PROJECT_ID:$RUN_REGION:slidesage-postgres" \
   --set-secrets=DATABASE_URL=DATABASE_URL:latest \
   --execute-now \
   --wait
