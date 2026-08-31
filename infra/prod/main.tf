@@ -35,7 +35,23 @@ locals {
     "DATABASE_URL",
   ])
 
-  runtime_secret_names = setunion(local.api_secret_names, local.worker_secret_names, local.preview_secret_names)
+  # Telemetry export is opt-in: with no endpoint the services keep their local
+  # loggers and Terraform never asks for the Datadog headers secret.
+  observability_enabled = trimspace(var.otel_exporter_otlp_endpoint) != ""
+  observability_environment = local.observability_enabled ? {
+    OTEL_EXPORTER_OTLP_ENDPOINT = var.otel_exporter_otlp_endpoint
+    OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
+    OTEL_LOGS_EXPORTER          = var.otel_logs_exporter
+    OTEL_SERVICE_VERSION        = var.otel_service_version
+  } : {}
+  observability_secret_names = local.observability_enabled ? toset(["DATADOG_OTLP_HEADERS"]) : toset([])
+
+  runtime_secret_names = setunion(
+    local.api_secret_names,
+    local.worker_secret_names,
+    local.preview_secret_names,
+    local.observability_secret_names,
+  )
 
   required_services = toset([
     "artifactregistry.googleapis.com",
@@ -187,6 +203,27 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       dynamic "env" {
+        for_each = local.observability_environment
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.observability_secret_names
+        content {
+          name = "OTEL_EXPORTER_OTLP_HEADERS"
+          value_source {
+            secret_key_ref {
+              secret  = data.google_secret_manager_secret.runtime[env.value].secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = local.api_secret_names
         content {
           name = env.value
@@ -307,6 +344,27 @@ resource "google_cloud_run_v2_service" "worker" {
       }
 
       dynamic "env" {
+        for_each = local.observability_environment
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.observability_secret_names
+        content {
+          name = "OTEL_EXPORTER_OTLP_HEADERS"
+          value_source {
+            secret_key_ref {
+              secret  = data.google_secret_manager_secret.runtime[env.value].secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = local.worker_secret_names
         content {
           name = env.value
@@ -400,6 +458,27 @@ resource "google_cloud_run_v2_service" "preview" {
       env {
         name  = "PRESENTATION_GCS_BUCKET"
         value = local.presentation_gcs_bucket
+      }
+
+      dynamic "env" {
+        for_each = local.observability_environment
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.observability_secret_names
+        content {
+          name = "OTEL_EXPORTER_OTLP_HEADERS"
+          value_source {
+            secret_key_ref {
+              secret  = data.google_secret_manager_secret.runtime[env.value].secret_id
+              version = "latest"
+            }
+          }
+        }
       }
 
       dynamic "env" {

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -65,9 +66,24 @@ func metricsFor() jobMetrics {
 	return jobMetricsOnce()
 }
 
+func newJobArgs(ctx context.Context, jobID string) JobArgs {
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+	return JobArgs{
+		JobID:       jobID,
+		TraceParent: carrier.Get("traceparent"),
+		TraceState:  carrier.Get("tracestate"),
+	}
+}
+
 // startJobSpan opens the worker-side span covering one processing attempt of a
 // durable generation job.
 func startJobSpan(ctx context.Context, args JobArgs, attempt int) (context.Context, trace.Span) {
+	carrier := propagation.MapCarrier{
+		"traceparent": args.TraceParent,
+		"tracestate":  args.TraceState,
+	}
+	ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 	return tracer.Start(ctx, "generation.job",
 		trace.WithAttributes(
 			attribute.String("generation.job.id", args.JobID),

@@ -33,7 +33,9 @@ type queueClient = river.Client[*sql.Tx]
 // JobArgs is intentionally small so queue internals never become the source of
 // truth for user-visible generation state.
 type JobArgs struct {
-	JobID string `json:"job_id"`
+	JobID       string `json:"job_id"`
+	TraceParent string `json:"traceparent,omitempty"`
+	TraceState  string `json:"tracestate,omitempty"`
 }
 
 func (JobArgs) Kind() string { return "presentation_generation_v1" }

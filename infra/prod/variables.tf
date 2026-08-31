@@ -105,3 +105,26 @@ variable "cdn_signed_url_ttl_seconds" {
     error_message = "cdn_signed_url_ttl_seconds must be between 60 and 3600 seconds."
   }
 }
+
+variable "otel_exporter_otlp_endpoint" {
+  description = "Common Datadog OTLP intake endpoint. Leave empty to disable telemetry export."
+  type        = string
+  default     = ""
+}
+
+variable "otel_service_version" {
+  description = "Version attached to OpenTelemetry resources, normally the deployed commit SHA."
+  type        = string
+  default     = ""
+}
+
+variable "otel_logs_exporter" {
+  description = "Set to none when the Datadog GCP integration already collects Cloud Run stdout logs."
+  type        = string
+  default     = "otlp"
+
+  validation {
+    condition     = contains(["otlp", "none"], var.otel_logs_exporter)
+    error_message = "otel_logs_exporter must be otlp or none."
+  }
+}

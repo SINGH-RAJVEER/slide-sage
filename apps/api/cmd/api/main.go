@@ -108,7 +108,7 @@ func main() {
 	address := net.JoinHostPort(env("HOST", "0.0.0.0"), env("PORT", "8000"))
 	server := &http.Server{
 		Addr:              address,
-		Handler:           withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, observability.Middleware(mux))),
+		Handler:           observability.Middleware(withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, mux))),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,

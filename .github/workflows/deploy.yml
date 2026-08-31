@@ -104,6 +104,11 @@ jobs:
       TF_VAR_gcp_region: asia-south1
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # Telemetry export stays off until DATADOG_OTLP_ENDPOINT is set, and the
+      # DATADOG_OTLP_HEADERS secret exists in Secret Manager.
+      TF_VAR_otel_exporter_otlp_endpoint: ${{ vars.DATADOG_OTLP_ENDPOINT }}
+      TF_VAR_otel_logs_exporter: ${{ vars.OTEL_LOGS_EXPORTER || 'otlp' }}
+      TF_VAR_otel_service_version: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
 

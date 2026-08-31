@@ -9,3 +9,10 @@ template_gcs_bucket     = "slidesage-504414-templates"
 
 # Preserve the repository name returned by the existing Pages integration.
 github_repository = "slide-sage"
+
+# Use the endpoint shown for your Datadog site. Create DATADOG_OTLP_HEADERS in
+# Secret Manager before enabling this value.
+otel_exporter_otlp_endpoint = "https://otlp.datadoghq.com"
+otel_service_version        = "<commit-sha>"
+# Set to "none" if the Datadog GCP integration already collects Cloud Run logs.
+otel_logs_exporter = "otlp"

@@ -21,10 +21,9 @@ import (
 // Middleware wraps an HTTP handler with the full observability stack:
 // W3C trace-context extraction, a server span per request, RED metrics, an
 // access log line, and panic recovery that records the panic on the span.
-// The outermost layer is recovery so panics raised anywhere below still
-// produce a completed span and metric sample.
+// Tracing is outermost so recovery can record panics on the active server span.
 func Middleware(next http.Handler) http.Handler {
-	return Recovery(RequestLogging(Tracing(Metrics(next))))
+	return Tracing(RequestLogging(Metrics(Recovery(next))))
 }
 
 // Tracing adds OpenTelemetry server spans using the standard otelhttp
@@ -32,10 +31,7 @@ func Middleware(next http.Handler) http.Handler {
 // low-cardinality.
 func Tracing(next http.Handler) http.Handler {
 	return otelhttp.NewHandler(next, "slidesage", otelhttp.WithSpanNameFormatter(func(_ string, request *http.Request) string {
-		if pattern := request.Pattern; pattern != "" {
-			return pattern
-		}
-		return request.Method + " " + request.URL.Path
+		return "HTTP " + request.Method
 	}))
 }
 
@@ -97,6 +93,7 @@ func Metrics(next http.Handler) http.Handler {
 			if route == "" {
 				route = "unmatched"
 			}
+			trace.SpanFromContext(request.Context()).SetAttributes(attribute.String(string(semconv.HTTPRouteKey), route))
 			attributes := metric.WithAttributeSet(attribute.NewSet(
 				attribute.String(string(semconv.HTTPRequestMethodKey), request.Method),
 				attribute.String(string(semconv.HTTPRouteKey), route),

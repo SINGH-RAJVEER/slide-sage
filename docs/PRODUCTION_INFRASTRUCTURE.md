@@ -4,7 +4,7 @@
 
 The September 7, 2026 read-only audit found the existing infrastructure was created outside Terraform. There was no state bucket in the project and this checkout had no initialized backend. The workflow on this branch switches future main deployments to Terraform so direct `gcloud run deploy` calls cannot overwrite its configuration. Cloudflare Pages continues to build the frontend independently from GitHub.
 
-Terraform does not create secret values. It reads existing Secret Manager secrets and grants the Cloud Run runtime service account access to them.
+Terraform does not create secret values. It reads existing Secret Manager secrets and grants the Cloud Run runtime service account access to them. When `otel_exporter_otlp_endpoint` is set, this includes the `DATADOG_OTLP_HEADERS` secret used for direct Datadog intake.
 
 ## Cloud SQL connectivity
 
@@ -39,6 +39,16 @@ Pages retains its live build command, `bun install --frozen-lockfile && bun run 
 ## Bootstrap
 
 Create the required Secret Manager secrets before the first plan. The names are listed in `infra/prod/main.tf`, and `data.google_secret_manager_secret` fails the plan for any name that does not exist. Payments are not optional, so the `RAZORPAY_*` secrets are listed alongside the rest. At minimum, production needs the values documented in [Environment variables](ENVIRONMENT_VARIABLES.md). Use a dedicated Terraform service account with permission to manage Cloud Run, Artifact Registry, Compute load balancing, service accounts, Secret Manager IAM bindings, and the enabled services.
+
+To enable Datadog, create `DATADOG_OTLP_HEADERS` before setting `otel_exporter_otlp_endpoint`:
+
+```bash
+gcloud secrets create DATADOG_OTLP_HEADERS --replication-policy=automatic
+printf '%s' 'dd-api-key=<api-key>,dd-otlp-source=serverless,compute_stats=true' \
+	| gcloud secrets versions add DATADOG_OTLP_HEADERS --data-file=-
+```
+
+Set `otel_service_version` to the deployed commit SHA, which CI passes as `TF_VAR_otel_service_version`. See [Observability](OBSERVABILITY.md) for endpoint selection, log duplication, and Datadog views.
 
 The Cloudflare token needs Zone Read, DNS Read/Edit for `slidesage.app`, and Pages Read/Edit for the account. The audit token could read Pages and the zone but was denied DNS-record access. The API record is discovered by hostname and imported automatically; do not invent its ID or replace it with a create operation to bypass missing permissions.
 
