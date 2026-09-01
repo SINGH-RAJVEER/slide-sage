@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
@@ -107,7 +106,7 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 	river.AddWorker(workers, &generationWorker{
 		handler: &handler{
 			database:    database,
-			client:      &http.Client{Timeout: 3 * time.Minute, Transport: observability.HTTPTransport(nil)},
+			client:      &http.Client{Timeout: 3 * time.Minute},
 			connections: connections,
 		},
 	})
@@ -198,11 +197,7 @@ type generationWorker struct {
 }
 
 func (worker *generationWorker) Work(ctx context.Context, riverJob *river.Job[JobArgs]) error {
-	ctx, span := startJobSpan(ctx, riverJob.Args, riverJob.Attempt)
-	started := time.Now()
-	err := worker.handler.processQueuedJob(ctx, riverJob)
-	finishJobSpan(span, started, riverJob.Attempt, err)
-	return err
+	return worker.handler.processQueuedJob(ctx, riverJob)
 }
 
 func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobArgs]) error {
@@ -279,7 +274,6 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "provider_failure", err.Error())
 	}
 	tokens += draftTokens
-	recordTokenUsage(ctx, job.kind, tokens)
 	if cancelled, err := h.cancelRequested(ctx, record.ID); err != nil {
 		return err
 	} else if cancelled {
