@@ -25,20 +25,6 @@ mock.module("@/contexts/AuthContext", () => {
 });
 
 describe("Header", () => {
-	it("links the SlideSage icon to the landing page", async () => {
-		mockAuthState.user = null;
-
-		const { default: Header } = await import("@/app/Header");
-
-		const { getByRole } = render(
-			<MemoryRouter>
-				<Header />
-			</MemoryRouter>,
-		);
-
-		expect(getByRole("link", { name: "SlideSage — landing" })).toHaveAttribute("href", "/landing");
-	});
-
 	it("renders header component", async () => {
 		mockAuthState.user = null;
 

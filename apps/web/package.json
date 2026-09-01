@@ -14,7 +14,6 @@
 		"format": "bunx biome format --write ."
 	},
 	"dependencies": {
-		"@designcodeio/threeui": "^1.0.0",
 		"@slidesage/types": "workspace:*",
 		"@slidesage/ui": "workspace:*",
 		"@tanstack/react-pacer": "^0.19.1",

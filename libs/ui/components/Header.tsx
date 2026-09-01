@@ -16,7 +16,6 @@ export interface HeaderUser {
 
 export interface HeaderRoutes {
 	home: string;
-	landing: string;
 	generate: string;
 	research: string;
 	presentations: string;
@@ -100,7 +99,7 @@ export function Header({
 		>
 			<div className="grid h-16 w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 md:grid-cols-3 md:px-10">
 				<div className="hidden items-center md:flex md:w-full">
-					<LinkComponent to={routes.landing} aria-label="SlideSage — landing">
+					<LinkComponent to={routes.home} aria-label="Go to home">
 						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain" />
 					</LinkComponent>
 				</div>
