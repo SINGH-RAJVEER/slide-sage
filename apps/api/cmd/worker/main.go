@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -21,26 +20,12 @@ import (
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/generation"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/middleware"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 )
 
 func main() {
-	telemetry, err := observability.Setup(context.Background(), observability.WorkerConfigFromEnv())
-	if err != nil {
-		log.Fatal(err)
-	}
-	logger := telemetry.Logger()
-	slog.SetDefault(logger)
-	defer func() {
-		shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelShutdown()
-		if err := telemetry.Shutdown(shutdownContext); err != nil {
-			logger.Error("telemetry shutdown failed", slog.Any("error", err))
-		}
-	}()
 	database, err := sql.Open("pgx", env("DATABASE_URL", "postgresql://slidesage:slidesage@localhost:5432/slidesage"))
 	if err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	defer database.Close()
 	maxWorkers := envInt("WORKER_CONCURRENCY", 2)
@@ -53,26 +38,26 @@ func main() {
 	pingContext, cancelPing := context.WithTimeout(signalContext, time.Duration(envInt("DATABASE_CONNECT_TIMEOUT", 10))*time.Second)
 	defer cancelPing()
 	if err := database.PingContext(pingContext); err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 
 	client, err := generation.NewWorkerClient(database, ai.ConnectionService{DB: database}, maxWorkers)
 	if err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	workerContext, cancelWorker := context.WithCancel(context.Background())
 	defer cancelWorker()
 	if err := client.Start(workerContext); err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	authService, err := auth.NewService(auth.Config{Database: database})
 	if err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	ready := &atomic.Bool{}
 	healthServer, healthErrors, err := startHealthServer(database, ready)
 	if err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	maintenanceContext, cancelMaintenance := context.WithCancel(context.Background())
 	maintenanceDone := make(chan struct{})
@@ -81,7 +66,7 @@ func main() {
 		runMaintenance(maintenanceContext, database, authService)
 	}()
 	ready.Store(true)
-	slog.Info("generation worker started", slog.Int("concurrency", maxWorkers))
+	log.Printf("generation worker started with concurrency %d", maxWorkers)
 	select {
 	case <-signalContext.Done():
 	case err := <-healthErrors:
@@ -95,7 +80,7 @@ func main() {
 	select {
 	case <-maintenanceDone:
 	case <-time.After(500 * time.Millisecond):
-		slog.Warn("worker maintenance did not stop within 500 milliseconds")
+		log.Printf("worker maintenance did not stop within 500 milliseconds")
 	}
 	healthDone := make(chan error, 1)
 	go func() {
@@ -107,17 +92,17 @@ func main() {
 	stopErr := client.Stop(drainContext)
 	cancelDrain()
 	if stopErr != nil {
-		slog.Error("generation worker graceful shutdown failed", slog.Any("error", stopErr))
+		log.Printf("generation worker graceful shutdown failed: %v", stopErr)
 		cancelWorker()
 		forceContext, cancelForce := context.WithTimeout(context.Background(), time.Second)
 		if err := client.StopAndCancel(forceContext); err != nil {
-			slog.Error("generation worker forced shutdown failed", slog.Any("error", err))
+			log.Printf("generation worker forced shutdown failed: %v", err)
 		}
 		cancelForce()
 	}
 	cancelWorker()
 	if err := <-healthDone; err != nil {
-		slog.Error("worker health shutdown failed", slog.Any("error", err))
+		log.Printf("worker health shutdown failed: %v", err)
 	}
 }
 
@@ -181,23 +166,23 @@ func runMaintenance(ctx context.Context, database *sql.DB, authService *auth.Ser
 
 func runRecovery(ctx context.Context, database *sql.DB) {
 	if err := generation.RecoverTerminatedQueueJobs(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
-		slog.Warn("terminated generation recovery failed", slog.Any("error", err))
+		log.Printf("terminated generation recovery failed: %v", err)
 	}
 	if err := generation.RecoverExpired(ctx, database); err != nil && !errors.Is(err, context.Canceled) {
-		slog.Warn("expired generation recovery failed", slog.Any("error", err))
+		log.Printf("expired generation recovery failed: %v", err)
 	}
 }
 
 func runCleanup(ctx context.Context, database *sql.DB, authService *auth.Service) {
 	if deleted, err := authService.CleanupExpiredUnverifiedUsers(ctx); err != nil && !errors.Is(err, context.Canceled) {
-		slog.Warn("unverified account cleanup failed", slog.Any("error", err))
+		log.Printf("unverified account cleanup failed: %v", err)
 	} else if deleted > 0 {
-		slog.Info("deleted expired unverified accounts", slog.Int64("count", deleted))
+		log.Printf("deleted %d expired unverified accounts", deleted)
 	}
 	if deleted, err := middleware.CleanupExpired(ctx, database, 500); err != nil && !errors.Is(err, context.Canceled) {
-		slog.Warn("rate-limit cleanup failed", slog.Any("error", err))
+		log.Printf("rate-limit cleanup failed: %v", err)
 	} else if deleted > 0 {
-		slog.Info("deleted expired rate-limit counters", slog.Int64("count", deleted))
+		log.Printf("deleted %d expired rate-limit counters", deleted)
 	}
 }
 
@@ -214,9 +199,4 @@ func envInt(key string, fallback int) int {
 		return fallback
 	}
 	return value
-}
-
-func fatal(logger *slog.Logger, err error) {
-	logger.Error("fatal", slog.Any("error", err))
-	os.Exit(1)
 }
