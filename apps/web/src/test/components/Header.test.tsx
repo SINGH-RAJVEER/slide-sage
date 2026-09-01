@@ -157,9 +157,12 @@ describe("Header", () => {
 			ctrlKey: false,
 		});
 
-		expect(await view.findByRole("menuitem", { name: "Settings" })).toHaveAttribute(
-			"href",
-			"/settings",
-		);
+		const profile = await view.findByRole("menuitem", { name: "Profile" });
+		const settings = await view.findByRole("menuitem", { name: "Settings" });
+		const signOut = await view.findByRole("menuitem", { name: "Sign Out" });
+		expect(settings).toHaveAttribute("href", "/settings");
+		for (const item of [profile, settings, signOut]) {
+			expect(item.querySelector("svg")).not.toBeNull();
+		}
 	});
 });
