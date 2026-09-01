@@ -163,7 +163,7 @@ export function Header({
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									align="end"
-									className="min-w-36 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
+									className="w-max min-w-0 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
 								>
 									{[
 										{ path: routes.profile, label: "Profile", Icon: UserRound },
@@ -172,11 +172,11 @@ export function Header({
 										<DropdownMenuItem
 											key={path}
 											asChild
-											className="w-full rounded-lg px-0 py-0 text-white/80 focus:bg-white/10 focus:text-white"
+											className="rounded-lg px-0 py-0 text-white/80 focus:bg-white/10 focus:text-white"
 										>
 											<LinkComponent
 												to={path}
-												className="flex w-full items-center gap-2 px-3 py-2 text-sm outline-none transition-colors"
+												className="flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap outline-none transition-colors"
 											>
 												<Icon aria-hidden="true" className="size-4" />
 												{label}
@@ -186,7 +186,7 @@ export function Header({
 									<DropdownMenuItem
 										disabled={signingOut}
 										onSelect={() => void handleSignOut()}
-										className="w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
+										className="items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
 									>
 										<LogOut aria-hidden="true" className="size-4" />
 										{signingOut ? "Signing out..." : "Sign Out"}
