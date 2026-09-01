@@ -101,7 +101,7 @@ The API discovers model catalogs for independent BYOK connections concurrently, 
 
 ## Deployment
 
-The intended production topology is a Cloud Run service for the API and a Cloud Run Worker Pool for `cmd/worker`. The current service-based deployment must use instance-based billing through `--no-cpu-throttling`; a minimum instance alone does not allocate CPU between requests. API-to-worker coordination uses PostgreSQL only; there is no HTTP or RPC call from the API to a worker instance. The worker still makes its required outbound calls to PostgreSQL and the selected AI provider.
+The intended production topology is a Cloud Run service for the API and a Cloud Run Worker Pool for `cmd/worker`. The current service-based deployment uses instance-based billing through `--no-cpu-throttling` and permits zero to ten instances. API-to-worker coordination uses PostgreSQL only; there is no HTTP or RPC call from the API to wake a worker instance. If the service scales to zero, PostgreSQL queue activity alone will not start it. The worker still makes its required outbound calls to PostgreSQL and the selected AI provider.
 
 Cloud Run Worker Pools use fixed/manual scaling rather than request-driven autoscaling. Start with one worker instance, monitor queue latency, provider limits, PostgreSQL connections, and job duration, then change the instance count manually. Total potential job concurrency is the worker instance count multiplied by `WORKER_CONCURRENCY`; size the database pool and provider limits accordingly.
 

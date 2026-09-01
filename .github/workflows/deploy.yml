@@ -152,8 +152,8 @@ jobs:
             --cpu=1 \
             --memory=1Gi \
             --no-cpu-throttling \
-            --min-instances=1 \
-            --max-instances=1 \
+            --min-instances=0 \
+            --max-instances=10 \
             --concurrency=1 \
             --set-secrets=DATABASE_URL=DATABASE_URL:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest \
             --set-env-vars='^@^NODE_ENV=production@WORKER_CONCURRENCY=2@BASE_URL=https://api.slidesage.app@OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions'
