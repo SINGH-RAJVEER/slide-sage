@@ -96,20 +96,6 @@ Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production 
 
 The API refuses to initialize authentication on an HTTPS base URL without a sufficiently strong `AUTH_SECRET`.
 
-## Observability
-
-| Variable                      | Required | Default                                            | Purpose                                                                   |
-| ----------------------------- | -------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | No       | Empty                                              | OTLP/gRPC collector endpoint; telemetry export stays disabled while empty |
-| `OTEL_EXPORTER_OTLP_INSECURE` | No       | `false`                                            | Plaintext gRPC for collectors without TLS, such as local development      |
-| `OTEL_SERVICE_NAME`           | No       | `slidesage-api` or `slidesage-worker`              | Resource service name on all signals                                      |
-| `OTEL_SERVICE_VERSION`        | No       | Empty                                              | Resource service version                                                  |
-| `OTEL_RESOURCE_ENVIRONMENT`   | No       | `ENVIRONMENT`, then `NODE_ENV`, then `development` | Deployment environment label                                              |
-| `OTEL_TRACES_SAMPLING_RATIO`  | No       | `1`                                                | Head-sampling ratio for root spans between 0 and 1                        |
-| `OTEL_METRIC_EXPORT_INTERVAL` | No       | `60000`                                            | Metric export interval in milliseconds                                    |
-
-Setting `OTEL_SDK_DISABLED=true` also disables export regardless of endpoint. See [OBSERVABILITY.md](OBSERVABILITY.md) for the emitted traces, metrics, and logs.
-
 ## BYOK credential encryption
 
 | Variable                              | Required | Description                                           |

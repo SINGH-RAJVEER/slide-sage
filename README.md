@@ -36,4 +36,3 @@ Justfile        Common development commands
 - [Authentication](docs/AUTH_API.md)
 - [Web research](docs/WEB_RESEARCH.md)
 - [Deck planning](docs/DECK_PLANNING.md)
-- [Observability](docs/OBSERVABILITY.md)
