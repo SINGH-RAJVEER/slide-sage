@@ -20,6 +20,7 @@ Copy `.env.example` to `.env`. Devenv loads it for the Go API, generation worker
 | `CORS_ORIGIN`                 | No         | Default CORS origins                                                                                       | Single-origin fallback; trailing slashes are normalized                             |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No         | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app`    | Comma-separated auth callback origins; trailing slashes are normalized              |
 | `VITE_API_URL`                | No         | `http://localhost:8000`                                                                                    | Browser API origin without a path suffix; set production to `https://api.slidesage.app` |
+| `VITE_PPTX_TEMPLATE_BASE_URL` | For binary template export | None | Public, CORS-enabled object-storage prefix for versioned runtime PPTX templates |
 | `NODE_ENV`                    | No         | `development` in devenv                                                                                    | Controls production auth and email-delivery safeguards; OTP values are never logged |
 
 Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and `POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all `slidesage`, except `POSTGRES_PORT=5432`. The running PostgreSQL process exposes its active port as `PGPORT`.
@@ -93,6 +94,8 @@ When `BASE_URL` is unset in a deployment, auth can derive it from the platform-p
 Do not commit `.env`. Keep secrets in the deployment platform's secret store in production.
 
 Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production build. The client sends requests directly to each endpoint. As a deployment safeguard, production builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back to same-origin routes instead.
+
+Set `VITE_PPTX_TEMPLATE_BASE_URL` to the directory above `pptx-templates/`. The browser downloads only the selected template. The object-storage origin must allow `GET` requests from the SlideSage web origin. Template objects use immutable, versioned paths documented in [OOXML_TEMPLATE_EXPORT.md](OOXML_TEMPLATE_EXPORT.md).
 
 The API refuses to initialize authentication on an HTTPS base URL without a sufficiently strong `AUTH_SECRET`.
 

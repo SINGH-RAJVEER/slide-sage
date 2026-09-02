@@ -36,7 +36,7 @@ A custom Chart.js plugin (`ssValueLabels`, registered in `ChartRenderer`) draws 
 - labels that would collide horizontally are skipped,
 - large numbers compact (`12k`, `3.4M`).
 
-Disable per chart with `options.plugins.ssValueLabels.display = false`. The PPTX export mirrors this with `showValue: true`.
+Disable per chart with `options.plugins.ssValueLabels.display = false`.
 
 ## Theming
 
@@ -56,4 +56,4 @@ In `apps/api/internal/presentation`:
 
 - `slideToScene` treats chart widgets as the visual partner in split compositions, placing them in their own grid column beside body text.
 - The scene chart widget now receives the theme palette, grid color, and font, and switches to compact density in narrow bounds.
-- PPTX export renders embedded chart blocks inside their resolved region rectangles with visible data labels; standalone chart slides keep their dedicated full-width layout.
+- OOXML template export does not create native PowerPoint charts. It rejects standalone chart slides and content slides containing embedded chart blocks rather than producing a partial result.
