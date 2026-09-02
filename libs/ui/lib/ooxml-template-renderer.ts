@@ -28,6 +28,13 @@ export type OoxmlTextValueSelector =
 	| "slide.chartTitle"
 	| "slide.chartDescription";
 
+export const OOXML_TEXT_SELECTOR_REGIONS: Partial<Record<OoxmlTextValueSelector, SlideRegion>> = {
+	"slide.body": "main",
+	"slide.primary": "primary",
+	"slide.secondary": "secondary",
+	"slide.mediaCaption": "media",
+};
+
 export interface OoxmlTextSlot {
 	shapeId: number;
 	value: OoxmlTextValueSelector;
@@ -505,13 +512,7 @@ function textValue(
 	if (selector === "slide.subtitle") {
 		return slide.subtitle;
 	}
-	const selectorRegions: Partial<Record<OoxmlTextValueSelector, SlideRegion>> = {
-		"slide.body": "main",
-		"slide.primary": "primary",
-		"slide.secondary": "secondary",
-		"slide.mediaCaption": "media",
-	};
-	const region = selectorRegions[selector];
+	const region = OOXML_TEXT_SELECTOR_REGIONS[selector];
 	if (region) {
 		return flattenRegionBlocks(slide.blocks, region);
 	}

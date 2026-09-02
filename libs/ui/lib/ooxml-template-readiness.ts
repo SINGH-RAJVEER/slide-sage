@@ -5,19 +5,12 @@ import {
 	type SlideRegion,
 } from "@slidesage/types";
 import { getOoxmlTemplateManifest } from "./ooxml-template-manifests";
-import type { OoxmlTextValueSelector } from "./ooxml-template-renderer";
+import { OOXML_TEXT_SELECTOR_REGIONS } from "./ooxml-template-renderer";
 
 export interface OoxmlExportReadiness {
 	ready: boolean;
 	reason?: string;
 }
-
-const selectorRegions: Partial<Record<OoxmlTextValueSelector, SlideRegion>> = {
-	"slide.body": "main",
-	"slide.primary": "primary",
-	"slide.secondary": "secondary",
-	"slide.mediaCaption": "media",
-};
 
 export function getOoxmlExportReadiness(presentation: PresentationData): OoxmlExportReadiness {
 	const reference = presentation.template;
@@ -50,6 +43,11 @@ export function getOoxmlExportReadiness(presentation: PresentationData): OoxmlEx
 		if (!layout) {
 			return unavailable(`The selected template does not support layout "${slide.layout}".`);
 		}
+		if (slide.backgroundImage) {
+			return unavailable(
+				`Slide ${index + 1} contains a background image that native OOXML export does not support yet.`,
+			);
+		}
 		const unsupported = slide.blocks.find(isUnsupportedNativeBlock);
 		if (unsupported) {
 			return unavailable(
@@ -58,7 +56,7 @@ export function getOoxmlExportReadiness(presentation: PresentationData): OoxmlEx
 		}
 		const mappedRegions = new Set(
 			Object.values(layout.textSlots ?? {})
-				.map((slot) => selectorRegions[slot.value])
+				.map((slot) => OOXML_TEXT_SELECTOR_REGIONS[slot.value])
 				.filter((region): region is SlideRegion => Boolean(region)),
 		);
 		const unmappedBlock = slide.blocks.find(

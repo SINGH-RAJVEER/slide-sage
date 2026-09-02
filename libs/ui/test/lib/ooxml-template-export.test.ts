@@ -136,6 +136,19 @@ describe("OOXML template export", () => {
 		await expect(
 			buildOoxmlTemplatePptx(withUnmappedBody, { publicBaseUrl: "https://cdn.example.com/" }),
 		).rejects.toThrow('unmapped "main" region');
+
+		const withBackground = presentation("simple-business-proposal");
+		const backgroundSlide = withBackground.slides[0];
+		if (backgroundSlide?.type !== "content") throw new Error("Expected content slide");
+		backgroundSlide.backgroundImage = {
+			url: "https://example.com/background.png",
+			alt: "Background",
+			focalPoint: "center",
+			overlay: "medium",
+		};
+		await expect(
+			buildOoxmlTemplatePptx(withBackground, { publicBaseUrl: "https://cdn.example.com/" }),
+		).rejects.toThrow("contains a background image");
 	});
 
 	it("downloads the versioned template path and reports storage failures", async () => {
