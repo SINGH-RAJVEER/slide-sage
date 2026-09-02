@@ -54,17 +54,15 @@ func TestNormalizeDocumentValidatesBinaryTemplateReference(t *testing.T) {
 		t.Fatalf("template: %#v", template)
 	}
 
-	for _, id := range []string{"Invalid Template", "unknown-but-well-formed"} {
-		invalid, err := NormalizeDocument(map[string]any{
-			"template": map[string]any{"id": id, "version": json.Number("1")},
-			"slides":   []any{map[string]any{"type": "content", "title": "Opening"}},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, ok := invalid["template"]; ok {
-			t.Fatalf("invalid template retained: %#v", invalid["template"])
-		}
+	invalid, err := NormalizeDocument(map[string]any{
+		"template": map[string]any{"id": "Invalid Template", "version": json.Number("1")},
+		"slides":   []any{map[string]any{"type": "content", "title": "Opening"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := invalid["template"]; ok {
+		t.Fatalf("invalid template retained: %#v", invalid["template"])
 	}
 }
 

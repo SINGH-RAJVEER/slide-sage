@@ -135,49 +135,10 @@ func ParseTemplateReference(value any) (TemplateReference, error) {
 	}
 	id := boundedText(template["id"], 120)
 	version, validVersion := exactInteger(template["version"])
-	if !binaryTemplateIDPattern.MatchString(id) || !validBinaryTemplateID(id) || !validVersion || version != 1 {
+	if !binaryTemplateIDPattern.MatchString(id) || !validVersion || version != 1 {
 		return TemplateReference{}, fmt.Errorf("invalid PowerPoint template")
 	}
 	return TemplateReference{ID: id, Version: 1}, nil
-}
-
-func validBinaryTemplateID(id string) bool {
-	switch id {
-	case "5s-training",
-		"charli-xcx-brat-album-inspired",
-		"email-marketing-workflow",
-		"family-christmas-card",
-		"festive-pattern-travel-agency-business-plan",
-		"fun-doodles-welcome-to-math-class",
-		"geometric-aesthetic-social-media-planner",
-		"geometric-mathematics-lesson",
-		"grade-1-addition",
-		"hotel-sales-strategy",
-		"illustrative-design-inspiration",
-		"illustrative-mathematics-quiz",
-		"illustrative-tv-series-social-media",
-		"mid-autumn-moon-festival",
-		"middle-school-functions-lesson",
-		"minimal-elegant-branding-kit",
-		"minimalist-marketing-annual-report",
-		"modern-minimal-grid-financial-management",
-		"my-travel-wrapped",
-		"new-jeans-y2k-style",
-		"pastel-street-maps-minitheme",
-		"pink-doodles-math-online-class",
-		"renaissance-odyssey-language-arts",
-		"saving-and-investment",
-		"simple-business-proposal",
-		"simple-performance-review",
-		"soft-skills-training",
-		"stock-management-system-project-proposal",
-		"stocks-trading-business-plan",
-		"strategic-media-planning",
-		"textured-scrapbook-go-green":
-		return true
-	default:
-		return false
-	}
 }
 
 func exactInteger(value any) (int64, bool) {
