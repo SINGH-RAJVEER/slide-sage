@@ -54,6 +54,7 @@ type jobPayload struct {
 	ResearchPayload  *presentation.ResearchPayload   `json:"research_payload,omitempty"`
 	Selection        *ai.Selection                   `json:"ai,omitempty"`
 	Template         *presentation.TemplateReference `json:"template,omitempty"`
+	Theme            string                          `json:"theme"`
 	Current          json.RawMessage                 `json:"current,omitempty"`
 	ExpectedRevision int                             `json:"expected_revision"`
 	QuotedMillis     int64                           `json:"quoted_millis"`
@@ -65,7 +66,7 @@ func payloadFromJob(job streamJob) jobPayload {
 		UserID: job.userID, OperationID: job.operationID, PresentationID: job.presentationID,
 		Kind: job.kind, Prompt: job.prompt, SlideCount: job.slideCount,
 		DetailLevel: job.detailLevel, Tonality: job.tonality,
-		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection, Template: job.template,
+		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection, Template: job.template, Theme: job.theme,
 		Current: job.current, ExpectedRevision: job.expectedRevision, QuotedMillis: job.quote,
 		RequestHash: job.requestHash,
 	}
@@ -77,7 +78,7 @@ func (payload jobPayload) streamJob() streamJob {
 		expectedRevision: payload.ExpectedRevision, quote: payload.QuotedMillis,
 		prompt: payload.Prompt, slideCount: payload.SlideCount, detailLevel: payload.DetailLevel,
 		tonality: payload.Tonality, research: payload.Research,
-		researchPayload: payload.ResearchPayload, selection: payload.Selection, template: payload.Template, current: payload.Current,
+		researchPayload: payload.ResearchPayload, selection: payload.Selection, template: payload.Template, theme: payload.Theme, current: payload.Current,
 		kind: payload.Kind, requestHash: payload.RequestHash,
 	}
 }
@@ -335,7 +336,10 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 }
 
 func preserveJobTemplate(document map[string]any, job streamJob) {
-	document["theme"] = "corporate-blue"
+	document["theme"] = job.theme
+	if job.theme == "" {
+		document["theme"] = "corporate-blue"
+	}
 	if job.kind == "iteration" {
 		document["theme"] = documentTheme(job.current)
 	}

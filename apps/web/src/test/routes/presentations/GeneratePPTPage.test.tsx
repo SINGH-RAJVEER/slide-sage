@@ -132,7 +132,7 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			model: "claude-sonnet-4-20250514",
 		});
 		expect(requestBody["template"]).toEqual({ id: "soft-skills-training", version: 1 });
-		expect(requestBody).not.toHaveProperty("theme");
+		expect(requestBody["theme"]).toBe("terra-mesa");
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

@@ -652,6 +652,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						parent_presentation_id: options.parentPresentationId,
 						retry_presentation_id: options.retryPresentationId,
 						ai: options.ai,
+						theme: options.template.previewThemeId,
 						template: { id: options.template.id, version: options.template.version },
 					}),
 					signal: controller.signal,

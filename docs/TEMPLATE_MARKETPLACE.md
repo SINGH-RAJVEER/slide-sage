@@ -32,7 +32,7 @@ A presentation stores its PowerPoint template separately from its browser previe
 }
 ```
 
-Selecting a template updates both fields in one presentation mutation. Generation and research routes carry the template reference through job submission, retries, resumable streaming, and the final persisted document.
+Selecting a template updates both fields in one presentation mutation. Generation and research routes submit the selected semantic preview theme alongside the binary template reference and carry both through retries, queued jobs, resumable streaming, and the final persisted document.
 
 ## Export readiness
 

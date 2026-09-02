@@ -26,6 +26,7 @@ type submitInput struct {
 	ResearchPayload *presentation.ResearchPayload
 	AI              *ai.Selection
 	Template        *presentation.TemplateReference
+	Theme           string
 }
 
 type persistedPresentation struct {
@@ -195,6 +196,14 @@ func parseSubmitInput(body map[string]any) (submitInput, error) {
 		return submitInput{}, err
 	}
 	input.AI = selection
+	input.Theme = "corporate-blue"
+	if value, found := body["theme"]; found {
+		theme, err := presentation.ParseTheme(value)
+		if err != nil {
+			return submitInput{}, err
+		}
+		input.Theme = theme
+	}
 	if value, found := body["template"]; found {
 		template, err := presentation.ParseTemplateReference(value)
 		if err != nil {
@@ -217,6 +226,7 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 		if template, parseErr := presentation.ParseTemplateReference(document["template"]); parseErr == nil {
 			input.Template = &template
 		}
+		input.Theme = documentTheme(existing.Data)
 		if document["status"] != "failed" {
 			duplicate, err := h.existingSubmission(ctx, userID, jobID, hash)
 			if err == nil && duplicate.jobID != "" {
@@ -248,13 +258,17 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 	}
 	initial := generationPlaceholder(input)
 	placeholder, _ := json.Marshal(initial)
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, template: input.Template, kind: "generation"}
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, template: input.Template, theme: input.Theme, kind: "generation"}
 	return job, placeholder, nil
 }
 
 func generationPlaceholder(input submitInput) map[string]any {
 	retry := map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}
-	initial := map[string]any{"title": "Generating...", "theme": "corporate-blue", "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": retry}}
+	theme := input.Theme
+	if theme == "" {
+		theme = "corporate-blue"
+	}
+	initial := map[string]any{"title": "Generating...", "theme": theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": retry}}
 	if input.Template != nil {
 		retry["template"] = input.Template
 		initial["template"] = input.Template
@@ -295,7 +309,7 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 }
 
 func buildIterationJob(jobID, userID, operationID string, base persistedPresentation, input submitInput, count int, quote int64, selection *ai.Selection) streamJob {
-	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, template: templateFromDocument(base.Data), current: base.Data, kind: "iteration"}
+	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, template: templateFromDocument(base.Data), theme: documentTheme(base.Data), current: base.Data, kind: "iteration"}
 }
 
 type streamJob struct {
@@ -309,6 +323,7 @@ type streamJob struct {
 	researchPayload                            *presentation.ResearchPayload
 	selection                                  *ai.Selection
 	template                                   *presentation.TemplateReference
+	theme                                      string
 	credential                                 string
 	current                                    json.RawMessage
 	requestHash                                string

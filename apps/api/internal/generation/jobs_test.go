@@ -20,7 +20,7 @@ func TestEventCursorPrefersLastEventID(t *testing.T) {
 
 func TestFinalDocumentPreservesJobTemplate(t *testing.T) {
 	document := map[string]any{"theme": "provider-theme", "template": map[string]any{"id": "unknown"}}
-	job := streamJob{template: &presentation.TemplateReference{ID: "soft-skills-training", Version: 1}}
+	job := streamJob{template: &presentation.TemplateReference{ID: "soft-skills-training", Version: 1}, theme: "terra-mesa"}
 
 	preserveJobTemplate(document, job)
 
@@ -28,7 +28,7 @@ func TestFinalDocumentPreservesJobTemplate(t *testing.T) {
 	if string(encoded) != `{"id":"soft-skills-training","version":1}` {
 		t.Fatalf("template = %s", encoded)
 	}
-	if document["theme"] != "corporate-blue" {
+	if document["theme"] != "terra-mesa" {
 		t.Fatalf("theme = %#v", document["theme"])
 	}
 }
@@ -38,6 +38,9 @@ func TestIterationJobRetainsExistingTemplate(t *testing.T) {
 	job := buildIterationJob("job", "user", "operation", base, submitInput{}, 5, 0, nil)
 	if job.template == nil || job.template.ID != "soft-skills-training" {
 		t.Fatalf("template = %#v", job.template)
+	}
+	if job.theme != "terra-mesa" {
+		t.Fatalf("theme = %q", job.theme)
 	}
 }
 
