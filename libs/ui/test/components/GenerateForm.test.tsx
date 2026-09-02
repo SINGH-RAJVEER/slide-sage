@@ -63,7 +63,7 @@ describe("GenerateForm", () => {
 		expect(view.getByText("Creating...").closest("button")).toBeDisabled();
 	});
 
-	it("generates on Enter in the compact editor", () => {
+	it("leaves compact-editor Enter handling to the generation page", () => {
 		const onGenerate = mock();
 		const view = renderGenerateForm({
 			prompt: "Customer retention strategy",
@@ -74,10 +74,10 @@ describe("GenerateForm", () => {
 			key: "Enter",
 		});
 
-		expect(onGenerate).toHaveBeenCalledTimes(1);
+		expect(onGenerate).not.toHaveBeenCalled();
 	});
 
-	it("uses Enter for new lines and Shift+Enter to generate when expanded", () => {
+	it("leaves expanded-editor keyboard generation to the generation page", () => {
 		const onGenerate = mock();
 		const view = renderGenerateForm({
 			prompt: "Customer retention strategy",
@@ -106,7 +106,7 @@ describe("GenerateForm", () => {
 		expect(onGenerate).not.toHaveBeenCalled();
 
 		fireEvent.keyDown(expandedEditor, { key: "Enter", shiftKey: true });
-		expect(onGenerate).toHaveBeenCalledTimes(1);
+		expect(onGenerate).not.toHaveBeenCalled();
 
 		fireEvent.click(view.getByRole("button", { name: "Shrink prompt editor" }));
 		expect(view.queryByRole("group", { name: "Expanded prompt" })).toBeNull();
