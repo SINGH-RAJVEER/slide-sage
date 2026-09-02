@@ -9,9 +9,13 @@ mock.module("@slidesage/ui/components/Viewer/ScaledSlide", () => ({
 }));
 
 mock.module("@slidesage/ui/components/Viewer/ViewerSlideCarousel", () => ({
-	ViewerSlideCarousel: ({ slides }: { slides: unknown[] }) => (
-		<div>{`${slides.length} preview slides`}</div>
-	),
+	ViewerSlideCarousel: ({
+		slides,
+		currentTemplate,
+	}: {
+		slides: unknown[];
+		currentTemplate: string;
+	}) => <div>{`${slides.length} preview slides using ${currentTemplate}`}</div>,
 }));
 
 mock.module("@slidesage/ui/components/Viewer/ViewerNavigationControls", () => ({
@@ -45,12 +49,12 @@ mock.module("@/hooks/useFullscreenMode", () => ({
 }));
 
 describe("MarketplaceThemePreviewPage", () => {
-	it("renders the selected SlideSage offering without viewer editing controls", async () => {
+	it("renders the selected binary offering with its semantic preview theme", async () => {
 		const { default: MarketplaceThemePreviewPage } = await import(
 			"@/routes/marketplace/MarketplaceThemePreviewPage"
 		);
 		const view = render(
-			<MemoryRouter initialEntries={["/marketplace/neon-district/preview"]}>
+			<MemoryRouter initialEntries={["/marketplace/charli-xcx-brat-album-inspired/preview"]}>
 				<Routes>
 					<Route
 						path="/marketplace/:marketplaceId/preview"
@@ -60,10 +64,10 @@ describe("MarketplaceThemePreviewPage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("7 preview slides")).toBeInTheDocument();
+		expect(view.getByText("4 preview slides using neon-district")).toBeInTheDocument();
 		expect(view.getByText("Viewer navigation")).toBeInTheDocument();
 		expect(view.getByText("Viewer thumbnails")).toBeInTheDocument();
-		expect(view.getByText("Neon District")).toBeInTheDocument();
+		expect(view.getByText("Charli XCX Brat Album-Inspired")).toBeInTheDocument();
 		expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
 		expect(view.queryByRole("combobox")).toBeNull();
 		expect(view.getByRole("button", { name: "Present slideshow" })).toBeInTheDocument();

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { BINARY_PPTX_TEMPLATE_CATALOG } from "@slidesage/types";
 import { createMarketplacePreviewPresentation, MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
 import {
 	AVAILABLE_TEMPLATES,
@@ -53,23 +54,40 @@ describe("presentation theme systems", () => {
 		}
 	});
 
-	it("builds a complete, theme-colored preview deck for every marketplace offering", () => {
+	it("derives marketplace offerings and semantic previews from the binary catalog", () => {
+		const binaryEntries = BINARY_PPTX_TEMPLATE_CATALOG.filter(
+			(entry) => entry.availability === "marketplace",
+		);
+
+		expect(MARKETPLACE_ITEMS).toHaveLength(25);
+		expect(MARKETPLACE_ITEMS.map((item) => item.id)).toEqual(
+			binaryEntries.map((entry) => entry.id),
+		);
 		for (const item of MARKETPLACE_ITEMS) {
 			const presentation = createMarketplacePreviewPresentation(item);
-			const theme = getTemplate(item.themeId).visual;
+			const binaryEntry = binaryEntries.find((entry) => entry.id === item.id);
+			if (!binaryEntry) throw new Error(`Missing binary entry for ${item.id}`);
 
-			expect(presentation.slides).toHaveLength(7);
+			expect(item).toMatchObject({
+				name: binaryEntry.name,
+				previewThemeId: binaryEntry.previewThemeId,
+				templateReference: { id: binaryEntry.id, version: binaryEntry.version },
+				sourceFilename: `${item.id}.pptx`,
+			});
+			expect(item).not.toHaveProperty("author");
+			expect(item).not.toHaveProperty("votes");
+			expect(item).not.toHaveProperty("uses");
+			expect(presentation).toMatchObject({
+				theme: binaryEntry.previewThemeId,
+				template: { id: binaryEntry.id, version: binaryEntry.version },
+				totalSlides: 4,
+			});
 			expect(presentation.slides[1]).toMatchObject({
 				id: `${item.id}-preview-showcase`,
 				title: item.previewSlide.title,
 			});
-			expect(presentation.slides[2]).toMatchObject({ id: `${item.id}-preview-story` });
-			expect(presentation.slides[3]).toMatchObject({
-				id: `${item.id}-preview-growth-chart`,
-				chartConfig: {
-					data: { datasets: [{ borderColor: theme.chartColors[0] }] },
-				},
-			});
+			expect(presentation.slides[2]).toMatchObject({ id: `${item.id}-preview-source` });
+			expect(presentation.slides[3]).toMatchObject({ id: `${item.id}-preview-dimensions` });
 		}
 	});
 });

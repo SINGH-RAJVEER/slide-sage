@@ -70,7 +70,7 @@ export default function MarketplaceThemePreviewPage() {
 					<ViewerHeaderControls
 						title={presentation.title}
 						canIterate={false}
-						currentTemplate={item.themeId}
+						currentTemplate={item.previewThemeId}
 						themeLabel={item.name}
 						showIterate={false}
 						showLayoutSelector={false}
@@ -88,7 +88,7 @@ export default function MarketplaceThemePreviewPage() {
 						slides={presentation.slides}
 						currentSlide={navigation.currentSlide}
 						visibleSlide={navigation.visibleSlide}
-						currentTemplate={item.themeId}
+						currentTemplate={item.previewThemeId}
 						containerRef={slideContainerRef}
 						onSelectSlide={(index) =>
 							stopAndNavigate(() => navigation.scrollToSlide(index, "smooth"))
@@ -118,7 +118,7 @@ export default function MarketplaceThemePreviewPage() {
 						currentSlide={navigation.currentSlide}
 						isStreamingMode={false}
 						isStreaming={false}
-						currentTemplate={item.themeId}
+						currentTemplate={item.previewThemeId}
 						onSelect={(index) => stopAndNavigate(() => navigation.scrollToSlide(index, "smooth"))}
 					/>
 				)}
@@ -135,7 +135,7 @@ export default function MarketplaceThemePreviewPage() {
 								<SlideRenderer
 									key={`${activeSlide.id}-${fullscreenSlideReady ? "ready" : "measuring"}`}
 									slide={activeSlide}
-									currentTemplate={item.themeId}
+									currentTemplate={item.previewThemeId}
 									isActive={fullscreenSlideReady}
 								/>
 							</Card>
