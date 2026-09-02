@@ -103,6 +103,21 @@ const ALL_THEME_IDS = [...THEME_IDS, ...MARKETPLACE_THEME_IDS] as const;
 
 export type ThemeId = (typeof ALL_THEME_IDS)[number];
 
+export type {
+	BinaryPptxTemplate,
+	BinaryTemplateAspectRatio,
+	BinaryTemplateAssetStatus,
+	BinaryTemplateAvailability,
+	BinaryTemplateDimensions,
+	BinaryTemplateSelection,
+	PresentationTemplateReference,
+} from "./template-catalog";
+export {
+	BINARY_PPTX_TEMPLATE_CATALOG,
+	buildBinaryTemplateUrl,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
+} from "./template-catalog";
+
 export const DECK_PLAN_PURPOSES = [
 	"cover",
 	"section",
@@ -487,6 +502,7 @@ export interface ResearchOptions {
 export interface PresentationData {
 	title: string;
 	theme: string;
+	template?: import("./template-catalog").PresentationTemplateReference;
 	dimensions?: PresentationDimensions;
 	slides: Slide[];
 	totalSlides: number;
@@ -507,6 +523,7 @@ export interface PresentationRetryOptions {
 	research_enabled: boolean;
 	research_payload?: ResearchPayload;
 	ai?: AIModelSelection;
+	template?: import("./template-catalog").PresentationTemplateReference;
 }
 
 export interface PresentationFailure {
@@ -517,6 +534,7 @@ export interface PresentationFailure {
 export interface PresentationJSON {
 	title: string;
 	theme: string;
+	template?: import("./template-catalog").PresentationTemplateReference;
 	dimensions?: PresentationDimensions;
 	slides: Slide[];
 	status?: PresentationStatus;
@@ -534,6 +552,7 @@ export type PresentationMutation =
 			type: "update-presentation";
 			title?: string;
 			theme?: ThemeId;
+			template?: import("./template-catalog").PresentationTemplateReference;
 			dimensions?: PresentationDimensions;
 	  }
 	| { type: "update-slide"; slideId: string; slide: Slide }

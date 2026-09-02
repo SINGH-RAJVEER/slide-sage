@@ -41,6 +41,31 @@ func TestNormalizeDocumentProducesRenderableSchema(t *testing.T) {
 	}
 }
 
+func TestNormalizeDocumentValidatesBinaryTemplateReference(t *testing.T) {
+	document, err := NormalizeDocument(map[string]any{
+		"template": map[string]any{"id": "simple-business-proposal", "version": json.Number("1")},
+		"slides":   []any{map[string]any{"type": "content", "title": "Opening"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	template := document["template"].(map[string]any)
+	if template["id"] != "simple-business-proposal" || template["version"] != 1 {
+		t.Fatalf("template: %#v", template)
+	}
+
+	invalid, err := NormalizeDocument(map[string]any{
+		"template": map[string]any{"id": "Invalid Template", "version": json.Number("1")},
+		"slides":   []any{map[string]any{"type": "content", "title": "Opening"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := invalid["template"]; ok {
+		t.Fatalf("invalid template retained: %#v", invalid["template"])
+	}
+}
+
 func TestParseResearchPayloadRejectsUnsafeURL(t *testing.T) {
 	_, err := ParseResearchPayload(map[string]any{"sources": []any{map[string]any{"url": "javascript:alert(1)"}}})
 	if err == nil {
@@ -156,6 +181,22 @@ func TestParseMutationsValidatesThemeAndDimensions(t *testing.T) {
 	}
 	if mutations[0].Dimensions["width"] != 4096 || mutations[0].Dimensions["height"] != 240 {
 		t.Fatalf("dimensions: %#v", mutations[0].Dimensions)
+	}
+}
+
+func TestParseMutationsValidatesBinaryTemplate(t *testing.T) {
+	body := []byte(`{"mutations":[{"type":"update-presentation","template":{"id":"simple-business-proposal","version":1}}]}`)
+	mutations, err := ParseMutations(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mutations[0].Template["id"] != "simple-business-proposal" {
+		t.Fatalf("template: %#v", mutations[0].Template)
+	}
+
+	invalid := []byte(`{"mutations":[{"type":"update-presentation","template":{"id":"Invalid Template","version":1}}]}`)
+	if _, err := ParseMutations(invalid); err == nil {
+		t.Fatal("invalid template accepted")
 	}
 }
 
@@ -313,11 +354,11 @@ func TestNormalizeDocumentAcceptsEmbeddedChartBlocks(t *testing.T) {
 			map[string]any{"type": "content", "layout": "split", "title": "Split with chart", "blocks": []any{
 				map[string]any{"type": "paragraph", "region": "primary", "text": "The trend is up."},
 				map[string]any{"type": "chart", "region": "secondary", "scale": "inline", "chartConfig": map[string]any{
-					"type": "doughnut",
-					"title": "Share of adoption",
+					"type":        "doughnut",
+					"title":       "Share of adoption",
 					"description": "2025 market share",
 					"data": map[string]any{
-						"labels": []any{"Batteries", "Hydro"},
+						"labels":   []any{"Batteries", "Hydro"},
 						"datasets": []any{map[string]any{"label": "Share", "data": []any{62, 38}}},
 					},
 				}},

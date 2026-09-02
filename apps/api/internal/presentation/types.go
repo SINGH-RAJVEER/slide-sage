@@ -64,6 +64,11 @@ type PresentationDetail struct {
 	UpdatedAt  time.Time       `json:"updated_at"`
 }
 
+type TemplateReference struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+}
+
 type ResearchOptions struct {
 	Enabled            bool     `json:"enabled"`
 	Freshness          string   `json:"freshness,omitempty"`

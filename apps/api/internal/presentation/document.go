@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -26,6 +27,8 @@ var validThemes = map[string]bool{
 	"concrete-brutal": true,
 	"terra-mesa":      true,
 }
+
+var binaryTemplateIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 var validLayouts = map[string]bool{
 	"cover":       true,
@@ -85,6 +88,11 @@ func NormalizeDocument(value map[string]any) (map[string]any, error) {
 	delete(result, "schemaVersion")
 	result["title"] = title
 	result["theme"] = theme
+	if template, ok := normalizeTemplateReference(value["template"]); ok {
+		result["template"] = template
+	} else {
+		delete(result, "template")
+	}
 	result["dimensions"] = dimensions
 	result["slides"] = slides
 	result["totalSlides"] = len(slides)
@@ -102,6 +110,46 @@ func NormalizeDocument(value map[string]any) (map[string]any, error) {
 		result["sources"] = []any{}
 	}
 	return result, nil
+}
+
+func normalizeTemplateReference(value any) (map[string]any, bool) {
+	reference, err := ParseTemplateReference(value)
+	if err != nil {
+		return nil, false
+	}
+	return map[string]any{"id": reference.ID, "version": reference.Version}, true
+}
+
+func ParseTemplateReference(value any) (TemplateReference, error) {
+	template, ok := value.(map[string]any)
+	if !ok {
+		return TemplateReference{}, fmt.Errorf("template must be an object")
+	}
+	id := boundedText(template["id"], 120)
+	version, validVersion := exactInteger(template["version"])
+	if !binaryTemplateIDPattern.MatchString(id) || !validVersion || version != 1 {
+		return TemplateReference{}, fmt.Errorf("invalid PowerPoint template")
+	}
+	return TemplateReference{ID: id, Version: 1}, nil
+}
+
+func exactInteger(value any) (int64, bool) {
+	switch number := value.(type) {
+	case json.Number:
+		parsed, err := number.Int64()
+		return parsed, err == nil
+	case int:
+		return int64(number), true
+	case int64:
+		return number, true
+	case float64:
+		if math.Trunc(number) != number {
+			return 0, false
+		}
+		return int64(number), true
+	default:
+		return 0, false
+	}
 }
 
 func normalizeDimensions(value any) map[string]int {

@@ -7,6 +7,9 @@ node_modules/
 .direnv/
 .DS_Store
 
+# Local source presentations are compiled and uploaded to object storage.
+templates/
+
 # Terraform
 **/.terraform/
 *.tfstate

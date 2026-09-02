@@ -10,6 +10,7 @@ type Mutation struct {
 	Type       string
 	Title      *string
 	Theme      *string
+	Template   map[string]any
 	Dimensions map[string]any
 	SlideID    string
 	Slide      map[string]any
@@ -57,6 +58,13 @@ func ParseMutations(body []byte) ([]Mutation, error) {
 					return nil, inputError("Invalid presentation theme", 400)
 				}
 				mutation.Theme = &theme
+			}
+			if rawTemplate, found := input["template"]; found {
+				template, valid := normalizeTemplateReference(rawTemplate)
+				if !valid {
+					return nil, inputError("Invalid PowerPoint template", 400)
+				}
+				mutation.Template = template
 			}
 			if rawDimensions, found := input["dimensions"]; found {
 				dimensions, ok := rawDimensions.(map[string]any)
@@ -122,6 +130,9 @@ func ApplyMutations(raw json.RawMessage, mutations []Mutation) (map[string]any, 
 			}
 			if mutation.Theme != nil {
 				document["theme"] = *mutation.Theme
+			}
+			if mutation.Template != nil {
+				document["template"] = mutation.Template
 			}
 			if mutation.Dimensions != nil {
 				document["dimensions"] = mutation.Dimensions
