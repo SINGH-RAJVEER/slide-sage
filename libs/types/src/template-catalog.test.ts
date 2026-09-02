@@ -54,8 +54,12 @@ describe("binary PPTX template catalog", () => {
 	it("records version and onboarding state without invented hashes", () => {
 		for (const entry of BINARY_PPTX_TEMPLATE_CATALOG) {
 			expect(entry.version).toBe(1);
-			expect(entry.asset.status).toBe("pending-upload");
 			expect(entry.asset).not.toHaveProperty("sha256");
 		}
+		expect(
+			BINARY_PPTX_TEMPLATE_CATALOG.filter((entry) => entry.asset.status === "available").map(
+				(entry) => entry.id,
+			),
+		).toEqual(["simple-business-proposal"]);
 	});
 });

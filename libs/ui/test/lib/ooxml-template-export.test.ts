@@ -68,20 +68,16 @@ describe("OOXML template export", () => {
 				publicBaseUrl: "https://cdn.example.com/",
 				fetcher,
 			}),
-		).rejects.toThrow("has not completed OOXML onboarding");
+		).rejects.toThrow("is pending asset upload");
 		expect(fetcher).not.toHaveBeenCalled();
 	});
 
-	it("rejects pending template assets before downloading", async () => {
-		const fetcher = mock(() => Promise.resolve(new Response(null, { status: 200 })));
-
-		await expect(
-			buildOoxmlTemplatePptx(presentation("simple-business-proposal"), {
-				publicBaseUrl: "https://cdn.example.com/",
-				fetcher,
-			}),
-		).rejects.toThrow('template "Simple Business Proposal" is pending asset upload');
-		expect(fetcher).not.toHaveBeenCalled();
+	it("marks only the onboarded runtime asset available", () => {
+		expect(
+			BINARY_PPTX_TEMPLATE_CATALOG.filter((entry) => entry.asset.status === "available").map(
+				(entry) => entry.id,
+			),
+		).toEqual(["simple-business-proposal"]);
 	});
 
 	it("rejects missing storage configuration", async () => {
@@ -111,31 +107,48 @@ describe("OOXML template export", () => {
 				publicBaseUrl: "https://cdn.example.com/",
 				fetcher,
 			}),
-		).rejects.toThrow('Unsupported PowerPoint slide kind "chart" at slide 1');
+		).rejects.toThrow("supports content slides only. Slide 1 is chart");
 		expect(fetcher).not.toHaveBeenCalled();
 	});
 
+	it("rejects rich blocks and unmapped regions instead of dropping content", async () => {
+		const withImage = presentation("simple-business-proposal");
+		const contentSlide = withImage.slides[0];
+		if (contentSlide?.type !== "content") throw new Error("Expected content slide");
+		contentSlide.blocks = [
+			{
+				type: "image",
+				region: "media",
+				url: "https://example.com/image.png",
+				alt: "Image",
+				caption: "",
+			},
+		];
+		await expect(
+			buildOoxmlTemplatePptx(withImage, { publicBaseUrl: "https://cdn.example.com/" }),
+		).rejects.toThrow("contains image content");
+
+		const withUnmappedBody = presentation("simple-business-proposal");
+		const mediaRight = withUnmappedBody.slides[0];
+		if (mediaRight?.type !== "content") throw new Error("Expected content slide");
+		mediaRight.layout = "media-right";
+		mediaRight.blocks = [{ type: "paragraph", region: "main", text: "Do not discard me" }];
+		await expect(
+			buildOoxmlTemplatePptx(withUnmappedBody, { publicBaseUrl: "https://cdn.example.com/" }),
+		).rejects.toThrow('unmapped "main" region');
+	});
+
 	it("downloads the versioned template path and reports storage failures", async () => {
-		const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
-			(entry) => entry.id === "simple-business-proposal",
-		);
-		if (!template) throw new Error("Test template is missing from the catalog");
-		const originalStatus = template.asset.status;
-		template.asset.status = "available";
 		const fetcher = mock(() => Promise.resolve(new Response(null, { status: 503 })));
 
-		try {
-			await expect(
-				buildOoxmlTemplatePptx(presentation("simple-business-proposal"), {
-					publicBaseUrl: "https://cdn.example.com/assets",
-					fetcher,
-				}),
-			).rejects.toThrow('Simple Business Proposal" (503)');
-			expect(fetcher).toHaveBeenCalledWith(
-				"https://cdn.example.com/assets/pptx-templates/v1/simple-business-proposal.pptx",
-			);
-		} finally {
-			template.asset.status = originalStatus;
-		}
+		await expect(
+			buildOoxmlTemplatePptx(presentation("simple-business-proposal"), {
+				publicBaseUrl: "https://cdn.example.com/assets",
+				fetcher,
+			}),
+		).rejects.toThrow('Simple Business Proposal" (503)');
+		expect(fetcher).toHaveBeenCalledWith(
+			"https://cdn.example.com/assets/pptx-templates/v1/simple-business-proposal.pptx",
+		);
 	});
 });

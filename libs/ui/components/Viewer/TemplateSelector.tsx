@@ -16,6 +16,7 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
+import { hasOoxmlTemplateManifest } from "../../lib/ooxml-template-manifests";
 import { getSemanticTheme } from "../../lib/semantic-themes";
 
 export interface InstalledTemplateOption {
@@ -40,6 +41,11 @@ const getTemplatePreviewColors = (previewThemeId: ThemeId) => {
 		secondary: visual.title,
 		accent: visual.accent,
 	};
+};
+
+const templateIsSelectable = (templateId: string) => {
+	const template = BINARY_PPTX_TEMPLATE_CATALOG.find((entry) => entry.id === templateId);
+	return template?.asset.status === "available" && hasOoxmlTemplateManifest(templateId);
 };
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({
@@ -98,6 +104,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 					{defaultTemplates.map((template) => {
 						const colors = getTemplatePreviewColors(template.previewThemeId);
 						const isSelected = selectedTemplate.id === template.id;
+						const selectable = templateIsSelectable(template.id);
 
 						return (
 							<DropdownMenuItem
@@ -141,7 +148,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 												</Badge>
 											)}
 										</div>
-										<div className="text-xs text-white/40 mt-1 truncate">PowerPoint template</div>
+										<div className="text-xs text-white/40 mt-1 truncate">
+											{selectable ? "PowerPoint template" : "Preparing for export"}
+										</div>
 									</div>
 
 									{/* Check mark */}
@@ -159,6 +168,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 							{installedThemes.map((theme) => {
 								const colors = getTemplatePreviewColors(theme.previewThemeId);
 								const isSelected = selectedTemplate.id === theme.templateReference.id;
+								const selectable = templateIsSelectable(theme.templateReference.id);
 								return (
 									<DropdownMenuItem
 										key={theme.marketplaceId}
@@ -181,7 +191,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 													{theme.name}
 												</div>
 												<div className="mt-1 truncate text-xs text-white/40">
-													{theme.description}
+													{selectable ? theme.description : "Preparing for export"}
 												</div>
 											</div>
 											{isSelected && <Check className="w-4 h-4 shrink-0 text-blue-400" />}

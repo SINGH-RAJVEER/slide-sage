@@ -56,15 +56,18 @@ const A_SERIES_PORTRAIT: BinaryTemplateDimensions = {
 	aspectRatio: { width: 210, height: 297, label: "A-series portrait" },
 };
 
-type CatalogEntry = Omit<BinaryPptxTemplate, "asset" | "sourceFilename" | "version">;
+type CatalogEntry = Omit<BinaryPptxTemplate, "asset" | "sourceFilename" | "version"> & {
+	assetStatus?: BinaryTemplateAssetStatus;
+};
 
 function template(entry: CatalogEntry): BinaryPptxTemplate {
+	const { assetStatus = "pending-upload", ...metadata } = entry;
 	return {
-		...entry,
+		...metadata,
 		version: 1,
 		sourceFilename: `${entry.id}.pptx`,
 		asset: {
-			status: "pending-upload",
+			status: assetStatus,
 			path: `pptx-templates/v1/${entry.id}.pptx`,
 		},
 	};
@@ -229,6 +232,7 @@ export const BINARY_PPTX_TEMPLATE_CATALOG = [
 		id: "simple-business-proposal",
 		name: "Simple Business Proposal",
 		availability: "default",
+		assetStatus: "available",
 		previewThemeId: "corporate-blue",
 		dimensions: HALF_SCALE_WIDESCREEN,
 	}),

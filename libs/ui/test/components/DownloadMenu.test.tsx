@@ -84,6 +84,19 @@ describe("DownloadMenu", () => {
 		expect(exportOoxmlTemplatePptx).not.toHaveBeenCalled();
 	});
 
+	it("disables PPTX for a template that is not export-ready", () => {
+		const pendingTemplate = {
+			...presentation,
+			template: { id: "5s-training", version: 1 },
+		};
+		const view = render(
+			<DownloadMenu presentation={pendingTemplate} onExport={exportPresentation} />,
+		);
+		openMenu(view.getByRole("button", { name: "Download" }));
+
+		expect(view.getByRole("menuitem", { name: "PowerPoint" })).toHaveAttribute("data-disabled");
+	});
+
 	it("disables downloads when there are no slides", () => {
 		const view = render(
 			<DownloadMenu

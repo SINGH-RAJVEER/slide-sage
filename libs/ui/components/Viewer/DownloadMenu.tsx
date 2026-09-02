@@ -7,6 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@slidesage/ui/components/dropdown-menu";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
+import { getOoxmlExportReadiness } from "@slidesage/ui/lib/ooxml-template-readiness";
 import { ChevronDown, Download, FileText, Presentation } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
@@ -46,6 +47,7 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 	};
 
 	const isExporting = exportingFormat !== null;
+	const pptxReadiness = getOoxmlExportReadiness(presentation);
 
 	return (
 		<div className="relative flex flex-col items-start gap-1">
@@ -72,7 +74,8 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 					className="w-48 bg-gray-900/80 backdrop-blur-md border border-white/10 text-white shadow-xl"
 				>
 					<DropdownMenuItem
-						disabled={isExporting || !presentation.template}
+						disabled={isExporting || !pptxReadiness.ready}
+						title={pptxReadiness.reason}
 						onSelect={() => void download("pptx")}
 						className="focus:bg-white/10 focus:text-white cursor-pointer"
 					>
