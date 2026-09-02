@@ -32,7 +32,10 @@ function contentSlide(id: string) {
 	};
 }
 
-function presentationResponse(theme: string) {
+function presentationResponse(
+	theme: string,
+	template = { id: "soft-skills-training", version: 1 },
+) {
 	return Response.json({
 		presentation: {
 			id: "presentation_1",
@@ -40,6 +43,7 @@ function presentationResponse(theme: string) {
 			slides_data: {
 				title: "Quarterly Review",
 				theme,
+				template,
 				dimensions: { width: 1280, height: 720 },
 				slides: [contentSlide("slide-1")],
 				totalSlides: 1,
@@ -63,56 +67,72 @@ function renderViewer() {
 	);
 }
 
-it("opens a saved presentation in the theme it was last viewed with", async () => {
+it("opens a saved presentation with its binary template", async () => {
 	const originalFetch = globalThis.fetch;
 	globalThis.fetch = mock(async () =>
-		presentationResponse("elegant-serif"),
+		presentationResponse("terra-mesa"),
 	) as unknown as typeof fetch;
 
 	try {
 		const view = renderViewer();
 
 		await waitFor(() => {
-			expect(view.getByRole("button", { name: /Editorial Ledger/ })).toBeInTheDocument();
+			expect(view.getByRole("button", { name: /Soft Skills Training/ })).toBeInTheDocument();
 		});
-		expect(view.queryByRole("button", { name: /Signal Grid/ })).not.toBeInTheDocument();
+		expect(
+			view.queryByRole("button", { name: /Simple Business Proposal/ }),
+		).not.toBeInTheDocument();
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
 });
 
-it("saves a theme change to the stored document and keeps it afterwards", async () => {
+it("saves a template and preview theme in one mutation", async () => {
 	const originalFetch = globalThis.fetch;
 	let savedTheme = "";
+	let savedTemplate: { id: string; version: number } | undefined;
 	globalThis.fetch = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
 		if (init?.method === "PATCH") {
 			const body = JSON.parse(String(init.body)) as {
-				mutations: Array<{ type: string; theme?: string }>;
+				mutations: Array<{
+					type: string;
+					theme?: string;
+					template?: { id: string; version: number };
+				}>;
 			};
-			savedTheme = body.mutations.find((mutation) => mutation.type === "update-presentation")
-				?.theme as string;
-			return presentationResponse(savedTheme);
+			const mutation = body.mutations.find((candidate) => candidate.type === "update-presentation");
+			savedTheme = mutation?.theme as string;
+			savedTemplate = mutation?.template;
+			return presentationResponse(savedTheme, savedTemplate);
 		}
-		return presentationResponse("elegant-serif");
+		return presentationResponse("terra-mesa");
 	}) as unknown as typeof fetch;
 
 	try {
 		const view = renderViewer();
 		await waitFor(() => {
-			expect(view.getByRole("button", { name: /Editorial Ledger/ })).toBeInTheDocument();
+			expect(view.getByRole("button", { name: /Soft Skills Training/ })).toBeInTheDocument();
 		});
 
-		fireEvent.pointerDown(view.getByRole("button", { name: /Editorial Ledger/ }), {
+		fireEvent.pointerDown(view.getByRole("button", { name: /Soft Skills Training/ }), {
 			button: 0,
 			ctrlKey: false,
 		});
-		fireEvent.click(view.getByRole("menuitem", { name: /Midnight Terminal/ }));
+		fireEvent.click(
+			view.getByRole("menuitem", { name: /Modern Minimal Grid Financial Management/ }),
+		);
 
 		await waitFor(() => expect(savedTheme).toBe("modern-dark"));
-		await waitFor(() => {
-			expect(view.getByRole("button", { name: /Midnight Terminal/ })).toBeInTheDocument();
+		expect(savedTemplate).toEqual({
+			id: "modern-minimal-grid-financial-management",
+			version: 1,
 		});
-		expect(view.queryByRole("button", { name: /Signal Grid/ })).not.toBeInTheDocument();
+		await waitFor(() => {
+			expect(
+				view.getByRole("button", { name: /Modern Minimal Grid Financial Management/ }),
+			).toBeInTheDocument();
+		});
+		expect(view.queryByRole("button", { name: /Soft Skills Training/ })).not.toBeInTheDocument();
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

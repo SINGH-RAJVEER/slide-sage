@@ -1,4 +1,9 @@
-import type { AIModelSelection, ResearchPayload } from "@slidesage/types";
+import {
+	type AIModelSelection,
+	type BinaryTemplateSelection,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
+	type ResearchPayload,
+} from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
@@ -17,6 +22,7 @@ interface ResearchRouteState {
 	researchPayload?: ResearchPayload;
 	retryPresentationId?: string;
 	ai?: AIModelSelection;
+	template: BinaryTemplateSelection;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -34,6 +40,11 @@ export default function GenerateResearchPage() {
 	const savedResearch = routeState?.researchPayload;
 	const retryPresentationId = routeState?.retryPresentationId;
 	const ai = routeState?.ai;
+	const template = routeState?.template ?? {
+		id: DEFAULT_BINARY_PPTX_TEMPLATE.id,
+		version: DEFAULT_BINARY_PPTX_TEMPLATE.version,
+		previewThemeId: DEFAULT_BINARY_PPTX_TEMPLATE.previewThemeId,
+	};
 
 	const [isProceeding, setIsProceeding] = useState(false);
 	const [researchAttempt, setResearchAttempt] = useState(0);
@@ -109,6 +120,7 @@ export default function GenerateResearchPage() {
 			researchPayload: payload,
 			retryPresentationId,
 			ai,
+			template,
 		});
 		navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
@@ -124,6 +136,7 @@ export default function GenerateResearchPage() {
 		prompt,
 		researchStatus,
 		retryPresentationId,
+		template,
 		navigate,
 		slideCount,
 		sources,

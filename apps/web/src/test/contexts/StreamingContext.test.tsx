@@ -30,6 +30,11 @@ function GenerateStarter({ onNavigateAway }: { onNavigateAway?: () => void }) {
 				type="button"
 				onClick={() => {
 					void generate({
+						template: {
+							id: "simple-business-proposal",
+							version: 1,
+							previewThemeId: "corporate-blue",
+						},
 						prompt: "Background generation",
 						slideCount: 2,
 						detailLevel: "balanced",
@@ -62,6 +67,11 @@ function IterateStarter() {
 				type="button"
 				onClick={() => {
 					void generate({
+						template: {
+							id: "simple-business-proposal",
+							version: 1,
+							previewThemeId: "corporate-blue",
+						},
 						prompt: "Update this presentation",
 						slideCount: 2,
 						detailLevel: "balanced",
@@ -88,6 +98,11 @@ function CancelStarter() {
 				type="button"
 				onClick={() => {
 					void generate({
+						template: {
+							id: "simple-business-proposal",
+							version: 1,
+							previewThemeId: "corporate-blue",
+						},
 						prompt: "Cancel this deck",
 						slideCount: 2,
 						detailLevel: "balanced",
@@ -472,6 +487,11 @@ it("starts a second generation after the first completes", async () => {
 						type="button"
 						onClick={() => {
 							void generate({
+								template: {
+									id: "simple-business-proposal",
+									version: 1,
+									previewThemeId: "corporate-blue",
+								},
 								prompt: `deck number ${runs + 1}`,
 								slideCount: 1,
 								detailLevel: "brief",

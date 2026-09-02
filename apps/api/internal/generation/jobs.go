@@ -42,21 +42,22 @@ func (JobArgs) InsertOpts() river.InsertOpts {
 }
 
 type jobPayload struct {
-	UserID           string                        `json:"user_id"`
-	OperationID      string                        `json:"operation_id"`
-	PresentationID   string                        `json:"presentation_id"`
-	Kind             string                        `json:"kind"`
-	Prompt           string                        `json:"prompt"`
-	SlideCount       int                           `json:"slide_count"`
-	DetailLevel      string                        `json:"detail_level"`
-	Tonality         string                        `json:"tonality"`
-	Research         any                           `json:"research,omitempty"`
-	ResearchPayload  *presentation.ResearchPayload `json:"research_payload,omitempty"`
-	Selection        *ai.Selection                 `json:"ai,omitempty"`
-	Current          json.RawMessage               `json:"current,omitempty"`
-	ExpectedRevision int                           `json:"expected_revision"`
-	QuotedMillis     int64                         `json:"quoted_millis"`
-	RequestHash      string                        `json:"request_hash,omitempty"`
+	UserID           string                          `json:"user_id"`
+	OperationID      string                          `json:"operation_id"`
+	PresentationID   string                          `json:"presentation_id"`
+	Kind             string                          `json:"kind"`
+	Prompt           string                          `json:"prompt"`
+	SlideCount       int                             `json:"slide_count"`
+	DetailLevel      string                          `json:"detail_level"`
+	Tonality         string                          `json:"tonality"`
+	Research         any                             `json:"research,omitempty"`
+	ResearchPayload  *presentation.ResearchPayload   `json:"research_payload,omitempty"`
+	Selection        *ai.Selection                   `json:"ai,omitempty"`
+	Template         *presentation.TemplateReference `json:"template,omitempty"`
+	Current          json.RawMessage                 `json:"current,omitempty"`
+	ExpectedRevision int                             `json:"expected_revision"`
+	QuotedMillis     int64                           `json:"quoted_millis"`
+	RequestHash      string                          `json:"request_hash,omitempty"`
 }
 
 func payloadFromJob(job streamJob) jobPayload {
@@ -64,7 +65,7 @@ func payloadFromJob(job streamJob) jobPayload {
 		UserID: job.userID, OperationID: job.operationID, PresentationID: job.presentationID,
 		Kind: job.kind, Prompt: job.prompt, SlideCount: job.slideCount,
 		DetailLevel: job.detailLevel, Tonality: job.tonality,
-		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection,
+		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection, Template: job.template,
 		Current: job.current, ExpectedRevision: job.expectedRevision, QuotedMillis: job.quote,
 		RequestHash: job.requestHash,
 	}
@@ -76,7 +77,7 @@ func (payload jobPayload) streamJob() streamJob {
 		expectedRevision: payload.ExpectedRevision, quote: payload.QuotedMillis,
 		prompt: payload.Prompt, slideCount: payload.SlideCount, detailLevel: payload.DetailLevel,
 		tonality: payload.Tonality, research: payload.Research,
-		researchPayload: payload.ResearchPayload, selection: payload.Selection, current: payload.Current,
+		researchPayload: payload.ResearchPayload, selection: payload.Selection, template: payload.Template, current: payload.Current,
 		kind: payload.Kind, requestHash: payload.RequestHash,
 	}
 }
@@ -284,10 +285,7 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	}
 
 	document["title"] = truncate(text(document["title"], "Untitled Presentation"), 255)
-	document["theme"] = "corporate-blue"
-	if job.kind == "iteration" {
-		document["theme"] = documentTheme(job.current)
-	}
+	preserveJobTemplate(document, job)
 	document["status"] = "ready"
 	document["tokens_used"] = tokens
 	if plan != nil {
@@ -334,6 +332,18 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		_ = h.connections.MarkUsed(ctx, job.userID, job.selection.Provider)
 	}
 	return nil
+}
+
+func preserveJobTemplate(document map[string]any, job streamJob) {
+	document["theme"] = "corporate-blue"
+	if job.kind == "iteration" {
+		document["theme"] = documentTheme(job.current)
+	}
+	if job.template == nil {
+		delete(document, "template")
+		return
+	}
+	document["template"] = map[string]any{"id": job.template.ID, "version": job.template.Version}
 }
 
 func (h *handler) loadGenerationJob(ctx context.Context, jobID string) (generationJobRecord, error) {

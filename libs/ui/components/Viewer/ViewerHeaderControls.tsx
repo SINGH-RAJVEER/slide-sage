@@ -1,4 +1,4 @@
-import type { SlideLayout } from "@slidesage/types";
+import type { BinaryTemplateSelection, SlideLayout } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { ArrowLeft, Palette, Presentation, Sparkles } from "lucide-react";
 import type React from "react";
@@ -9,8 +9,9 @@ interface ViewerHeaderControlsProps {
 	title?: string;
 	canIterate: boolean;
 	currentTemplate: string;
+	selectedTemplate?: BinaryTemplateSelection;
 	onBack: () => void;
-	onTemplateChange: (templateId: string) => void;
+	onTemplateChange: (template: BinaryTemplateSelection) => void;
 	selectedLayout?: SlideLayout;
 	onLayoutChange: (layout: SlideLayout) => void;
 	layoutDisabled: boolean;
@@ -26,7 +27,7 @@ interface ViewerHeaderControlsProps {
 export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
 	title,
 	canIterate,
-	currentTemplate,
+	selectedTemplate,
 	onBack,
 	onTemplateChange,
 	selectedLayout,
@@ -66,13 +67,13 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
 						<Palette className="size-4 text-blue-400" />
 						{themeLabel}
 					</div>
-				) : (
+				) : selectedTemplate ? (
 					<TemplateSelector
-						selectedTemplate={currentTemplate}
+						selectedTemplate={selectedTemplate}
 						onTemplateChange={onTemplateChange}
 						installedThemes={installedThemes}
 					/>
-				)}
+				) : null}
 				{showLayoutSelector && (
 					<SlideLayoutSelector
 						selectedLayout={selectedLayout}

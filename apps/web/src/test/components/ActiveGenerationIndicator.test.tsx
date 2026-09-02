@@ -15,6 +15,11 @@ function Starter() {
 			type="button"
 			onClick={() => {
 				void generate({
+					template: {
+						id: "simple-business-proposal",
+						version: 1,
+						previewThemeId: "corporate-blue",
+					},
 					prompt: "solar policy deck",
 					slideCount: 1,
 					detailLevel: "brief",

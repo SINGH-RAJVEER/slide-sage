@@ -1,8 +1,10 @@
 import type {
 	AIModelSelection,
+	BinaryTemplateSelection,
 	DeckPlan,
 	PresentationData,
 	PresentationGenerationStage,
+	PresentationTemplateReference,
 	ResearchPayload,
 	Slide,
 	Source,
@@ -15,6 +17,10 @@ import { publishPresentationUpdated } from "../lib/presentation-events";
 import { consumeSSEStream } from "../lib/sse-stream";
 
 const ACTIVE_GENERATION_KEY = "slidesage-active-generation";
+const DEFAULT_TEMPLATE_REFERENCE: PresentationTemplateReference = {
+	id: "simple-business-proposal",
+	version: 1,
+};
 
 interface StoredGeneration {
 	jobId: string;
@@ -23,6 +29,7 @@ interface StoredGeneration {
 	prompt?: string;
 	requestedSlides: number;
 	theme: string;
+	template: PresentationTemplateReference;
 	lastEventId: number;
 }
 
@@ -53,7 +60,18 @@ function readStoredGeneration(): StoredGeneration | null {
 			window.localStorage.removeItem(ACTIVE_GENERATION_KEY);
 			return null;
 		}
-		inMemoryGeneration = value as StoredGeneration;
+		const template = value.template;
+		if (
+			template !== undefined &&
+			(!template || typeof template.id !== "string" || typeof template.version !== "number")
+		) {
+			window.localStorage.removeItem(ACTIVE_GENERATION_KEY);
+			return null;
+		}
+		inMemoryGeneration = {
+			...(value as StoredGeneration),
+			template: template || DEFAULT_TEMPLATE_REFERENCE,
+		};
 		return inMemoryGeneration;
 	} catch {
 		generationStorageUnavailable = true;
@@ -93,6 +111,7 @@ export interface StreamingState {
 	isStreaming: boolean;
 	slides: Slide[];
 	theme: string;
+	template?: PresentationTemplateReference;
 	title: string;
 	totalSlides: number;
 	requestedSlides: number;
@@ -121,6 +140,7 @@ export interface GenerateOptions {
 	parentPresentationId?: string;
 	retryPresentationId?: string;
 	ai?: AIModelSelection;
+	template: BinaryTemplateSelection;
 }
 
 type ResearchPreviewStatus = "idle" | "loading" | "ready" | "error";
@@ -424,6 +444,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				setStreamingState((prev) => ({
 					...prev,
 					completedDocument: document,
+					template: document.template || prev.template,
 					theme: document.theme || prev.theme,
 					title: document.title || prev.title,
 					slides: document.slides || prev.slides,
@@ -575,6 +596,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				isStreaming: true,
 				jobId,
 				requestedSlides: options.slideCount,
+				theme: options.template.previewThemeId,
+				template: { id: options.template.id, version: options.template.version },
 				operation,
 				prompt: options.prompt,
 				presentationId: targetPresentationId || undefined,
@@ -586,7 +609,8 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				operation,
 				prompt: options.prompt,
 				requestedSlides: options.slideCount,
-				theme: "corporate-blue",
+				theme: options.template.previewThemeId,
+				template: { id: options.template.id, version: options.template.version },
 				lastEventId: 0,
 			};
 			storeGeneration(stored);
@@ -628,6 +652,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						parent_presentation_id: options.parentPresentationId,
 						retry_presentation_id: options.retryPresentationId,
 						ai: options.ai,
+						template: { id: options.template.id, version: options.template.version },
 					}),
 					signal: controller.signal,
 				});
@@ -843,6 +868,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 		return {
 			...streamingState.completedDocument,
 			deckPlan: streamingState.deckPlan ?? streamingState.completedDocument?.deckPlan,
+			template: streamingState.template ?? streamingState.completedDocument?.template,
 			title: streamingState.title,
 			theme: streamingState.theme,
 			slides: streamingState.slides,
@@ -867,6 +893,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			prompt: initialStored.prompt,
 			requestedSlides: initialStored.requestedSlides,
 			theme: initialStored.theme,
+			template: initialStored.template,
 		});
 
 		void consumeJobEvents(

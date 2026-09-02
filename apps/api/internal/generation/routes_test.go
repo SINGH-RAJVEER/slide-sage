@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 )
 
 func decodeSubmitBody(t *testing.T, raw string) map[string]any {
@@ -57,6 +59,55 @@ func TestSubmitInputKeepsEnabledResearch(t *testing.T) {
 	}
 	if input.Research == nil {
 		t.Fatal("enabled research was discarded")
+	}
+}
+
+func TestSubmitInputParsesBinaryTemplate(t *testing.T) {
+	body := decodeSubmitBody(t, `{
+		"topic":"Grid storage",
+		"slide_count":5,
+		"template":{"id":"soft-skills-training","version":1}
+	}`)
+	input, err := parseSubmitInput(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if input.Template == nil || input.Template.ID != "soft-skills-training" {
+		t.Fatalf("template = %#v", input.Template)
+	}
+
+	body["template"] = map[string]any{"id": "Invalid Template", "version": json.Number("1")}
+	if _, err := parseSubmitInput(body); err == nil {
+		t.Fatal("invalid template ID was accepted")
+	}
+}
+
+func TestGenerationPlaceholderCarriesTemplateIntoRetryState(t *testing.T) {
+	body := decodeSubmitBody(t, `{
+		"topic":"Grid storage",
+		"slide_count":5,
+		"template":{"id":"soft-skills-training","version":1}
+	}`)
+	input, err := parseSubmitInput(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	placeholder := generationPlaceholder(input)
+	if placeholder["theme"] != "corporate-blue" {
+		t.Fatalf("theme = %#v", placeholder["theme"])
+	}
+	retry := placeholder["failure"].(map[string]any)["retry"].(map[string]any)
+	encoded, _ := json.Marshal(retry["template"])
+	if string(encoded) != `{"id":"soft-skills-training","version":1}` {
+		t.Fatalf("retry template = %s", encoded)
+	}
+}
+
+func TestRequestHashIncludesTemplate(t *testing.T) {
+	first := submitInput{Topic: "Grid storage", Template: &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}}
+	second := submitInput{Topic: "Grid storage", Template: &presentation.TemplateReference{ID: "soft-skills-training", Version: 1}}
+	if requestHash(first) == requestHash(second) {
+		t.Fatal("template did not affect request hash")
 	}
 }
 

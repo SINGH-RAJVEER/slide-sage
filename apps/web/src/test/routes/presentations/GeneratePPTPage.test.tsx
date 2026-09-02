@@ -43,6 +43,7 @@ it("prefills a failed presentation prompt and generation options", () => {
 	expect(view.getByText("Comprehensive")).toBeInTheDocument();
 	expect(view.getByText("Casual")).toBeInTheDocument();
 	expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
+	expect(view.getByRole("button", { name: /Simple Business Proposal/ })).toBeInTheDocument();
 	expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled();
 });
 
@@ -105,6 +106,10 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			</MemoryRouter>,
 		);
 
+		fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
+			button: 0,
+		});
+		fireEvent.click(view.getByRole("menuitem", { name: /Soft Skills Training/ }));
 		fireEvent.click(view.getByRole("button", { name: "Generate" }));
 
 		await waitFor(() =>
@@ -126,13 +131,14 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			provider: "anthropic",
 			model: "claude-sonnet-4-20250514",
 		});
+		expect(requestBody["template"]).toEqual({ id: "soft-skills-training", version: 1 });
 		expect(requestBody).not.toHaveProperty("theme");
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
 });
 
-it("switches the theme while the generation skeleton is visible", async () => {
+it("switches the binary template while the generation skeleton is visible", async () => {
 	const originalFetch = globalThis.fetch;
 	const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) => {
 		const url = String(input);
@@ -194,13 +200,19 @@ it("switches the theme while the generation skeleton is visible", async () => {
 			).toBe(true),
 		);
 		await waitFor(() =>
-			expect(view.getByRole("button", { name: /Signal Grid/ })).toBeInTheDocument(),
+			expect(view.getByRole("button", { name: /Simple Business Proposal/ })).toBeInTheDocument(),
 		);
 
-		fireEvent.pointerDown(view.getByRole("button", { name: /Signal Grid/ }), { button: 0 });
-		fireEvent.click(view.getByRole("menuitem", { name: /Midnight Terminal/ }));
+		fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
+			button: 0,
+		});
+		fireEvent.click(
+			view.getByRole("menuitem", { name: /Modern Minimal Grid Financial Management/ }),
+		);
 
-		expect(view.getByRole("button", { name: /Midnight Terminal/ })).toBeInTheDocument();
+		expect(
+			view.getByRole("button", { name: /Modern Minimal Grid Financial Management/ }),
+		).toBeInTheDocument();
 		expect(
 			fetchMock.mock.calls.some(
 				([input, init]) =>

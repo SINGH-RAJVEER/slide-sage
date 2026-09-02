@@ -7,12 +7,12 @@ import DownloadMenu, {
 } from "@slidesage/ui/components/Viewer/DownloadMenu";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 
-const exportEditablePptx = mock(async (_presentation: PresentationData) => {});
+const exportOoxmlTemplatePptx = mock(async (_presentation: PresentationData) => {});
 const exportPresentationPdf = mock(async (_title: string) => {});
 
 const exportPresentation: PresentationExporter = async (format, presentation) => {
 	if (format === "pptx") {
-		await exportEditablePptx(presentation);
+		await exportOoxmlTemplatePptx(presentation);
 		return;
 	}
 	await exportPresentationPdf(presentation.title);
@@ -21,6 +21,7 @@ const exportPresentation: PresentationExporter = async (format, presentation) =>
 const presentation: PresentationData = {
 	title: "Structured deck",
 	theme: "corporate-blue",
+	template: { id: "simple-business-proposal", version: 1 },
 	totalSlides: 1,
 	slides: [
 		{
@@ -43,9 +44,9 @@ const openMenu = (button: HTMLElement) => {
 
 describe("DownloadMenu", () => {
 	beforeEach(() => {
-		exportEditablePptx.mockClear();
+		exportOoxmlTemplatePptx.mockClear();
 		exportPresentationPdf.mockClear();
-		exportEditablePptx.mockImplementation(async () => {});
+		exportOoxmlTemplatePptx.mockImplementation(async () => {});
 		exportPresentationPdf.mockImplementation(async () => {});
 	});
 
@@ -55,7 +56,7 @@ describe("DownloadMenu", () => {
 
 		fireEvent.click(view.getByRole("menuitem", { name: "PowerPoint" }));
 
-		await waitFor(() => expect(exportEditablePptx).toHaveBeenCalledWith(presentation));
+		await waitFor(() => expect(exportOoxmlTemplatePptx).toHaveBeenCalledWith(presentation));
 	});
 
 	it("downloads the rendered presentation as PDF", async () => {
@@ -65,6 +66,22 @@ describe("DownloadMenu", () => {
 		fireEvent.click(view.getByRole("menuitem", { name: "PDF document" }));
 
 		await waitFor(() => expect(exportPresentationPdf).toHaveBeenCalledWith(presentation.title));
+	});
+
+	it("disables PPTX without a binary template while keeping PDF enabled", async () => {
+		const presentationWithoutTemplate = { ...presentation, template: undefined };
+		const view = render(
+			<DownloadMenu presentation={presentationWithoutTemplate} onExport={exportPresentation} />,
+		);
+		openMenu(view.getByRole("button", { name: "Download" }));
+
+		expect(view.getByRole("menuitem", { name: "PowerPoint" })).toHaveAttribute("data-disabled");
+		const pdf = view.getByRole("menuitem", { name: "PDF document" });
+		expect(pdf).not.toHaveAttribute("data-disabled");
+		fireEvent.click(pdf);
+
+		await waitFor(() => expect(exportPresentationPdf).toHaveBeenCalledWith(presentation.title));
+		expect(exportOoxmlTemplatePptx).not.toHaveBeenCalled();
 	});
 
 	it("disables downloads when there are no slides", () => {

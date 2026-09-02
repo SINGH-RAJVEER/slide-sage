@@ -1,6 +1,13 @@
-import type { PresentationRetryOptions } from "@slidesage/types";
+import {
+	BINARY_PPTX_TEMPLATE_CATALOG,
+	type BinaryTemplateSelection,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
+	type PresentationRetryOptions,
+} from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
+import TemplateSelector from "@slidesage/ui/components/Viewer/TemplateSelector";
+import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +18,19 @@ import { ROUTES } from "@/app/router/paths";
 interface GenerateRouteState {
 	retry?: PresentationRetryOptions;
 	retryPresentationId?: string;
+}
+
+function templateSelection(
+	reference: PresentationRetryOptions["template"],
+): BinaryTemplateSelection {
+	const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(candidate) => candidate.id === reference?.id && candidate.version === reference.version,
+	);
+	return {
+		id: template?.id ?? DEFAULT_BINARY_PPTX_TEMPLATE.id,
+		version: template?.version ?? DEFAULT_BINARY_PPTX_TEMPLATE.version,
+		previewThemeId: template?.previewThemeId ?? DEFAULT_BINARY_PPTX_TEMPLATE.previewThemeId,
+	};
 }
 
 export default function GeneratePPTPage() {
@@ -25,8 +45,12 @@ export default function GeneratePPTPage() {
 	const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
+	const [selectedTemplate, setSelectedTemplate] = useState(() =>
+		templateSelection(retry?.template),
+	);
 	const navigate = useNavigate();
 	const { streamingState, generate } = useStreaming();
+	const installedThemes = useInstalledMarketplaceThemes();
 
 	useEffect(() => {
 		if (streamingState.error) {
@@ -73,6 +97,7 @@ export default function GeneratePPTPage() {
 					detailLevel,
 					tonality,
 					retryPresentationId,
+					template: selectedTemplate,
 					...(retry?.ai ? { ai: retry.ai } : {}),
 				},
 			});
@@ -86,6 +111,7 @@ export default function GeneratePPTPage() {
 			tonality,
 			retryPresentationId,
 			ai: retry?.ai,
+			template: selectedTemplate,
 		});
 		navigate(ROUTES.presentation, {
 			state: { isStreaming: true },
@@ -155,6 +181,12 @@ export default function GeneratePPTPage() {
 					onTonalityChange={setTonality}
 					onUseWebResearchChange={setUseWebResearch}
 					onSlideCountChange={setSlideCount}
+				/>
+				<TemplateSelector
+					selectedTemplate={selectedTemplate}
+					onTemplateChange={setSelectedTemplate}
+					installedThemes={installedThemes}
+					className="mt-2"
 				/>
 			</div>
 

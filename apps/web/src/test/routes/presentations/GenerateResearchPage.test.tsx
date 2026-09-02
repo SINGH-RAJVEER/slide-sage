@@ -96,6 +96,11 @@ describe("GenerateResearchPage", () => {
 								detailLevel: "balanced",
 								tonality: "professional",
 								ai: { provider: "google", model: "gemini-2.5-pro" },
+								template: {
+									id: "soft-skills-training",
+									version: 1,
+									previewThemeId: "terra-mesa",
+								},
 							},
 						},
 					]}
@@ -156,6 +161,10 @@ describe("GenerateResearchPage", () => {
 				model: "gemini-2.5-pro",
 			});
 			expect(generationBody?.["research"]).toEqual({ enabled: true });
+			expect(generationBody?.["template"]).toEqual({
+				id: "soft-skills-training",
+				version: 1,
+			});
 		} finally {
 			globalThis.fetch = originalFetch;
 		}

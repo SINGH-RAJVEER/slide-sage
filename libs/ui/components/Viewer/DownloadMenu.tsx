@@ -72,7 +72,7 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 					className="w-48 bg-gray-900/80 backdrop-blur-md border border-white/10 text-white shadow-xl"
 				>
 					<DropdownMenuItem
-						disabled={isExporting}
+						disabled={isExporting || !presentation.template}
 						onSelect={() => void download("pptx")}
 						className="focus:bg-white/10 focus:text-white cursor-pointer"
 					>

@@ -1,4 +1,4 @@
-import { type PresentationData, type Slide } from "@slidesage/types";
+import type { PresentationData, PresentationTemplateReference, Slide } from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -14,6 +14,7 @@ interface StreamingLikeState {
 	isComplete: boolean;
 	slides: Slide[];
 	theme: string;
+	template?: PresentationTemplateReference;
 	title: string;
 	operation?: "generation" | "iteration";
 	presentationId?: string;
@@ -88,6 +89,7 @@ export function usePresentationData({
 				...streamingState.completedDocument,
 				title: streamingState.title,
 				theme: streamingState.theme,
+				template: streamingState.template,
 				dimensions: streamingState.completedDocument?.dimensions || {
 					width: 1280,
 					height: 720,
@@ -101,6 +103,7 @@ export function usePresentationData({
 		streamingSlidesCount,
 		streamingState.title,
 		streamingState.theme,
+		streamingState.template,
 		streamingState.slides,
 		streamingState.completedDocument,
 		consumesStreamingState,
@@ -118,6 +121,7 @@ export function usePresentationData({
 				...streamingState.completedDocument,
 				title: streamingState.title,
 				theme: streamingState.theme,
+				template: streamingState.template,
 				dimensions: streamingState.completedDocument?.dimensions || {
 					width: 1280,
 					height: 720,
@@ -132,6 +136,7 @@ export function usePresentationData({
 		streamingState.slides,
 		streamingState.title,
 		streamingState.theme,
+		streamingState.template,
 		streamingState.completedDocument,
 		consumesStreamingState,
 	]);

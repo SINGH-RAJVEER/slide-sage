@@ -1,3 +1,9 @@
+import {
+	BINARY_PPTX_TEMPLATE_CATALOG,
+	type BinaryTemplateSelection,
+	type PresentationTemplateReference,
+	type ThemeId,
+} from "@slidesage/types";
 import { Badge } from "@slidesage/ui/components/badge";
 import { Button } from "@slidesage/ui/components/button";
 import {
@@ -10,24 +16,25 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
-import { AVAILABLE_TEMPLATES, getTemplate } from "../../lib/templates";
+import { getTemplate } from "../../lib/templates";
 
 export interface InstalledTemplateOption {
 	marketplaceId: string;
-	themeId: string;
 	name: string;
 	description: string;
+	templateReference: PresentationTemplateReference;
+	previewThemeId: ThemeId;
 }
 
 interface TemplateSelectorProps {
-	selectedTemplate: string;
-	onTemplateChange: (templateId: string) => void;
+	selectedTemplate: BinaryTemplateSelection;
+	onTemplateChange: (template: BinaryTemplateSelection) => void;
 	className?: string;
 	installedThemes?: InstalledTemplateOption[];
 }
 
-const getTemplatePreviewColors = (templateId: string) => {
-	const { visual } = getTemplate(templateId);
+const getTemplatePreviewColors = (previewThemeId: ThemeId) => {
+	const { visual } = getTemplate(previewThemeId);
 	return {
 		primary: visual.background,
 		secondary: visual.title,
@@ -41,7 +48,13 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 	className = "",
 	installedThemes = [],
 }) => {
-	const currentTemplate = AVAILABLE_TEMPLATES.find((t) => t.id === selectedTemplate);
+	const defaultTemplates = BINARY_PPTX_TEMPLATE_CATALOG.filter(
+		(template) => template.availability === "default",
+	);
+	const currentTemplate = BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(template) =>
+			template.id === selectedTemplate.id && template.version === selectedTemplate.version,
+	);
 
 	return (
 		<div className={`flex items-center gap-2 ${className}`}>
@@ -55,16 +68,18 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 							{/* Current template preview */}
 							{currentTemplate && (
 								<div className="flex gap-1">
-									{Object.values(getTemplatePreviewColors(currentTemplate.id)).map((color) => (
-										<div
-											key={`${currentTemplate.id}-${color}`}
-											className="h-2 w-2 rounded-full"
-											style={{ backgroundColor: color }}
-										/>
-									))}
+									{Object.values(getTemplatePreviewColors(selectedTemplate.previewThemeId)).map(
+										(color) => (
+											<div
+												key={`${currentTemplate.id}-${color}`}
+												className="h-2 w-2 rounded-full"
+												style={{ backgroundColor: color }}
+											/>
+										),
+									)}
 								</div>
 							)}
-							<span className="truncate">{currentTemplate?.name || "Select Theme"}</span>
+							<span className="truncate">{currentTemplate?.name || "Select template"}</span>
 						</div>
 						<ChevronDown className="w-4 h-4 opacity-30 group-hover:opacity-50" />
 					</Button>
@@ -76,18 +91,24 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 				>
 					<DropdownMenuLabel className="text-white/40 text-xs font-medium uppercase tracking-wider flex items-center gap-2 px-2 py-2">
 						<Sparkles className="w-3 h-3" />
-						Choose Theme
+						Choose template
 					</DropdownMenuLabel>
 					<DropdownMenuSeparator className="bg-white/5 mx-2" />
 
-					{AVAILABLE_TEMPLATES.map((template) => {
-						const colors = getTemplatePreviewColors(template.id);
-						const isSelected = selectedTemplate === template.id;
+					{defaultTemplates.map((template) => {
+						const colors = getTemplatePreviewColors(template.previewThemeId);
+						const isSelected = selectedTemplate.id === template.id;
 
 						return (
 							<DropdownMenuItem
 								key={template.id}
-								onClick={() => onTemplateChange(template.id)}
+								onClick={() =>
+									onTemplateChange({
+										id: template.id,
+										version: template.version,
+										previewThemeId: template.previewThemeId,
+									})
+								}
 								className={`
                   text-white/80 hover:bg-white/5 focus:bg-white/5 cursor-pointer p-3 rounded-lg my-1 mx-1
                   ${isSelected ? "bg-white/5" : ""}
@@ -120,9 +141,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 												</Badge>
 											)}
 										</div>
-										<div className="text-xs text-white/40 mt-1 truncate">
-											{template.description}
-										</div>
+										<div className="text-xs text-white/40 mt-1 truncate">PowerPoint template</div>
 									</div>
 
 									{/* Check mark */}
@@ -138,11 +157,17 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 								From Marketplace
 							</DropdownMenuLabel>
 							{installedThemes.map((theme) => {
-								const colors = getTemplatePreviewColors(theme.themeId);
+								const colors = getTemplatePreviewColors(theme.previewThemeId);
+								const isSelected = selectedTemplate.id === theme.templateReference.id;
 								return (
 									<DropdownMenuItem
 										key={theme.marketplaceId}
-										onClick={() => onTemplateChange(theme.themeId)}
+										onClick={() =>
+											onTemplateChange({
+												...theme.templateReference,
+												previewThemeId: theme.previewThemeId,
+											})
+										}
 										className="mx-1 my-1 cursor-pointer rounded-lg p-3 text-white/80 hover:bg-white/5 focus:bg-white/5"
 									>
 										<div className="flex w-full items-center gap-3">
@@ -159,6 +184,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 													{theme.description}
 												</div>
 											</div>
+											{isSelected && <Check className="w-4 h-4 shrink-0 text-blue-400" />}
 										</div>
 									</DropdownMenuItem>
 								);

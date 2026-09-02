@@ -1,10 +1,11 @@
-import type { SceneSlide } from "@slidesage/types";
+import type { BinaryTemplateSelection, SceneSlide } from "@slidesage/types";
 import {
+	BINARY_PPTX_TEMPLATE_CATALOG,
 	type ContentSlide,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
 	isContentSlide,
 	type PresentationData,
 	type SlideLayout,
-	type ThemeId,
 } from "@slidesage/types";
 import { useStreaming, useTemplate } from "@slidesage/ui";
 import { Card } from "@slidesage/ui/components/card";
@@ -32,6 +33,7 @@ import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
+import { exportOoxmlTemplatePptx } from "@slidesage/ui/lib/ooxml-template-export";
 import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
 import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
 import { findTemplate } from "@slidesage/ui/lib/templates";
@@ -39,6 +41,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
 import { useVimMode } from "@/context/VimModeContext";
+
+function resolveTemplateSelection(
+	reference?: PresentationData["template"],
+): BinaryTemplateSelection {
+	const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(candidate) => candidate.id === reference?.id && candidate.version === reference.version,
+	);
+	return {
+		id: template?.id ?? DEFAULT_BINARY_PPTX_TEMPLATE.id,
+		version: template?.version ?? DEFAULT_BINARY_PPTX_TEMPLATE.version,
+		previewThemeId: template?.previewThemeId ?? DEFAULT_BINARY_PPTX_TEMPLATE.previewThemeId,
+	};
+}
 
 export default function PresentationViewerPage() {
 	const location = useLocation();
@@ -50,6 +65,9 @@ export default function PresentationViewerPage() {
 	const { isVimMode } = useVimMode();
 
 	const locationState = location.state as ViewerLocationState | undefined;
+	const [selectedTemplate, setSelectedTemplate] = useState(() =>
+		resolveTemplateSelection(locationState?.presentation?.template ?? streamingState.template),
+	);
 
 	const presentationIdFromParams = useMemo(() => {
 		return params["presentationId"] || undefined;
@@ -79,8 +97,8 @@ export default function PresentationViewerPage() {
 	// the viewer is showing its pre-slide skeleton.
 	const appliedThemeRef = useRef<string | null>(null);
 	const hasManualThemeSelectionRef = useRef(false);
-	const pendingThemeRef = useRef<string | null>(null);
-	const persistPendingThemeRef = useRef<(themeId: string) => void>(() => {});
+	const pendingTemplateRef = useRef<BinaryTemplateSelection | null>(null);
+	const persistPendingTemplateRef = useRef<(template: BinaryTemplateSelection) => void>(() => {});
 	const templateSaveSequenceRef = useRef(0);
 	useEffect(() => {
 		const theme = presentation?.theme;
@@ -92,17 +110,24 @@ export default function PresentationViewerPage() {
 	}, [presentation?.theme, changeTemplate, streamingState.isStreaming]);
 
 	useEffect(() => {
-		const pendingTheme = pendingThemeRef.current;
+		if (!presentation?.template || hasManualThemeSelectionRef.current) return;
+		const selection = resolveTemplateSelection(presentation.template);
+		setSelectedTemplate(selection);
+		changeTemplate(selection.previewThemeId);
+	}, [presentation?.template, changeTemplate]);
+
+	useEffect(() => {
+		const pendingTemplate = pendingTemplateRef.current;
 		if (
-			!pendingTheme ||
+			!pendingTemplate ||
 			streamingState.isStreaming ||
 			!streamingState.isComplete ||
 			!presentationId
 		) {
 			return;
 		}
-		pendingThemeRef.current = null;
-		persistPendingThemeRef.current(pendingTheme);
+		pendingTemplateRef.current = null;
+		persistPendingTemplateRef.current(pendingTemplate);
 	}, [presentationId, streamingState.isComplete, streamingState.isStreaming]);
 
 	const slideContainerRef = useRef<HTMLDivElement | null>(null);
@@ -221,6 +246,7 @@ export default function PresentationViewerPage() {
 			tonality,
 			researchEnabled: useWebResearch,
 			parentPresentationId: presentationId,
+			template: selectedTemplate,
 		});
 
 		if (success) {
@@ -283,8 +309,9 @@ export default function PresentationViewerPage() {
 
 	const exportPresentation: PresentationExporter = async (format, presentationToExport) => {
 		if (format === "pptx") {
-			const { exportEditablePptx } = await import("@slidesage/ui/lib/pptx-export");
-			await exportEditablePptx(presentationToExport);
+			await exportOoxmlTemplatePptx(presentationToExport, {
+				publicBaseUrl: import.meta.env["VITE_PPTX_TEMPLATE_BASE_URL"] || "",
+			});
 			return;
 		}
 		const { exportPresentationPdf } = await import("@slidesage/ui/lib/pdf-export");
@@ -304,6 +331,7 @@ export default function PresentationViewerPage() {
 		({
 			title: streamingState.prompt || "Untitled presentation",
 			theme: streamingState.theme || currentTemplate,
+			template: streamingState.template,
 			slides: [],
 			totalSlides: 0,
 		} satisfies PresentationData);
@@ -319,32 +347,56 @@ export default function PresentationViewerPage() {
 	const activeDraftSlide = activeSlide ? pendingSlides[activeSlide.id] : undefined;
 	const activeContentSlide = activeSlide && isContentSlide(activeSlide) ? activeSlide : undefined;
 
-	const handleTemplateChange = async (templateId: string) => {
+	const handleTemplateChange = async (template: BinaryTemplateSelection) => {
 		const saveSequence = ++templateSaveSequenceRef.current;
 		const previousTheme = presentation?.theme || currentTemplate;
+		const previousTemplate = selectedTemplate;
 		hasManualThemeSelectionRef.current = true;
-		appliedThemeRef.current = templateId;
-		changeTemplate(templateId);
-		setPresentation((current) => (current ? { ...current, theme: templateId } : current));
+		appliedThemeRef.current = template.previewThemeId;
+		setSelectedTemplate(template);
+		changeTemplate(template.previewThemeId);
+		setPresentation((current) =>
+			current
+				? {
+						...current,
+						theme: template.previewThemeId,
+						template: { id: template.id, version: template.version },
+					}
+				: current,
+		);
 		if (streamingState.isStreaming || !presentationId) {
-			pendingThemeRef.current = templateId;
+			pendingTemplateRef.current = template;
 			return;
 		}
 		try {
 			const saved = await persistPresentationMutations(presentationId, [
-				{ type: "update-presentation", theme: templateId as ThemeId },
+				{
+					type: "update-presentation",
+					theme: template.previewThemeId,
+					template: { id: template.id, version: template.version },
+				},
 			]);
 			setPresentation(saved);
 		} catch (error) {
-			console.error("Failed to save presentation theme:", error);
+			console.error("Failed to save presentation template:", error);
 			if (templateSaveSequenceRef.current !== saveSequence) return;
 			changeTemplate(previousTheme);
+			setSelectedTemplate(previousTemplate);
 			setPresentation((current) =>
-				current?.theme === templateId ? { ...current, theme: previousTheme } : current,
+				current?.template?.id === template.id
+					? {
+							...current,
+							theme: previousTheme,
+							template: {
+								id: previousTemplate.id,
+								version: previousTemplate.version,
+							},
+						}
+					: current,
 			);
 		}
 	};
-	persistPendingThemeRef.current = (themeId) => void handleTemplateChange(themeId);
+	persistPendingTemplateRef.current = (template) => void handleTemplateChange(template);
 
 	const handleLayoutChange = async (layout: SlideLayout) => {
 		if (!presentation) return;
@@ -424,6 +476,7 @@ export default function PresentationViewerPage() {
 						title={viewerPresentation.title}
 						canIterate={hasSlides && !!presentationId}
 						currentTemplate={currentTemplate}
+						selectedTemplate={selectedTemplate}
 						onBack={() => navigate(isStreamingMode ? ROUTES.generate : ROUTES.presentations)}
 						onTemplateChange={handleTemplateChange}
 						installedThemes={installedThemes}
