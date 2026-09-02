@@ -8,6 +8,7 @@ const simpleBusinessProposal: OoxmlTemplateManifest = {
 				title: { shapeId: 51, value: "slide.title" },
 				subtitle: { shapeId: 53, value: "slide.subtitle" },
 				eyebrow: { shapeId: 52, value: "slide.eyebrow" },
+				logo: { shapeId: 54, value: "empty" },
 			},
 		},
 		section: {
@@ -47,6 +48,9 @@ const simpleBusinessProposal: OoxmlTemplateManifest = {
 				primary: { shapeId: 97, value: "slide.primary" },
 				secondary: { shapeId: 98, value: "slide.secondary" },
 				extra: { shapeId: 99, value: "slide.body" },
+				primaryMetric: { shapeId: 93, value: "empty" },
+				secondaryMetric: { shapeId: 94, value: "empty" },
+				tertiaryMetric: { shapeId: 95, value: "empty" },
 			},
 		},
 		sidebar: {
@@ -96,6 +100,10 @@ const simpleBusinessProposal: OoxmlTemplateManifest = {
 				primary: { shapeId: 150, value: "slide.primary" },
 				secondary: { shapeId: 151, value: "slide.secondary" },
 				media: { shapeId: 152, value: "slide.mediaCaption" },
+				itemOneLabel: { shapeId: 147, value: "empty" },
+				itemTwoLabel: { shapeId: 149, value: "empty" },
+				itemThreeLabel: { shapeId: 154, value: "empty" },
+				itemFourLabel: { shapeId: 153, value: "empty" },
 			},
 		},
 	},
