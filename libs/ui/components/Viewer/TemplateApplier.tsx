@@ -1,5 +1,5 @@
 import type React from "react";
-import { getTemplate } from "../../lib/templates";
+import { getSemanticTheme } from "../../lib/semantic-themes";
 
 interface TemplateApplierProps {
 	templateId: string;
@@ -12,7 +12,7 @@ const TemplateApplier: React.FC<TemplateApplierProps> = ({
 	children,
 	className = "",
 }) => {
-	const template = getTemplate(templateId);
+	const template = getSemanticTheme(templateId);
 	const styles = template.styles.slideContent;
 	const { visual } = template;
 	const themeVariables = {

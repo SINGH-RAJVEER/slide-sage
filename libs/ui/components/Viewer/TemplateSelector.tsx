@@ -16,7 +16,7 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
-import { getTemplate } from "../../lib/templates";
+import { getSemanticTheme } from "../../lib/semantic-themes";
 
 export interface InstalledTemplateOption {
 	marketplaceId: string;
@@ -34,7 +34,7 @@ interface TemplateSelectorProps {
 }
 
 const getTemplatePreviewColors = (previewThemeId: ThemeId) => {
-	const { visual } = getTemplate(previewThemeId);
+	const { visual } = getSemanticTheme(previewThemeId);
 	return {
 		primary: visual.background,
 		secondary: visual.title,

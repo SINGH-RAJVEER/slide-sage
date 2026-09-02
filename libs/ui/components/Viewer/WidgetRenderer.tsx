@@ -1,6 +1,6 @@
 import type { WidgetBlock } from "@slidesage/types";
 import React from "react";
-import type { TemplateStyles } from "../../lib/templates";
+import type { SemanticThemeStyles } from "../../lib/semantic-themes";
 import { compileWidgetScene, type WidgetWidth } from "../../lib/widget-scene";
 
 const cssColor = (value: unknown, fallback: string) =>
@@ -31,7 +31,7 @@ export function WidgetRenderer({
 	widthMode,
 }: {
 	block: WidgetBlock;
-	styles: TemplateStyles;
+	styles: SemanticThemeStyles;
 	widthMode: WidgetWidth;
 }) {
 	const scene = compileWidgetScene(block, widthMode);

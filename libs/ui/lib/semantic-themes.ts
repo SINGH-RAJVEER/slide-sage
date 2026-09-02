@@ -32,7 +32,7 @@ export interface ThemeVisualSystem {
 	imageFilter?: string;
 }
 
-export interface TemplateStyles {
+export interface SemanticThemeStyles {
 	slideContent: CSSProperties;
 	slideTitle: CSSProperties;
 	slideSubtitle: CSSProperties;
@@ -50,21 +50,21 @@ export interface TemplateStyles {
 	column: CSSProperties;
 }
 
-export interface Template {
+export interface SemanticTheme {
 	id: string;
 	name: string;
 	description: string;
-	styles: TemplateStyles;
+	styles: SemanticThemeStyles;
 	visual: ThemeVisualSystem;
 	backgroundClass?: string;
 }
 
-function createTemplate({
+function createSemanticTheme({
 	id,
 	name,
 	description,
 	visual,
-}: Omit<Template, "styles" | "backgroundClass">): Template {
+}: Omit<SemanticTheme, "styles" | "backgroundClass">): SemanticTheme {
 	return {
 		id,
 		name,
@@ -132,8 +132,8 @@ function createTemplate({
 	};
 }
 
-export const AVAILABLE_TEMPLATES: Template[] = [
-	createTemplate({
+export const DEFAULT_SEMANTIC_THEMES: SemanticTheme[] = [
+	createSemanticTheme({
 		id: "modern-dark",
 		name: "Midnight Terminal",
 		description: "Cinematic technical narratives with calibrated terminal detail",
@@ -154,7 +154,7 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 			layout: "midnight-terminal",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "corporate-blue",
 		name: "Signal Grid",
 		description: "Measured strategy and data stories on a disciplined editorial grid",
@@ -175,7 +175,7 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 			layout: "signal-grid",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "minimalist",
 		name: "Monochrome Grid",
 		description: "Quiet monochrome structure for plans, teaching, and clear thinking",
@@ -197,7 +197,7 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 			imageFilter: "grayscale(1) contrast(0.94)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "creative-studio",
 		name: "Kinetic Blocks",
 		description: "Poster-like momentum for campaigns, workshops, and launches",
@@ -219,7 +219,7 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 			imageFilter: "saturate(1.12) contrast(1.04)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "elegant-serif",
 		name: "Editorial Ledger",
 		description: "A warm, high-credibility editorial voice for considered decisions",
@@ -241,7 +241,7 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 			imageFilter: "sepia(0.14) contrast(0.96)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "nature-green",
 		name: "Field Report",
 		description: "Human, grounded reporting for impact, research, and communities",
@@ -267,12 +267,12 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 
 /**
  * Visual systems sold through the marketplace. They share no palette,
- * typography pairing, or layout language with AVAILABLE_TEMPLATES, so an
+ * typography pairing, or layout language with DEFAULT_SEMANTIC_THEMES, so an
  * installed theme renders as its own studio identity instead of a recolored
  * built-in.
  */
-export const MARKETPLACE_TEMPLATES: Template[] = [
-	createTemplate({
+export const ADDITIONAL_SEMANTIC_THEMES: SemanticTheme[] = [
+	createSemanticTheme({
 		id: "neon-district",
 		name: "Neon District",
 		description: "After-hours synthwave glow for product drops and night-market energy",
@@ -295,7 +295,7 @@ export const MARKETPLACE_TEMPLATES: Template[] = [
 			imageFilter: "saturate(1.28) hue-rotate(-8deg) contrast(1.08)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "draft-board",
 		name: "Draft Board",
 		description: "Blueprint linework and orange markups for engineering reviews and specs",
@@ -317,7 +317,7 @@ export const MARKETPLACE_TEMPLATES: Template[] = [
 			imageFilter: "saturate(0.72) contrast(1.06)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "velvet-marquee",
 		name: "Velvet Marquee",
 		description: "Black-tie theater glamour with champagne gold for galas and premieres",
@@ -339,7 +339,7 @@ export const MARKETPLACE_TEMPLATES: Template[] = [
 			imageFilter: "sepia(0.24) contrast(1.03)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "bubblegum-pop",
 		name: "Bubblegum Pop",
 		description: "Y2K candy pastels for community launches, clubs, and playful pitches",
@@ -361,7 +361,7 @@ export const MARKETPLACE_TEMPLATES: Template[] = [
 			imageFilter: "saturate(1.18) brightness(1.04)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "concrete-brutal",
 		name: "Concrete Brutal",
 		description: "Raw industrial slabs and safety-orange signage for bold internal truths",
@@ -383,7 +383,7 @@ export const MARKETPLACE_TEMPLATES: Template[] = [
 			imageFilter: "grayscale(1) contrast(1.15)",
 		},
 	}),
-	createTemplate({
+	createSemanticTheme({
 		id: "terra-mesa",
 		name: "Terra Mesa",
 		description: "Sun-baked adobe craft with sienna and turquoise for heritage stories",
@@ -407,22 +407,22 @@ export const MARKETPLACE_TEMPLATES: Template[] = [
 	}),
 ];
 
-const DEFAULT_TEMPLATE_ID = "corporate-blue";
+const DEFAULT_SEMANTIC_THEME_ID = "corporate-blue";
 
-export function findTemplate(templateId: string): Template | undefined {
+export function findSemanticTheme(themeId: string): SemanticTheme | undefined {
 	return (
-		AVAILABLE_TEMPLATES.find((template) => template.id === templateId) ||
-		MARKETPLACE_TEMPLATES.find((template) => template.id === templateId)
+		DEFAULT_SEMANTIC_THEMES.find((theme) => theme.id === themeId) ||
+		ADDITIONAL_SEMANTIC_THEMES.find((theme) => theme.id === themeId)
 	);
 }
 
-export function isDefaultTemplateId(templateId: string): boolean {
-	return AVAILABLE_TEMPLATES.some((template) => template.id === templateId);
+export function isDefaultSemanticTheme(themeId: string): boolean {
+	return DEFAULT_SEMANTIC_THEMES.some((theme) => theme.id === themeId);
 }
 
-export function getTemplate(templateId: string): Template {
-	const fallback = findTemplate(DEFAULT_TEMPLATE_ID);
-	const template = findTemplate(templateId) || fallback;
-	if (!template) throw new Error("The SlideSage default theme is unavailable.");
-	return template;
+export function getSemanticTheme(themeId: string): SemanticTheme {
+	const fallback = findSemanticTheme(DEFAULT_SEMANTIC_THEME_ID);
+	const theme = findSemanticTheme(themeId) || fallback;
+	if (!theme) throw new Error("The SlideSage default theme is unavailable.");
+	return theme;
 }

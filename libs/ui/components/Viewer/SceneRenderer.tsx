@@ -6,7 +6,7 @@ import {
 } from "@slidesage/types";
 import { Image as ImageIcon } from "lucide-react";
 import React from "react";
-import { getTemplate } from "../../lib/templates";
+import { getSemanticTheme } from "../../lib/semantic-themes";
 import { SceneWidget } from "./scene-widget-registry";
 
 function subscribeToViewport(callback: () => void) {
@@ -367,7 +367,7 @@ export function SceneRenderer({
 	);
 	const resolvedProfile = profile || viewportProfile;
 	const resolved = resolveScene(slide, dimensions, resolvedProfile);
-	const theme = getTemplate(currentTemplate).visual;
+	const theme = getSemanticTheme(currentTemplate).visual;
 	const art = slide.artDirection;
 	const background = art?.background || theme.background;
 	const foreground = art?.foreground || theme.foreground;

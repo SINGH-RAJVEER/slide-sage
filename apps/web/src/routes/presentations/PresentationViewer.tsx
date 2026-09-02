@@ -7,7 +7,7 @@ import {
 	type PresentationData,
 	type SlideLayout,
 } from "@slidesage/types";
-import { useStreaming, useTemplate } from "@slidesage/ui";
+import { useSemanticTheme, useStreaming } from "@slidesage/ui";
 import { Card } from "@slidesage/ui/components/card";
 import {
 	CenteredStatusScreen,
@@ -35,8 +35,8 @@ import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { exportOoxmlTemplatePptx } from "@slidesage/ui/lib/ooxml-template-export";
 import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
+import { findSemanticTheme } from "@slidesage/ui/lib/semantic-themes";
 import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
-import { findTemplate } from "@slidesage/ui/lib/templates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
@@ -60,7 +60,7 @@ export default function PresentationViewerPage() {
 	const navigate = useNavigate();
 	const params = useParams();
 	const { streamingState, getPresentation, generate, cancelGeneration } = useStreaming();
-	const { currentTemplate, changeTemplate } = useTemplate();
+	const { currentSemanticTheme, changeSemanticTheme } = useSemanticTheme();
 	const installedThemes = useInstalledMarketplaceThemes();
 	const { isVimMode } = useVimMode();
 
@@ -103,18 +103,18 @@ export default function PresentationViewerPage() {
 	useEffect(() => {
 		const theme = presentation?.theme;
 		if (!theme || theme === appliedThemeRef.current) return;
-		if (!findTemplate(theme)) return;
+		if (!findSemanticTheme(theme)) return;
 		if (hasManualThemeSelectionRef.current) return;
 		appliedThemeRef.current = theme;
-		changeTemplate(theme);
-	}, [presentation?.theme, changeTemplate, streamingState.isStreaming]);
+		changeSemanticTheme(theme);
+	}, [presentation?.theme, changeSemanticTheme, streamingState.isStreaming]);
 
 	useEffect(() => {
 		if (!presentation?.template || hasManualThemeSelectionRef.current) return;
 		const selection = resolveTemplateSelection(presentation.template);
 		setSelectedTemplate(selection);
-		changeTemplate(selection.previewThemeId);
-	}, [presentation?.template, changeTemplate]);
+		changeSemanticTheme(selection.previewThemeId);
+	}, [presentation?.template, changeSemanticTheme]);
 
 	useEffect(() => {
 		const pendingTemplate = pendingTemplateRef.current;
@@ -315,7 +315,7 @@ export default function PresentationViewerPage() {
 			return;
 		}
 		const { exportPresentationPdf } = await import("@slidesage/ui/lib/pdf-export");
-		await exportPresentationPdf(presentationToExport, currentTemplate);
+		await exportPresentationPdf(presentationToExport, currentSemanticTheme);
 	};
 
 	if (isLoading) {
@@ -330,7 +330,7 @@ export default function PresentationViewerPage() {
 		presentation ||
 		({
 			title: streamingState.prompt || "Untitled presentation",
-			theme: streamingState.theme || currentTemplate,
+			theme: streamingState.theme || currentSemanticTheme,
 			template: streamingState.template,
 			slides: [],
 			totalSlides: 0,
@@ -349,12 +349,12 @@ export default function PresentationViewerPage() {
 
 	const handleTemplateChange = async (template: BinaryTemplateSelection) => {
 		const saveSequence = ++templateSaveSequenceRef.current;
-		const previousTheme = presentation?.theme || currentTemplate;
+		const previousTheme = presentation?.theme || currentSemanticTheme;
 		const previousTemplate = selectedTemplate;
 		hasManualThemeSelectionRef.current = true;
 		appliedThemeRef.current = template.previewThemeId;
 		setSelectedTemplate(template);
-		changeTemplate(template.previewThemeId);
+		changeSemanticTheme(template.previewThemeId);
 		setPresentation((current) =>
 			current
 				? {
@@ -380,7 +380,7 @@ export default function PresentationViewerPage() {
 		} catch (error) {
 			console.error("Failed to save presentation template:", error);
 			if (templateSaveSequenceRef.current !== saveSequence) return;
-			changeTemplate(previousTheme);
+			changeSemanticTheme(previousTheme);
 			setSelectedTemplate(previousTemplate);
 			setPresentation((current) =>
 				current?.template?.id === template.id
@@ -475,7 +475,7 @@ export default function PresentationViewerPage() {
 					<ViewerHeaderControls
 						title={viewerPresentation.title}
 						canIterate={hasSlides && !!presentationId}
-						currentTemplate={currentTemplate}
+						currentTemplate={currentSemanticTheme}
 						selectedTemplate={selectedTemplate}
 						onBack={() => navigate(isStreamingMode ? ROUTES.generate : ROUTES.presentations)}
 						onTemplateChange={handleTemplateChange}
@@ -495,7 +495,7 @@ export default function PresentationViewerPage() {
 						slides={viewerPresentation.slides}
 						currentSlide={navigation.currentSlide}
 						visibleSlide={navigation.visibleSlide}
-						currentTemplate={currentTemplate}
+						currentTemplate={currentSemanticTheme}
 						containerRef={slideContainerRef}
 						isWaitingForFirstSlide={shouldShowGenerating}
 						onSelectSlide={(idx) => {
@@ -548,7 +548,7 @@ export default function PresentationViewerPage() {
 						currentSlide={navigation.currentSlide}
 						isStreamingMode={isStreamingMode}
 						isStreaming={streamingState.isStreaming || shouldShowGenerating}
-						currentTemplate={currentTemplate}
+						currentTemplate={currentSemanticTheme}
 						onSelect={(index) => {
 							playback.stop();
 							navigation.scrollToSlide(index, "smooth", { block: "center" });
@@ -568,7 +568,7 @@ export default function PresentationViewerPage() {
 								<SlideRenderer
 									key={`${activeSlide.id}-${fullscreenSlideReady ? "ready" : "measuring"}`}
 									slide={activeSlide}
-									currentTemplate={currentTemplate}
+									currentTemplate={currentSemanticTheme}
 									isActive={fullscreenSlideReady}
 								/>
 							</Card>

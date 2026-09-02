@@ -73,6 +73,7 @@ export interface SlideEffect {
 	durationMs?: number;
 }
 
+/** Browser-only semantic preview IDs. These are not PowerPoint template IDs. */
 export const THEME_IDS = [
 	"modern-dark",
 	"corporate-blue",
@@ -83,9 +84,8 @@ export const THEME_IDS = [
 ] as const;
 
 /**
- * Visual systems distributed exclusively through the template marketplace.
- * These never ship as default themes: they resolve through
- * MARKETPLACE_TEMPLATES and must be installed before they appear in the
+ * Browser-only semantic preview IDs. These are not PowerPoint templates.
+ * Marketplace preview themes must be installed before they appear in the
  * viewer theme dropdown.
  */
 export const MARKETPLACE_THEME_IDS = [

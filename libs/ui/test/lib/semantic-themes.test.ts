@@ -2,55 +2,51 @@ import { describe, expect, it } from "bun:test";
 import { BINARY_PPTX_TEMPLATE_CATALOG } from "@slidesage/types";
 import { createMarketplacePreviewPresentation, MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
 import {
-	AVAILABLE_TEMPLATES,
-	findTemplate,
-	getTemplate,
-	MARKETPLACE_TEMPLATES,
-} from "@slidesage/ui/lib/templates";
+	ADDITIONAL_SEMANTIC_THEMES,
+	DEFAULT_SEMANTIC_THEMES,
+	findSemanticTheme,
+	getSemanticTheme,
+} from "@slidesage/ui/lib/semantic-themes";
 
 describe("presentation theme systems", () => {
 	it("defines six visually distinct default systems", () => {
-		expect(AVAILABLE_TEMPLATES).toHaveLength(6);
-		expect(new Set(AVAILABLE_TEMPLATES.map((template) => template.visual.layout)).size).toBe(
-			AVAILABLE_TEMPLATES.length,
+		expect(DEFAULT_SEMANTIC_THEMES).toHaveLength(6);
+		expect(new Set(DEFAULT_SEMANTIC_THEMES.map((theme) => theme.visual.layout)).size).toBe(
+			DEFAULT_SEMANTIC_THEMES.length,
 		);
-		expect(new Set(AVAILABLE_TEMPLATES.map((template) => template.visual.accent)).size).toBe(
-			AVAILABLE_TEMPLATES.length,
+		expect(new Set(DEFAULT_SEMANTIC_THEMES.map((theme) => theme.visual.accent)).size).toBe(
+			DEFAULT_SEMANTIC_THEMES.length,
 		);
 		expect(
-			new Set(AVAILABLE_TEMPLATES.map((template) => template.visual.displayFont)).size,
+			new Set(DEFAULT_SEMANTIC_THEMES.map((theme) => theme.visual.displayFont)).size,
 		).toBeGreaterThan(2);
 	});
 
 	it("keeps marketplace systems entirely separate from the defaults", () => {
-		const defaultIds = AVAILABLE_TEMPLATES.map((template) => template.id);
-		const marketplaceIds = MARKETPLACE_TEMPLATES.map((template) => template.id);
+		const defaultIds = DEFAULT_SEMANTIC_THEMES.map((theme) => theme.id);
+		const marketplaceIds = ADDITIONAL_SEMANTIC_THEMES.map((theme) => theme.id);
 
-		expect(MARKETPLACE_TEMPLATES).toHaveLength(6);
+		expect(ADDITIONAL_SEMANTIC_THEMES).toHaveLength(6);
 		expect(marketplaceIds.filter((id) => defaultIds.includes(id))).toHaveLength(0);
 
-		const everySystem = [...AVAILABLE_TEMPLATES, ...MARKETPLACE_TEMPLATES];
-		expect(new Set(everySystem.map((template) => template.visual.layout)).size).toBe(
-			everySystem.length,
-		);
-		expect(new Set(everySystem.map((template) => template.visual.accent)).size).toBe(
-			everySystem.length,
-		);
-		expect(new Set(everySystem.map((template) => template.visual.background)).size).toBe(
+		const everySystem = [...DEFAULT_SEMANTIC_THEMES, ...ADDITIONAL_SEMANTIC_THEMES];
+		expect(new Set(everySystem.map((theme) => theme.visual.layout)).size).toBe(everySystem.length);
+		expect(new Set(everySystem.map((theme) => theme.visual.accent)).size).toBe(everySystem.length);
+		expect(new Set(everySystem.map((theme) => theme.visual.background)).size).toBe(
 			everySystem.length,
 		);
 	});
 
 	it("resolves an unknown theme to the SlideSage default system", () => {
-		const fallback = getTemplate("unknown-theme");
+		const fallback = getSemanticTheme("unknown-theme");
 		expect(fallback.id).toBe("corporate-blue");
 		expect(fallback.visual.layout).toBe("signal-grid");
 	});
 
 	it("resolves installed marketplace themes through the same renderer contract", () => {
-		for (const template of MARKETPLACE_TEMPLATES) {
-			expect(findTemplate(template.id)?.id).toBe(template.id);
-			expect(getTemplate(template.id).visual.chartColors.length).toBeGreaterThanOrEqual(5);
+		for (const theme of ADDITIONAL_SEMANTIC_THEMES) {
+			expect(findSemanticTheme(theme.id)?.id).toBe(theme.id);
+			expect(getSemanticTheme(theme.id).visual.chartColors.length).toBeGreaterThanOrEqual(5);
 		}
 	});
 

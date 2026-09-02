@@ -11,7 +11,7 @@ import {
 import { Image as ImageIcon } from "lucide-react";
 import React from "react";
 import { tweenNumber } from "../../lib/presentation-motion";
-import { getTemplate, type TemplateStyles } from "../../lib/templates";
+import { getSemanticTheme, type SemanticThemeStyles } from "../../lib/semantic-themes";
 import { isWidgetBlock, type WidgetWidth } from "../../lib/widget-scene";
 import ChartRenderer, { type ChartDensity } from "../Charts/ChartRenderer";
 import { SceneRenderer } from "./SceneRenderer";
@@ -170,11 +170,7 @@ function safeImageUrl(value: string): string | undefined {
 }
 
 function isVisualBlock(block: SlideBlock): boolean {
-	return (
-		block.type === "image" ||
-		block.type === "image-placeholder" ||
-		block.type === "chart"
-	);
+	return block.type === "image" || block.type === "image-placeholder" || block.type === "chart";
 }
 
 function AnimatedStatValue({ value, active }: { value: string; active: boolean }) {
@@ -218,7 +214,7 @@ function BlockRenderer({
 	chartTheme,
 }: {
 	block: SlideBlock;
-	styles: TemplateStyles;
+	styles: SemanticThemeStyles;
 	isActive: boolean;
 	editing?: boolean;
 	onEdit?: (block: SlideBlock) => void;
@@ -433,7 +429,7 @@ interface RegionProps {
 	blocks: SlideBlock[];
 	region: SlideRegion;
 	label?: string;
-	styles: TemplateStyles;
+	styles: SemanticThemeStyles;
 	isActive: boolean;
 	onSelectBlock?: (block: SlideBlock, element: HTMLElement) => void;
 	onEditBlock?: (block: SlideBlock) => void;
@@ -510,7 +506,7 @@ function Region({
 
 interface EditorialContentProps {
 	slide: ContentSlide;
-	styles: TemplateStyles;
+	styles: SemanticThemeStyles;
 	isActive: boolean;
 	onSelectBlock?: (block: SlideBlock, element: HTMLElement) => void;
 	onSelectTitle?: (element: HTMLElement) => void;
@@ -819,7 +815,7 @@ export const SlideRenderer = React.memo(
 				/>
 			);
 		}
-		const template = getTemplate(currentTemplate);
+		const template = getSemanticTheme(currentTemplate);
 		const chartTheme: ChartTheme = {
 			textColor: String(template.styles.slideContent.color || "white"),
 			gridColor: template.visual.chartGrid,
