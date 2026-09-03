@@ -1,3 +1,4 @@
+import { LogOut, Settings, UserRound } from "lucide-react";
 import { type ComponentType, type ReactNode, useState } from "react";
 import { cn } from "../lib/utils";
 import {
@@ -16,7 +17,6 @@ export interface HeaderUser {
 
 export interface HeaderRoutes {
 	home: string;
-	landing: string;
 	generate: string;
 	research: string;
 	presentations: string;
@@ -100,7 +100,7 @@ export function Header({
 		>
 			<div className="grid h-16 w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 md:grid-cols-3 md:px-10">
 				<div className="hidden items-center md:flex md:w-full">
-					<LinkComponent to={routes.landing} aria-label="SlideSage — landing">
+					<LinkComponent to={routes.home} aria-label="Go to home">
 						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain" />
 					</LinkComponent>
 				</div>
@@ -151,7 +151,7 @@ export function Header({
 										{user.image ? (
 											<img
 												src={user.image}
-												alt="Profile picture"
+												alt={user.name ? `${user.name}'s profile` : "User profile"}
 												className="size-full object-cover"
 											/>
 										) : (
@@ -163,27 +163,32 @@ export function Header({
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									align="end"
-									className="min-w-36 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
+									className="w-max min-w-0 rounded-xl border border-white/10 bg-[hsl(222,27%,12%)] p-1 text-white shadow-2xl"
 								>
-									{[routes.profile, routes.settings].map((path) => (
+									{[
+										{ path: routes.profile, label: "Profile", Icon: UserRound },
+										{ path: routes.settings, label: "Settings", Icon: Settings },
+									].map(({ path, label, Icon }) => (
 										<DropdownMenuItem
 											key={path}
 											asChild
-											className="w-full justify-center rounded-lg px-0 py-0 text-center text-white/80 focus:bg-white/10 focus:text-white"
+											className="rounded-lg px-0 py-0 text-white/80 focus:bg-white/10 focus:text-white"
 										>
 											<LinkComponent
 												to={path}
-												className="flex w-full justify-center px-3 py-2 text-center text-sm outline-none transition-colors"
+												className="flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap outline-none transition-colors"
 											>
-												{path === routes.profile ? "Profile" : "Settings"}
+												<Icon aria-hidden="true" className="size-4" />
+												{label}
 											</LinkComponent>
 										</DropdownMenuItem>
 									))}
 									<DropdownMenuItem
 										disabled={signingOut}
 										onSelect={() => void handleSignOut()}
-										className="w-full justify-center rounded-lg px-3 py-2 text-center text-sm text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
+										className="items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap text-red-400 outline-none transition-colors hover:text-red-300 focus:bg-red-500/10 focus:text-red-300"
 									>
+										<LogOut aria-hidden="true" className="size-4" />
 										{signingOut ? "Signing out..." : "Sign Out"}
 									</DropdownMenuItem>
 								</DropdownMenuContent>

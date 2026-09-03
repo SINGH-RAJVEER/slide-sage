@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -21,7 +20,6 @@ import (
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/billing"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/middleware"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -30,22 +28,9 @@ func main() {
 	if os.Getenv("NODE_ENV") == "production" && strings.TrimSpace(os.Getenv("RATE_LIMIT_HASH_SECRET")) == "" {
 		log.Fatal("RATE_LIMIT_HASH_SECRET is required in production")
 	}
-	telemetry, err := observability.Setup(context.Background(), observability.ConfigFromEnv())
-	if err != nil {
-		log.Fatal(err)
-	}
-	logger := telemetry.Logger()
-	slog.SetDefault(logger)
-	defer func() {
-		shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelShutdown()
-		if err := telemetry.Shutdown(shutdownContext); err != nil {
-			logger.Error("telemetry shutdown failed", slog.Any("error", err))
-		}
-	}()
 	database, err := sql.Open("pgx", env("DATABASE_URL", "postgresql://slidesage:slidesage@localhost:5432/slidesage"))
 	if err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	defer database.Close()
 	database.SetMaxOpenConns(envInt("DATABASE_POOL_MAX", 5))
@@ -54,7 +39,7 @@ func main() {
 	pingContext, cancelPing := context.WithTimeout(context.Background(), time.Duration(envInt("DATABASE_CONNECT_TIMEOUT", 10))*time.Second)
 	defer cancelPing()
 	if err := database.PingContext(pingContext); err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 
 	baseURL := env("BASE_URL", "http://localhost:8000")
@@ -78,7 +63,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		fatal(logger, err)
+		log.Fatal(err)
 	}
 	mux := http.NewServeMux()
 	auth.RegisterAuthRoutes(mux, service)
@@ -93,7 +78,7 @@ func main() {
 	if os.Getenv("RAZORPAY_KEY_ID") != "" && os.Getenv("RAZORPAY_KEY_SECRET") != "" {
 		razorpay, err = billing.NewRazorpayClientFromEnv()
 		if err != nil {
-			fatal(logger, err)
+			log.Fatal(err)
 		}
 	}
 	billing.RegisterRoutes(mux, billing.PaymentService{DB: database}, razorpay, identity)
@@ -108,7 +93,7 @@ func main() {
 	address := net.JoinHostPort(env("HOST", "0.0.0.0"), env("PORT", "8000"))
 	server := &http.Server{
 		Addr:              address,
-		Handler:           withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, observability.Middleware(mux))),
+		Handler:           withRecovery(withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, mux))),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -125,12 +110,12 @@ func main() {
 		serveErrors <- err
 	}()
 
-	logger.Info("api listening", slog.String("address", server.Addr))
+	log.Printf("api listening on %s", server.Addr)
 	select {
 	case <-signalContext.Done():
 	case err := <-serveErrors:
 		if err != nil {
-			fatal(logger, err)
+			log.Fatal(err)
 		}
 		return
 	}
@@ -139,17 +124,12 @@ func main() {
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancelShutdown()
 	if err := server.Shutdown(shutdownContext); err != nil {
-		logger.Error("api shutdown failed", slog.Any("error", err))
+		log.Printf("api shutdown failed: %v", err)
 		_ = server.Close()
 	}
 	if err := <-serveErrors; err != nil {
-		logger.Error("api server failed", slog.Any("error", err))
+		log.Printf("api server failed: %v", err)
 	}
-}
-
-func fatal(logger *slog.Logger, err error) {
-	logger.Error("fatal", slog.Any("error", err))
-	os.Exit(1)
 }
 
 func healthHandler(writer http.ResponseWriter, _ *http.Request) {
@@ -194,6 +174,18 @@ func withSecurity(next http.Handler) http.Handler {
 			return
 		}
 		request.Body = http.MaxBytesReader(writer, request.Body, 1<<20)
+		next.ServeHTTP(writer, request)
+	})
+}
+
+func withRecovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				log.Printf("panic serving %s %s: %v", request.Method, request.URL.Path, recovered)
+				writeJSONError(writer, http.StatusInternalServerError, "Internal server error")
+			}
+		}()
 		next.ServeHTTP(writer, request)
 	})
 }

@@ -5,7 +5,6 @@ import { ROUTES } from "@/app/router/paths";
 
 const HEADER_ROUTES: HeaderRoutes = {
 	home: ROUTES.home,
-	landing: ROUTES.landing,
 	generate: ROUTES.generate,
 	research: ROUTES.research,
 	presentations: ROUTES.presentations,

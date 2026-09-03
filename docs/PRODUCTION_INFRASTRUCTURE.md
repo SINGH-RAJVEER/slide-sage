@@ -1,15 +1,20 @@
 # Production infrastructure
 
-`infra/prod` manages the production Google Cloud and Cloudflare resources. Google Cloud runs the API, the always-on generation worker, and the migration job. Cloudflare Pages builds the React application from `main`.
+`infra/prod` manages the production Google Cloud and Cloudflare resources. Google Cloud runs the API, the generation worker, and the migration job. Cloudflare Pages builds the React application from `main`.
 
 Terraform does not create secret values. It reads existing Secret Manager secrets and grants the Cloud Run runtime service account access to them.
+
+## Cloud SQL connectivity
+
+The API, worker, and migration job connect through the Cloud SQL Unix socket at `/cloudsql/<project>:<region>:<instance>`. `DATABASE_URL` must use that socket path and be stored in Secret Manager. Create the application database role and rotate its password outside Terraform so credentials never enter Terraform state.
 
 ## Resources
 
 - Artifact Registry repository `slidesage` in `asia-south1`
 - Cloud Run service `api`, public only through the external HTTPS load balancer
-- Cloud Run service `worker`, private, one instance, with CPU kept allocated
+- Cloud Run service `worker`, private, scaling from zero to ten instances, with CPU kept allocated while an instance is running
 - Cloud Run job `slidesage-migrate`, invoked by deployment automation after an image update
+- A single-zone Enterprise `db-f1-micro` Cloud SQL PostgreSQL 18 instance with 10 GB SSD storage, no automated backups, and no point-in-time recovery
 - Global external HTTPS load balancer and serverless NEG for `api`
 - DNS-only Cloudflare `api` record pointing to the load balancer address
 - Cloudflare Pages project `slidesage` and its apex and `www` domains

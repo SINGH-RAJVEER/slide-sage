@@ -2,7 +2,6 @@ gcp_project_id       = "slidesage-504414"
 cloudflare_account_id = "your-cloudflare-account-id"
 
 # Pass the token through TF_VAR_cloudflare_api_token rather than storing it here.
-
 # Use commit tags or image digests. Do not use the mutable latest tag.
 api_image     = "asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:<commit-sha>"
 worker_image  = "asia-south1-docker.pkg.dev/slidesage-504414/slidesage/worker:<commit-sha>"

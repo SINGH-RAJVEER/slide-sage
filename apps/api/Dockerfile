@@ -19,7 +19,6 @@ run --mount=type=cache,target=/go/pkg/mod \
 	go build -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w" -o /out/migrate ./cmd/migrate
 
 
-# base
 from scratch as base
 
 workdir /app
@@ -48,6 +47,7 @@ copy --from=build /out/worker /app/worker
 
 entrypoint ["/app/worker"]
 
+#migrate
 from base as migrate
 
 copy --from=build /out/migrate /app/migrate

@@ -1,8 +1,23 @@
 import { Switch } from "@slidesage/ui/components/switch";
+import { useEffect, useState } from "react";
 import { useVimMode } from "@/context/VimModeContext";
+
+const MOBILE_VIEWPORT_QUERY = "(max-width: 767px)";
 
 export function VimModePreference() {
 	const { isVimMode, setVimMode } = useVimMode();
+	const [isMobileViewport, setIsMobileViewport] = useState(
+		() => window.matchMedia(MOBILE_VIEWPORT_QUERY).matches,
+	);
+
+	useEffect(() => {
+		const query = window.matchMedia(MOBILE_VIEWPORT_QUERY);
+		const update = () => setIsMobileViewport(query.matches);
+		query.addEventListener("change", update);
+		return () => query.removeEventListener("change", update);
+	}, []);
+
+	if (isMobileViewport) return null;
 
 	return (
 		<section aria-labelledby="vim-mode-heading">

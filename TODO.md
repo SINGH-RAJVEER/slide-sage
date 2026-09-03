@@ -21,6 +21,8 @@
 - Implement adding AI generated animations to slides
 - Implement ability to add presenter notes.
 - Add passkeys auth
+- Merge observability
+- Merge a finished landing page
 
 ## Issues
 
@@ -37,3 +39,4 @@
 - The nav controls in fullscreen view should dissapear after a delay and also be narrower
 - Iterations not working
 - When a user has just retreved a web result switching away from it should retain it in the generate page still
+- The marketplace search bar looks nothing like the presentaion page bar

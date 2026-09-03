@@ -25,20 +25,6 @@ mock.module("@/contexts/AuthContext", () => {
 });
 
 describe("Header", () => {
-	it("links the SlideSage icon to the landing page", async () => {
-		mockAuthState.user = null;
-
-		const { default: Header } = await import("@/app/Header");
-
-		const { getByRole } = render(
-			<MemoryRouter>
-				<Header />
-			</MemoryRouter>,
-		);
-
-		expect(getByRole("link", { name: "SlideSage — landing" })).toHaveAttribute("href", "/landing");
-	});
-
 	it("renders header component", async () => {
 		mockAuthState.user = null;
 
@@ -171,9 +157,12 @@ describe("Header", () => {
 			ctrlKey: false,
 		});
 
-		expect(await view.findByRole("menuitem", { name: "Settings" })).toHaveAttribute(
-			"href",
-			"/settings",
-		);
+		const profile = await view.findByRole("menuitem", { name: "Profile" });
+		const settings = await view.findByRole("menuitem", { name: "Settings" });
+		const signOut = await view.findByRole("menuitem", { name: "Sign Out" });
+		expect(settings).toHaveAttribute("href", "/settings");
+		for (const item of [profile, settings, signOut]) {
+			expect(item.querySelector("svg")).not.toBeNull();
+		}
 	});
 });

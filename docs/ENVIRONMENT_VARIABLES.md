@@ -55,7 +55,7 @@ For Cloud Run Worker Pools, start with one instance and change the fixed/manual 
 | Variable                        | Required                                  | Default                              | Purpose                                                                                                                                    |
 | ------------------------------- | ----------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `OPEN_ROUTER_API_KEY`           | Yes for default generation and embeddings | None                                 | Server OpenRouter authentication; BYOK replaces only generation calls                                                                      |
-| `OPEN_ROUTER_MODEL`             | No                                        | `z-ai/glm-5.2:free`                  | Generation model; the free GLM 5.2 variant is used because GLM 5.3 Flash is paid                                                           |
+| `OPEN_ROUTER_MODEL`             | No                                        | `google/gemma-4-26b-a4b-it:free`     | Generation model; the free Gemma 4 variant is used by default                                                                                |
 | `OPEN_ROUTER_API_BASE`          | No                                        | OpenRouter chat completions endpoint | Chat endpoint override                                                                                                                     |
 | `OPEN_ROUTER_EMBEDDINGS_URL`    | No                                        | OpenRouter embeddings endpoint       | Embedding endpoint override                                                                                                                |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No                                        | Not used                             | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |
@@ -63,7 +63,7 @@ For Cloud Run Worker Pools, start with one instance and change the fixed/manual 
 | `EMBEDDING_REQUEST_TIMEOUT_MS`  | No                                        | `15000`                              | Maximum embedding request duration; caller cancellation can stop it earlier                                                                |
 | `EXA_API_KEY`                   | For web research                          | None                                 | Exa search authentication                                                                                                                  |
 | `EXA_REQUEST_TIMEOUT_MS`        | No                                        | `10000`                              | Maximum Exa request duration; caller cancellation can stop it earlier                                                                      |
-Presentation requests without a valid user provider connection use OpenRouter strict JSON Schema output and consume SlideSage points. OpenRouter provider fallback remains enabled so transient outages can route to another compatible endpoint. The default model is OpenRouter's free GLM 5.2 variant; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required. Valid BYOK connections replace this generation path but do not replace the server embedding configuration.
+Presentation requests without a valid user provider connection use OpenRouter strict JSON Schema output and consume SlideSage points. OpenRouter provider fallback remains enabled so transient outages can route to another compatible endpoint. The default model is OpenRouter's free Gemma 4 variant; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required. Valid BYOK connections replace this generation path but do not replace the server embedding configuration.
 
 ## Authentication and email
 
@@ -95,20 +95,6 @@ Do not commit `.env`. Keep secrets in the deployment platform's secret store in 
 Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production build. The client sends requests directly to each endpoint. As a deployment safeguard, production builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back to same-origin routes instead.
 
 The API refuses to initialize authentication on an HTTPS base URL without a sufficiently strong `AUTH_SECRET`.
-
-## Observability
-
-| Variable                      | Required | Default                                            | Purpose                                                                   |
-| ----------------------------- | -------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | No       | Empty                                              | OTLP/gRPC collector endpoint; telemetry export stays disabled while empty |
-| `OTEL_EXPORTER_OTLP_INSECURE` | No       | `false`                                            | Plaintext gRPC for collectors without TLS, such as local development      |
-| `OTEL_SERVICE_NAME`           | No       | `slidesage-api` or `slidesage-worker`              | Resource service name on all signals                                      |
-| `OTEL_SERVICE_VERSION`        | No       | Empty                                              | Resource service version                                                  |
-| `OTEL_RESOURCE_ENVIRONMENT`   | No       | `ENVIRONMENT`, then `NODE_ENV`, then `development` | Deployment environment label                                              |
-| `OTEL_TRACES_SAMPLING_RATIO`  | No       | `1`                                                | Head-sampling ratio for root spans between 0 and 1                        |
-| `OTEL_METRIC_EXPORT_INTERVAL` | No       | `60000`                                            | Metric export interval in milliseconds                                    |
-
-Setting `OTEL_SDK_DISABLED=true` also disables export regardless of endpoint. See [OBSERVABILITY.md](OBSERVABILITY.md) for the emitted traces, metrics, and logs.
 
 ## BYOK credential encryption
 

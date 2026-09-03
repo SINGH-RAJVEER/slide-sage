@@ -40,6 +40,7 @@ resource "google_project_service" "required" {
 		"artifactregistry.googleapis.com",
 		"compute.googleapis.com",
 		"run.googleapis.com",
+		"sqladmin.googleapis.com",
 		"secretmanager.googleapis.com",
 	])
 
@@ -106,6 +107,11 @@ resource "google_cloud_run_v2_service" "api" {
 		containers {
 			image = var.api_image
 
+			volume_mounts {
+				name       = "cloudsql"
+				mount_path = "/cloudsql"
+			}
+
 			ports {
 				container_port = 8000
 			}
@@ -128,11 +134,11 @@ resource "google_cloud_run_v2_service" "api" {
 			}
 			env {
 				name  = "CORS_ORIGINS"
-				value = "https://${var.domain_name},https://www.${var.domain_name},https://slidesage.pages.dev"
+				value = "https://${var.domain_name},https://www.${var.domain_name},https://slidesage.pages.dev,https://slide-sage.pages.dev"
 			}
 			env {
 				name  = "BETTER_AUTH_TRUSTED_ORIGINS"
-				value = "https://${var.domain_name},https://www.${var.domain_name},https://slidesage.pages.dev"
+				value = "https://${var.domain_name},https://www.${var.domain_name},https://slidesage.pages.dev,https://slide-sage.pages.dev"
 			}
 			env {
 				name  = "TRUST_PROXY_HEADERS"
@@ -171,6 +177,13 @@ resource "google_cloud_run_v2_service" "api" {
 				initial_delay_seconds = 0
 			}
 		}
+
+		volumes {
+			name = "cloudsql"
+			cloud_sql_instance {
+				instances = [google_sql_database_instance.primary.connection_name]
+			}
+		}
 	}
 
 	depends_on = [google_secret_manager_secret_iam_member.runtime_accessor]
@@ -186,12 +199,17 @@ resource "google_cloud_run_v2_service" "worker" {
 		max_instance_request_concurrency = 1
 
 		scaling {
-			min_instance_count = 1
-			max_instance_count = 1
+			min_instance_count = 0
+			max_instance_count = 10
 		}
 
 		containers {
 			image = var.worker_image
+
+			volume_mounts {
+				name       = "cloudsql"
+				mount_path = "/cloudsql"
+			}
 
 			ports {
 				container_port = 8080
@@ -246,6 +264,13 @@ resource "google_cloud_run_v2_service" "worker" {
 				initial_delay_seconds = 0
 			}
 		}
+
+		volumes {
+			name = "cloudsql"
+			cloud_sql_instance {
+				instances = [google_sql_database_instance.primary.connection_name]
+			}
+		}
 	}
 
 	depends_on = [google_secret_manager_secret_iam_member.runtime_accessor]
@@ -272,6 +297,11 @@ resource "google_cloud_run_v2_job" "migrate" {
 			containers {
 				image = var.migrate_image
 
+				volume_mounts {
+					name       = "cloudsql"
+					mount_path = "/cloudsql"
+				}
+
 				env {
 					name = "DATABASE_URL"
 					value_source {
@@ -280,6 +310,13 @@ resource "google_cloud_run_v2_job" "migrate" {
 							version = "latest"
 						}
 					}
+				}
+			}
+
+			volumes {
+				name = "cloudsql"
+				cloud_sql_instance {
+					instances = [google_sql_database_instance.primary.connection_name]
 				}
 			}
 		}

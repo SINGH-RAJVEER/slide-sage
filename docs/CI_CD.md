@@ -186,9 +186,9 @@ If the database is Cloud SQL, add `--add-cloudsql-instances=<INSTANCE_CONNECTION
 | Service | Port | Instances     | Concurrency | Notes                       |
 | ------- | ---- | ------------- | ----------- | --------------------------- |
 | `api`   | 8000 | min 0, max 10 | 80          | Scales from zero on traffic |
-| `worker` | 8080 | min 1, max 1  | 1           | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`; one always-warm instance is billed continuously. |
+| `worker` | 8080 | min 0, max 10 | 1           | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`; instances may scale to zero. |
 
-The worker is not request-driven, so a `min-instances=1` keeps a warm, always-on instance polling Postgres. River uses row-level `SKIP LOCKED` so scaling out further is safe if needed.
+The worker is configured with zero minimum and ten maximum instances. River uses row-level `SKIP LOCKED`, so concurrent workers can claim jobs safely. Cloud Run service autoscaling responds to HTTP traffic, not queued PostgreSQL work. With no request source for the private worker service, scaling to zero stops River polling until Cloud Run starts an instance again. Use a request-based wake-up mechanism or a nonzero minimum before relying on this topology for unattended queue processing.
 
 ### Ingress and invocation
 
@@ -226,6 +226,8 @@ gcloud run jobs deploy slidesage-migrate \
   --project=slidesage-504414 \
   --image="$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION" \
   --region=asia-south1 \
+	--service-account="slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com" \
+	--add-cloudsql-instances="$PROJECT_ID:$RUN_REGION:slidesage-postgres" \
   --set-secrets=DATABASE_URL=DATABASE_URL:latest \
   --execute-now \
   --wait
