@@ -136,7 +136,7 @@ jobs:
             --concurrency=80 \
             --timeout=300s \
             --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,EXA_API_KEY=EXA_API_KEY:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest,RESEND_API_KEY=RESEND_API_KEY:latest,RESEND_FROM_EMAIL=RESEND_FROM_EMAIL:latest \
-            --set-env-vars='^@^NODE_ENV=production@BASE_URL=https://api.slidesage.app@CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions'
+            --set-env-vars='^@^NODE_ENV=production@BASE_URL=https://api.slidesage.app@CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@OPEN_ROUTER_MODEL=openrouter/free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions'
 
       - name: Deploy worker service
         run: |
@@ -156,7 +156,7 @@ jobs:
             --max-instances=10 \
             --concurrency=1 \
             --set-secrets=DATABASE_URL=DATABASE_URL:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest \
-            --set-env-vars='^@^NODE_ENV=production@WORKER_CONCURRENCY=2@BASE_URL=https://api.slidesage.app@OPEN_ROUTER_MODEL=google/gemma-4-26b-a4b-it:free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions'
+            --set-env-vars='^@^NODE_ENV=production@WORKER_CONCURRENCY=2@BASE_URL=https://api.slidesage.app@OPEN_ROUTER_MODEL=openrouter/free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions'
 
       - name: Verify Cloud Run exposure
         run: |

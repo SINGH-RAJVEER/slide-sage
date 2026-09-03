@@ -11,9 +11,9 @@ import (
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 )
 
-func TestModelUsesFreeGemmaByDefault(t *testing.T) {
+func TestModelUsesOpenRouterFreeByDefault(t *testing.T) {
 	t.Setenv("OPEN_ROUTER_MODEL", "")
-	if got := model(); got != "google/gemma-4-26b-a4b-it:free" {
+	if got := model(); got != "openrouter/free" {
 		t.Fatalf("default model = %q", got)
 	}
 }

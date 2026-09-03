@@ -56,5 +56,5 @@ variable "migrate_image" {
 variable "open_router_model" {
 	description = "Server-owned OpenRouter generation model."
 	type        = string
-	default     = "z-ai/glm-5.2:free"
+	default     = "openrouter/free"
 }
