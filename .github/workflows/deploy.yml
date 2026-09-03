@@ -98,7 +98,7 @@ jobs:
             --image=$IMAGE \
             --region=$RUN_REGION \
             --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
-            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
+            --set-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
             --set-secrets=DATABASE_URL=DATABASE_URL:latest \
             --execute-now \
             --wait

@@ -179,7 +179,7 @@ The API deployment sets `BASE_URL=https://api.slidesage.app` and trusts `https:/
 
 The Go code reads every other value from its own env defaults; add more `--set-secrets`/`--set-env-vars` entries to the `deploy` job as you move the variables from [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) into production.
 
-If the database is Cloud SQL, add `--add-cloudsql-instances=<INSTANCE_CONNECTION_NAME>` to the migrate, API, and worker deploy commands, and grant the runtime service account `roles/cloudsql.client`.
+If the database is Cloud SQL, use `--set-cloudsql-instances=<INSTANCE_CONNECTION_NAME>` for the migrate job and `--add-cloudsql-instances=<INSTANCE_CONNECTION_NAME>` for the API and worker services. Grant the runtime service account `roles/cloudsql.client`.
 
 ## Cloud Run service settings
 
@@ -227,7 +227,7 @@ gcloud run jobs deploy slidesage-migrate \
   --image="$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION" \
   --region=asia-south1 \
 	--service-account="slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com" \
-	--add-cloudsql-instances="$PROJECT_ID:$RUN_REGION:slidesage-postgres" \
+	--set-cloudsql-instances="$PROJECT_ID:$RUN_REGION:slidesage-postgres" \
   --set-secrets=DATABASE_URL=DATABASE_URL:latest \
   --execute-now \
   --wait
