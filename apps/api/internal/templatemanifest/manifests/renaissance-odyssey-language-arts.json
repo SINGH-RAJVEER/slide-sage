@@ -1,0 +1,1153 @@
+{
+	"manifestVersion": 1,
+	"templateId": "renaissance-odyssey-language-arts",
+	"templateVersion": 1,
+	"sha256": "5e38610d28d2cf31e8a0ab040705c641da451b63e7cee863f0eeeef60f075c07",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 20,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape57p9-57",
+					"shapeId": 57,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape58p9-58",
+					"shapeId": 58,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "The Odyssey"
+				},
+				{
+					"id": "google-shape59p9-59",
+					"shapeId": 59,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Homer"
+				},
+				{
+					"id": "google-shape60p9-60",
+					"shapeId": 60,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape61p9-61",
+					"shapeId": 61,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape66p10-66",
+					"shapeId": 66,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape67p10-67",
+					"shapeId": 67,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Table of Contents"
+				},
+				{
+					"id": "google-shape69p10-69",
+					"shapeId": 69,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Introduction"
+				},
+				{
+					"id": "google-shape70p10-70",
+					"shapeId": 70,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape72p10-72",
+					"shapeId": 72,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Odysseus’ Adventures"
+				},
+				{
+					"id": "google-shape73p10-73",
+					"shapeId": 73,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape75p10-75",
+					"shapeId": 75,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Themes and Legacy"
+				},
+				{
+					"id": "google-shape76p10-76",
+					"shapeId": 76,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape78p10-78",
+					"shapeId": 78,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Chapter Title"
+				},
+				{
+					"id": "google-shape79p10-79",
+					"shapeId": 79,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "section",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape84p11-84",
+					"shapeId": 84,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape85p11-85",
+					"shapeId": 85,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Introduction"
+				},
+				{
+					"id": "google-shape86p11-86",
+					"shapeId": 86,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "section",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape91p12-91",
+					"shapeId": 91,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape92p12-92",
+					"shapeId": 92,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Homer"
+				},
+				{
+					"id": "google-shape93p12-93",
+					"shapeId": 93,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 3,
+					"sampleText": "Homer is a Greek poet that wrote The Odyssey and The Illiad among other works.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "section",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape98p13-98",
+					"shapeId": 98,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape99p13-99",
+					"shapeId": 99,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "The Plot"
+				},
+				{
+					"id": "google-shape100p13-100",
+					"shapeId": 100,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape101p13-101",
+					"shapeId": 101,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape102p13-102",
+					"shapeId": 102,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 739,
+					"maxListItems": 3,
+					"sampleText": "It follows the Greek hero Odysseus, king of Ithaca, and his journey home after the Trojan War. After the war, which lasted ten years, his journey from Troy to Ithaca, via Africa and southern Europe, lasted for ten additional years during which time he encountered many perils and all of his crewmates were killed. In his absence, Odysseus was assumed dead, and his wife Penelope and son Telemachus had to contend with a group of unruly suitors who were competing for Penelope's hand in marriage.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Pulvinar mattis nunc sed blandit libero volutpat sed cras. Enim sed faucibus turpis in eu mi. Et ligula ullamcorper malesuada proin libero nunc consequat interdum varius. Gravida neque convallis a cras semper auctor. Lectus magna fringilla urna porttitor rhoncus dolor. Amet aliquam id diam maecenas ultricies mi eget mauris. Nibh nisl condimentum id venenatis a condimentum. Et odio pellentesque diam volutpat commodo. Id aliquet risus feugiat in."
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "section",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape107p14-107",
+					"shapeId": 107,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape108p14-108",
+					"shapeId": 108,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Odysseus"
+				},
+				{
+					"id": "google-shape109p14-109",
+					"shapeId": 109,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 635,
+					"maxListItems": 3,
+					"sampleText": "Odysseus is a combination of the self-made, self-assured man and the embodiment of the standards and mores of his culture. He is favored by the gods and respected and admired by the mortals. Even the wrath of Poseidon does not keep him from his homecoming. He is confident that he represents virtue even when a modern audience might not be so sure. He is also a living series of contradictions, a much more complicated character than we would expect to find in the stereotypical epic hero.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Pulvinar mattis nunc sed blandit libero volutpat sed cras. Enim sed faucibus turpis in eu mi. Et ligula ullamcorper malesuada proin libero nunc consequat interdum varius. Gravida neque convallis a cras semper auctor."
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape114p15-114",
+					"shapeId": 114,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape115p15-115",
+					"shapeId": 115,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape116p15-116",
+					"shapeId": 116,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape117p15-117",
+					"shapeId": 117,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Cast of Characters"
+				},
+				{
+					"id": "google-shape118p15-118",
+					"shapeId": 118,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Penelope"
+				},
+				{
+					"id": "google-shape119p15-119",
+					"shapeId": 119,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape120p15-120",
+					"shapeId": 120,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 159,
+					"sampleText": "Wife of Odysseus and mother of their son, Telemachus, she is shrewd and faithful in fending off the suitors."
+				},
+				{
+					"id": "google-shape121p15-121",
+					"shapeId": 121,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape122p15-122",
+					"shapeId": 122,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Telemachus"
+				},
+				{
+					"id": "google-shape123p15-123",
+					"shapeId": 123,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 190,
+					"sampleText": "Son of Odysseus and Penelope, the prince struggles to gain his own maturity while attempting to deal with the problems of the palace."
+				},
+				{
+					"id": "google-shape124p15-124",
+					"shapeId": 124,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Athena"
+				},
+				{
+					"id": "google-shape125p15-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 181,
+					"sampleText": "She frequently intervenes on Odysseus' or Telemachus' behalf, often in disguise and sometimes as Mentor, the prince's adviser."
+				},
+				{
+					"id": "google-shape126p15-126",
+					"shapeId": 126,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Poseidon"
+				},
+				{
+					"id": "google-shape127p15-127",
+					"shapeId": 127,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 137,
+					"sampleText": "God of the sea and father of Polyphemus, he seeks revenge on Odysseus for blinding his son."
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "section",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape132p16-132",
+					"shapeId": 132,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape133p16-133",
+					"shapeId": 133,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Odysseus’ Adventures"
+				},
+				{
+					"id": "google-shape134p16-134",
+					"shapeId": 134,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "section",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape139p17-139",
+					"shapeId": 139,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape140p17-140",
+					"shapeId": 140,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 31,
+					"maxListItems": 2,
+					"sampleText": "Trojan\nHorse"
+				},
+				{
+					"id": "google-shape141p17-141",
+					"shapeId": 141,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape142p17-142",
+					"shapeId": 142,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 560,
+					"maxListItems": 3,
+					"sampleText": "In Greek mythology, the Trojan Horse was a wooden horse said to have been used by the Greeks during the Trojan War to enter the city of Troy and win the war. The Trojan Horse is not mentioned in Homer's Iliad, with the poem ending before the war is concluded, and it is only briefly mentioned in the Odyssey.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Pulvinar mattis nunc sed blandit libero volutpat sed cras. Enim sed faucibus turpis in eu mi. Et ligula ullamcorper malesuada proin libero nunc consequat interdum varius. Turpis cursus in hac habitasse. Donec et odio pellentesque diam volutpat commodo sed egestas. Tellus molestie nunc non blandit massa."
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "section",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape147p18-147",
+					"shapeId": 147,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape148p18-148",
+					"shapeId": 148,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape149p18-149",
+					"shapeId": 149,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "The Cyclops"
+				},
+				{
+					"id": "google-shape150p18-150",
+					"shapeId": 150,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 459,
+					"sampleText": "In Cyclops, the fifth-century BC play by Euripides, a chorus of satyrs offers comic relief based on the encounter of Odysseus and Polyphemus. The third-century BC poet Callimachus makes the Hesiodic Cyclopes the assistants of smith-god Hephaestus; as does Virgil in the Latin epic Aeneid, where he seems to equate the Hesiodic and Homeric Cyclopes."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "section",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape155p19-155",
+					"shapeId": 155,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape156p19-156",
+					"shapeId": 156,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "The Sirens"
+				},
+				{
+					"id": "google-shape157p19-157",
+					"shapeId": 157,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape158p19-158",
+					"shapeId": 158,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 964,
+					"sampleText": "In the twelfth book of the Odyssey, as Odysseus (Ulysses) is leaving Kirkê's island, Kirkê informs Odysseus of the dangers of the sea that he will encounter on his way home, specifically warning him of the Sirens. Sirens are beautiful women of the sea, who sing songs that hypnotize or lure and trick men into shipwrecking their boats on rocky shores because they follow the irresistible songs. Odysseus instructs his crew to tie him to the mast, telling them to ignore whatever he may say while under the sway of the Siren's song. The sailors stuff their ears with beeswax and then tie Odysseus tightly to the mast. Odysseus is the only one who hears the siren song, while the others ears are covered and they prevent Odysseus from following the song."
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "section",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape163p20-163",
+					"shapeId": 163,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape164p20-164",
+					"shapeId": 164,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 31,
+					"maxListItems": 2,
+					"sampleText": "Lotus\nEaters"
+				},
+				{
+					"id": "google-shape165p20-165",
+					"shapeId": 165,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 419,
+					"sampleText": "In the Odyssey specifically, the Lotus Eaters are mysterious people who live on a small island. They regularly consume lotus plants that cause them to live in a perpetual state of bliss. Their lifestyle causes them to lose all sense of urgency. Odysseus and his men spend some time on the island of the Lotus Eaters."
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "section",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape170p21-170",
+					"shapeId": 170,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape171p21-171",
+					"shapeId": 171,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 34,
+					"maxListItems": 2,
+					"sampleText": "Themes \n\u0026 Legacy"
+				},
+				{
+					"id": "google-shape172p21-172",
+					"shapeId": 172,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape177p22-177",
+					"shapeId": 177,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape178p22-178",
+					"shapeId": 178,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Themes"
+				},
+				{
+					"id": "google-shape180p22-180",
+					"shapeId": 180,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Heroism"
+				},
+				{
+					"id": "google-shape181p22-181",
+					"shapeId": 181,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape183p22-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Loyalty"
+				},
+				{
+					"id": "google-shape184p22-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape186p22-186",
+					"shapeId": 186,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Hospitality"
+				},
+				{
+					"id": "google-shape187p22-187",
+					"shapeId": 187,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape189p22-189",
+					"shapeId": 189,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Importance of Home"
+				},
+				{
+					"id": "google-shape190p22-190",
+					"shapeId": 190,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape195p23-195",
+					"shapeId": 195,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape196p23-196",
+					"shapeId": 196,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape197p23-197",
+					"shapeId": 197,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape198p23-198",
+					"shapeId": 198,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape199p23-199",
+					"shapeId": 199,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape200p23-200",
+					"shapeId": 200,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape201p23-201",
+					"shapeId": 201,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape202p23-202",
+					"shapeId": 202,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "Media Inspired by; or Adapted from The Odyssey"
+				},
+				{
+					"id": "google-shape203p23-203",
+					"shapeId": 203,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Ulysses"
+				},
+				{
+					"id": "google-shape204p23-204",
+					"shapeId": 204,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 41,
+					"maxListItems": 2,
+					"sampleText": "1922\nby James Joyce"
+				},
+				{
+					"id": "google-shape205p23-205",
+					"shapeId": 205,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "The Time Traveler’s Wife"
+				},
+				{
+					"id": "google-shape206p23-206",
+					"shapeId": 206,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "2003\nby Audrey Niffenegger"
+				},
+				{
+					"id": "google-shape207p23-207",
+					"shapeId": 207,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Big Fish"
+				},
+				{
+					"id": "google-shape208p23-208",
+					"shapeId": 208,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 45,
+					"maxListItems": 2,
+					"sampleText": "1998\nby Daniel Wallace"
+				},
+				{
+					"id": "google-shape209p23-209",
+					"shapeId": 209,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "As I Lay Dying"
+				},
+				{
+					"id": "google-shape210p23-210",
+					"shapeId": 210,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "1930\nby William Faulkner"
+				},
+				{
+					"id": "google-shape211p23-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "O Brother, Where Art Thou"
+				},
+				{
+					"id": "google-shape212p23-212",
+					"shapeId": 212,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 51,
+					"maxListItems": 2,
+					"sampleText": "2000\nby Ethan and Joel Coen"
+				},
+				{
+					"id": "google-shape213p23-213",
+					"shapeId": 213,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Keyhole"
+				},
+				{
+					"id": "google-shape214p23-214",
+					"shapeId": 214,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 40,
+					"maxListItems": 2,
+					"sampleText": "2011\nby Guy Maddin"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "section",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape219p24-219",
+					"shapeId": 219,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape220p24-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "A picture is worth a thousand words"
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape225p25-225",
+					"shapeId": 225,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape226p25-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "Write an original statement or inspiring quote"
+				},
+				{
+					"id": "google-shape227p25-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 87,
+					"sampleText": "— Include a credit, citation, or supporting message"
+				},
+				{
+					"id": "google-shape228p25-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "“"
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape233p26-233",
+					"shapeId": 233,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape239p26-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "123 Anywhere St., Any City,ST 12345"
+				},
+				{
+					"id": "google-shape240p26-240",
+					"shapeId": 240,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "123-456-7890"
+				},
+				{
+					"id": "google-shape241p26-241",
+					"shapeId": 241,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "hello@reallygreatsite.com"
+				},
+				{
+					"id": "google-shape242p26-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "reallygreatsite.com"
+				},
+				{
+					"id": "google-shape243p26-243",
+					"shapeId": 243,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "@reallygreatsite"
+				},
+				{
+					"id": "google-shape244p26-244",
+					"shapeId": 244,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Contact Us"
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "content",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape249p27-249",
+					"shapeId": 249,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape250p27-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 95,
+					"sampleText": "This presentation template uses the following free fonts:"
+				},
+				{
+					"id": "google-shape251p27-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape252p27-252",
+					"shapeId": 252,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 47,
+					"maxListItems": 3,
+					"sampleText": "Titles: Buenard\nHeaders: Buenard\nBody Copy: DM Sans"
+				},
+				{
+					"id": "google-shape253p27-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "You can find these fonts online too. Happy designing!"
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "closing",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape258p28-258",
+					"shapeId": 258,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape260p28-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape261p28-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape263p28-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape264p28-264",
+					"shapeId": 264,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape265p28-265",
+					"shapeId": 265,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape266p28-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape267p28-267",
+					"shapeId": 267,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape268p28-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape269p28-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape270p28-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape271p28-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				}
+			]
+		}
+	]
+}

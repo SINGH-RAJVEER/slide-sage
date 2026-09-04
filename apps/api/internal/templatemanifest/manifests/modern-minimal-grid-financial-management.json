@@ -1,0 +1,2084 @@
+{
+	"manifestVersion": 1,
+	"templateId": "modern-minimal-grid-financial-management",
+	"templateVersion": 1,
+	"sha256": "0618580488e2f4322736c194e620ad53d52ba007e0658ea0ed0077f50da3a5ff",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 19,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape131p9-131",
+					"shapeId": 131,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape132p9-132",
+					"shapeId": 132,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape134p9-134",
+					"shapeId": 134,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape135p9-135",
+					"shapeId": 135,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape137p9-137",
+					"shapeId": 137,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape138p9-138",
+					"shapeId": 138,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape139p9-139",
+					"shapeId": 139,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape140p9-140",
+					"shapeId": 140,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape142p9-142",
+					"shapeId": 142,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape143p9-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "$"
+				},
+				{
+					"id": "google-shape144p9-144",
+					"shapeId": 144,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Financial Management"
+				},
+				{
+					"id": "google-shape145p9-145",
+					"shapeId": 145,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for small business consulting"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape151p10-151",
+					"shapeId": 151,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape152p10-152",
+					"shapeId": 152,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape154p10-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape155p10-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape157p10-157",
+					"shapeId": 157,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape158p10-158",
+					"shapeId": 158,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape160p10-160",
+					"shapeId": 160,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape161p10-161",
+					"shapeId": 161,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape162p10-162",
+					"shapeId": 162,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape163p10-163",
+					"shapeId": 163,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape164p10-164",
+					"shapeId": 164,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape165p10-165",
+					"shapeId": 165,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape166p10-166",
+					"shapeId": 166,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Introduction"
+				},
+				{
+					"id": "google-shape167p10-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 351,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+				},
+				{
+					"id": "google-shape168p10-168",
+					"shapeId": 168,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "About Us"
+				},
+				{
+					"id": "google-shape169p10-169",
+					"shapeId": 169,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Our Products"
+				},
+				{
+					"id": "google-shape170p10-170",
+					"shapeId": 170,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Chapter Title"
+				},
+				{
+					"id": "google-shape171p10-171",
+					"shapeId": 171,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 351,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+				},
+				{
+					"id": "google-shape172p10-172",
+					"shapeId": 172,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 351,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+				},
+				{
+					"id": "google-shape173p10-173",
+					"shapeId": 173,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 351,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape179p11-179",
+					"shapeId": 179,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape180p11-180",
+					"shapeId": 180,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape181p11-181",
+					"shapeId": 181,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape183p11-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape184p11-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape186p11-186",
+					"shapeId": 186,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape187p11-187",
+					"shapeId": 187,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape188p11-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Welcome to Presentation"
+				},
+				{
+					"id": "google-shape189p11-189",
+					"shapeId": 189,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 6,
+					"sampleText": "I'm Rain, and I'll be sharing with you my beautiful ideas.\nFollow me at @reallygreatsite to learn more. \n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nMagna sit amet purus gravida. Eu ultrices vitae auctor eu augue ut lectus arcu. Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Euismod elementum nisi quis eleifend quam adipiscing vitae proin sagittis. Amet consectetur adipiscing elit ut aliquam. Vel fringilla est ullamcorper eget nulla facilisi. Lectus sit amet"
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape195p12-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape196p12-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape197p12-197",
+					"shapeId": 197,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape199p12-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape200p12-200",
+					"shapeId": 200,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape201p12-201",
+					"shapeId": 201,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Introduction"
+				},
+				{
+					"id": "google-shape202p12-202",
+					"shapeId": 202,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 290,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape208p13-208",
+					"shapeId": 208,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape209p13-209",
+					"shapeId": 209,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape211p13-211",
+					"shapeId": 211,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape212p13-212",
+					"shapeId": 212,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "$"
+				},
+				{
+					"id": "google-shape214p13-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape215p13-215",
+					"shapeId": 215,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape217p13-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape218p13-218",
+					"shapeId": 218,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape220p13-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape221p13-221",
+					"shapeId": 221,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape223p13-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape224p13-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape226p13-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape227p13-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape228p13-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Our Company"
+				},
+				{
+					"id": "google-shape230p13-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "What we do?"
+				},
+				{
+					"id": "google-shape231p13-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 207,
+					"sampleText": "Briefly elaborate on what you want to discuss. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore."
+				},
+				{
+					"id": "google-shape233p13-233",
+					"shapeId": 233,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Who we are?"
+				},
+				{
+					"id": "google-shape234p13-234",
+					"shapeId": 234,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 207,
+					"sampleText": "Briefly elaborate on what you want to discuss. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore."
+				},
+				{
+					"id": "google-shape236p13-236",
+					"shapeId": 236,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Why we do?"
+				},
+				{
+					"id": "google-shape237p13-237",
+					"shapeId": 237,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 207,
+					"sampleText": "Briefly elaborate on what you want to discuss. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore."
+				},
+				{
+					"id": "google-shape239p13-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "How we do?"
+				},
+				{
+					"id": "google-shape240p13-240",
+					"shapeId": 240,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 207,
+					"sampleText": "Briefly elaborate on what you want to discuss. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore."
+				},
+				{
+					"id": "google-shape241p13-241",
+					"shapeId": 241,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape247p14-247",
+					"shapeId": 247,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape248p14-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape250p14-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape251p14-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape253p14-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape254p14-254",
+					"shapeId": 254,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape256p14-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape257p14-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape258p14-258",
+					"shapeId": 258,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Mission"
+				},
+				{
+					"id": "google-shape259p14-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Vision"
+				},
+				{
+					"id": "google-shape260p14-260",
+					"shapeId": 260,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 5,
+					"sampleText": "Enter your grand vision statement!\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nMagna sit amet purus gravida. Eu ultrices vitae auctor eu augue ut lectus arcu. Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Euismod elementum nisi quis eleifend quam adipiscing vitae proin sagittis. Amet consectetur adipiscing elit ut aliquam. Vel fringilla est ullamcorper eget nulla facilisi. Lectus sit amet"
+				},
+				{
+					"id": "google-shape261p14-261",
+					"shapeId": 261,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 5,
+					"sampleText": "Enter your grand vision statement!\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nMagna sit amet purus gravida. Eu ultrices vitae auctor eu augue ut lectus arcu. Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Euismod elementum nisi quis eleifend quam adipiscing vitae proin sagittis. Amet consectetur adipiscing elit ut aliquam. Vel fringilla est ullamcorper eget nulla facilisi. Lectus sit amet"
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape267p15-267",
+					"shapeId": 267,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape268p15-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape270p15-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape271p15-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape272p15-272",
+					"shapeId": 272,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "About Us"
+				},
+				{
+					"id": "google-shape273p15-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 290,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco."
+				},
+				{
+					"id": "google-shape274p15-274",
+					"shapeId": 274,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape280p16-280",
+					"shapeId": 280,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape281p16-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape283p16-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape284p16-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape286p16-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape287p16-287",
+					"shapeId": 287,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape288p16-288",
+					"shapeId": 288,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape289p16-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Our History"
+				},
+				{
+					"id": "google-shape290p16-290",
+					"shapeId": 290,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 5,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nMagna sit amet purus gravida. Eu ultrices vitae auctor eu augue ut lectus arcu. Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Euismod elementum nisi quis eleifend quam adipiscing vitae proin sagittis. Amet consectetur adipiscing elit ut aliquam. Vel fringilla est ullamcorper eget nulla facilisi. Lectus sit amet"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape296p17-296",
+					"shapeId": 296,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape297p17-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape298p17-298",
+					"shapeId": 298,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape300p17-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape301p17-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape303p17-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape304p17-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape306p17-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape307p17-307",
+					"shapeId": 307,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape309p17-309",
+					"shapeId": 309,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape310p17-310",
+					"shapeId": 310,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape311p17-311",
+					"shapeId": 311,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape313p17-313",
+					"shapeId": 313,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape314p17-314",
+					"shapeId": 314,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape316p17-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape317p17-317",
+					"shapeId": 317,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape319p17-319",
+					"shapeId": 319,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape320p17-320",
+					"shapeId": 320,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape321p17-321",
+					"shapeId": 321,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape323p17-323",
+					"shapeId": 323,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape324p17-324",
+					"shapeId": 324,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape325p17-325",
+					"shapeId": 325,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape326p17-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Meet the Team"
+				},
+				{
+					"id": "google-shape328p17-328",
+					"shapeId": 328,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "John Doe"
+				},
+				{
+					"id": "google-shape329p17-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Position"
+				},
+				{
+					"id": "google-shape331p17-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Jane Doe"
+				},
+				{
+					"id": "google-shape332p17-332",
+					"shapeId": 332,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Position"
+				},
+				{
+					"id": "google-shape334p17-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "John Doe"
+				},
+				{
+					"id": "google-shape335p17-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Position"
+				},
+				{
+					"id": "google-shape337p17-337",
+					"shapeId": 337,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Jane Doe"
+				},
+				{
+					"id": "google-shape338p17-338",
+					"shapeId": 338,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Position"
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape344p18-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape345p18-345",
+					"shapeId": 345,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape347p18-347",
+					"shapeId": 347,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape348p18-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape350p18-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape351p18-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape353p18-353",
+					"shapeId": 353,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape354p18-354",
+					"shapeId": 354,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape356p18-356",
+					"shapeId": 356,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape357p18-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape358p18-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Timeline"
+				},
+				{
+					"id": "google-shape360p18-360",
+					"shapeId": 360,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Main Point"
+				},
+				{
+					"id": "google-shape361p18-361",
+					"shapeId": 361,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 459,
+					"maxListItems": 3,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur reprehenderit."
+				},
+				{
+					"id": "google-shape363p18-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Main Point"
+				},
+				{
+					"id": "google-shape364p18-364",
+					"shapeId": 364,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 459,
+					"maxListItems": 3,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur reprehenderit."
+				},
+				{
+					"id": "google-shape366p18-366",
+					"shapeId": 366,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Main Point"
+				},
+				{
+					"id": "google-shape367p18-367",
+					"shapeId": 367,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 459,
+					"maxListItems": 3,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur reprehenderit."
+				},
+				{
+					"id": "google-shape369p18-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Main Point"
+				},
+				{
+					"id": "google-shape370p18-370",
+					"shapeId": 370,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 459,
+					"maxListItems": 3,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur reprehenderit."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape375p19-375",
+					"shapeId": 375,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape376p19-376",
+					"shapeId": 376,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape377p19-377",
+					"shapeId": 377,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape378p19-378",
+					"shapeId": 378,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape379p19-379",
+					"shapeId": 379,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape380p19-380",
+					"shapeId": 380,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape382p19-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape383p19-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape384p19-384",
+					"shapeId": 384,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Gallery Image"
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape390p20-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape391p20-391",
+					"shapeId": 391,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape393p20-393",
+					"shapeId": 393,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape394p20-394",
+					"shapeId": 394,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape395p20-395",
+					"shapeId": 395,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Our Products"
+				},
+				{
+					"id": "google-shape396p20-396",
+					"shapeId": 396,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 290,
+					"sampleText": "Elaborate on your topic here. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco."
+				},
+				{
+					"id": "google-shape397p20-397",
+					"shapeId": 397,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape402p21-402",
+					"shapeId": 402,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape404p21-404",
+					"shapeId": 404,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape405p21-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape407p21-407",
+					"shapeId": 407,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape408p21-408",
+					"shapeId": 408,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape409p21-409",
+					"shapeId": 409,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Project Two"
+				},
+				{
+					"id": "google-shape410p21-410",
+					"shapeId": 410,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 3,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+				},
+				{
+					"id": "google-shape412p21-412",
+					"shapeId": 412,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape413p21-413",
+					"shapeId": 413,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape415p21-415",
+					"shapeId": 415,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape416p21-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape418p21-418",
+					"shapeId": 418,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Specification"
+				},
+				{
+					"id": "google-shape419p21-419",
+					"shapeId": 419,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Elaborate here."
+				},
+				{
+					"id": "google-shape421p21-421",
+					"shapeId": 421,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Specification"
+				},
+				{
+					"id": "google-shape422p21-422",
+					"shapeId": 422,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Elaborate here."
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape427p22-427",
+					"shapeId": 427,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape428p22-428",
+					"shapeId": 428,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape429p22-429",
+					"shapeId": 429,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape430p22-430",
+					"shapeId": 430,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape432p22-432",
+					"shapeId": 432,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape433p22-433",
+					"shapeId": 433,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape434p22-434",
+					"shapeId": 434,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 5,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nMagna sit amet purus gravida. Eu ultrices vitae auctor eu augue ut lectus arcu. Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Euismod elementum nisi quis eleifend quam adipiscing vitae proin sagittis. Amet consectetur adipiscing elit ut aliquam. Vel fringilla est ullamcorper eget nulla facilisi. Lectus sit amet"
+				},
+				{
+					"id": "google-shape436p22-436",
+					"shapeId": 436,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape437p22-437",
+					"shapeId": 437,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape438p22-438",
+					"shapeId": 438,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Project One"
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape444p23-444",
+					"shapeId": 444,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape445p23-445",
+					"shapeId": 445,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape447p23-447",
+					"shapeId": 447,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape448p23-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape449p23-449",
+					"shapeId": 449,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Market Research"
+				},
+				{
+					"id": "google-shape451p23-451",
+					"shapeId": 451,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape452p23-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape453p23-453",
+					"shapeId": 453,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 580,
+					"maxListItems": 3,
+					"sampleText": "Elaborate on your topic here.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+				},
+				{
+					"id": "google-shape455p23-455",
+					"shapeId": 455,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape456p23-456",
+					"shapeId": 456,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape457p23-457",
+					"shapeId": 457,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape458p23-458",
+					"shapeId": 458,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape463p24-463",
+					"shapeId": 463,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape465p24-465",
+					"shapeId": 465,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape466p24-466",
+					"shapeId": 466,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape467p24-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "A picture is worth a thousand words"
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape472p25-472",
+					"shapeId": 472,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape474p25-474",
+					"shapeId": 474,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape475p25-475",
+					"shapeId": 475,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape477p25-477",
+					"shapeId": 477,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape478p25-478",
+					"shapeId": 478,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape479p25-479",
+					"shapeId": 479,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "123 Anywhere St., Any City,ST 12345"
+				},
+				{
+					"id": "google-shape480p25-480",
+					"shapeId": 480,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "123-456-7890"
+				},
+				{
+					"id": "google-shape481p25-481",
+					"shapeId": 481,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "hello@reallygreatsite.com"
+				},
+				{
+					"id": "google-shape482p25-482",
+					"shapeId": 482,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "reallygreatsite.com"
+				},
+				{
+					"id": "google-shape483p25-483",
+					"shapeId": 483,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "@reallygreatsite"
+				},
+				{
+					"id": "google-shape484p25-484",
+					"shapeId": 484,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Contact Us"
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape490p26-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape491p26-491",
+					"shapeId": 491,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape493p26-493",
+					"shapeId": 493,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape494p26-494",
+					"shapeId": 494,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape496p26-496",
+					"shapeId": 496,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape497p26-497",
+					"shapeId": 497,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape499p26-499",
+					"shapeId": 499,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape500p26-500",
+					"shapeId": 500,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape502p26-502",
+					"shapeId": 502,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape503p26-503",
+					"shapeId": 503,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape505p26-505",
+					"shapeId": 505,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape506p26-506",
+					"shapeId": 506,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape508p26-508",
+					"shapeId": 508,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape509p26-509",
+					"shapeId": 509,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape510p26-510",
+					"shapeId": 510,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape511p26-511",
+					"shapeId": 511,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape512p26-512",
+					"shapeId": 512,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nAlata\n\nHEADERS:\nAlata\n\nBODY COPY:\nAlata"
+				},
+				{
+					"id": "google-shape513p26-513",
+					"shapeId": 513,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#151515"
+				},
+				{
+					"id": "google-shape514p26-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#FFFFFF"
+				},
+				{
+					"id": "google-shape515p26-515",
+					"shapeId": 515,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape516p26-516",
+					"shapeId": 516,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "DON'T FORGET TO DELETE THIS PAGE BEFORE PRESENTING."
+				},
+				{
+					"id": "google-shape517p26-517",
+					"shapeId": 517,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				},
+				{
+					"id": "google-shape518p26-518",
+					"shapeId": 518,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "FONTS"
+				},
+				{
+					"id": "google-shape519p26-519",
+					"shapeId": 519,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "DESIGN ELEMENTS"
+				},
+				{
+					"id": "google-shape520p26-520",
+					"shapeId": 520,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "COLORS"
+				},
+				{
+					"id": "google-shape522p26-522",
+					"shapeId": 522,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape523p26-523",
+					"shapeId": 523,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape524p26-524",
+					"shapeId": 524,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#D8FB50"
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "closing",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape534p27-534",
+					"shapeId": 534,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape535p27-535",
+					"shapeId": 535,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape537p27-537",
+					"shapeId": 537,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape538p27-538",
+					"shapeId": 538,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape539p27-539",
+					"shapeId": 539,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape540p27-540",
+					"shapeId": 540,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape541p27-541",
+					"shapeId": 541,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape542p27-542",
+					"shapeId": 542,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape543p27-543",
+					"shapeId": 543,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape544p27-544",
+					"shapeId": 544,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				},
+				{
+					"id": "google-shape545p27-545",
+					"shapeId": 545,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

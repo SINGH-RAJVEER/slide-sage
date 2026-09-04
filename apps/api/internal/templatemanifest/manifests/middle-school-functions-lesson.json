@@ -1,0 +1,1433 @@
+{
+	"manifestVersion": 1,
+	"templateId": "middle-school-functions-lesson",
+	"templateVersion": 1,
+	"sha256": "9a7ec2fab857d7c84b764bbb6deae7baadb49b5fa81d3ee3dbab077b56ed7551",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 16,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape70p10-70",
+					"shapeId": 70,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "FUNCTIONS LESSON"
+				},
+				{
+					"id": "google-shape71p10-71",
+					"shapeId": 71,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "Mathematics Lesson or Middle School"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape95p11-95",
+					"shapeId": 95,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "LESSON OUTLINE"
+				},
+				{
+					"id": "google-shape97p11-97",
+					"shapeId": 97,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape98p11-98",
+					"shapeId": 98,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "What are relations?"
+				},
+				{
+					"id": "google-shape99p11-99",
+					"shapeId": 99,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "What are functions?"
+				},
+				{
+					"id": "google-shape100p11-100",
+					"shapeId": 100,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 75,
+					"sampleText": "Presenting functions as tables and graphs"
+				},
+				{
+					"id": "google-shape101p11-101",
+					"shapeId": 101,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "The Vertical Line Test"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape107p12-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape124p12-124",
+					"shapeId": 124,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape125p12-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape127p12-127",
+					"shapeId": 127,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape128p12-128",
+					"shapeId": 128,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape130p12-130",
+					"shapeId": 130,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape131p12-131",
+					"shapeId": 131,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape133p12-133",
+					"shapeId": 133,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape134p12-134",
+					"shapeId": 134,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape136p12-136",
+					"shapeId": 136,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape137p12-137",
+					"shapeId": 137,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape138p12-138",
+					"shapeId": 138,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape139p12-139",
+					"shapeId": 139,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape142p12-142",
+					"shapeId": 142,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 125,
+					"maxListItems": 3,
+					"sampleText": "Do you still remember how to fill in the table of values based on a given graph? \n\nComplete the table of values below."
+				},
+				{
+					"id": "google-shape143p12-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "LET'S RECALL AND ANALYZE!"
+				},
+				{
+					"id": "google-shape144p12-144",
+					"shapeId": 144,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "12"
+				},
+				{
+					"id": "google-shape145p12-145",
+					"shapeId": 145,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "y"
+				},
+				{
+					"id": "google-shape146p12-146",
+					"shapeId": 146,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "x"
+				},
+				{
+					"id": "google-shape147p12-147",
+					"shapeId": 147,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "10"
+				},
+				{
+					"id": "google-shape148p12-148",
+					"shapeId": 148,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "8"
+				},
+				{
+					"id": "google-shape149p12-149",
+					"shapeId": 149,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "6"
+				},
+				{
+					"id": "google-shape150p12-150",
+					"shapeId": 150,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape151p12-151",
+					"shapeId": 151,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape152p12-152",
+					"shapeId": 152,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape153p12-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape154p12-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "6"
+				},
+				{
+					"id": "google-shape155p12-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "8"
+				},
+				{
+					"id": "google-shape156p12-156",
+					"shapeId": 156,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "10"
+				},
+				{
+					"id": "google-shape157p12-157",
+					"shapeId": 157,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "12"
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "section",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape165p13-165",
+					"shapeId": 165,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape167p13-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "LEARNING OUTCOMES"
+				},
+				{
+					"id": "google-shape170p13-170",
+					"shapeId": 170,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 90,
+					"maxListItems": 5,
+					"sampleText": "By the end of the lesson, you'll be able to:\n\nExpress relations and functions in tables and graphs.\nDifferentiate between a relation and a function.\nUse a vertical test."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape177p14-177",
+					"shapeId": 177,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape178p14-178",
+					"shapeId": 178,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape183p14-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "WHAT ARE RELATIONS?"
+				},
+				{
+					"id": "google-shape188p14-188",
+					"shapeId": 188,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 121,
+					"maxListItems": 2,
+					"sampleText": "Example:\nNames and their age are a set of ordered pairs that we could put into a table."
+				},
+				{
+					"id": "google-shape189p14-189",
+					"shapeId": 189,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 107,
+					"sampleText": "A relation is a set of ordered pairs that represent a relationship."
+				},
+				{
+					"id": "google-shape190p14-190",
+					"shapeId": 190,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "section",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape197p15-197",
+					"shapeId": 197,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 130,
+					"maxListItems": 3,
+					"sampleText": "A function is a special type of relation where each input only has one output.\nFunctions are a way of connecting inp﻿ut values to their corresponding output values.\nThe relation is a function if, for every x-value, there is exactly one y-value."
+				},
+				{
+					"id": "google-shape198p15-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "WHAT IS A FUNCTION?"
+				},
+				{
+					"id": "google-shape202p15-202",
+					"shapeId": 202,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape203p15-203",
+					"shapeId": 203,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape204p15-204",
+					"shapeId": 204,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape211p16-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 130,
+					"sampleText": "Functions are a way of connecting inp﻿ut values to their corresponding output values."
+				},
+				{
+					"id": "google-shape212p16-212",
+					"shapeId": 212,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 80,
+					"maxListItems": 5,
+					"sampleText": "Example: \nOrdering a coffee for $5\n\nPay $5, and you get 1 coffee.\nPay $10, and you'll get 2 coffees, and so on."
+				},
+				{
+					"id": "google-shape213p16-213",
+					"shapeId": 213,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 86,
+					"sampleText": "The input affects the output in a predictable way."
+				},
+				{
+					"id": "google-shape214p16-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "WHAT IS A FUNCTION?"
+				},
+				{
+					"id": "google-shape216p16-216",
+					"shapeId": 216,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape217p16-217",
+					"shapeId": 217,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape245p17-245",
+					"shapeId": 245,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape248p17-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-1"
+				},
+				{
+					"id": "google-shape251p17-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "0"
+				},
+				{
+					"id": "google-shape254p17-254",
+					"shapeId": 254,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape257p17-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape260p17-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape263p17-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-2"
+				},
+				{
+					"id": "google-shape266p17-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape269p17-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-1"
+				},
+				{
+					"id": "google-shape272p17-272",
+					"shapeId": 272,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "3"
+				},
+				{
+					"id": "google-shape273p17-273",
+					"shapeId": 273,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape275p17-275",
+					"shapeId": 275,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape282p17-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape283p17-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape284p17-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Step 1:"
+				},
+				{
+					"id": "google-shape286p17-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape287p17-287",
+					"shapeId": 287,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape288p17-288",
+					"shapeId": 288,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Step 2:"
+				},
+				{
+					"id": "google-shape289p17-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "y"
+				},
+				{
+					"id": "google-shape290p17-290",
+					"shapeId": 290,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "x"
+				},
+				{
+					"id": "google-shape291p17-291",
+					"shapeId": 291,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Plot the points."
+				},
+				{
+					"id": "google-shape293p17-293",
+					"shapeId": 293,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "Construct the table of values."
+				},
+				{
+					"id": "google-shape294p17-294",
+					"shapeId": 294,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 80,
+					"sampleText": "Do this by substituting values of x to y=2x."
+				},
+				{
+					"id": "google-shape295p17-295",
+					"shapeId": 295,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 104,
+					"sampleText": "Notice that for every value of x, there is only one value of y."
+				},
+				{
+					"id": "google-shape296p17-296",
+					"shapeId": 296,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 80,
+					"sampleText": "GRAPHING A FUNCTION USING THE TABLE OF VALUES"
+				},
+				{
+					"id": "google-shape297p17-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Given the equation y = 2x."
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "section",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape302p18-302",
+					"shapeId": 302,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape304p18-304",
+					"shapeId": 304,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape305p18-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Is this relation a function?"
+				},
+				{
+					"id": "google-shape306p18-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "TRY THIS!"
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape345p19-345",
+					"shapeId": 345,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape348p19-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "5"
+				},
+				{
+					"id": "google-shape352p19-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape355p19-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "5"
+				},
+				{
+					"id": "google-shape358p19-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape361p19-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-2"
+				},
+				{
+					"id": "google-shape364p19-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-3"
+				},
+				{
+					"id": "google-shape367p19-367",
+					"shapeId": 367,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape370p19-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-1"
+				},
+				{
+					"id": "google-shape373p19-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "3"
+				},
+				{
+					"id": "google-shape376p19-376",
+					"shapeId": 376,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-4"
+				},
+				{
+					"id": "google-shape379p19-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-5"
+				},
+				{
+					"id": "google-shape382p19-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape385p19-385",
+					"shapeId": 385,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape388p19-388",
+					"shapeId": 388,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "3"
+				},
+				{
+					"id": "google-shape391p19-391",
+					"shapeId": 391,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-1"
+				},
+				{
+					"id": "google-shape394p19-394",
+					"shapeId": 394,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-2"
+				},
+				{
+					"id": "google-shape397p19-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-3"
+				},
+				{
+					"id": "google-shape400p19-400",
+					"shapeId": 400,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-4"
+				},
+				{
+					"id": "google-shape403p19-403",
+					"shapeId": 403,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-5"
+				},
+				{
+					"id": "google-shape404p19-404",
+					"shapeId": 404,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 124,
+					"sampleText": "Use the vertical line test to check whether a graph of a relation is a function."
+				},
+				{
+					"id": "google-shape405p19-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "VERTICAL LINE TEST"
+				},
+				{
+					"id": "google-shape406p19-406",
+					"shapeId": 406,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 151,
+					"sampleText": "If a vertical line, drawn anywhere on the graph, can touch the graph only once, then it is a function."
+				},
+				{
+					"id": "google-shape408p19-408",
+					"shapeId": 408,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape409p19-409",
+					"shapeId": 409,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape448p20-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "5"
+				},
+				{
+					"id": "google-shape452p20-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape455p20-455",
+					"shapeId": 455,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "5"
+				},
+				{
+					"id": "google-shape458p20-458",
+					"shapeId": 458,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape461p20-461",
+					"shapeId": 461,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-2"
+				},
+				{
+					"id": "google-shape464p20-464",
+					"shapeId": 464,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-3"
+				},
+				{
+					"id": "google-shape467p20-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape470p20-470",
+					"shapeId": 470,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-1"
+				},
+				{
+					"id": "google-shape473p20-473",
+					"shapeId": 473,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "3"
+				},
+				{
+					"id": "google-shape476p20-476",
+					"shapeId": 476,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-4"
+				},
+				{
+					"id": "google-shape479p20-479",
+					"shapeId": 479,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-5"
+				},
+				{
+					"id": "google-shape482p20-482",
+					"shapeId": 482,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape485p20-485",
+					"shapeId": 485,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape488p20-488",
+					"shapeId": 488,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "3"
+				},
+				{
+					"id": "google-shape491p20-491",
+					"shapeId": 491,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "4"
+				},
+				{
+					"id": "google-shape494p20-494",
+					"shapeId": 494,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-1"
+				},
+				{
+					"id": "google-shape497p20-497",
+					"shapeId": 497,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-2"
+				},
+				{
+					"id": "google-shape500p20-500",
+					"shapeId": 500,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-3"
+				},
+				{
+					"id": "google-shape503p20-503",
+					"shapeId": 503,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-4"
+				},
+				{
+					"id": "google-shape505p20-505",
+					"shapeId": 505,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape506p20-506",
+					"shapeId": 506,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape510p20-510",
+					"shapeId": 510,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape511p20-511",
+					"shapeId": 511,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape513p20-513",
+					"shapeId": 513,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape514p20-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape517p20-517",
+					"shapeId": 517,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "-5"
+				},
+				{
+					"id": "google-shape518p20-518",
+					"shapeId": 518,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 175,
+					"sampleText": "If a vertical line, drawn anywhere on the graph, can touch the graph more than once, then the relation is not a function."
+				},
+				{
+					"id": "google-shape526p20-526",
+					"shapeId": 526,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "VERTICAL LINE TEST"
+				},
+				{
+					"id": "google-shape527p20-527",
+					"shapeId": 527,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape533p21-533",
+					"shapeId": 533,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 121,
+					"sampleText": "A function is a special type of relation where each input only has one output."
+				},
+				{
+					"id": "google-shape534p21-534",
+					"shapeId": 534,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 80,
+					"sampleText": "Graphing a function using the table of values"
+				},
+				{
+					"id": "google-shape535p21-535",
+					"shapeId": 535,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 84,
+					"maxListItems": 2,
+					"sampleText": "Step 1: Construct the table of values.\nStep 2: Plot the points on the coordinate plane."
+				},
+				{
+					"id": "google-shape536p21-536",
+					"shapeId": 536,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "SUMMARY"
+				},
+				{
+					"id": "google-shape546p21-546",
+					"shapeId": 546,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape552p22-552",
+					"shapeId": 552,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape559p22-559",
+					"shapeId": 559,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 177,
+					"maxListItems": 3,
+					"sampleText": "Select 10 clothing items from your closet. Create a mapping diagram to record the colors to each of the clothing you have. \n\nThen, find out if the information you collected represents a function or not."
+				},
+				{
+					"id": "google-shape560p22-560",
+					"shapeId": 560,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 84,
+					"sampleText": "Share your findings with the class next session."
+				},
+				{
+					"id": "google-shape561p22-561",
+					"shapeId": 561,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "CLOSET COLORS!"
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "section",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape572p23-572",
+					"shapeId": 572,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "REFERENCE"
+				},
+				{
+					"id": "google-shape573p23-573",
+					"shapeId": 573,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 167,
+					"maxListItems": 2,
+					"sampleText": "Mathspace. “6.0 Functions and relations | Grade 8 Math | Common Core 8 - 2023 Edition.” Accessed 12 June 2023,\nhttps://mathspace.co/textbooks/syllabuses/Syllabus-1157/topics/Topic-21908/subtopics/Subtopic-279918/?searchString="
+				},
+				{
+					"id": "google-shape580p23-580",
+					"shapeId": 580,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape586p24-586",
+					"shapeId": 586,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 91,
+					"maxListItems": 11,
+					"sampleText": "Use these design resources in your Canva Presentation.\n\n\n\n\n\n\n\n\nYou can find these fonts online too. Happy designing!"
+				},
+				{
+					"id": "google-shape595p24-595",
+					"shapeId": 595,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				},
+				{
+					"id": "google-shape596p24-596",
+					"shapeId": 596,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 95,
+					"sampleText": "This presentation template uses the following free fonts:"
+				},
+				{
+					"id": "google-shape597p24-597",
+					"shapeId": 597,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 51,
+					"maxListItems": 3,
+					"sampleText": "Titles:  Changa\nHeaders:  Changa\nBody Copy: Yantramanav"
+				},
+				{
+					"id": "google-shape598p24-598",
+					"shapeId": 598,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape599p24-599",
+					"shapeId": 599,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "closing",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape605p25-605",
+					"shapeId": 605,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape606p25-606",
+					"shapeId": 606,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape612p25-612",
+					"shapeId": 612,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape613p25-613",
+					"shapeId": 613,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 79,
+					"maxListItems": 2,
+					"sampleText": "SlidesCarnival for the presentation template\nPexels for the photos"
+				},
+				{
+					"id": "google-shape614p25-614",
+					"shapeId": 614,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

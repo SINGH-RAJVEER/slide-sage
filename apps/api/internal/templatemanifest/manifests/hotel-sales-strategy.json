@@ -1,0 +1,1331 @@
+{
+	"manifestVersion": 1,
+	"templateId": "hotel-sales-strategy",
+	"templateVersion": 1,
+	"sha256": "b6e546dab248a76e69cfa0c28088b57504ef214e87f51d22cb058b92f08f9eac",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 14,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape81p13-81",
+					"shapeId": 81,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape85p13-85",
+					"shapeId": 85,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Luxe Hotel"
+				},
+				{
+					"id": "google-shape88p13-88",
+					"shapeId": 88,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 42,
+					"maxListItems": 2,
+					"sampleText": "Hotel Sales \nStrategy Slides"
+				},
+				{
+					"id": "google-shape89p13-89",
+					"shapeId": 89,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Turning demand into high-value bookings"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "section",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape94p14-94",
+					"shapeId": 94,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape95p14-95",
+					"shapeId": 95,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape96p14-96",
+					"shapeId": 96,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Overview"
+				},
+				{
+					"id": "google-shape98p14-98",
+					"shapeId": 98,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape103p15-103",
+					"shapeId": 103,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Who we sell to"
+				},
+				{
+					"id": "google-shape105p15-105",
+					"shapeId": 105,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Leisure travelers"
+				},
+				{
+					"id": "google-shape106p15-106",
+					"shapeId": 106,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 120,
+					"sampleText": "Premium city stays for short getaways, combining comfort, location, and ease."
+				},
+				{
+					"id": "google-shape107p15-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape109p15-109",
+					"shapeId": 109,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Business travelers"
+				},
+				{
+					"id": "google-shape110p15-110",
+					"shapeId": 110,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 71,
+					"maxListItems": 2,
+					"sampleText": "Efficient, reliable stays designed\nfor business travel and repeat visits."
+				},
+				{
+					"id": "google-shape111p15-111",
+					"shapeId": 111,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape113p15-113",
+					"shapeId": 113,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Small groups and events"
+				},
+				{
+					"id": "google-shape114p15-114",
+					"shapeId": 114,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 100,
+					"maxListItems": 2,
+					"sampleText": "Flexible spaces and dependable service for meetings and small\ngroup stays."
+				},
+				{
+					"id": "google-shape115p15-115",
+					"shapeId": 115,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape117p15-117",
+					"shapeId": 117,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				},
+				{
+					"id": "google-shape118p15-118",
+					"shapeId": 118,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape123p16-123",
+					"shapeId": 123,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Our value proposition"
+				},
+				{
+					"id": "google-shape124p16-124",
+					"shapeId": 124,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 99,
+					"maxListItems": 4,
+					"sampleText": "Luxe Hotel delivers a premium yet approachable stay through:\nthoughtfully designed spaces, \nattentive service, and \nflexible offerings that adapt to every type of visit."
+				},
+				{
+					"id": "google-shape125p16-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				},
+				{
+					"id": "google-shape127p16-127",
+					"shapeId": 127,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape133p17-133",
+					"shapeId": 133,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "Ideal guest profile"
+				},
+				{
+					"id": "google-shape134p17-134",
+					"shapeId": 134,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 84,
+					"maxListItems": 5,
+					"sampleText": "Our ideal guest...\nBooks for business or city getaways\nExpects seamless booking and check-in\nValues comfort, efficiency, and modern amenities\nAppreciates consistent, thoughtful service"
+				},
+				{
+					"id": "google-shape135p17-135",
+					"shapeId": 135,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				},
+				{
+					"id": "google-shape136p17-136",
+					"shapeId": 136,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape137p17-137",
+					"shapeId": 137,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape138p17-138",
+					"shapeId": 138,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape149p18-149",
+					"shapeId": 149,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "How we attract demand"
+				},
+				{
+					"id": "google-shape150p18-150",
+					"shapeId": 150,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 76,
+					"sampleText": "Focus on the experience, not just features"
+				},
+				{
+					"id": "google-shape151p18-151",
+					"shapeId": 151,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 85,
+					"sampleText": "Highlight atmosphere, location, and guest moments"
+				},
+				{
+					"id": "google-shape152p18-152",
+					"shapeId": 152,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Help guests visualize their stay before booking"
+				},
+				{
+					"id": "google-shape153p18-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape163p19-163",
+					"shapeId": 163,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape166p19-166",
+					"shapeId": 166,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape169p19-169",
+					"shapeId": 169,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape170p19-170",
+					"shapeId": 170,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 66,
+					"sampleText": "How demand becomes confirmed stays"
+				},
+				{
+					"id": "google-shape171p19-171",
+					"shapeId": 171,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Showcase destination\nand hotel experience"
+				},
+				{
+					"id": "google-shape172p19-172",
+					"shapeId": 172,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 57,
+					"maxListItems": 2,
+					"sampleText": "Highlight rooms, amenities,\nand benefits"
+				},
+				{
+					"id": "google-shape173p19-173",
+					"shapeId": 173,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Encourage direct bookings\nwith clear offers"
+				},
+				{
+					"id": "google-shape174p19-174",
+					"shapeId": 174,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Awareness"
+				},
+				{
+					"id": "google-shape175p19-175",
+					"shapeId": 175,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Consideration"
+				},
+				{
+					"id": "google-shape176p19-176",
+					"shapeId": 176,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Booking-ready"
+				},
+				{
+					"id": "google-shape178p19-178",
+					"shapeId": 178,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Guest journey funnel"
+				},
+				{
+					"id": "google-shape179p19-179",
+					"shapeId": 179,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				},
+				{
+					"id": "google-shape180p19-180",
+					"shapeId": 180,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape189p20-189",
+					"shapeId": 189,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape190p20-190",
+					"shapeId": 190,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape191p20-191",
+					"shapeId": 191,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Group and event leads"
+				},
+				{
+					"id": "google-shape195p20-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape196p20-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape197p20-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Direct website inquiries"
+				},
+				{
+					"id": "google-shape198p20-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Where bookings come from"
+				},
+				{
+					"id": "google-shape199p20-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Prospecting strategy"
+				},
+				{
+					"id": "google-shape203p20-203",
+					"shapeId": 203,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape204p20-204",
+					"shapeId": 204,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape205p20-205",
+					"shapeId": 205,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Corporate partnerships"
+				},
+				{
+					"id": "google-shape209p20-209",
+					"shapeId": 209,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape210p20-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape211p20-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 57,
+					"sampleText": "Referrals and repeat guests"
+				},
+				{
+					"id": "google-shape212p20-212",
+					"shapeId": 212,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape220p21-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape221p21-221",
+					"shapeId": 221,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape222p21-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Sales action plan"
+				},
+				{
+					"id": "google-shape223p21-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "Generate qualified demand"
+				},
+				{
+					"id": "google-shape224p21-224",
+					"shapeId": 224,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 157,
+					"maxListItems": 2,
+					"sampleText": "Focus marketing and partnerships\non high-value leisure and group segments to drive inquiries that align with pricing and availability goals."
+				},
+				{
+					"id": "google-shape225p21-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Step 1"
+				},
+				{
+					"id": "google-shape230p21-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape231p21-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape232p21-232",
+					"shapeId": 232,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Deliver and retain"
+				},
+				{
+					"id": "google-shape233p21-233",
+					"shapeId": 233,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 146,
+					"sampleText": "Ensure a smooth stay experience that encourages repeat bookings, referrals, and long-term loyalty."
+				},
+				{
+					"id": "google-shape234p21-234",
+					"shapeId": 234,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Step 3"
+				},
+				{
+					"id": "google-shape238p21-238",
+					"shapeId": 238,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape239p21-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape240p21-240",
+					"shapeId": 240,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "Convert inquiries efficiently"
+				},
+				{
+					"id": "google-shape241p21-241",
+					"shapeId": 241,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 131,
+					"sampleText": "Respond quickly with clear rates and flexible options to help guests confidently book."
+				},
+				{
+					"id": "google-shape242p21-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Step 2"
+				},
+				{
+					"id": "google-shape243p21-243",
+					"shapeId": 243,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape248p22-248",
+					"shapeId": 248,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape249p22-249",
+					"shapeId": 249,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Team roles by funnel stage"
+				},
+				{
+					"id": "google-shape251p22-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Sales funnel ownership"
+				},
+				{
+					"id": "google-shape253p22-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape260p23-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape263p23-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape266p23-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape269p23-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape270p23-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape271p23-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape272p23-272",
+					"shapeId": 272,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape273p23-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape278p23-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "What we offer"
+				},
+				{
+					"id": "google-shape279p23-279",
+					"shapeId": 279,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 129,
+					"sampleText": "Comfortable, flexible stays with thoughtful service that guests enjoy coming back to"
+				},
+				{
+					"id": "google-shape281p23-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Who we focus on"
+				},
+				{
+					"id": "google-shape282p23-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 144,
+					"sampleText": "Leisure travelers, business guests, and small groups that best fit our rooms, rates, and seasons"
+				},
+				{
+					"id": "google-shape284p23-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "How guests move to booking"
+				},
+				{
+					"id": "google-shape285p23-285",
+					"shapeId": 285,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 100,
+					"sampleText": "Through clear marketing, quick responses, and relevant offers"
+				},
+				{
+					"id": "google-shape287p23-287",
+					"shapeId": 287,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 57,
+					"sampleText": "How the team works together"
+				},
+				{
+					"id": "google-shape288p23-288",
+					"shapeId": 288,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 140,
+					"sampleText": "Marketing, sales, and operations each own a clear role in turning demand into confirmed stays"
+				},
+				{
+					"id": "google-shape289p23-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Summary"
+				},
+				{
+					"id": "google-shape290p23-290",
+					"shapeId": 290,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Back to Overview page"
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape299p24-299",
+					"shapeId": 299,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape300p24-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape301p24-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Thank you!"
+				},
+				{
+					"id": "google-shape302p24-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 87,
+					"sampleText": "Feel free to approach us if you have any questions."
+				},
+				{
+					"id": "google-shape305p24-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Luxe Hotel"
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape312p25-312",
+					"shapeId": 312,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape313p25-313",
+					"shapeId": 313,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape315p25-315",
+					"shapeId": 315,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape316p25-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape318p25-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape319p25-319",
+					"shapeId": 319,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape321p25-321",
+					"shapeId": 321,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape322p25-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Design Elements / Icons"
+				},
+				{
+					"id": "google-shape324p25-324",
+					"shapeId": 324,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape325p25-325",
+					"shapeId": 325,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				},
+				{
+					"id": "google-shape327p25-327",
+					"shapeId": 327,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape328p25-328",
+					"shapeId": 328,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape330p25-330",
+					"shapeId": 330,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape331p25-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape333p25-333",
+					"shapeId": 333,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape334p25-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape336p25-336",
+					"shapeId": 336,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape337p25-337",
+					"shapeId": 337,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape339p25-339",
+					"shapeId": 339,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape340p25-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape347p25-347",
+					"shapeId": 347,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape348p25-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape349p25-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape350p25-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape352p25-352",
+					"shapeId": 352,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape353p25-353",
+					"shapeId": 353,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape354p25-354",
+					"shapeId": 354,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 66,
+					"sampleText": "Noto Serif Display Extra Condensed"
+				},
+				{
+					"id": "google-shape355p25-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Crimson Pro"
+				},
+				{
+					"id": "google-shape356p25-356",
+					"shapeId": 356,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "TITLES:"
+				},
+				{
+					"id": "google-shape357p25-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "BODY TEXT:"
+				},
+				{
+					"id": "google-shape358p25-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#FDF6E5"
+				},
+				{
+					"id": "google-shape359p25-359",
+					"shapeId": 359,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#D6AF4C"
+				},
+				{
+					"id": "google-shape360p25-360",
+					"shapeId": 360,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#243D16"
+				},
+				{
+					"id": "google-shape361p25-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#485B3D"
+				},
+				{
+					"id": "google-shape362p25-362",
+					"shapeId": 362,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#778B6C"
+				},
+				{
+					"id": "google-shape363p25-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 119,
+					"sampleText": "Use these in your presentation. Delete or hide this page before presenting."
+				},
+				{
+					"id": "google-shape364p25-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "closing",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape369p26-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape373p26-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape374p26-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape378p26-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape379p26-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape380p26-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "for this presentation template"
+				},
+				{
+					"id": "google-shape381p26-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 124,
+					"sampleText": "This presentation template is free for everyone to use, thanks to the following:"
+				},
+				{
+					"id": "google-shape382p26-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape383p26-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "for the photos, graphics, and elements"
+				},
+				{
+					"id": "google-shape384p26-384",
+					"shapeId": 384,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Pexels, Pixabay, Sketchify"
+				},
+				{
+					"id": "google-shape387p26-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Luxe Hotel"
+				},
+				{
+					"id": "google-shape389p26-389",
+					"shapeId": 389,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

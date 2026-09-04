@@ -1,0 +1,3092 @@
+{
+	"manifestVersion": 1,
+	"templateId": "fun-doodles-welcome-to-math-class",
+	"templateVersion": 1,
+	"sha256": "606ac28f14328a2f4f7817e22c88086f6bf27832b60b142c58b25c62871a3876",
+	"widthEmu": 9144000,
+	"heightEmu": 5143500,
+	"slideCount": 28,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape72p11-72",
+					"shapeId": 72,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 39,
+					"maxListItems": 3,
+					"sampleText": "Welcome to\nMath Class\nPresentation"
+				},
+				{
+					"id": "google-shape73p11-73",
+					"shapeId": 73,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape74p11-74",
+					"shapeId": 74,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape75p11-75",
+					"shapeId": 75,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape76p11-76",
+					"shapeId": 76,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape77p11-77",
+					"shapeId": 77,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape78p11-78",
+					"shapeId": 78,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape79p11-79",
+					"shapeId": 79,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape85p12-85",
+					"shapeId": 85,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 110,
+					"maxListItems": 4,
+					"sampleText": "Click on the \"Google Slides\" button below this presentation preview. \nClick on \"Make a copy.\"\nStart editing your presentation.\nYou need to sign in to your Google account."
+				},
+				{
+					"id": "google-shape86p12-86",
+					"shapeId": 86,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "GOOGLE SLIDES"
+				},
+				{
+					"id": "google-shape88p12-88",
+					"shapeId": 88,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 122,
+					"maxListItems": 3,
+					"sampleText": "Click on the \"PowerPoint\" button below this presentation preview. \nStart editing your presentation.\nDownload and install the fonts used in this presentation as listed on page 21."
+				},
+				{
+					"id": "google-shape89p12-89",
+					"shapeId": 89,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "POWERPOINT"
+				},
+				{
+					"id": "google-shape91p12-91",
+					"shapeId": 91,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 100,
+					"maxListItems": 3,
+					"sampleText": "Click on the \"Canva\" button under this presentation preview. \nStart editing your presentation.\nYou need to sign in to your Canva account."
+				},
+				{
+					"id": "google-shape92p12-92",
+					"shapeId": 92,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "CANVA"
+				},
+				{
+					"id": "google-shape94p12-94",
+					"shapeId": 94,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "How to Use This Presentation"
+				},
+				{
+					"id": "google-shape95p12-95",
+					"shapeId": 95,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape100p13-100",
+					"shapeId": 100,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape101p13-101",
+					"shapeId": 101,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape102p13-102",
+					"shapeId": 102,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Add an Agenda Page"
+				},
+				{
+					"id": "google-shape104p13-104",
+					"shapeId": 104,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape105p13-105",
+					"shapeId": 105,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape106p13-106",
+					"shapeId": 106,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape107p13-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape112p14-112",
+					"shapeId": 112,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write your topic or idea"
+				},
+				{
+					"id": "google-shape113p14-113",
+					"shapeId": 113,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape114p14-114",
+					"shapeId": 114,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape116p14-116",
+					"shapeId": 116,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape117p14-117",
+					"shapeId": 117,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape118p14-118",
+					"shapeId": 118,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape119p14-119",
+					"shapeId": 119,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape120p14-120",
+					"shapeId": 120,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape122p14-122",
+					"shapeId": 122,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape123p14-123",
+					"shapeId": 123,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape124p14-124",
+					"shapeId": 124,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape125p14-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape127p14-127",
+					"shapeId": 127,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape128p14-128",
+					"shapeId": 128,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape129p14-129",
+					"shapeId": 129,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape130p14-130",
+					"shapeId": 130,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape136p15-136",
+					"shapeId": 136,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Hello there!"
+				},
+				{
+					"id": "google-shape137p15-137",
+					"shapeId": 137,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 110,
+					"maxListItems": 2,
+					"sampleText": "I'm Rain, and I'll be sharing with\nyou my beautiful ideas. Follow me at @reallygreatsite to learn more."
+				},
+				{
+					"id": "google-shape138p15-138",
+					"shapeId": 138,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape139p15-139",
+					"shapeId": 139,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape140p15-140",
+					"shapeId": 140,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape141p15-141",
+					"shapeId": 141,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape142p15-142",
+					"shapeId": 142,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape143p15-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape144p15-144",
+					"shapeId": 144,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape145p15-145",
+					"shapeId": 145,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape146p15-146",
+					"shapeId": 146,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape152p16-152",
+					"shapeId": 152,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape153p16-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape154p16-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape155p16-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape161p17-161",
+					"shapeId": 161,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape162p17-162",
+					"shapeId": 162,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you\nwant to discuss."
+				},
+				{
+					"id": "google-shape163p17-163",
+					"shapeId": 163,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape165p17-165",
+					"shapeId": 165,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape166p17-166",
+					"shapeId": 166,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you\nwant to discuss."
+				},
+				{
+					"id": "google-shape167p17-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape168p17-168",
+					"shapeId": 168,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape173p18-173",
+					"shapeId": 173,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape175p18-175",
+					"shapeId": 175,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape176p18-176",
+					"shapeId": 176,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "1"
+				},
+				{
+					"id": "google-shape178p18-178",
+					"shapeId": 178,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape179p18-179",
+					"shapeId": 179,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "2"
+				},
+				{
+					"id": "google-shape181p18-181",
+					"shapeId": 181,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape182p18-182",
+					"shapeId": 182,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "3"
+				},
+				{
+					"id": "google-shape184p18-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape185p18-185",
+					"shapeId": 185,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you\nwant to discuss."
+				},
+				{
+					"id": "google-shape187p18-187",
+					"shapeId": 187,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape188p18-188",
+					"shapeId": 188,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you\nwant to discuss."
+				},
+				{
+					"id": "google-shape190p18-190",
+					"shapeId": 190,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape191p18-191",
+					"shapeId": 191,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you\nwant to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape196p19-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape198p19-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape199p19-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape201p19-201",
+					"shapeId": 201,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape202p19-202",
+					"shapeId": 202,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape204p19-204",
+					"shapeId": 204,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape205p19-205",
+					"shapeId": 205,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape207p19-207",
+					"shapeId": 207,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape208p19-208",
+					"shapeId": 208,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape210p19-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape211p19-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape213p19-213",
+					"shapeId": 213,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape214p19-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape215p19-215",
+					"shapeId": 215,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape216p19-216",
+					"shapeId": 216,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape217p19-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape218p19-218",
+					"shapeId": 218,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape219p19-219",
+					"shapeId": 219,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "section",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape224p20-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape225p20-225",
+					"shapeId": 225,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape230p21-230",
+					"shapeId": 230,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 42,
+					"maxListItems": 2,
+					"sampleText": "Write a caption\nfor the photos."
+				},
+				{
+					"id": "google-shape231p21-231",
+					"shapeId": 231,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape232p21-232",
+					"shapeId": 232,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape233p21-233",
+					"shapeId": 233,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape234p21-234",
+					"shapeId": 234,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape235p21-235",
+					"shapeId": 235,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape236p21-236",
+					"shapeId": 236,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape237p21-237",
+					"shapeId": 237,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape243p22-243",
+					"shapeId": 243,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "Include a citation or supporting message"
+				},
+				{
+					"id": "google-shape244p22-244",
+					"shapeId": 244,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "Write an original statement or inspiring quote"
+				},
+				{
+					"id": "google-shape245p22-245",
+					"shapeId": 245,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape246p22-246",
+					"shapeId": 246,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape247p22-247",
+					"shapeId": 247,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape248p22-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape254p23-254",
+					"shapeId": 254,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Add a Team Members Page"
+				},
+				{
+					"id": "google-shape255p23-255",
+					"shapeId": 255,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape256p23-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape258p23-258",
+					"shapeId": 258,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape259p23-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape260p23-260",
+					"shapeId": 260,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape262p23-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape263p23-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape264p23-264",
+					"shapeId": 264,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape266p23-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape267p23-267",
+					"shapeId": 267,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape268p23-268",
+					"shapeId": 268,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape270p23-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape271p23-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape272p23-272",
+					"shapeId": 272,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape277p24-277",
+					"shapeId": 277,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape278p24-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape279p24-279",
+					"shapeId": 279,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape280p24-280",
+					"shapeId": 280,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 41,
+					"maxListItems": 2,
+					"sampleText": "Add a \nSection Header"
+				},
+				{
+					"id": "google-shape281p24-281",
+					"shapeId": 281,
+					"placeholder": "sldNum",
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "section",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape287p25-287",
+					"shapeId": 287,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape288p25-288",
+					"shapeId": 288,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Write Your Big Topic or Idea"
+				},
+				{
+					"id": "google-shape289p25-289",
+					"shapeId": 289,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape294p26-294",
+					"shapeId": 294,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape295p26-295",
+					"shapeId": 295,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape296p26-296",
+					"shapeId": 296,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape297p26-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape302p27-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape303p27-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "123,456,789"
+				},
+				{
+					"id": "google-shape304p27-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape310p28-310",
+					"shapeId": 310,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "2 out 5"
+				},
+				{
+					"id": "google-shape311p28-311",
+					"shapeId": 311,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape312p28-312",
+					"shapeId": 312,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "95%"
+				},
+				{
+					"id": "google-shape313p28-313",
+					"shapeId": 313,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape314p28-314",
+					"shapeId": 314,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "123 million"
+				},
+				{
+					"id": "google-shape315p28-315",
+					"shapeId": 315,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape316p28-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape317p28-317",
+					"shapeId": 317,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "content",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape323p29-323",
+					"shapeId": 323,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Thank you!"
+				},
+				{
+					"id": "google-shape324p29-324",
+					"shapeId": 324,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 85,
+					"sampleText": "Write a closing statement or call-to-action here."
+				},
+				{
+					"id": "google-shape325p29-325",
+					"shapeId": 325,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape326p29-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape327p29-327",
+					"shapeId": 327,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape328p29-328",
+					"shapeId": 328,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "content",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape333p30-333",
+					"shapeId": 333,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape334p30-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape336p30-336",
+					"shapeId": 336,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 134,
+					"sampleText": "Special thanks to all the people who made and released these awesome resources for free:"
+				},
+				{
+					"id": "google-shape337p30-337",
+					"shapeId": 337,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 72,
+					"maxListItems": 2,
+					"sampleText": "Presentation template by SlidesCarnival\nPhotographs by Pexels"
+				},
+				{
+					"id": "google-shape338p30-338",
+					"shapeId": 338,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape339p30-339",
+					"shapeId": 339,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape340p30-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-21",
+			"role": "content",
+			"sourceSlide": 21,
+			"partName": "ppt/slides/slide21.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape345p31-345",
+					"shapeId": 345,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape346p31-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Fonts In this Presentation"
+				},
+				{
+					"id": "google-shape348p31-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "This presentation template uses the following fonts:"
+				},
+				{
+					"id": "google-shape349p31-349",
+					"shapeId": 349,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 47,
+					"maxListItems": 3,
+					"sampleText": "Titles: Gaegu Bold\nHeaders: Gaegu Bold\nBody Copy: Nunito"
+				},
+				{
+					"id": "google-shape350p31-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "You can find these fonts online too. Happy designing!"
+				},
+				{
+					"id": "google-shape351p31-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape352p31-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-22",
+			"role": "content",
+			"sourceSlide": 22,
+			"partName": "ppt/slides/slide22.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape359p32-359",
+					"shapeId": 359,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "Add a\nmain point"
+				},
+				{
+					"id": "google-shape360p32-360",
+					"shapeId": 360,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape362p32-362",
+					"shapeId": 362,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "Add a\nmain point"
+				},
+				{
+					"id": "google-shape363p32-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape365p32-365",
+					"shapeId": 365,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "Add a\nmain point"
+				},
+				{
+					"id": "google-shape366p32-366",
+					"shapeId": 366,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape368p32-368",
+					"shapeId": 368,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "Add a\nmain point"
+				},
+				{
+					"id": "google-shape369p32-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape370p32-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape371p32-371",
+					"shapeId": 371,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape372p32-372",
+					"shapeId": 372,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape373p32-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape374p32-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "Add a Timeline Page"
+				}
+			]
+		},
+		{
+			"id": "slide-23",
+			"role": "content",
+			"sourceSlide": 23,
+			"partName": "ppt/slides/slide23.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape380p33-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "STRENGTHS"
+				},
+				{
+					"id": "google-shape381p33-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 117,
+					"sampleText": "What are you doing well? What sets you apart? What are your good qualities?"
+				},
+				{
+					"id": "google-shape382p33-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape383p33-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "S"
+				},
+				{
+					"id": "google-shape385p33-385",
+					"shapeId": 385,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "WEAKNESSES"
+				},
+				{
+					"id": "google-shape386p33-386",
+					"shapeId": 386,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 134,
+					"sampleText": "Where do you need to improve? Are resources adequate? What do others do better than you?"
+				},
+				{
+					"id": "google-shape387p33-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape388p33-388",
+					"shapeId": 388,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "W"
+				},
+				{
+					"id": "google-shape390p33-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "OPPORTUNITIES"
+				},
+				{
+					"id": "google-shape391p33-391",
+					"shapeId": 391,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 106,
+					"sampleText": "What are your goals? Are demands shifting? How can it be improved?"
+				},
+				{
+					"id": "google-shape392p33-392",
+					"shapeId": 392,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape393p33-393",
+					"shapeId": 393,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "O"
+				},
+				{
+					"id": "google-shape395p33-395",
+					"shapeId": 395,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "THREATS"
+				},
+				{
+					"id": "google-shape396p33-396",
+					"shapeId": 396,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 121,
+					"sampleText": "What are the blockers you're facing? What are factors outside of your control?"
+				},
+				{
+					"id": "google-shape397p33-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape398p33-398",
+					"shapeId": 398,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "T"
+				}
+			]
+		},
+		{
+			"id": "slide-24",
+			"role": "content",
+			"sourceSlide": 24,
+			"partName": "ppt/slides/slide24.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape404p34-404",
+					"shapeId": 404,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 1"
+				},
+				{
+					"id": "google-shape405p34-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 2"
+				},
+				{
+					"id": "google-shape406p34-406",
+					"shapeId": 406,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 3"
+				},
+				{
+					"id": "google-shape407p34-407",
+					"shapeId": 407,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 4"
+				},
+				{
+					"id": "google-shape408p34-408",
+					"shapeId": 408,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 5"
+				},
+				{
+					"id": "google-shape416p34-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "25"
+				},
+				{
+					"id": "google-shape417p34-417",
+					"shapeId": 417,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "20"
+				},
+				{
+					"id": "google-shape418p34-418",
+					"shapeId": 418,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "15"
+				},
+				{
+					"id": "google-shape419p34-419",
+					"shapeId": 419,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "10"
+				},
+				{
+					"id": "google-shape420p34-420",
+					"shapeId": 420,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "5"
+				},
+				{
+					"id": "google-shape421p34-421",
+					"shapeId": 421,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "0"
+				},
+				{
+					"id": "google-shape423p34-423",
+					"shapeId": 423,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape424p34-424",
+					"shapeId": 424,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape425p34-425",
+					"shapeId": 425,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape426p34-426",
+					"shapeId": 426,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape427p34-427",
+					"shapeId": 427,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape429p34-429",
+					"shapeId": 429,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape430p34-430",
+					"shapeId": 430,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape431p34-431",
+					"shapeId": 431,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape432p34-432",
+					"shapeId": 432,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-25",
+			"role": "content",
+			"sourceSlide": 25,
+			"partName": "ppt/slides/slide25.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape447p35-447",
+					"shapeId": 447,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape448p35-448",
+					"shapeId": 448,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape449p35-449",
+					"shapeId": 449,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape450p35-450",
+					"shapeId": 450,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape452p35-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape453p35-453",
+					"shapeId": 453,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape454p35-454",
+					"shapeId": 454,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape455p35-455",
+					"shapeId": 455,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape457p35-457",
+					"shapeId": 457,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape458p35-458",
+					"shapeId": 458,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape459p35-459",
+					"shapeId": 459,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape460p35-460",
+					"shapeId": 460,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape462p35-462",
+					"shapeId": 462,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape463p35-463",
+					"shapeId": 463,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape464p35-464",
+					"shapeId": 464,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape465p35-465",
+					"shapeId": 465,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape467p35-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape468p35-468",
+					"shapeId": 468,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape469p35-469",
+					"shapeId": 469,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape470p35-470",
+					"shapeId": 470,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape472p35-472",
+					"shapeId": 472,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape473p35-473",
+					"shapeId": 473,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape474p35-474",
+					"shapeId": 474,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape475p35-475",
+					"shapeId": 475,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape477p35-477",
+					"shapeId": 477,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape478p35-478",
+					"shapeId": 478,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape479p35-479",
+					"shapeId": 479,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape480p35-480",
+					"shapeId": 480,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Job Title"
+				},
+				{
+					"id": "google-shape481p35-481",
+					"shapeId": 481,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a Chart Page"
+				},
+				{
+					"id": "google-shape482p35-482",
+					"shapeId": 482,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-26",
+			"role": "content",
+			"sourceSlide": 26,
+			"partName": "ppt/slides/slide26.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape487p36-487",
+					"shapeId": 487,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 35,
+					"maxListItems": 3,
+					"sampleText": "Icons\nResource \nPage"
+				},
+				{
+					"id": "google-shape488p36-488",
+					"shapeId": 488,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 106,
+					"maxListItems": 3,
+					"sampleText": "Use these design resources in your Presentation. Happy designing! \n\nDon't forget to delete this page before presenting."
+				},
+				{
+					"id": "google-shape489p36-489",
+					"shapeId": 489,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape490p36-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape491p36-491",
+					"shapeId": 491,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape492p36-492",
+					"shapeId": 492,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape493p36-493",
+					"shapeId": 493,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape494p36-494",
+					"shapeId": 494,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape495p36-495",
+					"shapeId": 495,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape496p36-496",
+					"shapeId": 496,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape497p36-497",
+					"shapeId": 497,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape498p36-498",
+					"shapeId": 498,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape499p36-499",
+					"shapeId": 499,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape500p36-500",
+					"shapeId": 500,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape501p36-501",
+					"shapeId": 501,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape502p36-502",
+					"shapeId": 502,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape503p36-503",
+					"shapeId": 503,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape504p36-504",
+					"shapeId": 504,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape505p36-505",
+					"shapeId": 505,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape506p36-506",
+					"shapeId": 506,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape507p36-507",
+					"shapeId": 507,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape508p36-508",
+					"shapeId": 508,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape509p36-509",
+					"shapeId": 509,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape510p36-510",
+					"shapeId": 510,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape511p36-511",
+					"shapeId": 511,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape512p36-512",
+					"shapeId": 512,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape513p36-513",
+					"shapeId": 513,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape514p36-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape515p36-515",
+					"shapeId": 515,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape516p36-516",
+					"shapeId": 516,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape517p36-517",
+					"shapeId": 517,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape518p36-518",
+					"shapeId": 518,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape519p36-519",
+					"shapeId": 519,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape520p36-520",
+					"shapeId": 520,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape521p36-521",
+					"shapeId": 521,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape522p36-522",
+					"shapeId": 522,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape523p36-523",
+					"shapeId": 523,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape524p36-524",
+					"shapeId": 524,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape525p36-525",
+					"shapeId": 525,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape526p36-526",
+					"shapeId": 526,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape527p36-527",
+					"shapeId": 527,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape528p36-528",
+					"shapeId": 528,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape529p36-529",
+					"shapeId": 529,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape530p36-530",
+					"shapeId": 530,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape531p36-531",
+					"shapeId": 531,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape532p36-532",
+					"shapeId": 532,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape533p36-533",
+					"shapeId": 533,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape534p36-534",
+					"shapeId": 534,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape535p36-535",
+					"shapeId": 535,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape536p36-536",
+					"shapeId": 536,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape537p36-537",
+					"shapeId": 537,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape538p36-538",
+					"shapeId": 538,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape539p36-539",
+					"shapeId": 539,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape540p36-540",
+					"shapeId": 540,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape541p36-541",
+					"shapeId": 541,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape542p36-542",
+					"shapeId": 542,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape543p36-543",
+					"shapeId": 543,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape544p36-544",
+					"shapeId": 544,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape545p36-545",
+					"shapeId": 545,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape546p36-546",
+					"shapeId": 546,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape547p36-547",
+					"shapeId": 547,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape548p36-548",
+					"shapeId": 548,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape549p36-549",
+					"shapeId": 549,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape550p36-550",
+					"shapeId": 550,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape551p36-551",
+					"shapeId": 551,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape552p36-552",
+					"shapeId": 552,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape553p36-553",
+					"shapeId": 553,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape554p36-554",
+					"shapeId": 554,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape555p36-555",
+					"shapeId": 555,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape556p36-556",
+					"shapeId": 556,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape557p36-557",
+					"shapeId": 557,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape558p36-558",
+					"shapeId": 558,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape559p36-559",
+					"shapeId": 559,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape560p36-560",
+					"shapeId": 560,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape561p36-561",
+					"shapeId": 561,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape562p36-562",
+					"shapeId": 562,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape563p36-563",
+					"shapeId": 563,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape564p36-564",
+					"shapeId": 564,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape565p36-565",
+					"shapeId": 565,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape566p36-566",
+					"shapeId": 566,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape567p36-567",
+					"shapeId": 567,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape568p36-568",
+					"shapeId": 568,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape569p36-569",
+					"shapeId": 569,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape570p36-570",
+					"shapeId": 570,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape571p36-571",
+					"shapeId": 571,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape572p36-572",
+					"shapeId": 572,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape573p36-573",
+					"shapeId": 573,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape574p36-574",
+					"shapeId": 574,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape575p36-575",
+					"shapeId": 575,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape576p36-576",
+					"shapeId": 576,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape577p36-577",
+					"shapeId": 577,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape578p36-578",
+					"shapeId": 578,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape579p36-579",
+					"shapeId": 579,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape580p36-580",
+					"shapeId": 580,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape581p36-581",
+					"shapeId": 581,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape582p36-582",
+					"shapeId": 582,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape583p36-583",
+					"shapeId": 583,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape584p36-584",
+					"shapeId": 584,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-27",
+			"role": "content",
+			"sourceSlide": 27,
+			"partName": "ppt/slides/slide27.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape589p37-589",
+					"shapeId": 589,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 35,
+					"maxListItems": 3,
+					"sampleText": "Elements\nResource \nPage"
+				},
+				{
+					"id": "google-shape590p37-590",
+					"shapeId": 590,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 106,
+					"maxListItems": 3,
+					"sampleText": "Use these design resources in your Presentation. Happy designing! \n\nDon't forget to delete this page before presenting."
+				},
+				{
+					"id": "google-shape591p37-591",
+					"shapeId": 591,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape592p37-592",
+					"shapeId": 592,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape593p37-593",
+					"shapeId": 593,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape594p37-594",
+					"shapeId": 594,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape595p37-595",
+					"shapeId": 595,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape596p37-596",
+					"shapeId": 596,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape597p37-597",
+					"shapeId": 597,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape598p37-598",
+					"shapeId": 598,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape599p37-599",
+					"shapeId": 599,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape600p37-600",
+					"shapeId": 600,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape601p37-601",
+					"shapeId": 601,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape602p37-602",
+					"shapeId": 602,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape603p37-603",
+					"shapeId": 603,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape604p37-604",
+					"shapeId": 604,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape605p37-605",
+					"shapeId": 605,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape606p37-606",
+					"shapeId": 606,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape607p37-607",
+					"shapeId": 607,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape608p37-608",
+					"shapeId": 608,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape609p37-609",
+					"shapeId": 609,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape610p37-610",
+					"shapeId": 610,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape611p37-611",
+					"shapeId": 611,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape612p37-612",
+					"shapeId": 612,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape613p37-613",
+					"shapeId": 613,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape614p37-614",
+					"shapeId": 614,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape615p37-615",
+					"shapeId": 615,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-28",
+			"role": "closing",
+			"sourceSlide": 28,
+			"partName": "ppt/slides/slide28.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape620p38-620",
+					"shapeId": 620,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape621p38-621",
+					"shapeId": 621,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "Free templates for all your presentation needs"
+				},
+				{
+					"id": "google-shape624p38-624",
+					"shapeId": 624,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 77,
+					"sampleText": "Ready to use, professional and customizable"
+				},
+				{
+					"id": "google-shape625p38-625",
+					"shapeId": 625,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape627p38-627",
+					"shapeId": 627,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "100% free for personal or commercial use"
+				},
+				{
+					"id": "google-shape628p38-628",
+					"shapeId": 628,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape630p38-630",
+					"shapeId": 630,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Blow your audience away with attractive visuals"
+				},
+				{
+					"id": "google-shape631p38-631",
+					"shapeId": 631,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape633p38-633",
+					"shapeId": 633,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "For PowerPoint and Google Slides"
+				},
+				{
+					"id": "google-shape634p38-634",
+					"shapeId": 634,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		}
+	]
+}

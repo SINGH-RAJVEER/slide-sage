@@ -1,0 +1,1618 @@
+{
+	"manifestVersion": 1,
+	"templateId": "stocks-trading-business-plan",
+	"templateVersion": 1,
+	"sha256": "f441009a5a41e23f6c601d14aa5e8be936dbabad9151e72a392194d9e293d521",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 17,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape183p18-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape184p18-184",
+					"shapeId": 184,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape185p18-185",
+					"shapeId": 185,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "STOCKS TRADING"
+				},
+				{
+					"id": "google-shape186p18-186",
+					"shapeId": 186,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "BUSINESS PLAN"
+				},
+				{
+					"id": "google-shape187p18-187",
+					"shapeId": 187,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape188p18-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "04.05.24"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape195p19-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape196p19-196",
+					"shapeId": 196,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape197p19-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "OUR COMPANY"
+				},
+				{
+					"id": "google-shape198p19-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape199p19-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				},
+				{
+					"id": "google-shape200p19-200",
+					"shapeId": 200,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				},
+				{
+					"id": "google-shape201p19-201",
+					"shapeId": 201,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				},
+				{
+					"id": "google-shape202p19-202",
+					"shapeId": 202,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "BRIEF HISTORY"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape209p20-209",
+					"shapeId": 209,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape213p20-213",
+					"shapeId": 213,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape216p20-216",
+					"shapeId": 216,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape219p20-219",
+					"shapeId": 219,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape222p20-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape223p20-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "WHAT WE DO"
+				},
+				{
+					"id": "google-shape224p20-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				},
+				{
+					"id": "google-shape225p20-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 01"
+				},
+				{
+					"id": "google-shape226p20-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				},
+				{
+					"id": "google-shape227p20-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 02"
+				},
+				{
+					"id": "google-shape228p20-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				},
+				{
+					"id": "google-shape229p20-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 03"
+				},
+				{
+					"id": "google-shape230p20-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				},
+				{
+					"id": "google-shape231p20-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 04"
+				},
+				{
+					"id": "google-shape232p20-232",
+					"shapeId": 232,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape237p21-237",
+					"shapeId": 237,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape238p21-238",
+					"shapeId": 238,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape239p21-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape240p21-240",
+					"shapeId": 240,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				},
+				{
+					"id": "google-shape241p21-241",
+					"shapeId": 241,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape246p22-246",
+					"shapeId": 246,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape249p22-249",
+					"shapeId": 249,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape250p22-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape251p22-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "CONTENTS"
+				},
+				{
+					"id": "google-shape252p22-252",
+					"shapeId": 252,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape253p22-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape254p22-254",
+					"shapeId": 254,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape255p22-255",
+					"shapeId": 255,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape256p22-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape257p22-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape258p22-258",
+					"shapeId": 258,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "04"
+				},
+				{
+					"id": "google-shape259p22-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape260p22-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "05"
+				},
+				{
+					"id": "google-shape261p22-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape262p22-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "06"
+				},
+				{
+					"id": "google-shape263p22-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape264p22-264",
+					"shapeId": 264,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "07"
+				},
+				{
+					"id": "google-shape265p22-265",
+					"shapeId": 265,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape266p22-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "08"
+				},
+				{
+					"id": "google-shape267p22-267",
+					"shapeId": 267,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD SECTION HERE"
+				},
+				{
+					"id": "google-shape268p22-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape275p23-275",
+					"shapeId": 275,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape276p23-276",
+					"shapeId": 276,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape277p23-277",
+					"shapeId": 277,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "MARKET ANALYSIS"
+				},
+				{
+					"id": "google-shape278p23-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape279p23-279",
+					"shapeId": 279,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 01"
+				},
+				{
+					"id": "google-shape280p23-280",
+					"shapeId": 280,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 02"
+				},
+				{
+					"id": "google-shape281p23-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 03"
+				},
+				{
+					"id": "google-shape282p23-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				},
+				{
+					"id": "google-shape283p23-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				},
+				{
+					"id": "google-shape284p23-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 287,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida. Placerat duis ultricies lacus sed turpis."
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape293p24-293",
+					"shapeId": 293,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape296p24-296",
+					"shapeId": 296,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape297p24-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "TIMELINE"
+				},
+				{
+					"id": "google-shape298p24-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 180,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape299p24-299",
+					"shapeId": 299,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 01"
+				},
+				{
+					"id": "google-shape300p24-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 180,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape301p24-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 02"
+				},
+				{
+					"id": "google-shape302p24-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 180,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape303p24-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 03"
+				},
+				{
+					"id": "google-shape304p24-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 180,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape305p24-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 04"
+				},
+				{
+					"id": "google-shape306p24-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape307p24-307",
+					"shapeId": 307,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape314p25-314",
+					"shapeId": 314,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape315p25-315",
+					"shapeId": 315,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape316p25-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape317p25-317",
+					"shapeId": 317,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape318p25-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "PROPOSALS"
+				},
+				{
+					"id": "google-shape319p25-319",
+					"shapeId": 319,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 01"
+				},
+				{
+					"id": "google-shape320p25-320",
+					"shapeId": 320,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 02"
+				},
+				{
+					"id": "google-shape321p25-321",
+					"shapeId": 321,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape322p25-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape329p26-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape330p26-330",
+					"shapeId": 330,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape331p26-331",
+					"shapeId": 331,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape332p26-332",
+					"shapeId": 332,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "COMPARE"
+				},
+				{
+					"id": "google-shape333p26-333",
+					"shapeId": 333,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape334p26-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape335p26-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "CONTRAST"
+				},
+				{
+					"id": "google-shape336p26-336",
+					"shapeId": 336,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape337p26-337",
+					"shapeId": 337,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape342p27-342",
+					"shapeId": 342,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape343p27-343",
+					"shapeId": 343,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape346p27-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape347p27-347",
+					"shapeId": 347,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "NUMBERS"
+				},
+				{
+					"id": "google-shape348p27-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape353p28-353",
+					"shapeId": 353,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "NUMBERS"
+				},
+				{
+					"id": "google-shape354p28-354",
+					"shapeId": 354,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape355p28-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape358p28-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape361p28-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape364p28-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape365p28-365",
+					"shapeId": 365,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape366p28-366",
+					"shapeId": 366,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape367p28-367",
+					"shapeId": 367,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape368p28-368",
+					"shapeId": 368,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 01"
+				},
+				{
+					"id": "google-shape369p28-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 02"
+				},
+				{
+					"id": "google-shape370p28-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "POINT 03"
+				},
+				{
+					"id": "google-shape371p28-371",
+					"shapeId": 371,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape378p29-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape379p29-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape380p29-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "NUMBERS"
+				},
+				{
+					"id": "google-shape381p29-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				},
+				{
+					"id": "google-shape382p29-382",
+					"shapeId": 382,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape387p30-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape390p30-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape391p30-391",
+					"shapeId": 391,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape392p30-392",
+					"shapeId": 392,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape393p30-393",
+					"shapeId": 393,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape394p30-394",
+					"shapeId": 394,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape395p30-395",
+					"shapeId": 395,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape396p30-396",
+					"shapeId": 396,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "PHOTO GALLERY"
+				},
+				{
+					"id": "google-shape397p30-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 236,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc aliquet bibendum enim facilisis gravida."
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape404p31-404",
+					"shapeId": 404,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape405p31-405",
+					"shapeId": 405,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape406p31-406",
+					"shapeId": 406,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape407p31-407",
+					"shapeId": 407,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape408p31-408",
+					"shapeId": 408,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape409p31-409",
+					"shapeId": 409,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "OUR TEAM"
+				},
+				{
+					"id": "google-shape410p31-410",
+					"shapeId": 410,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "NAME HERE"
+				},
+				{
+					"id": "google-shape411p31-411",
+					"shapeId": 411,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "POSITION OR TITLE HERE"
+				},
+				{
+					"id": "google-shape412p31-412",
+					"shapeId": 412,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				},
+				{
+					"id": "google-shape413p31-413",
+					"shapeId": 413,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "NAME HERE"
+				},
+				{
+					"id": "google-shape414p31-414",
+					"shapeId": 414,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "POSITION OR TITLE HERE"
+				},
+				{
+					"id": "google-shape415p31-415",
+					"shapeId": 415,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				},
+				{
+					"id": "google-shape416p31-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "NAME HERE"
+				},
+				{
+					"id": "google-shape417p31-417",
+					"shapeId": 417,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "POSITION OR TITLE HERE"
+				},
+				{
+					"id": "google-shape418p31-418",
+					"shapeId": 418,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, incididunt ut."
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape423p32-423",
+					"shapeId": 423,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape424p32-424",
+					"shapeId": 424,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "CONTACT US"
+				},
+				{
+					"id": "google-shape425p32-425",
+					"shapeId": 425,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "CANVA CORPORATION"
+				},
+				{
+					"id": "google-shape426p32-426",
+					"shapeId": 426,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "123-4567"
+				},
+				{
+					"id": "google-shape427p32-427",
+					"shapeId": 427,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "123 ANYWHERE ST. ANY CITY, 12345"
+				},
+				{
+					"id": "google-shape428p32-428",
+					"shapeId": 428,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "CANVACORP.COM"
+				},
+				{
+					"id": "google-shape429p32-429",
+					"shapeId": 429,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "CANVACORP@MAIL.COM.AU"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape435p33-435",
+					"shapeId": 435,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape436p33-436",
+					"shapeId": 436,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape438p33-438",
+					"shapeId": 438,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape439p33-439",
+					"shapeId": 439,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape441p33-441",
+					"shapeId": 441,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape442p33-442",
+					"shapeId": 442,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape444p33-444",
+					"shapeId": 444,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape445p33-445",
+					"shapeId": 445,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape447p33-447",
+					"shapeId": 447,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape448p33-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape450p33-450",
+					"shapeId": 450,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape451p33-451",
+					"shapeId": 451,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape453p33-453",
+					"shapeId": 453,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape454p33-454",
+					"shapeId": 454,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape456p33-456",
+					"shapeId": 456,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape457p33-457",
+					"shapeId": 457,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape458p33-458",
+					"shapeId": 458,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape459p33-459",
+					"shapeId": 459,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape460p33-460",
+					"shapeId": 460,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nROBOTO\n\nHEADERS:\nROBOTO\n\nBODY COPY:\nROBOTO"
+				},
+				{
+					"id": "google-shape461p33-461",
+					"shapeId": 461,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#7B5325"
+				},
+				{
+					"id": "google-shape462p33-462",
+					"shapeId": 462,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#2B1C09"
+				},
+				{
+					"id": "google-shape463p33-463",
+					"shapeId": 463,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#FFFFFF"
+				},
+				{
+					"id": "google-shape464p33-464",
+					"shapeId": 464,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape465p33-465",
+					"shapeId": 465,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "DON'T FORGET TO DELETE THIS PAGE BEFORE PRESENTING."
+				},
+				{
+					"id": "google-shape466p33-466",
+					"shapeId": 466,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "RESOURCE PAGE"
+				},
+				{
+					"id": "google-shape467p33-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape468p33-468",
+					"shapeId": 468,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape469p33-469",
+					"shapeId": 469,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				},
+				{
+					"id": "google-shape471p33-471",
+					"shapeId": 471,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape472p33-472",
+					"shapeId": 472,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape473p33-473",
+					"shapeId": 473,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#DFC7AB"
+				},
+				{
+					"id": "google-shape477p33-477",
+					"shapeId": 477,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "closing",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape484p34-484",
+					"shapeId": 484,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape485p34-485",
+					"shapeId": 485,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape486p34-486",
+					"shapeId": 486,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape487p34-487",
+					"shapeId": 487,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape488p34-488",
+					"shapeId": 488,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape489p34-489",
+					"shapeId": 489,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape490p34-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				}
+			]
+		}
+	]
+}

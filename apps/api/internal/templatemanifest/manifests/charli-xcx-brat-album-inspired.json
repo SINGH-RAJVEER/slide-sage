@@ -1,0 +1,2070 @@
+{
+	"manifestVersion": 1,
+	"templateId": "charli-xcx-brat-album-inspired",
+	"templateVersion": 1,
+	"sha256": "bb76954bcb48089091e081789f8944782f0f6efa6ad09122462c371ec3b13847",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 17,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape262p18-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape263p18-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape264p18-264",
+					"shapeId": 264,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape265p18-265",
+					"shapeId": 265,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape266p18-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape267p18-267",
+					"shapeId": 267,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape268p18-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape269p18-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape270p18-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape271p18-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape272p18-272",
+					"shapeId": 272,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape273p18-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape274p18-274",
+					"shapeId": 274,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape275p18-275",
+					"shapeId": 275,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape276p18-276",
+					"shapeId": 276,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape277p18-277",
+					"shapeId": 277,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape278p18-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape279p18-279",
+					"shapeId": 279,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape280p18-280",
+					"shapeId": 280,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape281p18-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape282p18-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape283p18-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape284p18-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape285p18-285",
+					"shapeId": 285,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape286p18-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape287p18-287",
+					"shapeId": 287,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape288p18-288",
+					"shapeId": 288,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape289p18-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape290p18-290",
+					"shapeId": 290,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape291p18-291",
+					"shapeId": 291,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape292p18-292",
+					"shapeId": 292,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape293p18-293",
+					"shapeId": 293,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape294p18-294",
+					"shapeId": 294,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape295p18-295",
+					"shapeId": 295,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape296p18-296",
+					"shapeId": 296,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Charli XCX"
+				},
+				{
+					"id": "google-shape297p18-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape298p18-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape299p18-299",
+					"shapeId": 299,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Album-Inspired Slides"
+				},
+				{
+					"id": "google-shape301p18-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "brat"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape308p19-308",
+					"shapeId": 308,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape310p19-310",
+					"shapeId": 310,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 39,
+					"maxListItems": 2,
+					"sampleText": "What is a \nbrat summer?"
+				},
+				{
+					"id": "google-shape311p19-311",
+					"shapeId": 311,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 465,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum. Odio himenaeos euismod sociosqu litora hac sed ornare lacus. Eleifend nisi libero phasellus bibendum class sagittis. Eros tempor rutrum aptent rutrum lacus eu nostra laoreet. Porta ac volutpat risus integer fusce tempus neque luctus."
+				},
+				{
+					"id": "google-shape314p19-314",
+					"shapeId": 314,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape317p19-317",
+					"shapeId": 317,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape320p19-320",
+					"shapeId": 320,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape323p19-323",
+					"shapeId": 323,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape329p20-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "tracklist"
+				},
+				{
+					"id": "google-shape330p20-330",
+					"shapeId": 330,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape331p20-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "360"
+				},
+				{
+					"id": "google-shape332p20-332",
+					"shapeId": 332,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape333p20-333",
+					"shapeId": 333,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Club Classics"
+				},
+				{
+					"id": "google-shape334p20-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape335p20-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "Sympathy Is a Knife"
+				},
+				{
+					"id": "google-shape336p20-336",
+					"shapeId": 336,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "04"
+				},
+				{
+					"id": "google-shape337p20-337",
+					"shapeId": 337,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "I Might Say Something Stupid"
+				},
+				{
+					"id": "google-shape338p20-338",
+					"shapeId": 338,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "05"
+				},
+				{
+					"id": "google-shape339p20-339",
+					"shapeId": 339,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Talk Talk"
+				},
+				{
+					"id": "google-shape340p20-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "06"
+				},
+				{
+					"id": "google-shape341p20-341",
+					"shapeId": 341,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Von Dutch"
+				},
+				{
+					"id": "google-shape342p20-342",
+					"shapeId": 342,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "07"
+				},
+				{
+					"id": "google-shape343p20-343",
+					"shapeId": 343,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Everything Is Romantic"
+				},
+				{
+					"id": "google-shape344p20-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "08"
+				},
+				{
+					"id": "google-shape345p20-345",
+					"shapeId": 345,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Rewind"
+				},
+				{
+					"id": "google-shape346p20-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "09"
+				},
+				{
+					"id": "google-shape347p20-347",
+					"shapeId": 347,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "So I"
+				},
+				{
+					"id": "google-shape348p20-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "10"
+				},
+				{
+					"id": "google-shape349p20-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Girl, so confusing"
+				},
+				{
+					"id": "google-shape350p20-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "11"
+				},
+				{
+					"id": "google-shape351p20-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Apple"
+				},
+				{
+					"id": "google-shape352p20-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "12"
+				},
+				{
+					"id": "google-shape353p20-353",
+					"shapeId": 353,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "B2b"
+				},
+				{
+					"id": "google-shape354p20-354",
+					"shapeId": 354,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "13"
+				},
+				{
+					"id": "google-shape355p20-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Mean Girls"
+				},
+				{
+					"id": "google-shape356p20-356",
+					"shapeId": 356,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "14"
+				},
+				{
+					"id": "google-shape357p20-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "I Think About It All the Time"
+				},
+				{
+					"id": "google-shape358p20-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "15"
+				},
+				{
+					"id": "google-shape359p20-359",
+					"shapeId": 359,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "365"
+				},
+				{
+					"id": "google-shape360p20-360",
+					"shapeId": 360,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "16"
+				},
+				{
+					"id": "google-shape361p20-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Hello Goodbye"
+				},
+				{
+					"id": "google-shape362p20-362",
+					"shapeId": 362,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "17"
+				},
+				{
+					"id": "google-shape363p20-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Guess"
+				},
+				{
+					"id": "google-shape364p20-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "18"
+				},
+				{
+					"id": "google-shape365p20-365",
+					"shapeId": 365,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Spring Breakers"
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape370p21-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "agenda"
+				},
+				{
+					"id": "google-shape378p21-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape379p21-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				},
+				{
+					"id": "google-shape380p21-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape382p21-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape383p21-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				},
+				{
+					"id": "google-shape384p21-384",
+					"shapeId": 384,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape386p21-386",
+					"shapeId": 386,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape387p21-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				},
+				{
+					"id": "google-shape388p21-388",
+					"shapeId": 388,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape396p22-396",
+					"shapeId": 396,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape397p22-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "timeline"
+				},
+				{
+					"id": "google-shape398p22-398",
+					"shapeId": 398,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape399p22-399",
+					"shapeId": 399,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape400p22-400",
+					"shapeId": 400,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape403p22-403",
+					"shapeId": 403,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape404p22-404",
+					"shapeId": 404,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape405p22-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape406p22-406",
+					"shapeId": 406,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape409p22-409",
+					"shapeId": 409,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape410p22-410",
+					"shapeId": 410,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape411p22-411",
+					"shapeId": 411,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape412p22-412",
+					"shapeId": 412,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape415p22-415",
+					"shapeId": 415,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape416p22-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "04"
+				},
+				{
+					"id": "google-shape417p22-417",
+					"shapeId": 417,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape418p22-418",
+					"shapeId": 418,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape427p23-427",
+					"shapeId": 427,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape428p23-428",
+					"shapeId": 428,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "add section here"
+				},
+				{
+					"id": "google-shape429p23-429",
+					"shapeId": 429,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "add section here"
+				},
+				{
+					"id": "google-shape430p23-430",
+					"shapeId": 430,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "add section here"
+				},
+				{
+					"id": "google-shape431p23-431",
+					"shapeId": 431,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "add section here"
+				},
+				{
+					"id": "google-shape447p23-447",
+					"shapeId": 447,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape450p23-450",
+					"shapeId": 450,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape453p23-453",
+					"shapeId": 453,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape459p24-459",
+					"shapeId": 459,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "i think the apple’s rotten right to the core..."
+				},
+				{
+					"id": "google-shape461p24-461",
+					"shapeId": 461,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape462p24-462",
+					"shapeId": 462,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape463p24-463",
+					"shapeId": 463,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 249,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum. Odio himenaeos euismod sociosqu litora hac sed ornare lacus."
+				},
+				{
+					"id": "google-shape465p24-465",
+					"shapeId": 465,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape466p24-466",
+					"shapeId": 466,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape467p24-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 249,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum. Odio himenaeos euismod sociosqu litora hac sed ornare lacus."
+				},
+				{
+					"id": "google-shape470p24-470",
+					"shapeId": 470,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape473p24-473",
+					"shapeId": 473,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape476p24-476",
+					"shapeId": 476,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape484p25-484",
+					"shapeId": 484,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape485p25-485",
+					"shapeId": 485,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 80,
+					"sampleText": "I wanna grow the apple, keep all the seeds..."
+				},
+				{
+					"id": "google-shape487p25-487",
+					"shapeId": 487,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape488p25-488",
+					"shapeId": 488,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape489p25-489",
+					"shapeId": 489,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape490p25-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape493p25-493",
+					"shapeId": 493,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape496p25-496",
+					"shapeId": 496,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape514p26-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "girl, you’re so confusing?"
+				},
+				{
+					"id": "google-shape515p26-515",
+					"shapeId": 515,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 250,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum. Odio himenaeos euismod sociosqu litora hac sed ornare lacus."
+				},
+				{
+					"id": "google-shape516p26-516",
+					"shapeId": 516,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 250,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum. Odio himenaeos euismod sociosqu litora hac sed ornare lacus."
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape524p27-524",
+					"shapeId": 524,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "everything is romantic..."
+				},
+				{
+					"id": "google-shape525p27-525",
+					"shapeId": 525,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape526p27-526",
+					"shapeId": 526,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape527p27-527",
+					"shapeId": 527,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape528p27-528",
+					"shapeId": 528,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape529p27-529",
+					"shapeId": 529,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape530p27-530",
+					"shapeId": 530,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape535p28-535",
+					"shapeId": 535,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 69,
+					"maxListItems": 7,
+					"sampleText": "you want to guess?\nyou want to guess?\nyou want to guess?\nyou want to guess?\nyou want to guess?\nyou want to guess?you want to guess?\nyou want to guess?"
+				},
+				{
+					"id": "google-shape538p28-538",
+					"shapeId": 538,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape539p28-539",
+					"shapeId": 539,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape541p28-541",
+					"shapeId": 541,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape542p28-542",
+					"shapeId": 542,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				},
+				{
+					"id": "google-shape544p28-544",
+					"shapeId": 544,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Subtitle here"
+				},
+				{
+					"id": "google-shape545p28-545",
+					"shapeId": 545,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 174,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum."
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape553p29-553",
+					"shapeId": 553,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape556p29-556",
+					"shapeId": 556,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape559p29-559",
+					"shapeId": 559,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape562p29-562",
+					"shapeId": 562,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape563p29-563",
+					"shapeId": 563,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "big numbers"
+				},
+				{
+					"id": "google-shape564p29-564",
+					"shapeId": 564,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 320,
+					"sampleText": "Lorem ipsum odor amet, consectetuer adipiscing elit. Ipsum risus lobortis cras interdum taciti semper proin vestibulum. Odio himenaeos euismod sociosqu litora hac sed ornare lacus. Eleifend nisi libero phasellus bibendum class sagittis."
+				},
+				{
+					"id": "google-shape566p29-566",
+					"shapeId": 566,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "1,000"
+				},
+				{
+					"id": "google-shape567p29-567",
+					"shapeId": 567,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				},
+				{
+					"id": "google-shape569p29-569",
+					"shapeId": 569,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "10,000"
+				},
+				{
+					"id": "google-shape570p29-570",
+					"shapeId": 570,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				},
+				{
+					"id": "google-shape572p29-572",
+					"shapeId": 572,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "100,000"
+				},
+				{
+					"id": "google-shape573p29-573",
+					"shapeId": 573,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				},
+				{
+					"id": "google-shape575p29-575",
+					"shapeId": 575,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "100"
+				},
+				{
+					"id": "google-shape576p29-576",
+					"shapeId": 576,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "title here"
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape581p30-581",
+					"shapeId": 581,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				},
+				{
+					"id": "google-shape582p30-582",
+					"shapeId": 582,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				},
+				{
+					"id": "google-shape583p30-583",
+					"shapeId": 583,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				},
+				{
+					"id": "google-shape584p30-584",
+					"shapeId": 584,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				},
+				{
+					"id": "google-shape585p30-585",
+					"shapeId": 585,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				},
+				{
+					"id": "google-shape586p30-586",
+					"shapeId": 586,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				},
+				{
+					"id": "google-shape587p30-587",
+					"shapeId": 587,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "fall in love again and again"
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape595p31-595",
+					"shapeId": 595,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "more photos here"
+				},
+				{
+					"id": "google-shape596p31-596",
+					"shapeId": 596,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "more photos here"
+				},
+				{
+					"id": "google-shape597p31-597",
+					"shapeId": 597,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "more photos here"
+				},
+				{
+					"id": "google-shape600p31-600",
+					"shapeId": 600,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "more photos here"
+				},
+				{
+					"id": "google-shape602p31-602",
+					"shapeId": 602,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "more photos here"
+				},
+				{
+					"id": "google-shape603p31-603",
+					"shapeId": 603,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "more photos here"
+				},
+				{
+					"id": "google-shape607p31-607",
+					"shapeId": 607,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape610p31-610",
+					"shapeId": 610,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape615p32-615",
+					"shapeId": 615,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape616p32-616",
+					"shapeId": 616,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape617p32-617",
+					"shapeId": 617,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape618p32-618",
+					"shapeId": 618,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape619p32-619",
+					"shapeId": 619,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape620p32-620",
+					"shapeId": 620,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape621p32-621",
+					"shapeId": 621,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape622p32-622",
+					"shapeId": 622,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape623p32-623",
+					"shapeId": 623,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape624p32-624",
+					"shapeId": 624,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape625p32-625",
+					"shapeId": 625,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape626p32-626",
+					"shapeId": 626,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "end of presentation"
+				},
+				{
+					"id": "google-shape627p32-627",
+					"shapeId": 627,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape628p32-628",
+					"shapeId": 628,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape629p32-629",
+					"shapeId": 629,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape630p32-630",
+					"shapeId": 630,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape631p32-631",
+					"shapeId": 631,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape632p32-632",
+					"shapeId": 632,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape633p32-633",
+					"shapeId": 633,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape634p32-634",
+					"shapeId": 634,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape635p32-635",
+					"shapeId": 635,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape636p32-636",
+					"shapeId": 636,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape637p32-637",
+					"shapeId": 637,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape638p32-638",
+					"shapeId": 638,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "thank you!"
+				},
+				{
+					"id": "google-shape640p32-640",
+					"shapeId": 640,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "goodbye."
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape646p33-646",
+					"shapeId": 646,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape647p33-647",
+					"shapeId": 647,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape649p33-649",
+					"shapeId": 649,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape650p33-650",
+					"shapeId": 650,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape652p33-652",
+					"shapeId": 652,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape653p33-653",
+					"shapeId": 653,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape655p33-655",
+					"shapeId": 655,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape656p33-656",
+					"shapeId": 656,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape658p33-658",
+					"shapeId": 658,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape659p33-659",
+					"shapeId": 659,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape661p33-661",
+					"shapeId": 661,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape662p33-662",
+					"shapeId": 662,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape664p33-664",
+					"shapeId": 664,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape665p33-665",
+					"shapeId": 665,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape667p33-667",
+					"shapeId": 667,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape668p33-668",
+					"shapeId": 668,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape669p33-669",
+					"shapeId": 669,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape670p33-670",
+					"shapeId": 670,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape671p33-671",
+					"shapeId": 671,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nARIAL\n\nHEADERS:\nARIAL\n\nBODY COPY:\nARIAL"
+				},
+				{
+					"id": "google-shape672p33-672",
+					"shapeId": 672,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#000000"
+				},
+				{
+					"id": "google-shape673p33-673",
+					"shapeId": 673,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#8ACE03"
+				},
+				{
+					"id": "google-shape674p33-674",
+					"shapeId": 674,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#5C8A00"
+				},
+				{
+					"id": "google-shape675p33-675",
+					"shapeId": 675,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape676p33-676",
+					"shapeId": 676,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "DON'T FORGET TO DELETE THIS PAGE BEFORE PRESENTING."
+				},
+				{
+					"id": "google-shape677p33-677",
+					"shapeId": 677,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "RESOURCE PAGE"
+				},
+				{
+					"id": "google-shape678p33-678",
+					"shapeId": 678,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape679p33-679",
+					"shapeId": 679,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape680p33-680",
+					"shapeId": 680,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "closing",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape725p34-725",
+					"shapeId": 725,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape726p34-726",
+					"shapeId": 726,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape727p34-727",
+					"shapeId": 727,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape728p34-728",
+					"shapeId": 728,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape729p34-729",
+					"shapeId": 729,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape730p34-730",
+					"shapeId": 730,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				},
+				{
+					"id": "google-shape734p34-734",
+					"shapeId": 734,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape737p34-737",
+					"shapeId": 737,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		}
+	]
+}

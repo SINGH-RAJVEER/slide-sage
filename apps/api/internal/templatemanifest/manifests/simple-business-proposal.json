@@ -1,0 +1,1223 @@
+{
+	"manifestVersion": 1,
+	"templateId": "simple-business-proposal",
+	"templateVersion": 1,
+	"sha256": "3cd5d79c4df26b3a7169c431111fc0e3e709d193eb5e0e99218aa3f969966ac5",
+	"widthEmu": 9144000,
+	"heightEmu": 5143500,
+	"slideCount": 17,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape51p11-51",
+					"shapeId": 51,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "SIMPLE BUSINESS PROPOSAL"
+				},
+				{
+					"id": "google-shape52p11-52",
+					"shapeId": 52,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "COMPANY NAME"
+				},
+				{
+					"id": "google-shape53p11-53",
+					"shapeId": 53,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "Presentation Slides"
+				},
+				{
+					"id": "google-shape54p11-54",
+					"shapeId": 54,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "YOURLOGO."
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "section",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape60p12-60",
+					"shapeId": 60,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape61p12-61",
+					"shapeId": 61,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "I'm Rain, and I'll be sharing with you my beautiful ideas. Follow me at @reallygreatsite to learn more."
+				},
+				{
+					"id": "google-shape62p12-62",
+					"shapeId": 62,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "WELCOME TO PRESENTATION"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape67p13-67",
+					"shapeId": 67,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape68p13-68",
+					"shapeId": 68,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "AGENDA"
+				},
+				{
+					"id": "google-shape70p13-70",
+					"shapeId": 70,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape71p13-71",
+					"shapeId": 71,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape72p13-72",
+					"shapeId": 72,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape73p13-73",
+					"shapeId": 73,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape74p13-74",
+					"shapeId": 74,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape75p13-75",
+					"shapeId": 75,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape76p13-76",
+					"shapeId": 76,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape77p13-77",
+					"shapeId": 77,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape78p13-78",
+					"shapeId": 78,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				},
+				{
+					"id": "google-shape79p13-79",
+					"shapeId": 79,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Write an agenda here."
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape84p14-84",
+					"shapeId": 84,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape85p14-85",
+					"shapeId": 85,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "INTRODUCTION"
+				},
+				{
+					"id": "google-shape86p14-86",
+					"shapeId": 86,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 164,
+					"sampleText": "PRESENTATIONS ARE COMMUNICATION TOOLS THAT CAN BE USED AS DEMONSTRATIONS, LECTURES, SPEECHES, REPORTS, AND MORE."
+				},
+				{
+					"id": "google-shape87p14-87",
+					"shapeId": 87,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 595,
+					"maxListItems": 4,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. Aliquam quis lacinia lorem. Mauris ac tellus et sapien malesuada pretium id a tortor. Nunc viverra mi ullamcorper enim bibendum, in dignissim felis aliquam. Nam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst. Nulla nec consectetur odio, a hendrerit purus.\n\nDuis non libero aliquet, tincidunt leo vel, auctor arcu. Nulla congue id justo a sollicitudin. Suspendisse eget aliquam lacus, eget pharetra ipsum. Proin maximus non libero at fermentum. Donec elit urna, eleifend sed vehicula et, accumsan sit amet leo. Proin risus neque, fermentum at laoreet luctus, rhoncus vitae tortor. Nullam non dapibus ante."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape92p15-92",
+					"shapeId": 92,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "GOALS"
+				},
+				{
+					"id": "google-shape93p15-93",
+					"shapeId": 93,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "50K"
+				},
+				{
+					"id": "google-shape94p15-94",
+					"shapeId": 94,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "1 IN 3"
+				},
+				{
+					"id": "google-shape95p15-95",
+					"shapeId": 95,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "23%"
+				},
+				{
+					"id": "google-shape96p15-96",
+					"shapeId": 96,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 164,
+					"sampleText": "PRESENTATIONS ARE COMMUNICATION TOOLS THAT CAN BE USED AS DEMONSTRATIONS, LECTURES, SPEECHES, REPORTS, AND MORE."
+				},
+				{
+					"id": "google-shape97p15-97",
+					"shapeId": 97,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "Write the goal here and elaborate on it."
+				},
+				{
+					"id": "google-shape98p15-98",
+					"shapeId": 98,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "Write the goal here and elaborate on it."
+				},
+				{
+					"id": "google-shape99p15-99",
+					"shapeId": 99,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "Write the goal here and elaborate on it."
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape104p16-104",
+					"shapeId": 104,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape105p16-105",
+					"shapeId": 105,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape106p16-106",
+					"shapeId": 106,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "WRITE THE GOAL HERE AND ELABORATE ON IT."
+				},
+				{
+					"id": "google-shape107p16-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "WRITE YOUR PROJECT"
+				},
+				{
+					"id": "google-shape108p16-108",
+					"shapeId": 108,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 457,
+					"maxListItems": 5,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. \n\nNam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst. Nulla nec consectetur odio, a hendrerit purus.\n\nDuis non libero aliquet, tincidunt leo vel, auctor arcu. Nulla congue id justo a sollicitudin. Suspendisse eget aliquam lacus, eget pharetra ipsum. Proin maximus non libero at fermentum. Donec elit urna, eleifend sed vehicula et, accumsan sit amet leo. Proin risus neque, fermentum at laoreet luctus, rhoncus vitae tortor. Nullam non dapibus ante."
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape113p17-113",
+					"shapeId": 113,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "WRITE YOUR\nTOPIC HERE"
+				},
+				{
+					"id": "google-shape114p17-114",
+					"shapeId": 114,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 559,
+					"sampleText": "Maecenas consequat, nunc a consequat sodales, erat est laoreet diam, vitae convallis diam diam at augue. Aliquam erat volutpat. Quisque ac diam sollicitudin, sodales orci sit amet, malesuada eros. Nam congue nec neque nec lobortis. Vivamus euismod mi sit amet ullamcorper ultrices. Donec quis tempor dui. Nullam sit amet elit ac magna vulputate feugiat. Curabitur risus lacus, mollis non hendrerit non, tincidunt sit amet elit."
+				},
+				{
+					"id": "google-shape115p17-115",
+					"shapeId": 115,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 559,
+					"sampleText": "Maecenas consequat, nunc a consequat sodales, erat est laoreet diam, vitae convallis diam diam at augue. Aliquam erat volutpat. Quisque ac diam sollicitudin, sodales orci sit amet, malesuada eros. Nam congue nec neque nec lobortis. Vivamus euismod mi sit amet ullamcorper ultrices. Donec quis tempor dui. Nullam sit amet elit ac magna vulputate feugiat. Curabitur risus lacus, mollis non hendrerit non, tincidunt sit amet elit."
+				},
+				{
+					"id": "google-shape116p17-116",
+					"shapeId": 116,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 559,
+					"sampleText": "Maecenas consequat, nunc a consequat sodales, erat est laoreet diam, vitae convallis diam diam at augue. Aliquam erat volutpat. Quisque ac diam sollicitudin, sodales orci sit amet, malesuada eros. Nam congue nec neque nec lobortis. Vivamus euismod mi sit amet ullamcorper ultrices. Donec quis tempor dui. Nullam sit amet elit ac magna vulputate feugiat. Curabitur risus lacus, mollis non hendrerit non, tincidunt sit amet elit."
+				},
+				{
+					"id": "google-shape117p17-117",
+					"shapeId": 117,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "ADD A\nMAIN POINT"
+				},
+				{
+					"id": "google-shape118p17-118",
+					"shapeId": 118,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "ADD A\nMAIN POINT"
+				},
+				{
+					"id": "google-shape119p17-119",
+					"shapeId": 119,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "ADD A\nMAIN POINT"
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "section",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape124p18-124",
+					"shapeId": 124,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape125p18-125",
+					"shapeId": 125,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 86,
+					"maxListItems": 2,
+					"sampleText": "SHARE AN EASY, RANDOM QUESTION EVERYONE CAN ANSWER\nTO ENCOURAGE A RELAXED MEETING ENVIRONMENT."
+				},
+				{
+					"id": "google-shape126p18-126",
+					"shapeId": 126,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "ICE BREAKER"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape131p19-131",
+					"shapeId": 131,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape132p19-132",
+					"shapeId": 132,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape133p19-133",
+					"shapeId": 133,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape134p19-134",
+					"shapeId": 134,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape137p19-137",
+					"shapeId": 137,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape140p19-140",
+					"shapeId": 140,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape143p19-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape146p19-146",
+					"shapeId": 146,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape147p19-147",
+					"shapeId": 147,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape148p19-148",
+					"shapeId": 148,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 56,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you want\nto discuss."
+				},
+				{
+					"id": "google-shape149p19-149",
+					"shapeId": 149,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape150p19-150",
+					"shapeId": 150,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 56,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you want\nto discuss."
+				},
+				{
+					"id": "google-shape151p19-151",
+					"shapeId": 151,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 56,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you want\nto discuss."
+				},
+				{
+					"id": "google-shape152p19-152",
+					"shapeId": 152,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 56,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on what you want\nto discuss."
+				},
+				{
+					"id": "google-shape153p19-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape154p19-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape155p19-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "TIMELINE PAGE"
+				},
+				{
+					"id": "google-shape156p19-156",
+					"shapeId": 156,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 164,
+					"sampleText": "PRESENTATIONS ARE COMMUNICATION TOOLS THAT CAN BE USED AS DEMONSTRATIONS, LECTURES, SPEECHES, REPORTS, AND MORE."
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape161p20-161",
+					"shapeId": 161,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "STEPS"
+				},
+				{
+					"id": "google-shape162p20-162",
+					"shapeId": 162,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "STEP 01"
+				},
+				{
+					"id": "google-shape163p20-163",
+					"shapeId": 163,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "STEP 02"
+				},
+				{
+					"id": "google-shape164p20-164",
+					"shapeId": 164,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "STEP 03"
+				},
+				{
+					"id": "google-shape165p20-165",
+					"shapeId": 165,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 537,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. Aliquam quis lacinia lorem. Mauris ac tellus et sapien malesuada pretium id a tortor. Nunc viverra mi ullamcorper enim bibendum, in dignissim felis aliquam. Nam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst."
+				},
+				{
+					"id": "google-shape166p20-166",
+					"shapeId": 166,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 537,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. Aliquam quis lacinia lorem. Mauris ac tellus et sapien malesuada pretium id a tortor. Nunc viverra mi ullamcorper enim bibendum, in dignissim felis aliquam. Nam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst."
+				},
+				{
+					"id": "google-shape167p20-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 537,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. Aliquam quis lacinia lorem. Mauris ac tellus et sapien malesuada pretium id a tortor. Nunc viverra mi ullamcorper enim bibendum, in dignissim felis aliquam. Nam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst."
+				},
+				{
+					"id": "google-shape168p20-168",
+					"shapeId": 168,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 164,
+					"sampleText": "PRESENTATIONS ARE COMMUNICATION TOOLS THAT CAN BE USED AS DEMONSTRATIONS, LECTURES, SPEECHES, REPORTS, AND MORE."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape173p21-173",
+					"shapeId": 173,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape174p21-174",
+					"shapeId": 174,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape175p21-175",
+					"shapeId": 175,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "WRITE YOUR PROJECT"
+				},
+				{
+					"id": "google-shape176p21-176",
+					"shapeId": 176,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 457,
+					"maxListItems": 6,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. \n\nNam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst. Nulla nec consectetur odio, a hendrerit purus.\n\nDuis non libero aliquet, tincidunt leo vel, auctor arcu. Nulla congue id justo a sollicitudin. Suspendisse eget aliquam lacus, eget pharetra ipsum. Proin maximus non libero at fermentum. Donec elit urna, eleifend sed vehicula et, accumsan sit amet leo. Proin risus neque, fermentum at laoreet luctus, rhoncus vitae tortor. Nullam non dapibus ante."
+				},
+				{
+					"id": "google-shape177p21-177",
+					"shapeId": 177,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "YEAR: 2024"
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape182p22-182",
+					"shapeId": 182,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape183p22-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "ADD YOUR MAIN POINT"
+				},
+				{
+					"id": "google-shape184p22-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "ADD YOUR MAIN POINT"
+				},
+				{
+					"id": "google-shape185p22-185",
+					"shapeId": 185,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 207,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam"
+				},
+				{
+					"id": "google-shape186p22-186",
+					"shapeId": 186,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 207,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam"
+				},
+				{
+					"id": "google-shape187p22-187",
+					"shapeId": 187,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "WRITE YOUR\nTOPIC HERE"
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape192p23-192",
+					"shapeId": 192,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape193p23-193",
+					"shapeId": 193,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape194p23-194",
+					"shapeId": 194,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape195p23-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape196p23-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape197p23-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape198p23-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape199p23-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "NAME"
+				},
+				{
+					"id": "google-shape200p23-200",
+					"shapeId": 200,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape201p23-201",
+					"shapeId": 201,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "OUR TEAM"
+				},
+				{
+					"id": "google-shape202p23-202",
+					"shapeId": 202,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 164,
+					"sampleText": "PRESENTATIONS ARE COMMUNICATION TOOLS THAT CAN BE USED AS DEMONSTRATIONS, LECTURES, SPEECHES, REPORTS, AND MORE."
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape207p24-207",
+					"shapeId": 207,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape208p24-208",
+					"shapeId": 208,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 32,
+					"maxListItems": 2,
+					"sampleText": "OUR\nFOUNDER"
+				},
+				{
+					"id": "google-shape209p24-209",
+					"shapeId": 209,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 457,
+					"maxListItems": 5,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vitae vehicula quam. Fusce et lacinia turpis, vitae viverra nibh. Aenean et consequat tortor, et iaculis purus. \n\nNam et convallis nisl, ac luctus lorem. In hac habitasse platea dictumst. Nulla nec consectetur odio, a hendrerit purus.\n\nDuis non libero aliquet, tincidunt leo vel, auctor arcu. Nulla congue id justo a sollicitudin. Suspendisse eget aliquam lacus, eget pharetra ipsum. Proin maximus non libero at fermentum. Donec elit urna, eleifend sed vehicula et, accumsan sit amet leo. Proin risus neque, fermentum at laoreet luctus, rhoncus vitae tortor. Nullam non dapibus ante."
+				},
+				{
+					"id": "google-shape210p24-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "NAME SURNAME"
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "section",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape216p25-216",
+					"shapeId": 216,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 187,
+					"sampleText": "TFOR YOUR ATTENTION AND PARTICIPATION. WE HOPE YOU FOUND THE PRESENTATION INSIGHTFUL AND LOOK FORWARD TO YOUR CONTINUED ENGAGEMENT."
+				},
+				{
+					"id": "google-shape217p25-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "THANK YOU"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape223p26-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape224p26-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape226p26-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape227p26-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape229p26-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape230p26-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape232p26-232",
+					"shapeId": 232,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape233p26-233",
+					"shapeId": 233,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape235p26-235",
+					"shapeId": 235,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape236p26-236",
+					"shapeId": 236,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape238p26-238",
+					"shapeId": 238,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape239p26-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape241p26-241",
+					"shapeId": 241,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape242p26-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape243p26-243",
+					"shapeId": 243,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape244p26-244",
+					"shapeId": 244,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape245p26-245",
+					"shapeId": 245,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nANTON\n\nHEADERS:\nANTON\n\nBODY COPY:\nALATA"
+				},
+				{
+					"id": "google-shape246p26-246",
+					"shapeId": 246,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#EAE8F3"
+				},
+				{
+					"id": "google-shape247p26-247",
+					"shapeId": 247,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#000000"
+				},
+				{
+					"id": "google-shape248p26-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape249p26-249",
+					"shapeId": 249,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "DON'T FORGET TO DELETE THIS PAGE BEFORE PRESENTING."
+				},
+				{
+					"id": "google-shape250p26-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "RESOURCE PAGE"
+				},
+				{
+					"id": "google-shape251p26-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape252p26-252",
+					"shapeId": 252,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape253p26-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "closing",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape300p27-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape301p27-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape303p27-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape304p27-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape305p27-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape306p27-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "HAPPY DESIGNING!"
+				},
+				{
+					"id": "google-shape307p27-307",
+					"shapeId": 307,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape308p27-308",
+					"shapeId": 308,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape309p27-309",
+					"shapeId": 309,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape310p27-310",
+					"shapeId": 310,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				}
+			]
+		}
+	]
+}
