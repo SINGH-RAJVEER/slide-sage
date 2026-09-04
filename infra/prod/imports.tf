@@ -8,7 +8,6 @@
 # these once you have the zone, record, and account IDs:
 #
 #   cloudflare_record.api        -> "<zone_id>/<record_id>"
-#   cloudflare_record.cdn        -> "<zone_id>/<record_id>"
 #   cloudflare_pages_project.web -> "<account_id>/slidesage"
 #   cloudflare_pages_domain.apex -> "<account_id>/slidesage/slidesage.app"
 #   cloudflare_pages_domain.www  -> "<account_id>/slidesage/www.slidesage.app"
@@ -16,6 +15,7 @@
 # These are absent from the project and are created by the first apply rather
 # than imported:
 #
+#   cloudflare_record.cdn (cdn.slidesage.app does not resolve yet)
 #   google_storage_bucket.presentation_revisions
 #   google_storage_bucket_iam_member.runtime_revision_creator
 #   google_storage_bucket_iam_member.runtime_revision_viewer
