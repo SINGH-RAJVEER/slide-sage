@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { BINARY_PPTX_TEMPLATE_CATALOG, buildBinaryTemplateUrl } from "./template-catalog";
+import { BINARY_PPTX_TEMPLATE_CATALOG } from "./template-catalog";
 
 describe("binary PPTX template catalog", () => {
 	it("contains six default and 24 marketplace templates", () => {
@@ -38,23 +38,11 @@ describe("binary PPTX template catalog", () => {
 		);
 	});
 
-	it("constructs an encoded URL from the configured public base URL", () => {
-		const entry = {
-			asset: { status: "pending-upload" as const, path: "templates/v1/sample deck.pptx" },
-		};
-
-		expect(buildBinaryTemplateUrl("https://cdn.example.com/public", entry)).toBe(
-			"https://cdn.example.com/public/templates/v1/sample%20deck.pptx",
-		);
-		expect(buildBinaryTemplateUrl("https://cdn.example.com/public/", entry)).toBe(
-			"https://cdn.example.com/public/templates/v1/sample%20deck.pptx",
-		);
-	});
-
-	it("records version and onboarding state without invented hashes", () => {
+	it("records version, thumbnail path, and onboarding state without invented hashes", () => {
 		for (const entry of BINARY_PPTX_TEMPLATE_CATALOG) {
 			expect(entry.version).toBe(1);
 			expect(entry.asset).not.toHaveProperty("sha256");
+			expect(entry.thumbnailPath).toBe(`pptx-templates/${entry.id}/1/thumbnails/cover.webp`);
 		}
 		expect(
 			BINARY_PPTX_TEMPLATE_CATALOG.filter((entry) => entry.asset.status === "available").map(

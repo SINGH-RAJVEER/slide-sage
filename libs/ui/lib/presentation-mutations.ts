@@ -28,8 +28,8 @@ export async function persistPresentationMutations(
 			const document = body.presentation.slides_data;
 			return {
 				...document,
-				totalSlides: document.totalSlides ?? document.slides.length,
-			};
+				totalSlides: document["totalSlides"] ?? document.currentRevision?.slideCount ?? 0,
+			} as PresentationData;
 		});
 	mutationQueues.set(
 		presentationId,
