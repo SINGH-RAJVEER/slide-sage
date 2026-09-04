@@ -50,12 +50,6 @@ const HALF_SCALE_WIDESCREEN: BinaryTemplateDimensions = {
 	aspectRatio: { width: 16, height: 9, label: "16:9" },
 };
 
-const A_SERIES_PORTRAIT: BinaryTemplateDimensions = {
-	widthEmu: 7_556_500,
-	heightEmu: 10_693_400,
-	aspectRatio: { width: 210, height: 297, label: "A-series portrait" },
-};
-
 type CatalogEntry = Omit<BinaryPptxTemplate, "asset" | "sourceFilename" | "version"> & {
 	assetStatus?: BinaryTemplateAssetStatus;
 };

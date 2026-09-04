@@ -2,13 +2,13 @@ import { describe, expect, it } from "bun:test";
 import { BINARY_PPTX_TEMPLATE_CATALOG, buildBinaryTemplateUrl } from "./template-catalog";
 
 describe("binary PPTX template catalog", () => {
-	it("contains six default and 25 marketplace templates", () => {
+	it("contains six default and 24 marketplace templates", () => {
 		expect(
 			BINARY_PPTX_TEMPLATE_CATALOG.filter((entry) => entry.availability === "default"),
 		).toHaveLength(6);
 		expect(
 			BINARY_PPTX_TEMPLATE_CATALOG.filter((entry) => entry.availability === "marketplace"),
-		).toHaveLength(25);
+		).toHaveLength(24);
 	});
 
 	it("uses the selected general-purpose templates as defaults", () => {

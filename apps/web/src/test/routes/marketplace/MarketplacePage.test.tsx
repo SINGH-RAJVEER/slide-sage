@@ -17,7 +17,7 @@ mock.module("@slidesage/ui/components/Viewer/SlideRenderer", () => ({
 describe("MarketplacePage", () => {
 	beforeEach(() => localStorage.clear());
 
-	it("lists all 25 binary marketplace templates", async () => {
+	it("lists all 24 binary marketplace templates", async () => {
 		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
@@ -25,8 +25,8 @@ describe("MarketplacePage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("25 templates")).toBeInTheDocument();
-		expect(view.getAllByRole("button", { name: /^Preview .+ template$/ })).toHaveLength(25);
+		expect(view.getByText("24 templates")).toBeInTheDocument();
+		expect(view.getAllByRole("button", { name: /^Preview .+ template$/ })).toHaveLength(24);
 		expect(view.queryByText(/^by .+$/)).toBeNull();
 		expect(view.queryByRole("button", { name: /upvote/i })).toBeNull();
 	});
@@ -103,9 +103,8 @@ describe("MarketplacePage", () => {
 		);
 
 		fireEvent.input(view.getByRole("searchbox", { name: "Search marketplace" }), {
-			target: { value: "A-series portrait" },
+			target: { value: "16:9" },
 		});
-		expect(view.getByText("Family Christmas Card", { selector: "h2" })).toBeInTheDocument();
-		expect(view.queryByText("Hotel Sales Strategy", { selector: "h2" })).toBeNull();
+		expect(view.getByText("Hotel Sales Strategy", { selector: "h2" })).toBeInTheDocument();
 	});
 });

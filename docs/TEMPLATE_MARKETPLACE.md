@@ -1,6 +1,6 @@
 # Template marketplace
 
-The authenticated `/marketplace` route lists curated binary PowerPoint templates. `BINARY_PPTX_TEMPLATE_CATALOG` in `libs/types/src/template-catalog.ts` is the catalog authority. The initial catalog contains six default templates and 25 marketplace templates.
+The authenticated `/marketplace` route lists curated binary PowerPoint templates. `BINARY_PPTX_TEMPLATE_CATALOG` in `libs/types/src/template-catalog.ts` is the catalog authority. The initial catalog contains six default templates and 24 marketplace templates.
 
 ## Catalog model
 

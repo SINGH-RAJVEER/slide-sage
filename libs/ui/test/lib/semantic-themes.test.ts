@@ -55,7 +55,7 @@ describe("presentation theme systems", () => {
 			(entry) => entry.availability === "marketplace",
 		);
 
-		expect(MARKETPLACE_ITEMS).toHaveLength(25);
+		expect(MARKETPLACE_ITEMS).toHaveLength(24);
 		expect(MARKETPLACE_ITEMS.map((item) => item.id)).toEqual(
 			binaryEntries.map((entry) => entry.id),
 		);

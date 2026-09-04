@@ -4,7 +4,7 @@ SlideSage can render a presentation into a curated PowerPoint template by clonin
 
 ## Current status
 
-The binary catalog contains six default templates and 25 marketplace templates. Source presentations stay in the root `templates/` directory and are ignored by version control because the current collection is larger than 800 MiB. Production deployments must publish prepared runtime packages to object storage.
+The binary catalog contains six default templates and 24 marketplace templates. Source presentations stay in the root `templates/` directory and are ignored by version control because the current collection is larger than 800 MiB. Production deployments must publish prepared runtime packages to object storage.
 
 `Simple Business Proposal` is the first onboarded and available template. Its manifest covers all 11 semantic content layouts. OOXML template rendering is the only PPTX export path. Export requires a selected template with an available asset, an OOXML manifest, configured template storage, and supported content slides. Scene slides, standalone chart slides, native chart blocks, dynamic tables, generated diagrams, stats, and resolved images are rejected until native OOXML support exists. Content in a region without a mapped template slot is also rejected rather than silently omitted.
 
