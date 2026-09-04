@@ -118,19 +118,15 @@ it("saves a template and preview theme in one mutation", async () => {
 			button: 0,
 			ctrlKey: false,
 		});
-		fireEvent.click(
-			view.getByRole("menuitem", { name: /Modern Minimal Grid Financial Management/ }),
-		);
+		fireEvent.click(view.getByRole("menuitem", { name: /Simple Business Proposal/ }));
 
-		await waitFor(() => expect(savedTheme).toBe("modern-dark"));
+		await waitFor(() => expect(savedTheme).toBe("corporate-blue"));
 		expect(savedTemplate).toEqual({
-			id: "modern-minimal-grid-financial-management",
+			id: "simple-business-proposal",
 			version: 1,
 		});
 		await waitFor(() => {
-			expect(
-				view.getByRole("button", { name: /Modern Minimal Grid Financial Management/ }),
-			).toBeInTheDocument();
+			expect(view.getByRole("button", { name: /Simple Business Proposal/ })).toBeInTheDocument();
 		});
 		expect(view.queryByRole("button", { name: /Soft Skills Training/ })).not.toBeInTheDocument();
 	} finally {

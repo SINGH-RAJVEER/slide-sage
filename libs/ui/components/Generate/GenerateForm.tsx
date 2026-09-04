@@ -4,6 +4,7 @@ import { TopicInput } from "./TopicInput";
 interface GenerateFormProps {
 	prompt: string;
 	loading: boolean;
+	generationDisabled?: boolean;
 	onPromptChange: (value: string) => void;
 	onGenerate: () => void;
 }
@@ -11,6 +12,7 @@ interface GenerateFormProps {
 export const GenerateForm: React.FC<GenerateFormProps> = ({
 	prompt,
 	loading,
+	generationDisabled = false,
 	onPromptChange,
 	onGenerate,
 }) => {
@@ -21,6 +23,7 @@ export const GenerateForm: React.FC<GenerateFormProps> = ({
 				onPromptChange={onPromptChange}
 				onGenerate={onGenerate}
 				disabled={loading}
+				generationDisabled={generationDisabled}
 				loading={loading}
 			/>
 		</div>

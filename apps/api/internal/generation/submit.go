@@ -137,6 +137,10 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		h.reservationError(writer, err)
 		return
 	}
+	if err := validateGenerationTemplate(job.template); err != nil {
+		writeError(writer, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	balance, _, err := h.enqueue(request.Context(), job, requestHashValue, create, input.Topic, placeholder)
 	if err != nil {

@@ -304,6 +304,9 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	}
 	document, err = presentation.NormalizeDocument(document)
 	slides, ok := document["slides"].([]any)
+	if err == nil {
+		err = validateDocumentForTemplate(document, job.template)
+	}
 	if err != nil || !ok || len(slides) == 0 || !hasSubstantiveGeneratedContent(slides) {
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "invalid_document", "Generated presentation was invalid")
 	}

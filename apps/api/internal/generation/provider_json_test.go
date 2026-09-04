@@ -2,6 +2,7 @@ package generation
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,11 +10,50 @@ import (
 	"testing"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 )
 
-func TestModelUsesFreeGemmaByDefault(t *testing.T) {
+func TestGenerateDocumentRepairsParseableEmptyDraft(t *testing.T) {
+	responses := []string{
+		`{"title":"Infant Mortality in India","slides":[]}`,
+		`{"title":"Infant Mortality in India","slides":[{"id":"slide-1","type":"content","layout":"cover","title":"Infant Mortality in India","blocks":[{"type":"paragraph","region":"main","text":"India has reduced infant mortality, but progress remains uneven across states."}]}]}`,
+	}
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		content, _ := json.Marshal(responses[requests])
+		requests++
+		writer.Header().Set("Content-Type", "text/event-stream")
+		_, _ = writer.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":" + string(content) + "},\"finish_reason\":\"stop\"}],\"usage\":{\"total_tokens\":10}}\n\n"))
+		_, _ = writer.Write([]byte("data: [DONE]\n\n"))
+	}))
+	defer server.Close()
+
+	t.Setenv("OPEN_ROUTER_API_BASE", server.URL)
+	t.Setenv("OPEN_ROUTER_MODEL", "test-model")
+	t.Setenv("OPEN_ROUTER_API_KEY", "test-key")
+	handler := &handler{client: server.Client()}
+	job := streamJob{
+		slideCount: 1,
+		template:   &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1},
+	}
+	document, tokens, err := handler.generateDocument(context.Background(), job, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if requests != 2 {
+		t.Fatalf("provider requests = %d, want one draft and one repair", requests)
+	}
+	if tokens != 20 {
+		t.Fatalf("tokens = %d, want aggregate usage from both calls", tokens)
+	}
+	if issue := draftValidationIssue(document, job, nil); issue != "" {
+		t.Fatalf("repaired document remained invalid: %s", issue)
+	}
+}
+
+func TestModelUsesOpenRouterFreeByDefault(t *testing.T) {
 	t.Setenv("OPEN_ROUTER_MODEL", "")
-	if got := model(); got != "google/gemma-4-26b-a4b-it:free" {
+	if got := model(); got != "openrouter/free" {
 		t.Fatalf("default model = %q", got)
 	}
 }

@@ -76,7 +76,7 @@ function unavailable(reason: string): OoxmlExportReadiness {
 }
 
 function isUnsupportedNativeBlock(block: SlideBlock): boolean {
-	return ["chart", "image", "stats", "table", "widget"].includes(block.type);
+	return ["chart", "image", "image-placeholder", "stats", "table", "widget"].includes(block.type);
 }
 
 function hasTextContent(block: SlideBlock): boolean {

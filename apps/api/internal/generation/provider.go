@@ -18,7 +18,7 @@ import (
 )
 
 // defaultModel is used when no model is configured and no per-user AI selection exists.
-const defaultModel = "google/gemma-4-26b-a4b-it:free"
+const defaultModel = "openrouter/free"
 
 // doProviderRequest sends a provider request and retries transient failures (429 and 5xx) with exponential backoff, honoring Retry-After when present.
 func (h *handler) doProviderRequest(ctx context.Context, send func() (*http.Response, error)) (*http.Response, error) {
@@ -79,12 +79,15 @@ func parseRetryAfter(value string) time.Duration {
 }
 
 func (h *handler) generatePlan(ctx context.Context, job streamJob) (map[string]any, int, error) {
-	plan, tokens, err := h.generateJSON(ctx, job, planningSystemPrompt, generationUserPrompt(job), maxPlanOutputTokens(job.slideCount))
+	plan, tokens, err := h.generateJSON(ctx, job, planningSystemPromptForTemplate(job.template), generationUserPrompt(job), maxPlanOutputTokens(job.slideCount))
 	if err != nil {
 		return nil, 0, err
 	}
 	normalized, err := presentation.NormalizeDeckPlan(plan, job.slideCount)
 	if err != nil {
+		return nil, 0, err
+	}
+	if err := validatePlanForTemplate(normalized, job.template); err != nil {
 		return nil, 0, err
 	}
 	return normalized, tokens, nil
@@ -96,7 +99,50 @@ func (h *handler) generateDocument(ctx context.Context, job streamJob, plan map[
 		encoded, _ := json.Marshal(plan)
 		user += "\n\nDraft this validated DeckPlan in order. Preserve every planned slide's id, title, message, evidence, and semantic layout intent. Write substantive slide copy for each plan entry: " + string(encoded)
 	}
-	return h.generateJSON(ctx, job, generationSystemPrompt, user, maxOutputTokens(job.slideCount))
+	document, tokens, err := h.generateJSON(ctx, job, generationSystemPromptForTemplate(job.template), user, maxOutputTokens(job.slideCount))
+	if err != nil {
+		return nil, tokens, err
+	}
+	issue := draftValidationIssue(document, job, plan)
+	if issue == "" {
+		return document, tokens, nil
+	}
+
+	previous, _ := json.Marshal(document)
+	repairPrompt := user + "\n\nRepair the previous response and return a complete replacement JSON object. The previous response failed validation because " + issue + ". Return exactly the requested number of slides, and give every slide at least one substantive text block. Previous response: " + string(previous)
+	repaired, repairTokens, err := h.generateJSON(ctx, job, generationSystemPromptForTemplate(job.template), repairPrompt, maxOutputTokens(job.slideCount))
+	return repaired, tokens + repairTokens, err
+}
+
+func draftValidationIssue(document map[string]any, job streamJob, plan map[string]any) string {
+	rawSlides, ok := document["slides"].([]any)
+	if !ok {
+		return "slides was not an array"
+	}
+	if len(rawSlides) != job.slideCount {
+		return fmt.Sprintf("it contained %d slides instead of %d", len(rawSlides), job.slideCount)
+	}
+	encoded, _ := json.Marshal(document)
+	var candidate map[string]any
+	if json.Unmarshal(encoded, &candidate) != nil {
+		return "it could not be normalized"
+	}
+	preserveJobTemplate(candidate, job)
+	if plan != nil {
+		candidate = presentation.ApplyDeckPlan(candidate, plan)
+	}
+	normalized, _ := presentation.NormalizeDocument(candidate)
+	slides, _ := normalized["slides"].([]any)
+	if len(slides) != job.slideCount {
+		return "one or more slides had an invalid structure"
+	}
+	if !hasSubstantiveGeneratedContent(slides) {
+		return "it contained no substantive slide text"
+	}
+	if err := validateDocumentForTemplate(normalized, job.template); err != nil {
+		return err.Error()
+	}
+	return ""
 }
 
 func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user string, maxOutput int) (map[string]any, int, error) {

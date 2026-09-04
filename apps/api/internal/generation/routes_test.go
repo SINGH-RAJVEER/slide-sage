@@ -182,6 +182,54 @@ func TestPlanningPromptDefinesBoundedVisualIntents(t *testing.T) {
 	}
 }
 
+func TestExportReadyTemplatePromptsExcludeUnsupportedVisuals(t *testing.T) {
+	template := &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}
+	planning := planningSystemPromptForTemplate(template)
+	if strings.Contains(planning, `"kind":"chart"`) || strings.Contains(planning, `"kind":"image-hero"`) {
+		t.Fatalf("export-safe planning prompt still permits unsupported visuals: %s", planning)
+	}
+	drafting := generationSystemPromptForTemplate(template)
+	if strings.Contains(drafting, `"type":"image-placeholder"`) {
+		t.Fatalf("export-safe drafting prompt still permits image placeholders: %s", drafting)
+	}
+}
+
+func TestGenerationTemplateReadiness(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		template  *presentation.TemplateReference
+		wantError bool
+	}{
+		{name: "available", template: &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}},
+		{name: "missing", wantError: true},
+		{name: "pending", template: &presentation.TemplateReference{ID: "soft-skills-training", Version: 1}, wantError: true},
+		{name: "wrong version", template: &presentation.TemplateReference{ID: "simple-business-proposal", Version: 2}, wantError: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateGenerationTemplate(test.template)
+			if (err != nil) != test.wantError {
+				t.Fatalf("validateGenerationTemplate() error = %v, wantError = %v", err, test.wantError)
+			}
+		})
+	}
+}
+
+func TestExportReadyTemplateRejectsUnsupportedProviderOutput(t *testing.T) {
+	template := &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}
+	plan := map[string]any{"slides": []any{map[string]any{
+		"visualIntent": map[string]any{"kind": "chart"},
+	}}}
+	if err := validatePlanForTemplate(plan, template); err == nil {
+		t.Fatal("chart plan was accepted for a template without chart support")
+	}
+	document := map[string]any{"slides": []any{map[string]any{
+		"blocks": []any{map[string]any{"type": "image-placeholder"}},
+	}}}
+	if err := validateDocumentForTemplate(document, template); err == nil {
+		t.Fatal("image placeholder was accepted for a template without image support")
+	}
+}
+
 func TestGeneratedContentRejectsSyntheticPlaceholder(t *testing.T) {
 	placeholder := []any{map[string]any{
 		"type": "content",
@@ -436,7 +484,7 @@ func TestAnthropicGeneratePayloadEnablesExtendedThinking(t *testing.T) {
 }
 
 func TestOpenRouterPayloadReservesReasoningHeadroom(t *testing.T) {
-	payload := openRouterGeneratePayload("google/gemma-4-26b-a4b-it:free", "system", "user", 1500)
+	payload := openRouterGeneratePayload("openrouter/free", "system", "user", 1500)
 	if payload["max_tokens"] != 1500+reasoningBudget {
 		t.Fatalf("completion bound was not padded: %v", payload["max_tokens"])
 	}
