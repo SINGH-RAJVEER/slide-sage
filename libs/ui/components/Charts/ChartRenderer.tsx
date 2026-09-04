@@ -69,14 +69,11 @@ const ssValueLabels: Plugin = {
 				let y: number;
 				if (typeof element["innerRadius"] === "number") {
 					// Arc slice (pie, doughnut, polarArea): label along the mid-angle.
-					const mid =
-						((element["startAngle"] as number) + (element["endAngle"] as number)) / 2;
+					const mid = ((element["startAngle"] as number) + (element["endAngle"] as number)) / 2;
 					const inner = element["innerRadius"] as number;
 					const outer = element["outerRadius"] as number;
-				const radius =
-					chartConfigIsRing(chartKind) && inner > 0
-						? (inner + outer) / 2
-						: outer * 0.74;
+					const radius =
+						chartConfigIsRing(chartKind) && inner > 0 ? (inner + outer) / 2 : outer * 0.74;
 					x = (element["x"] as number) + Math.cos(mid) * radius;
 					y = (element["y"] as number) + Math.sin(mid) * radius;
 				} else if (typeof element["base"] === "number") {
@@ -117,8 +114,7 @@ function chartConfigIsRing(type: string): boolean {
 
 function formatChartValue(value: number): string {
 	const abs = Math.abs(value);
-	const trim = (number: number) =>
-		String(Math.round(number * 10) / 10).replace(/\.0$/, "");
+	const trim = (number: number) => String(Math.round(number * 10) / 10).replace(/\.0$/, "");
 	if (abs >= 1_000_000) return `${trim(value / 1_000_000)}M`;
 	if (abs >= 10_000) return `${trim(value / 1_000)}k`;
 	return String(Math.round(value * 100) / 100);
@@ -173,10 +169,8 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 			};
 		}),
 	};
-	const userPlugins = ((chartConfig.options?.["plugins"] as Record<string, unknown>) || {}) as Record<
-		string,
-		Record<string, unknown> | undefined
-	>;
+	const userPlugins = ((chartConfig.options?.["plugins"] as Record<string, unknown>) ||
+		{}) as Record<string, Record<string, unknown> | undefined>;
 	const defaultOptions = {
 		responsive: true,
 		maintainAspectRatio: false,

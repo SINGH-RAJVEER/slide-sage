@@ -1,5 +1,5 @@
-import { API_URL } from "./api";
 import type { LandingPage } from "@slidesage/types";
+import { API_URL } from "./api";
 
 export interface SessionUser {
 	id: string;

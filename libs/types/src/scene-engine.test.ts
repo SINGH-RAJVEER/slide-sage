@@ -24,12 +24,15 @@ describe("scene engine", () => {
 		});
 
 		const resolved = resolveScene(slide, { width: 1280, height: 720 });
-		const composition = resolved.root.children?.find((node) => node.id === "slide-chart-composition");
+		const composition = resolved.root.children?.find(
+			(node) => node.id === "slide-chart-composition",
+		);
 		expect(composition?.children).toHaveLength(2);
 		const widget = composition?.children?.find((node) => node.id === "chart");
 		expect(widget?.type).toBe("widget");
 		const body = composition?.children?.find((node) => node.id === "slide-chart-body");
-		expect(body?.bounds.x).toBeLessThan(widget!.bounds.x);
+		if (!widget) throw new Error("Expected chart widget");
+		expect(body?.bounds.x).toBeLessThan(widget.bounds.x);
 	});
 
 	it("resolves nested stack and grid layouts deterministically", () => {

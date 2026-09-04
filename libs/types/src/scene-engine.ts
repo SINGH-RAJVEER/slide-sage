@@ -435,7 +435,11 @@ function blockNode(slideId: string, block: SlideBlock, index: number): SceneNode
 		};
 	}
 	const kind =
-		block.type === "widget" ? (block.kind === "flow" ? "process" : block.kind) : (block.type as string);
+		block.type === "widget"
+			? block.kind === "flow"
+				? "process"
+				: block.kind
+			: (block.type as string);
 	return { id, order: index, type: "widget", kind, version: 1, props: { ...block } } as SceneNode;
 }
 
