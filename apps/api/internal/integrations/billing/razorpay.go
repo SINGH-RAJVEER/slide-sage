@@ -51,15 +51,19 @@ type CapturedPayment struct {
 }
 
 type RazorpayClient struct {
-	KeyID, KeySecret string
-	HTTPClient       *http.Client
-	BaseURL          string
+	KeyID, KeySecret, WebhookSecret string
+	HTTPClient                      *http.Client
+	BaseURL                         string
 }
 
 func NewRazorpayClientFromEnv() (*RazorpayClient, error) {
-	client := &RazorpayClient{KeyID: os.Getenv("RAZORPAY_KEY_ID"), KeySecret: os.Getenv("RAZORPAY_KEY_SECRET")}
-	if client.KeyID == "" || client.KeySecret == "" {
-		return nil, errors.New("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set")
+	client := &RazorpayClient{
+		KeyID:         os.Getenv("RAZORPAY_KEY_ID"),
+		KeySecret:     os.Getenv("RAZORPAY_KEY_SECRET"),
+		WebhookSecret: os.Getenv("RAZORPAY_WEBHOOK_SECRET"),
+	}
+	if client.KeyID == "" || client.KeySecret == "" || client.WebhookSecret == "" {
+		return nil, errors.New("RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, and RAZORPAY_WEBHOOK_SECRET must be set")
 	}
 	return client, nil
 }
@@ -101,8 +105,8 @@ func (c *RazorpayClient) CreateOrder(ctx context.Context, userID string, pack Pa
 	var response struct {
 		ID, Entity, Currency, Receipt, Status string
 		Amount                                int
-		AmountDue                             int `json:"amount_due"`
-		AmountPaid                            int `json:"amount_paid"`
+		AmountDue                             int  `json:"amount_due"`
+		AmountPaid                            int  `json:"amount_paid"`
 		PartialPayment                        bool `json:"partial_payment"`
 	}
 	if err := c.request(ctx, http.MethodPost, "/orders", payload, &response); err != nil {

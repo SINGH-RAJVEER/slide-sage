@@ -74,12 +74,9 @@ func main() {
 		return identity(request)
 	}, researchService, database)
 	ai.RegisterRoutes(mux, ai.ConnectionService{DB: database}, identity)
-	var razorpay *billing.RazorpayClient
-	if os.Getenv("RAZORPAY_KEY_ID") != "" && os.Getenv("RAZORPAY_KEY_SECRET") != "" {
-		razorpay, err = billing.NewRazorpayClientFromEnv()
-		if err != nil {
-			log.Fatal(err)
-		}
+	razorpay, err := billing.NewRazorpayClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
 	}
 	billing.RegisterRoutes(mux, billing.PaymentService{DB: database}, razorpay, identity)
 	streamContext, cancelStreams := context.WithCancel(context.Background())
