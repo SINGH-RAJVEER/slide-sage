@@ -417,4 +417,3 @@ export interface BillingVerifyResponse {
 	tokens_awarded: number;
 	new_balance: number;
 }
-

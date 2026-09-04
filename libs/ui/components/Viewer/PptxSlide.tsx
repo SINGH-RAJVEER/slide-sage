@@ -24,6 +24,7 @@ export const PptxSlide: React.FC<PptxSlideProps> = ({ document, index, className
 	return (
 		<div
 			ref={containerRef}
+			role="img"
 			aria-label={`Slide ${index + 1}`}
 			className={`relative overflow-hidden ${className}`}
 			style={{ aspectRatio: `${document.width} / ${document.height}` }}

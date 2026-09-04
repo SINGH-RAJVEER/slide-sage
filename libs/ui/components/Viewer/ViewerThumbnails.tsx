@@ -21,8 +21,7 @@ export const ViewerThumbnails: React.FC<{
 				{document &&
 					Array.from({ length: slideCount }, (_, index) => {
 						const isFirstThumbnail = index === 0;
-						const isLastThumbnail =
-							index === slideCount - 1 && !(isStreamingMode && isStreaming);
+						const isLastThumbnail = index === slideCount - 1 && !(isStreamingMode && isStreaming);
 
 						return (
 							<button

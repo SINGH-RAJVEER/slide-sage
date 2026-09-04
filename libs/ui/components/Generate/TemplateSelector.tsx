@@ -1,7 +1,4 @@
-import {
-	BINARY_PPTX_TEMPLATE_CATALOG,
-	type PresentationTemplateReference,
-} from "@slidesage/types";
+import { BINARY_PPTX_TEMPLATE_CATALOG, type PresentationTemplateReference } from "@slidesage/types";
 import { Badge } from "@slidesage/ui/components/badge";
 import { Button } from "@slidesage/ui/components/button";
 import {

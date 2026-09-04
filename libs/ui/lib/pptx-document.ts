@@ -1,8 +1,8 @@
 import {
 	buildPresentation,
 	materializeSlideNodes,
-	parseZip,
 	type PresentationData as PptxPresentation,
+	parseZip,
 	renderSlide,
 	type SlideData,
 	type SlideHandle,

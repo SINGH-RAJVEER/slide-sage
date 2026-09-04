@@ -7,7 +7,12 @@
         pkgs.go
         pkgs.goose
         pkgs.just
+        # Renders template thumbnails. Playwright's own download is dynamically
+        # linked against libraries NixOS does not place on the default path.
+        pkgs.chromium
     ];
+
+    env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
 
     services.postgres = {
         enable = true;
