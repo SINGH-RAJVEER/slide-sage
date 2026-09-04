@@ -1,11 +1,4 @@
 { pkgs, lib, ... }:
-
-let
-    dbName = "slidesage";
-    dbUser = "slidesage";
-    dbPassword = "slidesage";
-    dbPort = 5432;
-in
 {
     dotenv.enable = true;
 
@@ -22,7 +15,7 @@ in
         extensions = extensions: [ extensions.pgvector ];
         createDatabase = false;
         listen_addresses = "127.0.0.1";
-        port = dbPort;
+        port = 5432;
         initdbArgs = [
             "--username=postgres"
             "--encoding=UTF8"
@@ -39,23 +32,23 @@ in
         "db:setup" = {
             after = [ "devenv:processes:postgres@ready" ];
             exec = ''
-                if ! psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '${dbUser}'" | grep -q 1; then
-                    psql -d postgres -c "CREATE USER ${dbUser} WITH PASSWORD '${dbPassword}'"
+                if ! psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'slidesage'" | grep -q 1; then
+                    psql -d postgres -c "CREATE USER slidesage WITH PASSWORD 'slidesage'"
                 fi
 
-                if ! psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '${dbName}'" | grep -q 1; then
-                    psql -d postgres -c "CREATE DATABASE ${dbName} OWNER ${dbUser}"
+                if ! psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'slidesage'" | grep -q 1; then
+                    psql -d postgres -c "CREATE DATABASE slidesage OWNER slidesage"
                 fi
 
-                psql -d ${dbName} -c "CREATE EXTENSION IF NOT EXISTS vector"
-                psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser}"
+                psql -d slidesage -c "CREATE EXTENSION IF NOT EXISTS vector"
+                psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE slidesage TO slidesage"
             '';
         };
 
         "db:migrate" = {
             after = [ "db:setup" ];
             exec = ''
-                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" \
+                DATABASE_URL="postgresql://slidesage:slidesage@127.0.0.1:$PGPORT/slidesage" \
                     go -C "$DEVENV_ROOT/apps/api" run ./cmd/migrate
             '';
         };
@@ -64,7 +57,7 @@ in
     processes = {
         api = {
             exec = ''
-                DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" go run ./cmd/api
+                DATABASE_URL="postgresql://slidesage:slidesage@127.0.0.1:$PGPORT/slidesage" go run ./cmd/api
             '';
             cwd = "apps/api";
             after = [ "db:migrate" ];
@@ -82,7 +75,7 @@ in
         };
 		worker = {
 			exec = ''
-				DATABASE_URL="postgresql://${dbUser}:${dbPassword}@127.0.0.1:$PGPORT/${dbName}" go run ./cmd/worker
+				DATABASE_URL="postgresql://slidesage:slidesage@127.0.0.1:$PGPORT/slidesage" go run ./cmd/worker
 			'';
 			cwd = "apps/api";
 			after = [ "db:migrate" ];
@@ -119,11 +112,11 @@ in
 
     env = {
         PGUSER = "postgres";
-        POSTGRES_USER = dbUser;
-        POSTGRES_PASSWORD = dbPassword;
-        POSTGRES_DB = dbName;
-        POSTGRES_PORT = toString dbPort;
-        DATABASE_URL = "postgresql://${dbUser}:${dbPassword}@127.0.0.1:${toString dbPort}/${dbName}";
+        POSTGRES_USER = "slidesage";
+        POSTGRES_PASSWORD = "slidesage";
+        POSTGRES_DB = "slidesage";
+        POSTGRES_PORT = toString 5432;
+        DATABASE_URL = "postgresql://slidesage:slidesage@127.0.0.1:${toString 5432}/slidesage";
         NODE_ENV = "development";
         LOG_LEVEL = "debug";
         CGO_ENABLED = "0";
