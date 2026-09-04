@@ -21,6 +21,7 @@ Copy `.env.example` to `.env`. Devenv loads it for the Go API, generation worker
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No         | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app`    | Comma-separated auth callback origins; trailing slashes are normalized              |
 | `VITE_API_URL`                | No         | `http://localhost:8000`                                                                                    | Browser API origin without a path suffix; set production to `https://api.slidesage.app` |
 | `VITE_PPTX_TEMPLATE_BASE_URL` | For binary template export | None | Public, CORS-enabled object-storage prefix for versioned runtime PPTX templates |
+| `PRESENTATION_GCS_BUCKET`      | Canonical PPTX revisions | None | Private GCS bucket configuration for the canonical revision flow |
 | `NODE_ENV`                    | No         | `development` in devenv                                                                                    | Controls production auth and email-delivery safeguards; OTP values are never logged |
 
 Devenv also supplies `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and `POSTGRES_PORT` for its local PostgreSQL process. Their defaults are all `slidesage`, except `POSTGRES_PORT=5432`. The running PostgreSQL process exposes its active port as `PGPORT`.
@@ -56,7 +57,7 @@ For Cloud Run Worker Pools, start with one instance and change the fixed/manual 
 | Variable                        | Required                                  | Default                              | Purpose                                                                                                                                    |
 | ------------------------------- | ----------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `OPEN_ROUTER_API_KEY`           | Yes for default generation and embeddings | None                                 | Server OpenRouter authentication; BYOK replaces only generation calls                                                                      |
-| `OPEN_ROUTER_MODEL`             | No                                        | `google/gemma-4-26b-a4b-it:free`     | Generation model; the free Gemma 4 variant is used by default                                                                                |
+| `OPEN_ROUTER_MODEL`             | No                                        | `openrouter/free`                     | Generation model; OpenRouter selects an available free model for each request                                                                |
 | `OPEN_ROUTER_API_BASE`          | No                                        | OpenRouter chat completions endpoint | Chat endpoint override                                                                                                                     |
 | `OPEN_ROUTER_EMBEDDINGS_URL`    | No                                        | OpenRouter embeddings endpoint       | Embedding endpoint override                                                                                                                |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No                                        | Not used                             | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |
@@ -64,7 +65,7 @@ For Cloud Run Worker Pools, start with one instance and change the fixed/manual 
 | `EMBEDDING_REQUEST_TIMEOUT_MS`  | No                                        | `15000`                              | Maximum embedding request duration; caller cancellation can stop it earlier                                                                |
 | `EXA_API_KEY`                   | For web research                          | None                                 | Exa search authentication                                                                                                                  |
 | `EXA_REQUEST_TIMEOUT_MS`        | No                                        | `10000`                              | Maximum Exa request duration; caller cancellation can stop it earlier                                                                      |
-Presentation requests without a valid user provider connection use OpenRouter strict JSON Schema output and consume SlideSage points. OpenRouter provider fallback remains enabled so transient outages can route to another compatible endpoint. The default model is OpenRouter's free Gemma 4 variant; set `OPEN_ROUTER_MODEL` explicitly if a different cost or availability profile is required. Valid BYOK connections replace this generation path but do not replace the server embedding configuration.
+Presentation requests without a valid user provider connection use OpenRouter JSON output and consume SlideSage points. The default `openrouter/free` router selects an available free model for each request, improving availability at the cost of less predictable model behavior. Set `OPEN_ROUTER_MODEL` explicitly when a pinned model is required. Valid BYOK connections replace this generation path but do not replace the server embedding configuration.
 
 ## Authentication and email
 
@@ -86,16 +87,32 @@ When `BASE_URL` is unset in a deployment, auth can derive it from the platform-p
 
 | Variable                  | Required      | Default | Purpose                                                         |
 | ------------------------- | ------------- | ------- | --------------------------------------------------------------- |
-| `RAZORPAY_KEY_ID`         | For purchases | None    | Public checkout key                                             |
-| `RAZORPAY_KEY_SECRET`     | For purchases | None    | Creates orders and verifies payments                            |
-| `RAZORPAY_WEBHOOK_SECRET` | For webhooks  | None    | Verifies signatures against the exact raw Razorpay webhook body |
+| `RAZORPAY_KEY_ID`         | Yes           | None    | Public checkout key                                             |
+| `RAZORPAY_KEY_SECRET`     | Yes           | None    | Creates orders and verifies payments                            |
+| `RAZORPAY_WEBHOOK_SECRET` | Yes           | None    | Verifies signatures against the exact raw Razorpay webhook body |
 | `RAZORPAY_REQUEST_TIMEOUT_MS` | No            | `15000` | Maximum Razorpay API request duration                           |
+
+The API reads all three credentials at startup and exits when any of them is empty, so it cannot run without payments configured. `.env.example` ships placeholder values that satisfy the check for local development.
 
 Do not commit `.env`. Keep secrets in the deployment platform's secret store in production.
 
 Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production build. The client sends requests directly to each endpoint. As a deployment safeguard, production builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back to same-origin routes instead.
 
 Set `VITE_PPTX_TEMPLATE_BASE_URL` to the directory above `pptx-templates/`. The browser downloads only the selected template. The object-storage origin must allow `GET` requests from the SlideSage web origin. Template objects use immutable, versioned paths documented in [OOXML_TEMPLATE_EXPORT.md](OOXML_TEMPLATE_EXPORT.md).
+
+## GCS and Cloud CDN
+
+| Variable                     | Required | Secret | Purpose |
+| ---------------------------- | -------- | ------ | ------- |
+| `PRESENTATION_GCS_BUCKET`    | Canonical revisions | No | Private bucket receiving create-only canonical PPTX objects |
+| `CDN_URL`                    | Signed template delivery | No | Public HTTPS Cloud CDN base URL used as part of the signed URL |
+| `CDN_SIGNING_KEY_NAME`       | Signed template delivery | No | Active Cloud CDN signing-key identifier sent as `KeyName` |
+| `CDN_SIGNING_KEY_SECRET`     | Signed template delivery | Yes | Base64url-encoded 128-bit shared key used by the server-side signer |
+| `CDN_SIGNED_URL_TTL_SECONDS` | No | No | Signed template URL lifetime; defaults to `900` seconds |
+
+`CDN_SIGNING_KEY_NAME` is only an identifier and cannot create a valid signed URL by itself. The signer must retain the corresponding 16-byte secret because Google does not return key values through its APIs after configuration. Keep `CDN_SIGNING_KEY_SECRET` in Secret Manager and never expose it through a `VITE_` variable. See Google's [Cloud CDN signed URL documentation](https://cloud.google.com/cdn/docs/using-signed-urls#createkeys).
+
+When the canonical revision flow is wired into Cloud Run, it will use the attached service account through Application Default Credentials; do not deploy a service-account JSON key. Grant the runtime account bucket-scoped `roles/storage.objectCreator` and `roles/storage.objectViewer` for the private revision bucket. The GCS adapter uses the `DoesNotExist` generation precondition so retries cannot overwrite an object. See Google's [generation preconditions](https://cloud.google.com/storage/docs/request-preconditions#special-match) and [Cloud Storage IAM roles](https://cloud.google.com/storage/docs/access-control/iam-roles#storage.objectCreator).
 
 The API refuses to initialize authentication on an HTTPS base URL without a sufficiently strong `AUTH_SECRET`.
 
