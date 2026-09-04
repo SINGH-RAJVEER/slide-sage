@@ -128,6 +128,25 @@ describe("OOXML template export", () => {
 			buildOoxmlTemplatePptx(withImage, { publicBaseUrl: "https://cdn.example.com/" }),
 		).rejects.toThrow("contains image content");
 
+		const withImagePlaceholder = presentation("simple-business-proposal");
+		const placeholderSlide = withImagePlaceholder.slides[0];
+		if (placeholderSlide?.type !== "content") throw new Error("Expected content slide");
+		placeholderSlide.layout = "media-right";
+		placeholderSlide.blocks = [
+			{
+				type: "image-placeholder",
+				region: "media",
+				alt: "A visual that must not disappear",
+				caption: "",
+				focalPoint: "center",
+			},
+		];
+		await expect(
+			buildOoxmlTemplatePptx(withImagePlaceholder, {
+				publicBaseUrl: "https://cdn.example.com/",
+			}),
+		).rejects.toThrow("contains image-placeholder content");
+
 		const withUnmappedBody = presentation("simple-business-proposal");
 		const mediaRight = withUnmappedBody.slides[0];
 		if (mediaRight?.type !== "content") throw new Error("Expected content slide");

@@ -366,9 +366,13 @@ describe("renderOoxmlTemplate", () => {
 		const textByShapeId = new Map(
 			elements(clonedSlide, PRESENTATION, "sp").map((shape) => [
 				elements(shape, PRESENTATION, "cNvPr")[0]?.getAttribute("id"),
-				elements(shape, DRAWING, "t")
-					.map((text) => text.textContent)
-					.join(""),
+				elements(shape, DRAWING, "p")
+					.map((paragraph) =>
+						elements(paragraph, DRAWING, "t")
+							.map((text) => text.textContent)
+							.join(""),
+					)
+					.join("\n"),
 			]),
 		);
 
@@ -378,6 +382,28 @@ describe("renderOoxmlTemplate", () => {
 		expect(textByShapeId.get("22")).toBe("Name\tValue\nAlpha\t10");
 		expect(textByShapeId.get("23")).toBe("Collect");
 		expect(textByShapeId.get("24")).toBe("Media caption");
+		const bodyShape = elements(clonedSlide, PRESENTATION, "sp").find(
+			(shape) => elements(shape, PRESENTATION, "cNvPr")[0]?.getAttribute("id") === "21",
+		);
+		if (!bodyShape) throw new Error("Expected generated body shape");
+		const paragraphs = elements(bodyShape, DRAWING, "p");
+		expect(paragraphs).toHaveLength(8);
+		expect(
+			paragraphs.map((paragraph) =>
+				elements(paragraph, DRAWING, "t")
+					.map((text) => text.textContent)
+					.join(""),
+			),
+		).toEqual([
+			"Opening paragraph",
+			"First bullet",
+			"Second bullet",
+			"Quoted text",
+			"Speaker",
+			"Callout",
+			"Callout detail",
+			"42% Growth",
+		]);
 	});
 
 	it("keeps every internal cloned relationship target resolvable", async () => {

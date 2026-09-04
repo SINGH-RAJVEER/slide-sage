@@ -456,17 +456,43 @@ function replaceTextSlots(
 			);
 		}
 		const value = textValue(slot.value, slide, presentation, layoutKey, slotName);
-		const firstTextNode = textNodes[0];
+		replaceShapeParagraphs(shape, value, layoutKey, slotName);
+	}
+}
+
+function replaceShapeParagraphs(
+	shape: Element,
+	value: string,
+	layoutKey: string,
+	slotName: string,
+): void {
+	const paragraphs = elements(shape, DRAWING_NAMESPACE, "p");
+	const sourceParagraph = paragraphs[0];
+	const parent = sourceParagraph?.parentNode;
+	if (!sourceParagraph || !parent) {
+		throw new Error(`OOXML template slot "${layoutKey}.${slotName}" has no text paragraph`);
+	}
+	const lines = value.replace(/\r\n/g, "\n").split("\n");
+	for (const paragraph of paragraphs) {
+		paragraph.parentNode?.removeChild(paragraph);
+	}
+	for (const line of lines) {
+		const paragraph = sourceParagraph.cloneNode(true) as Element;
+		const paragraphTextNodes = elements(paragraph, DRAWING_NAMESPACE, "t");
+		const firstTextNode = paragraphTextNodes[0];
 		if (!firstTextNode) {
 			throw new Error(`OOXML template slot "${layoutKey}.${slotName}" has no text node`);
 		}
-		firstTextNode.textContent = value;
-		if (/^\s|\s$/.test(value)) {
+		firstTextNode.textContent = line;
+		if (/^\s|\s$/.test(line)) {
 			firstTextNode.setAttributeNS(XML_NAMESPACE, "xml:space", "preserve");
+		} else {
+			firstTextNode.removeAttributeNS(XML_NAMESPACE, "space");
 		}
-		for (const textNode of textNodes.slice(1)) {
+		for (const textNode of paragraphTextNodes.slice(1)) {
 			textNode.textContent = "";
 		}
+		parent.appendChild(paragraph);
 	}
 }
 
