@@ -1,3 +1,5 @@
+import templateDigests from "./template-digests.json";
+
 export type BinaryTemplateAvailability = "default" | "marketplace";
 
 export type BinaryTemplateAssetStatus = "pending-upload" | "available";
@@ -49,19 +51,25 @@ const HALF_SCALE_WIDESCREEN: BinaryTemplateDimensions = {
 type CatalogEntry = Omit<
 	BinaryPptxTemplate,
 	"asset" | "sourceFilename" | "version" | "thumbnailPath"
-> & {
-	assetStatus?: BinaryTemplateAssetStatus;
-};
+>;
+
+/**
+ * Digests are backfilled by `go run ./cmd/publish-templates`, which sanitizes
+ * each package, hashes the sanitized bytes, and uploads them to a digest-pinned
+ * key. A template is available exactly when a published digest exists for it.
+ */
+const publishedDigests: Record<string, { sha256: string; slideCount: number } | undefined> =
+	templateDigests;
 
 function template(entry: CatalogEntry): BinaryPptxTemplate {
-	const { assetStatus = "pending-upload", ...metadata } = entry;
+	const published = publishedDigests[entry.id];
 	return {
-		...metadata,
+		...entry,
 		version: 1,
 		sourceFilename: `${entry.id}.pptx`,
-		asset: {
-			status: assetStatus,
-		},
+		asset: published
+			? { status: "available", sha256: published.sha256 }
+			: { status: "pending-upload" },
 		thumbnailPath: `pptx-templates/${entry.id}/1/thumbnails/cover.webp`,
 	};
 }
@@ -203,7 +211,6 @@ export const BINARY_PPTX_TEMPLATE_CATALOG = [
 		id: "simple-business-proposal",
 		name: "Simple Business Proposal",
 		availability: "default",
-		assetStatus: "available",
 		dimensions: HALF_SCALE_WIDESCREEN,
 	}),
 	template({
@@ -257,5 +264,3 @@ function requiredCatalogEntry(id: string): BinaryPptxTemplate {
 }
 
 export const DEFAULT_BINARY_PPTX_TEMPLATE = requiredCatalogEntry("simple-business-proposal");
-
-
