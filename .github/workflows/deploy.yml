@@ -15,13 +15,7 @@ env:
   REGISTRY_REPOSITORY: slidesage
   RUN_REGION: asia-south1
   IMAGE_VERSION: ${{ github.sha }}
-  TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
-  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-  TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  TF_VAR_api_image: asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/slidesage/api:${{ github.sha }}
-  TF_VAR_worker_image: asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/slidesage/worker:${{ github.sha }}
-  TF_VAR_migrate_image: asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/slidesage/migrate:${{ github.sha }}
+  API_AUTH_FLAG: ${{ vars.API_AUTH_FLAG || '--allow-unauthenticated' }}
 
 jobs:
   build:
@@ -89,8 +83,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-
       - id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -99,20 +91,17 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
-
-      - name: Terraform init
-        working-directory: infra/prod
-        run: terraform init -input=false -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="prefix=prod"
-
-      - name: Update migration job definition
-        working-directory: infra/prod
-        run: terraform apply -input=false -auto-approve -target=google_cloud_run_v2_job.migrate
-
-      - name: Run migrations
-        run: gcloud run jobs execute slidesage-migrate --project=$PROJECT_ID --region=$RUN_REGION --wait
+      - name: Deploy and run migrations
+        run: |
+          IMAGE=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION
+          gcloud run jobs deploy slidesage-migrate \
+            --image=$IMAGE \
+            --region=$RUN_REGION \
+            --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
+            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
+            --set-secrets=DATABASE_URL=DATABASE_URL:latest \
+            --execute-now \
+            --wait
 
   deploy:
     needs: [build, migrate]
@@ -121,8 +110,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-
       - id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -131,17 +118,45 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
+      - name: Deploy API service
+        run: |
+          IMAGE=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/api:$IMAGE_VERSION
+          gcloud run deploy api \
+            $API_AUTH_FLAG \
+            --image=$IMAGE \
+            --region=$RUN_REGION \
+            --ingress=internal-and-cloud-load-balancing \
+            --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
+            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
+            --port=8000 \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=10 \
+            --concurrency=80 \
+            --timeout=300s \
+            --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,EXA_API_KEY=EXA_API_KEY:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest,RESEND_API_KEY=RESEND_API_KEY:latest,RESEND_FROM_EMAIL=RESEND_FROM_EMAIL:latest,CDN_SIGNING_KEY_SECRET=CDN_SIGNING_KEY_SECRET:latest \
+            --set-env-vars='^@^NODE_ENV=production@BASE_URL=https://api.slidesage.app@CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@OPEN_ROUTER_MODEL=openrouter/free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions@PRESENTATION_GCS_BUCKET=slidesage-504414-presentation-revisions@CDN_URL=https://api.slidesage.app@CDN_SIGNING_KEY_NAME=templates-key-v2@CDN_SIGNED_URL_TTL_SECONDS=900'
 
-      - name: Terraform init
-        working-directory: infra/prod
-        run: terraform init -input=false -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="prefix=prod"
-
-      - name: Terraform apply
-        working-directory: infra/prod
-        run: terraform apply -input=false -auto-approve
+      - name: Deploy worker service
+        run: |
+          IMAGE=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/worker:$IMAGE_VERSION
+          gcloud run deploy worker \
+            --no-allow-unauthenticated \
+            --image=$IMAGE \
+            --region=$RUN_REGION \
+            --ingress=internal \
+            --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
+            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
+            --port=8080 \
+            --cpu=1 \
+            --memory=1Gi \
+            --no-cpu-throttling \
+            --min-instances=0 \
+            --max-instances=10 \
+            --concurrency=1 \
+            --set-secrets=DATABASE_URL=DATABASE_URL:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest,CDN_SIGNING_KEY_SECRET=CDN_SIGNING_KEY_SECRET:latest \
+            --set-env-vars='^@^NODE_ENV=production@WORKER_CONCURRENCY=2@BASE_URL=https://api.slidesage.app@OPEN_ROUTER_MODEL=openrouter/free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions@PRESENTATION_GCS_BUCKET=slidesage-504414-presentation-revisions@CDN_URL=https://api.slidesage.app@CDN_SIGNING_KEY_NAME=templates-key-v2@CDN_SIGNED_URL_TTL_SECONDS=900'
 
       - name: Verify Cloud Run exposure
         run: |

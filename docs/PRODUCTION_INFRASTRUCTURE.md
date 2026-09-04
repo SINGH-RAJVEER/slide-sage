@@ -16,12 +16,12 @@ The API, worker, and migration job connect through the Cloud SQL Unix socket at 
 - Cloud Run job `slidesage-migrate`, invoked by deployment automation after an image update
 - A single-zone Enterprise `db-f1-micro` Cloud SQL PostgreSQL 18 instance with 10 GB SSD storage, no automated backups, and no point-in-time recovery
 - Global external HTTPS load balancer and serverless NEG for `api`, with an HTTP listener that redirects to HTTPS
-- Cloud CDN backend bucket `templates`, routed from the `cdn` host rule on the same load balancer and served from the private template-origin bucket
-- Managed certificates for `api` and `cdn`, both attached to the one HTTPS proxy
-- DNS-only Cloudflare `api` and `cdn` records pointing to the load balancer address
+- Cloud CDN backend bucket `templates`, routed from the `/pptx-templates/*` path rule on the `api` host and served from the private template-origin bucket
+- Managed certificate for `api`, attached to the HTTPS proxy
+- DNS-only Cloudflare `api` record pointing to the load balancer address
 - Cloudflare Pages project `slidesage` and its apex and `www` domains
 - Private GCS bucket for immutable canonical presentation revisions
-- Existing private template-origin bucket `cdn.slidesage.app`, read by the Cloud CDN cache-fill service account
+- Existing private template-origin bucket, read by the Cloud CDN cache-fill service account and routed under `https://api.slidesage.app/pptx-templates/`
 
 Terraform creates the revision bucket and grants the Cloud Run runtime account bucket-scoped object creator and viewer access. It references the existing template-origin bucket and grants its Google-managed Cloud CDN cache-fill account object viewer access. Override `presentation_gcs_bucket` or `template_gcs_bucket` when the bucket names differ from their defaults.
 
@@ -72,13 +72,13 @@ terraform apply \
 	-var="migrate_image=asia-south1-docker.pkg.dev/slidesage-504414/slidesage/migrate:$GITHUB_SHA"
 ```
 
-Run the migration job before releasing API and worker revisions that depend on the new schema. `.github/workflows/deploy.yml` performs exactly this sequence: it builds and pushes the three images, applies `-target=google_cloud_run_v2_job.migrate`, executes the job, then applies the rest. It passes the image variables through `TF_VAR_*` environment variables and needs the `TF_STATE_BUCKET`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` repository secrets in addition to the existing GCP workload-identity secrets.
+Run the migration job before releasing API and worker revisions that depend on the new schema.
 
-Terraform is the only production deployment path. Do not run `gcloud run deploy` against these services; the next plan would show drift and the following apply would revert it.
+The live deployment path is `.github/workflows/deploy.yml`, which uses `gcloud run deploy` directly. Terraform in `infra/prod` is not yet adopted against this project: no state bucket exists and no resources have been imported, so it must not be applied. Production infrastructure is currently changed by hand. Reconcile the two before making Terraform authoritative.
 
 ## Adopting an existing environment
 
-This project's resources were originally created with the `gcloud` CLI, so the resource names in `edge.tf` follow that environment rather than a fresh Terraform naming scheme: the address is `slidesage-api-ip`, the backend service is `slidesage-api-backend`, the URL map is `slidesage-api-map`, the certificates are `slidesage-api-cert` and `slidesage-cdn-cert`, and the forwarding rules are `slidesage-api-http-rule` and `slidesage-api-https-rule`. Renaming any of these means replacing the resource, so leave them alone.
+This project's resources were originally created with the `gcloud` CLI, so the resource names in `edge.tf` follow that environment rather than a fresh Terraform naming scheme: the address is `slidesage-api-ip`, the backend service is `slidesage-api-backend`, the URL map is `slidesage-api-map`, the certificate is `slidesage-api-cert`, and the forwarding rules are `slidesage-api-http-rule` and `slidesage-api-https-rule`. Renaming any of these means replacing the resource, so leave them alone.
 
 `infra/prod/imports.tf` adopts those resources into state. Run `terraform plan` and confirm the summary reports imports, additions, and in-place changes only. A plan that proposes a replacement or a destroy means a name or an argument no longer matches the live resource; fix the configuration rather than applying. Delete `imports.tf` once the apply succeeds.
 

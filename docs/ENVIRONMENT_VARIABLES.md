@@ -20,7 +20,6 @@ Copy `.env.example` to `.env`. Devenv loads it for the Go API, generation worker
 | `CORS_ORIGIN`                 | No         | Default CORS origins                                                                                       | Single-origin fallback; trailing slashes are normalized                             |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | No         | Local frontend, `https://slidesage.pages.dev`, `https://slidesage.app`, and `https://www.slidesage.app`    | Comma-separated auth callback origins; trailing slashes are normalized              |
 | `VITE_API_URL`                | No         | `http://localhost:8000`                                                                                    | Browser API origin without a path suffix; set production to `https://api.slidesage.app` |
-| `VITE_PPTX_TEMPLATE_BASE_URL` | For binary template export | None | Public, CORS-enabled object-storage prefix for versioned runtime PPTX templates |
 | `PRESENTATION_GCS_BUCKET`      | Canonical PPTX revisions | None | Private GCS bucket configuration for the canonical revision flow |
 | `NODE_ENV`                    | No         | `development` in devenv                                                                                    | Controls production auth and email-delivery safeguards; OTP values are never logged |
 
@@ -98,14 +97,12 @@ Do not commit `.env`. Keep secrets in the deployment platform's secret store in 
 
 Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production build. The client sends requests directly to each endpoint. As a deployment safeguard, production builds ignore loopback values such as `localhost` and `127.0.0.1` and fall back to same-origin routes instead.
 
-Set `VITE_PPTX_TEMPLATE_BASE_URL` to the directory above `pptx-templates/`. The browser downloads only the selected template. The object-storage origin must allow `GET` requests from the SlideSage web origin. Template objects use immutable, versioned paths documented in [OOXML_TEMPLATE_EXPORT.md](OOXML_TEMPLATE_EXPORT.md).
-
 ## GCS and Cloud CDN
 
 | Variable                     | Required | Secret | Purpose |
 | ---------------------------- | -------- | ------ | ------- |
 | `PRESENTATION_GCS_BUCKET`    | Canonical revisions | No | Private bucket receiving create-only canonical PPTX objects |
-| `CDN_URL`                    | Signed template delivery | No | Public HTTPS Cloud CDN base URL used as part of the signed URL |
+| `CDN_URL`                    | Signed template delivery | No | HTTPS origin used when signing template URLs; templates are served by the API load balancer under `/pptx-templates/` |
 | `CDN_SIGNING_KEY_NAME`       | Signed template delivery | No | Active Cloud CDN signing-key identifier sent as `KeyName` |
 | `CDN_SIGNING_KEY_SECRET`     | Signed template delivery | Yes | Base64url-encoded 128-bit shared key used by the server-side signer |
 | `CDN_SIGNED_URL_TTL_SECONDS` | No | No | Signed template URL lifetime; defaults to `900` seconds |
