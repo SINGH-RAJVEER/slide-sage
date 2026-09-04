@@ -18,6 +18,12 @@ The API, worker, and migration job connect through the Cloud SQL Unix socket at 
 - Global external HTTPS load balancer and serverless NEG for `api`
 - DNS-only Cloudflare `api` record pointing to the load balancer address
 - Cloudflare Pages project `slidesage` and its apex and `www` domains
+- Private GCS bucket for immutable canonical presentation revisions
+- Existing private template-origin bucket `cdn.slidesage.app`, read by the Cloud CDN cache-fill service account
+
+Terraform creates the revision bucket and grants the Cloud Run runtime account bucket-scoped object creator and viewer access. It references the existing template-origin bucket and grants its Google-managed Cloud CDN cache-fill account object viewer access. Override `presentation_gcs_bucket` or `template_gcs_bucket` when the bucket names differ from their defaults.
+
+Cloud CDN signing key material is deliberately outside Terraform because putting the shared key value in a resource would store it in Terraform state. Rotate keys with Google Cloud tooling, retain the base64url value in Secret Manager as `CDN_SIGNING_KEY_SECRET`, and set `cdn_signing_key_name` to the active key name. The API and worker receive the secret from Secret Manager. Never add the value to `terraform.tfvars` or a client build variable.
 
 The API has `internal-and-cloud-load-balancing` ingress. Do not proxy the `api` record through Cloudflare. Google must see the load balancer request for that ingress policy to work and for the managed certificate to provision.
 
