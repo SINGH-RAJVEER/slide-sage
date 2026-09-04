@@ -1,14 +1,11 @@
-import type { Slide } from "@slidesage/types";
 import { Plus, Trash2 } from "lucide-react";
-import { ScaledSlide } from "../Viewer/ScaledSlide";
-import { SlideRenderer } from "../Viewer/SlideRenderer";
 
 export interface MarketplaceCardItem {
 	id: string;
 	name: string;
 	description: string;
-	previewThemeId: string;
-	previewSlide: Slide;
+	/** Signed URL of the cover slide rendered from the template package. */
+	thumbnailUrl: string;
 }
 
 interface MarketplaceCardProps {
@@ -34,15 +31,13 @@ export default function MarketplaceCard({
 				aria-label={`Preview ${item.name} template`}
 				className="relative block aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black/30 text-left shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition duration-300 group-hover:-translate-y-1 group-hover:border-white/20 group-hover:shadow-[0_24px_65px_rgba(0,0,0,0.28)] focus:outline-none focus:ring-2 focus:ring-amber-100/35"
 			>
-				<ScaledSlide className="absolute inset-0" fit="width">
-					<div className="h-full w-full">
-						<SlideRenderer
-							slide={item.previewSlide}
-							currentTemplate={item.previewThemeId}
-							isActive={false}
-						/>
-					</div>
-				</ScaledSlide>
+				<img
+					src={item.thumbnailUrl}
+					alt={`${item.name} cover slide`}
+					loading="lazy"
+					decoding="async"
+					className="absolute inset-0 h-full w-full object-cover"
+				/>
 				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#111827]/70 via-transparent to-transparent opacity-60" />
 			</button>
 

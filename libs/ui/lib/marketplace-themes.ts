@@ -1,4 +1,4 @@
-import type { PresentationTemplateReference, ThemeId } from "@slidesage/types";
+import type { PresentationTemplateReference } from "@slidesage/types";
 import { MARKETPLACE_ITEMS } from "./catalog";
 
 const STORAGE_KEY = "slidesage-installed-marketplace-themes";
@@ -9,8 +9,7 @@ export interface InstalledMarketplaceTheme {
 	name: string;
 	description: string;
 	templateReference: PresentationTemplateReference;
-	previewThemeId: ThemeId;
-	themeId: ThemeId;
+	thumbnailPath: string;
 }
 
 function getStoredReferences(): PresentationTemplateReference[] {
@@ -48,8 +47,7 @@ export function getInstalledMarketplaceThemes(): InstalledMarketplaceTheme[] {
 		name: item.name,
 		description: item.description,
 		templateReference: item.templateReference,
-		previewThemeId: item.previewThemeId,
-		themeId: item.previewThemeId,
+		thumbnailPath: item.thumbnailPath,
 	}));
 }
 

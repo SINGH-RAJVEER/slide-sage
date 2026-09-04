@@ -1,45 +1,28 @@
-import type { BinaryTemplateSelection, SlideLayout } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { ArrowLeft, Palette, Presentation, Sparkles } from "lucide-react";
 import type React from "react";
-import { SlideLayoutSelector } from "./SlideLayoutSelector";
-import TemplateSelector, { type InstalledTemplateOption } from "./TemplateSelector";
 
 interface ViewerHeaderControlsProps {
 	title?: string;
 	canIterate: boolean;
-	currentTemplate: string;
-	selectedTemplate?: BinaryTemplateSelection;
 	onBack: () => void;
-	onTemplateChange: (template: BinaryTemplateSelection) => void;
-	selectedLayout?: SlideLayout;
-	onLayoutChange: (layout: SlideLayout) => void;
-	layoutDisabled: boolean;
 	onIterate: () => void;
 	onPresent: () => void;
 	presentDisabled?: boolean;
-	themeLabel?: string;
+	/** Name of the PowerPoint template the deck was generated from. */
+	templateLabel?: string;
 	showIterate?: boolean;
-	showLayoutSelector?: boolean;
-	installedThemes?: InstalledTemplateOption[];
 }
 
 export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
 	title,
 	canIterate,
-	selectedTemplate,
 	onBack,
-	onTemplateChange,
-	selectedLayout,
-	onLayoutChange,
-	layoutDisabled,
 	onIterate,
 	onPresent,
 	presentDisabled = false,
-	themeLabel,
+	templateLabel,
 	showIterate = true,
-	showLayoutSelector = true,
-	installedThemes = [],
 }) => {
 	return (
 		<header
@@ -62,24 +45,11 @@ export const ViewerHeaderControls: React.FC<ViewerHeaderControlsProps> = ({
 			</div>
 
 			<div className="viewer-header__tools flex items-center justify-center gap-2">
-				{themeLabel ? (
+				{templateLabel && (
 					<div className="flex h-10 items-center gap-2 rounded-md border border-white/5 bg-white/5 px-3 text-sm text-white/75">
 						<Palette className="size-4 text-blue-400" />
-						{themeLabel}
+						{templateLabel}
 					</div>
-				) : selectedTemplate ? (
-					<TemplateSelector
-						selectedTemplate={selectedTemplate}
-						onTemplateChange={onTemplateChange}
-						installedThemes={installedThemes}
-					/>
-				) : null}
-				{showLayoutSelector && (
-					<SlideLayoutSelector
-						selectedLayout={selectedLayout}
-						onLayoutChange={onLayoutChange}
-						disabled={layoutDisabled}
-					/>
 				)}
 				{showIterate && (
 					<Button
