@@ -44,11 +44,19 @@ The renderer leaves original source slides as unreachable package parts for now.
 
 ## CDN requirements
 
-Runtime packages should use paths such as:
+The legacy browser exporter used paths such as:
 
 ```text
 pptx-templates/v1/simple-business-proposal.pptx
 ```
+
+The canonical server-side flow supersedes that layout with digest-pinned paths:
+
+```text
+pptx-templates/simple-business-proposal/1/{sha256}/template.pptx
+```
+
+Existing objects under `templates/v1/` or `pptx-templates/v1/` must be validated and republished before the canonical Go fetcher can use them. Do not mark an asset available in the canonical catalog until its digest-pinned object exists.
 
 The storage origin must return the PPTX bytes without content transformation and allow cross-origin browser downloads. Use the PowerPoint MIME type `application/vnd.openxmlformats-officedocument.presentationml.presentation`. Versioned objects may use immutable caching.
 

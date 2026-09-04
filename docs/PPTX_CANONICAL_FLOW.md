@@ -92,7 +92,7 @@ Generation succeeds only after package validation, immutable upload, and databas
 Canonical objects use immutable keys:
 
 ```text
-presentations/{presentation-id}/revisions/{revision}/deck.pptx
+presentations/{presentation-id}/objects/{sha256}.pptx
 presentations/{presentation-id}/revisions/{revision}/previews/{slide-index}.webp
 ```
 
@@ -107,13 +107,19 @@ PostgreSQL records:
 
 Writers use compare-and-swap against the expected current revision. Duplicate operation IDs return the prior result. Stale saves remain available as conflict revisions but do not replace the current revision.
 
+PPTX objects are content-addressed so an interrupted database commit can safely retry the immutable upload. Multiple revisions may reference the same object when distinct successful operations produce identical bytes.
+
+The target production object store is a private Google Cloud Storage bucket. Once runtime wiring and bucket infrastructure are enabled, API and worker processes authenticate with their attached Cloud Run service account through Application Default Credentials. The GCS adapter uses a create-only generation precondition (`DoesNotExist`, equivalent to `ifGenerationMatch=0`) and records the expected SHA-256 in object metadata. An existing object is accepted only when its size, content type, and digest metadata match the requested write. See Google's [request preconditions](https://cloud.google.com/storage/docs/request-preconditions#special-match).
+
+Template delivery through a private Cloud CDN origin uses signed URLs. `KeyName` identifies a configured signing key but is not secret key material; the server-side signer also requires the matching base64url-encoded 128-bit secret. Google does not return that secret after the key is configured, so it must be retained in Secret Manager. See Google's [signed URL key requirements](https://cloud.google.com/cdn/docs/using-signed-urls#createkeys).
+
 ## ONLYOFFICE integration
 
 The Go API creates a signed editor configuration for one user, presentation, permission set, and base revision. The ONLYOFFICE document key derives from the presentation ID and immutable revision. The stable file identity remains the presentation ID.
 
 The source URL is read-only and expires after the editor has fetched the document. The callback verifies the ONLYOFFICE JWT, session identity, callback status, base revision, result origin, size, content type, and package structure.
 
-For a final save, SlideSage downloads the assembled PPTX from the trusted Document Server, writes a staging object while hashing it, validates it, promotes it to an immutable revision key, commits the database revision, and then acknowledges the callback.
+For a final save, SlideSage downloads the assembled PPTX from the trusted Document Server, writes a staging object while hashing it, validates it, promotes it to an immutable content-addressed object, commits the database revision, and then acknowledges the callback.
 
 ## LibreOffice preview worker
 
