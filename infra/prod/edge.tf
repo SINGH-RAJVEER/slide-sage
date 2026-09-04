@@ -59,14 +59,23 @@ resource "google_compute_url_map" "api" {
   name            = "slidesage-api-map"
   default_service = google_compute_backend_service.api.id
 
+  # Templates are served from the API host so they reuse its DNS record and
+  # certificate. A dedicated cdn host cannot hold a managed certificate: the
+  # only backend behind it rejects the unsigned requests Google issues to
+  # validate the domain, so the certificate never provisions.
   host_rule {
-    hosts        = ["cdn.${var.domain_name}"]
+    hosts        = ["api.${var.domain_name}"]
     path_matcher = "path-matcher-1"
   }
 
   path_matcher {
     name            = "path-matcher-1"
-    default_service = google_compute_backend_bucket.templates.id
+    default_service = google_compute_backend_service.api.id
+
+    path_rule {
+      paths   = ["/pptx-templates/*"]
+      service = google_compute_backend_bucket.templates.id
+    }
   }
 }
 
@@ -88,21 +97,10 @@ resource "google_compute_managed_ssl_certificate" "api" {
   }
 }
 
-resource "google_compute_managed_ssl_certificate" "cdn" {
-  name = "slidesage-cdn-cert"
-
-  managed {
-    domains = ["cdn.${var.domain_name}"]
-  }
-}
-
 resource "google_compute_target_https_proxy" "api" {
-  name    = "slidesage-api-https-proxy"
-  url_map = google_compute_url_map.api.id
-  ssl_certificates = [
-    google_compute_managed_ssl_certificate.api.id,
-    google_compute_managed_ssl_certificate.cdn.id,
-  ]
+  name             = "slidesage-api-https-proxy"
+  url_map          = google_compute_url_map.api.id
+  ssl_certificates = [google_compute_managed_ssl_certificate.api.id]
 }
 
 resource "google_compute_target_http_proxy" "https_redirect" {
@@ -128,20 +126,12 @@ resource "google_compute_global_forwarding_rule" "api_http" {
   target                = google_compute_target_http_proxy.https_redirect.id
 }
 
+# Carries both the API and the signed template traffic. Signed URLs must reach
+# the Cloud CDN backend bucket directly, so the record stays DNS-only: proxying
+# it would strip the signature parameters and every template fetch would 403.
 resource "cloudflare_record" "api" {
   zone_id = data.cloudflare_zone.production.id
   name    = "api"
-  content = google_compute_global_address.api.address
-  type    = "A"
-  ttl     = 1
-  proxied = false
-}
-
-# Signed URLs must reach the Cloud CDN backend bucket directly, so this record
-# stays DNS-only like the API record.
-resource "cloudflare_record" "cdn" {
-  zone_id = data.cloudflare_zone.production.id
-  name    = "cdn"
   content = google_compute_global_address.api.address
   type    = "A"
   ttl     = 1

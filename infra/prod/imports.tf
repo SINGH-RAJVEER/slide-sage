@@ -15,7 +15,6 @@
 # These are absent from the project and are created by the first apply rather
 # than imported:
 #
-#   cloudflare_record.cdn (cdn.slidesage.app does not resolve yet)
 #   google_storage_bucket.presentation_revisions
 #   google_storage_bucket_iam_member.runtime_revision_creator
 #   google_storage_bucket_iam_member.runtime_revision_viewer
@@ -131,11 +130,6 @@ import {
 import {
   to = google_compute_managed_ssl_certificate.api
   id = "projects/slidesage-504414/global/sslCertificates/slidesage-api-cert"
-}
-
-import {
-  to = google_compute_managed_ssl_certificate.cdn
-  id = "projects/slidesage-504414/global/sslCertificates/slidesage-cdn-cert"
 }
 
 import {
