@@ -7,8 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@slidesage/ui/components/dropdown-menu";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
-import { getOoxmlExportReadiness } from "@slidesage/ui/lib/ooxml-template-readiness";
-import { ChevronDown, Download, FileText, Presentation } from "lucide-react";
+import { ChevronDown, Download, Presentation } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
 
@@ -17,7 +16,7 @@ interface Props {
 	onExport?: PresentationExporter;
 }
 
-export type ExportFormat = "pptx" | "pdf";
+export type ExportFormat = "pptx";
 export type PresentationExporter = (
 	format: ExportFormat,
 	presentation: PresentationData,
@@ -47,7 +46,9 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 	};
 
 	const isExporting = exportingFormat !== null;
-	const pptxReadiness = getOoxmlExportReadiness(presentation);
+	// Download serves the bytes of the current revision, so it is available as
+	// soon as one exists.
+	const revision = presentation.currentRevision;
 
 	return (
 		<div className="relative flex flex-col items-start gap-1">
@@ -55,7 +56,7 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 				<DropdownMenuTrigger asChild>
 					<Button
 						type="button"
-						disabled={isExporting || presentation.slides.length === 0}
+						disabled={isExporting || !revision}
 						variant="outline"
 						className="bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20 shadow-none transition-colors duration-200"
 					>
@@ -74,21 +75,12 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 					className="w-48 bg-gray-900/80 backdrop-blur-md border border-white/10 text-white shadow-xl"
 				>
 					<DropdownMenuItem
-						disabled={isExporting || !pptxReadiness.ready}
-						title={pptxReadiness.reason}
+						disabled={isExporting || !revision}
 						onSelect={() => void download("pptx")}
 						className="focus:bg-white/10 focus:text-white cursor-pointer"
 					>
 						<Presentation />
 						<span>PowerPoint</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						disabled={isExporting}
-						onSelect={() => void download("pdf")}
-						className="focus:bg-white/10 focus:text-white cursor-pointer"
-					>
-						<FileText />
-						<span>PDF document</span>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

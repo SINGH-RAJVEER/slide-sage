@@ -1,7 +1,6 @@
 export * from "./components/alert";
 export * from "./components/badge";
 export * from "./components/button";
-export { default as ChartRenderer } from "./components/Charts/ChartRenderer";
 export * from "./components/card";
 export * from "./components/dialog";
 export * from "./components/dropdown-menu";
@@ -20,8 +19,6 @@ export * from "./components/thinking-orb";
 export * from "./components/Viewer";
 export * from "./context/AuthContext";
 export * from "./context/StreamingContext";
+export * from "./lib/pptx-document";
 export * from "./lib/presentation-motion";
-export * from "./lib/semantic-themes";
-export { useSemanticTheme } from "./lib/useSemanticTheme";
 export * from "./lib/utils";
-export * from "./lib/widget-scene";
