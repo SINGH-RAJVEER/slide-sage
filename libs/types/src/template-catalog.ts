@@ -279,13 +279,6 @@ export const BINARY_PPTX_TEMPLATE_CATALOG = [
 		dimensions: WIDESCREEN,
 	}),
 	template({
-		id: "family-christmas-card",
-		name: "Family Christmas Card",
-		availability: "marketplace",
-		previewThemeId: "velvet-marquee",
-		dimensions: A_SERIES_PORTRAIT,
-	}),
-	template({
 		id: "my-travel-wrapped",
 		name: "My Travel Wrapped",
 		availability: "marketplace",
