@@ -106,10 +106,6 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			</MemoryRouter>,
 		);
 
-		fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
-			button: 0,
-		});
-		fireEvent.click(view.getByRole("menuitem", { name: /Soft Skills Training/ }));
 		fireEvent.click(view.getByRole("button", { name: "Generate" }));
 
 		await waitFor(() =>
@@ -131,14 +127,14 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			provider: "anthropic",
 			model: "claude-sonnet-4-20250514",
 		});
-		expect(requestBody["template"]).toEqual({ id: "soft-skills-training", version: 1 });
-		expect(requestBody["theme"]).toBe("terra-mesa");
+		expect(requestBody["template"]).toEqual({ id: "simple-business-proposal", version: 1 });
+		expect(requestBody["theme"]).toBe("corporate-blue");
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
 });
 
-it("switches the binary template while the generation skeleton is visible", async () => {
+it("does not switch to an unavailable template while the generation skeleton is visible", async () => {
 	const originalFetch = globalThis.fetch;
 	const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) => {
 		const url = String(input);
@@ -203,16 +199,17 @@ it("switches the binary template while the generation skeleton is visible", asyn
 			expect(view.getByRole("button", { name: /Simple Business Proposal/ })).toBeInTheDocument(),
 		);
 
-		fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
+		const templateSelector = view.getByRole("button", { name: /Simple Business Proposal/ });
+		fireEvent.pointerDown(templateSelector, {
 			button: 0,
 		});
-		fireEvent.click(
-			view.getByRole("menuitem", { name: /Modern Minimal Grid Financial Management/ }),
-		);
+		const unavailable = view.getByRole("menuitem", {
+			name: /Modern Minimal Grid Financial Management/,
+		});
+		expect(unavailable.hasAttribute("data-disabled")).toBe(true);
+		fireEvent.click(unavailable);
 
-		expect(
-			view.getByRole("button", { name: /Modern Minimal Grid Financial Management/ }),
-		).toBeInTheDocument();
+		expect(templateSelector).toHaveTextContent("Simple Business Proposal");
 		expect(
 			fetchMock.mock.calls.some(
 				([input, init]) =>
@@ -222,6 +219,37 @@ it("switches the binary template while the generation skeleton is visible", asyn
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
+});
+
+it("disables generation when retry state names an unavailable template", () => {
+	const view = render(
+		<MemoryRouter
+			initialEntries={[
+				{
+					pathname: "/generate",
+					state: {
+						retry: {
+							prompt: "Retry with an unavailable template",
+							slide_count: 5,
+							detail_level: "balanced",
+							tonality: "professional",
+							research_enabled: false,
+							template: { id: "soft-skills-training", version: 1 },
+						},
+					},
+				},
+			]}
+		>
+			<StreamingProvider>
+				<Routes>
+					<Route path="/generate" element={<GeneratePPTPage />} />
+				</Routes>
+			</StreamingProvider>
+		</MemoryRouter>,
+	);
+
+	expect(view.getByRole("textbox", { name: "Prompt" })).toBeEnabled();
+	expect(view.getByRole("button", { name: "Generate" })).toBeDisabled();
 });
 
 it("starts generation on Enter even when focus sits on an options-bar control", async () => {

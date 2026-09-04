@@ -9,6 +9,7 @@ import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Gener
 import TemplateSelector from "@slidesage/ui/components/Viewer/TemplateSelector";
 import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
+import { templateIsSelectable } from "@slidesage/ui/lib/template-selection";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -51,6 +52,7 @@ export default function GeneratePPTPage() {
 	const navigate = useNavigate();
 	const { streamingState, generate } = useStreaming();
 	const installedThemes = useInstalledMarketplaceThemes();
+	const generationDisabled = !templateIsSelectable(selectedTemplate);
 
 	useEffect(() => {
 		if (streamingState.error) {
@@ -83,7 +85,7 @@ export default function GeneratePPTPage() {
 
 	const handleGenerateInternal = async (selectedPrompt: string) => {
 		const normalizedPrompt = selectedPrompt.trim();
-		if (!normalizedPrompt || streamingState.isStreaming) return;
+		if (!normalizedPrompt || streamingState.isStreaming || generationDisabled) return;
 
 		setLoading(true);
 
@@ -129,7 +131,7 @@ export default function GeneratePPTPage() {
 	});
 
 	const handleGenerate = () => {
-		if (!prompt.trim()) return;
+		if (!prompt.trim() || generationDisabled) return;
 
 		requestGenerationNotificationPermission();
 		debouncedGenerate(prompt);
@@ -141,7 +143,7 @@ export default function GeneratePPTPage() {
 			document.getElementById("prompt")?.focus();
 			return;
 		}
-		if (!loading && !streamingState.isStreaming) {
+		if (!loading && !streamingState.isStreaming && !generationDisabled) {
 			handleGenerate();
 		}
 	};
@@ -166,7 +168,15 @@ export default function GeneratePPTPage() {
 
 	return (
 		<div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-transparent">
-			<Header />
+			<Header
+				templateSelector={
+					<TemplateSelector
+						selectedTemplate={selectedTemplate}
+						onTemplateChange={setSelectedTemplate}
+						installedThemes={installedThemes}
+					/>
+				}
+			/>
 
 			<div
 				data-generation-selectors
@@ -182,12 +192,6 @@ export default function GeneratePPTPage() {
 					onUseWebResearchChange={setUseWebResearch}
 					onSlideCountChange={setSlideCount}
 				/>
-				<TemplateSelector
-					selectedTemplate={selectedTemplate}
-					onTemplateChange={setSelectedTemplate}
-					installedThemes={installedThemes}
-					className="mt-2"
-				/>
 			</div>
 
 			<main className="flex w-full flex-1 items-center justify-center overflow-y-auto px-4 py-12 md:px-8">
@@ -196,6 +200,7 @@ export default function GeneratePPTPage() {
 						<GenerateForm
 							prompt={prompt}
 							loading={loading || streamingState.isStreaming}
+							generationDisabled={generationDisabled}
 							onPromptChange={setPrompt}
 							onGenerate={handleGenerate}
 						/>

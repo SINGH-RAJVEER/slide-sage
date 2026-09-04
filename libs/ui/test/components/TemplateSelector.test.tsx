@@ -4,7 +4,7 @@ import { expect, it, mock } from "bun:test";
 import TemplateSelector from "@slidesage/ui/components/Viewer/TemplateSelector";
 import { fireEvent, render } from "@testing-library/react";
 
-it("lists six defaults and selects a typed binary template", () => {
+it("lists six defaults and disables templates that are not export-ready", () => {
 	const onTemplateChange = mock();
 	const view = render(
 		<TemplateSelector
@@ -22,12 +22,10 @@ it("lists six defaults and selects a typed binary template", () => {
 	});
 
 	expect(view.getAllByRole("menuitem")).toHaveLength(6);
-	fireEvent.click(view.getByRole("menuitem", { name: /Soft Skills Training/ }));
-	expect(onTemplateChange).toHaveBeenCalledWith({
-		id: "soft-skills-training",
-		version: 1,
-		previewThemeId: "terra-mesa",
-	});
+	const unavailable = view.getByRole("menuitem", { name: /Soft Skills Training/ });
+	expect(unavailable.hasAttribute("data-disabled")).toBe(true);
+	fireEvent.click(unavailable);
+	expect(onTemplateChange).not.toHaveBeenCalled();
 });
 
 it("adds installed marketplace binary references", () => {
@@ -55,11 +53,8 @@ it("adds installed marketplace binary references", () => {
 	fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
 		button: 0,
 	});
-	fireEvent.click(view.getByRole("menuitem", { name: /New Jeans Y2K Style/ }));
-
-	expect(onTemplateChange).toHaveBeenCalledWith({
-		id: "new-jeans-y2k-style",
-		version: 1,
-		previewThemeId: "bubblegum-pop",
-	});
+	const unavailable = view.getByRole("menuitem", { name: /New Jeans Y2K Style/ });
+	expect(unavailable.hasAttribute("data-disabled")).toBe(true);
+	fireEvent.click(unavailable);
+	expect(onTemplateChange).not.toHaveBeenCalled();
 });

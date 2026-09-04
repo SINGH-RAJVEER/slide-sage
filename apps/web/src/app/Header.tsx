@@ -1,5 +1,6 @@
 import { useAuth } from "@slidesage/ui";
 import { type HeaderRoutes, Header as HeaderView } from "@slidesage/ui/components/Header";
+import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
 
@@ -15,7 +16,13 @@ const HEADER_ROUTES: HeaderRoutes = {
 	auth: [ROUTES.signIn, ROUTES.signUp, ROUTES.forgotPassword, ROUTES.resetPassword],
 };
 
-export default function Header({ sticky = false }: { sticky?: boolean }) {
+export default function Header({
+	sticky = false,
+	templateSelector,
+}: {
+	sticky?: boolean;
+	templateSelector?: ReactNode;
+}) {
 	const { user, signOut } = useAuth();
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -29,6 +36,7 @@ export default function Header({ sticky = false }: { sticky?: boolean }) {
 			sticky={sticky}
 			onNavigate={navigate}
 			onSignOut={signOut}
+			templateSelector={templateSelector}
 		/>
 	);
 }

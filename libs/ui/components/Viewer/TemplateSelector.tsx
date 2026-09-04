@@ -16,8 +16,7 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
-import { hasOoxmlTemplateManifest } from "../../lib/ooxml-template-manifests";
-import { getSemanticTheme } from "../../lib/semantic-themes";
+import { templateIsSelectable } from "../../lib/template-selection";
 
 export interface InstalledTemplateOption {
 	marketplaceId: string;
@@ -33,20 +32,6 @@ interface TemplateSelectorProps {
 	className?: string;
 	installedThemes?: InstalledTemplateOption[];
 }
-
-const getTemplatePreviewColors = (previewThemeId: ThemeId) => {
-	const { visual } = getSemanticTheme(previewThemeId);
-	return {
-		primary: visual.background,
-		secondary: visual.title,
-		accent: visual.accent,
-	};
-};
-
-const templateIsSelectable = (templateId: string) => {
-	const template = BINARY_PPTX_TEMPLATE_CATALOG.find((entry) => entry.id === templateId);
-	return template?.asset.status === "available" && hasOoxmlTemplateManifest(templateId);
-};
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 	selectedTemplate,
@@ -68,23 +53,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 				<DropdownMenuTrigger asChild>
 					<Button
 						variant="outline"
-						className="w-52 bg-black/20 border-white/5 text-white/80 hover:bg-white/5 hover:text-white justify-between backdrop-blur-sm transition-all duration-200"
+						className="w-44 bg-black/20 border-white/5 text-white/80 hover:bg-white/5 hover:text-white justify-between backdrop-blur-sm transition-all duration-200"
 					>
 						<div className="flex items-center gap-2">
-							{/* Current template preview */}
-							{currentTemplate && (
-								<div className="flex gap-1">
-									{Object.values(getTemplatePreviewColors(selectedTemplate.previewThemeId)).map(
-										(color) => (
-											<div
-												key={`${currentTemplate.id}-${color}`}
-												className="h-2 w-2 rounded-full"
-												style={{ backgroundColor: color }}
-											/>
-										),
-									)}
-								</div>
-							)}
 							<span className="truncate">{currentTemplate?.name || "Select template"}</span>
 						</div>
 						<ChevronDown className="w-4 h-4 opacity-30 group-hover:opacity-50" />
@@ -102,35 +73,27 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 					<DropdownMenuSeparator className="bg-white/5 mx-2" />
 
 					{defaultTemplates.map((template) => {
-						const colors = getTemplatePreviewColors(template.previewThemeId);
 						const isSelected = selectedTemplate.id === template.id;
-						const selectable = templateIsSelectable(template.id);
+						const selectable = templateIsSelectable(template);
 
 						return (
 							<DropdownMenuItem
 								key={template.id}
-								onClick={() =>
+								disabled={!selectable}
+								onClick={() => {
+									if (!selectable) return;
 									onTemplateChange({
 										id: template.id,
 										version: template.version,
 										previewThemeId: template.previewThemeId,
-									})
-								}
+									});
+								}}
 								className={`
                   text-white/80 hover:bg-white/5 focus:bg-white/5 cursor-pointer p-3 rounded-lg my-1 mx-1
                   ${isSelected ? "bg-white/5" : ""}
                 `}
 							>
 								<div className="flex items-center gap-3 w-full">
-									{/* Template preview */}
-									<div className="flex-shrink-0">
-										<div className="w-8 h-6 rounded border border-white/10 overflow-hidden flex shadow-sm">
-											<div className="w-1/3" style={{ backgroundColor: colors.primary }} />
-											<div className="w-1/3" style={{ backgroundColor: colors.secondary }} />
-											<div className="w-1/3" style={{ backgroundColor: colors.accent }} />
-										</div>
-									</div>
-
 									{/* Template info */}
 									<div className="flex-1 min-w-0">
 										<div className="flex items-center gap-2">
@@ -166,26 +129,22 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 								From Marketplace
 							</DropdownMenuLabel>
 							{installedThemes.map((theme) => {
-								const colors = getTemplatePreviewColors(theme.previewThemeId);
 								const isSelected = selectedTemplate.id === theme.templateReference.id;
-								const selectable = templateIsSelectable(theme.templateReference.id);
+								const selectable = templateIsSelectable(theme.templateReference);
 								return (
 									<DropdownMenuItem
 										key={theme.marketplaceId}
-										onClick={() =>
+										disabled={!selectable}
+										onClick={() => {
+											if (!selectable) return;
 											onTemplateChange({
 												...theme.templateReference,
 												previewThemeId: theme.previewThemeId,
-											})
-										}
+											});
+										}}
 										className="mx-1 my-1 cursor-pointer rounded-lg p-3 text-white/80 hover:bg-white/5 focus:bg-white/5"
 									>
 										<div className="flex w-full items-center gap-3">
-											<div className="flex h-6 w-8 shrink-0 overflow-hidden rounded border border-white/10 shadow-sm">
-												<div className="w-1/3" style={{ backgroundColor: colors.primary }} />
-												<div className="w-1/3" style={{ backgroundColor: colors.secondary }} />
-												<div className="w-1/3" style={{ backgroundColor: colors.accent }} />
-											</div>
 											<div className="min-w-0 flex-1">
 												<div className="truncate text-sm font-medium text-white/80">
 													{theme.name}
