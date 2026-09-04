@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 )
 
 const (
@@ -27,18 +28,32 @@ Use visual intents only when they clarify the slide message. Evidence must conta
 Block region must be main, primary, secondary, or media. Do not rename text or items, do not nest blocks under content, and do not return empty blocks. Never return HTML, Markdown, CSS, code, styles, class names, coordinates, or arbitrary colors.`
 )
 
+// clientExportTemplateReady reports whether a template can drive generation,
+// which means its package has been published to a digest-pinned CDN key.
 func clientExportTemplateReady(reference *presentation.TemplateReference) bool {
-	return reference != nil && reference.ID == "simple-business-proposal" && reference.Version == 1
+	return reference != nil && templatecatalog.Published(reference.ID, reference.Version)
+}
+
+// resolveGenerationTemplate validates the requested template and returns it with
+// the published digest attached. The digest comes from the catalog rather than
+// the request so a caller cannot pin generation to bytes of its choosing.
+func resolveGenerationTemplate(reference *presentation.TemplateReference) (presentation.TemplateReference, error) {
+	if reference == nil {
+		return presentation.TemplateReference{}, errors.New("A PowerPoint template is required for generation")
+	}
+	entry, found := templatecatalog.Lookup(reference.ID, reference.Version)
+	if !found {
+		if templatecatalog.Empty() {
+			return presentation.TemplateReference{}, errors.New("No PowerPoint template has been published yet")
+		}
+		return presentation.TemplateReference{}, errors.New("The selected PowerPoint template is not ready for generation")
+	}
+	return presentation.TemplateReference{ID: entry.ID, Version: entry.Version, SHA256: entry.SHA256}, nil
 }
 
 func validateGenerationTemplate(reference *presentation.TemplateReference) error {
-	if reference == nil {
-		return errors.New("A PowerPoint template is required for generation")
-	}
-	if !clientExportTemplateReady(reference) {
-		return errors.New("The selected PowerPoint template is not ready for generation")
-	}
-	return nil
+	_, err := resolveGenerationTemplate(reference)
+	return err
 }
 
 func planningSystemPromptForTemplate(reference *presentation.TemplateReference) string {

@@ -17,6 +17,13 @@ export interface BinaryTemplateDimensions {
 export interface PresentationTemplateReference {
 	id: string;
 	version: number;
+	/**
+	 * Digest of the published package the presentation was compiled from. The
+	 * server resolves it from the published catalog and writes it onto the
+	 * stored document, so it is absent on a reference the client is sending and
+	 * present on one it reads back.
+	 */
+	sha256?: string;
 }
 
 export interface BinaryPptxTemplate {
@@ -26,6 +33,13 @@ export interface BinaryPptxTemplate {
 	availability: BinaryTemplateAvailability;
 	sourceFilename: string;
 	dimensions: BinaryTemplateDimensions;
+	/**
+	 * Browser-facing publication hint only. The authority for whether a package
+	 * exists at a digest-pinned key is the API's published catalog
+	 * (apps/api/internal/templatecatalog/published.json); generation resolves
+	 * the digest there and rejects anything it does not list, whatever this
+	 * says.
+	 */
 	asset: {
 		status: BinaryTemplateAssetStatus;
 		sha256?: string;

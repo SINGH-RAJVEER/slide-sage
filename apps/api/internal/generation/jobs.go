@@ -350,7 +350,7 @@ func preserveJobTemplate(document map[string]any, job streamJob) {
 		delete(document, "template")
 		return
 	}
-	document["template"] = map[string]any{"id": job.template.ID, "version": job.template.Version}
+	document["template"] = job.template.Document()
 }
 
 func (h *handler) loadGenerationJob(ctx context.Context, jobID string) (generationJobRecord, error) {

@@ -29,6 +29,7 @@ var validThemes = map[string]bool{
 }
 
 var binaryTemplateIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+var templateDigestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 var validLayouts = map[string]bool{
 	"cover":       true,
@@ -125,9 +126,24 @@ func normalizeTemplateReference(value any) (map[string]any, bool) {
 	if err != nil {
 		return nil, false
 	}
-	return map[string]any{"id": reference.ID, "version": reference.Version}, true
+	return reference.Document(), true
 }
 
+// Document renders the reference for storage. The digest is written only once
+// the server has resolved it, so a document never carries a half-identified
+// template.
+func (reference TemplateReference) Document() map[string]any {
+	stored := map[string]any{"id": reference.ID, "version": reference.Version}
+	if reference.SHA256 != "" {
+		stored["sha256"] = reference.SHA256
+	}
+	return stored
+}
+
+// ParseTemplateReference reads a template reference from request or document
+// JSON. A digest present in the value is accepted only when it is well formed;
+// callers must still resolve the authoritative digest from the published
+// catalog rather than trusting one that arrived with a request.
 func ParseTemplateReference(value any) (TemplateReference, error) {
 	template, ok := value.(map[string]any)
 	if !ok {
@@ -138,7 +154,15 @@ func ParseTemplateReference(value any) (TemplateReference, error) {
 	if !binaryTemplateIDPattern.MatchString(id) || !validVersion || version != 1 {
 		return TemplateReference{}, fmt.Errorf("invalid PowerPoint template")
 	}
-	return TemplateReference{ID: id, Version: 1}, nil
+	reference := TemplateReference{ID: id, Version: 1}
+	if raw, present := template["sha256"]; present && raw != nil {
+		digest := boundedText(raw, 64)
+		if !templateDigestPattern.MatchString(digest) {
+			return TemplateReference{}, fmt.Errorf("invalid PowerPoint template digest")
+		}
+		reference.SHA256 = digest
+	}
+	return reference, nil
 }
 
 func exactInteger(value any) (int64, bool) {
