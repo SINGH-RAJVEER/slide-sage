@@ -4,11 +4,12 @@ resource "google_sql_database_instance" "primary" {
   region           = var.gcp_region
 
   settings {
-    edition           = "ENTERPRISE"
-    tier              = "db-f1-micro"
-    availability_type = "ZONAL"
-    disk_size         = 10
-    disk_autoresize   = false
+    edition                     = "ENTERPRISE"
+    enable_dataplex_integration = true
+    tier                        = "db-f1-micro"
+    availability_type           = "ZONAL"
+    disk_size                   = 10
+    disk_autoresize             = false
 
     backup_configuration {
       enabled                        = false
@@ -20,7 +21,7 @@ resource "google_sql_database_instance" "primary" {
     }
   }
 
-  deletion_protection = false
+  deletion_protection = true
 
   depends_on = [google_project_service.required]
 }

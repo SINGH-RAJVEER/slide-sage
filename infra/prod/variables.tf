@@ -59,6 +59,12 @@ variable "open_router_model" {
   default     = "openrouter/free"
 }
 
+variable "open_router_api_base" {
+  description = "OpenRouter chat completions endpoint used by the API and worker."
+  type        = string
+  default     = "https://openrouter.ai/api/v1/chat/completions"
+}
+
 variable "template_gcs_bucket" {
   description = "Existing private GCS bucket used as the Cloud CDN template origin."
   type        = string

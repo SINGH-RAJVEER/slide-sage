@@ -15,30 +15,22 @@ locals {
     "OPEN_ROUTER_API_KEY",
     "RESEND_API_KEY",
     "RESEND_FROM_EMAIL",
+    "CDN_SIGNING_KEY_SECRET",
     "RAZORPAY_KEY_ID",
     "RAZORPAY_KEY_SECRET",
     "RAZORPAY_WEBHOOK_SECRET",
-    "BYOK_ENCRYPTION_KEY",
-    "CDN_SIGNING_KEY_SECRET",
   ])
 
   worker_secret_names = toset([
     "DATABASE_URL",
     "EXA_API_KEY",
     "OPEN_ROUTER_API_KEY",
-    "BYOK_ENCRYPTION_KEY",
     "CDN_SIGNING_KEY_SECRET",
   ])
 
   runtime_secret_names = setunion(local.api_secret_names, local.worker_secret_names)
-}
 
-data "google_project" "current" {
-  project_id = var.gcp_project_id
-}
-
-resource "google_project_service" "required" {
-  for_each = toset([
+  required_services = toset([
     "artifactregistry.googleapis.com",
     "compute.googleapis.com",
     "run.googleapis.com",
@@ -46,6 +38,14 @@ resource "google_project_service" "required" {
     "secretmanager.googleapis.com",
     "storage.googleapis.com",
   ])
+}
+
+data "google_project" "current" {
+  project_id = var.gcp_project_id
+}
+
+resource "google_project_service" "required" {
+  for_each = local.required_services
 
   project            = var.gcp_project_id
   service            = each.value
@@ -152,8 +152,8 @@ resource "google_cloud_run_v2_service" "api" {
         value = var.open_router_model
       }
       env {
-        name  = "BYOK_ENCRYPTION_KEY_CURRENT_VERSION"
-        value = "1"
+        name  = "OPEN_ROUTER_API_BASE"
+        value = var.open_router_api_base
       }
       env {
         name  = "PRESENTATION_GCS_BUCKET"
@@ -251,12 +251,16 @@ resource "google_cloud_run_v2_service" "worker" {
         value = "2"
       }
       env {
+        name  = "BASE_URL"
+        value = "https://api.${var.domain_name}"
+      }
+      env {
         name  = "OPEN_ROUTER_MODEL"
         value = var.open_router_model
       }
       env {
-        name  = "BYOK_ENCRYPTION_KEY_CURRENT_VERSION"
-        value = "1"
+        name  = "OPEN_ROUTER_API_BASE"
+        value = var.open_router_api_base
       }
       env {
         name  = "PRESENTATION_GCS_BUCKET"

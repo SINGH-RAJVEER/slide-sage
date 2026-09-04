@@ -15,8 +15,10 @@ The API, worker, and migration job connect through the Cloud SQL Unix socket at 
 - Cloud Run service `worker`, private, scaling from zero to ten instances, with CPU kept allocated while an instance is running
 - Cloud Run job `slidesage-migrate`, invoked by deployment automation after an image update
 - A single-zone Enterprise `db-f1-micro` Cloud SQL PostgreSQL 18 instance with 10 GB SSD storage, no automated backups, and no point-in-time recovery
-- Global external HTTPS load balancer and serverless NEG for `api`
-- DNS-only Cloudflare `api` record pointing to the load balancer address
+- Global external HTTPS load balancer and serverless NEG for `api`, with an HTTP listener that redirects to HTTPS
+- Cloud CDN backend bucket `templates`, routed from the `cdn` host rule on the same load balancer and served from the private template-origin bucket
+- Managed certificates for `api` and `cdn`, both attached to the one HTTPS proxy
+- DNS-only Cloudflare `api` and `cdn` records pointing to the load balancer address
 - Cloudflare Pages project `slidesage` and its apex and `www` domains
 - Private GCS bucket for immutable canonical presentation revisions
 - Existing private template-origin bucket `cdn.slidesage.app`, read by the Cloud CDN cache-fill service account
@@ -29,7 +31,7 @@ The API has `internal-and-cloud-load-balancing` ingress. Do not proxy the `api` 
 
 ## Bootstrap
 
-Create the required Secret Manager secrets before the first plan. The names are listed in `infra/prod/main.tf`. At minimum, production needs the values documented in [Environment variables](ENVIRONMENT_VARIABLES.md). Use a dedicated Terraform service account with permission to manage Cloud Run, Artifact Registry, Compute load balancing, service accounts, Secret Manager IAM bindings, and the enabled services.
+Create the required Secret Manager secrets before the first plan. The names are listed in `infra/prod/main.tf`, and `data.google_secret_manager_secret` fails the plan for any name that does not exist. Payments are not optional, so the `RAZORPAY_*` secrets are listed alongside the rest. At minimum, production needs the values documented in [Environment variables](ENVIRONMENT_VARIABLES.md). Use a dedicated Terraform service account with permission to manage Cloud Run, Artifact Registry, Compute load balancing, service accounts, Secret Manager IAM bindings, and the enabled services.
 
 The Cloudflare token needs edit access to the zone and Pages project. Before the Pages resource can connect the repository, authorize the Cloudflare Pages GitHub app for `SINGH-RAJVEER/slidesage` in the Cloudflare account.
 
@@ -70,4 +72,14 @@ terraform apply \
 	-var="migrate_image=asia-south1-docker.pkg.dev/slidesage-504414/slidesage/migrate:$GITHUB_SHA"
 ```
 
-Run the migration job before releasing API and worker revisions that depend on the new schema. The current GitHub Actions workflow uses `gcloud` for that sequence. Move it to the Terraform apply flow before making Terraform the only production deployment path. Do not run both paths against different container settings, or the next Terraform plan will show drift.
+Run the migration job before releasing API and worker revisions that depend on the new schema. `.github/workflows/deploy.yml` performs exactly this sequence: it builds and pushes the three images, applies `-target=google_cloud_run_v2_job.migrate`, executes the job, then applies the rest. It passes the image variables through `TF_VAR_*` environment variables and needs the `TF_STATE_BUCKET`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` repository secrets in addition to the existing GCP workload-identity secrets.
+
+Terraform is the only production deployment path. Do not run `gcloud run deploy` against these services; the next plan would show drift and the following apply would revert it.
+
+## Adopting an existing environment
+
+This project's resources were originally created with the `gcloud` CLI, so the resource names in `edge.tf` follow that environment rather than a fresh Terraform naming scheme: the address is `slidesage-api-ip`, the backend service is `slidesage-api-backend`, the URL map is `slidesage-api-map`, the certificates are `slidesage-api-cert` and `slidesage-cdn-cert`, and the forwarding rules are `slidesage-api-http-rule` and `slidesage-api-https-rule`. Renaming any of these means replacing the resource, so leave them alone.
+
+`infra/prod/imports.tf` adopts those resources into state. Run `terraform plan` and confirm the summary reports imports, additions, and in-place changes only. A plan that proposes a replacement or a destroy means a name or an argument no longer matches the live resource; fix the configuration rather than applying. Delete `imports.tf` once the apply succeeds.
+
+Cloudflare import IDs are account-scoped and are listed as comments in that file. Add them once you have the zone, record, and account IDs.
