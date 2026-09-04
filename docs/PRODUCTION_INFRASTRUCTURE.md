@@ -21,7 +21,7 @@ The API, worker, and migration job connect through the Cloud SQL Unix socket at 
 - DNS-only Cloudflare `api` record pointing to the load balancer address
 - Cloudflare Pages project `slidesage` and its apex and `www` domains
 - Private GCS bucket for immutable canonical presentation revisions
-- Existing private template-origin bucket, read by the Cloud CDN cache-fill service account and routed under `https://api.slidesage.app/pptx-templates/`
+- Existing private template-origin bucket `slidesage-504414-templates`, read by the Cloud CDN cache-fill service account and routed under `https://api.slidesage.app/pptx-templates/`
 
 Terraform creates the revision bucket and grants the Cloud Run runtime account bucket-scoped object creator and viewer access. It references the existing template-origin bucket and grants its Google-managed Cloud CDN cache-fill account object viewer access. Override `presentation_gcs_bucket` or `template_gcs_bucket` when the bucket names differ from their defaults.
 
