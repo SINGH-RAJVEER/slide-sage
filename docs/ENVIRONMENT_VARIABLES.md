@@ -51,6 +51,37 @@ The worker also requires `DATABASE_URL` and uses `DATABASE_CONNECT_TIMEOUT` and 
 
 For Cloud Run Worker Pools, start with one instance and change the fixed/manual instance count deliberately. Account for both the instance count and `WORKER_CONCURRENCY` when sizing PostgreSQL connection limits and provider capacity. See [GENERATION_WORKER.md](GENERATION_WORKER.md). When deployed as a Cloud Run service rather than a Worker Pool, the worker must use instance-based billing with CPU throttling disabled so River and maintenance continue between HTTP requests.
 
+## Preview renderer
+
+| Variable                    | Required | Default                    | Purpose                                                              |
+| --------------------------- | -------- | -------------------------- | -------------------------------------------------------------------- |
+| `PREVIEW_CONCURRENCY`       | No       | `1`                        | Maximum concurrent River preview jobs in one renderer process        |
+| `PREVIEW_DATABASE_POOL_MAX` | No       | `PREVIEW_CONCURRENCY + 2`  | Maximum open and idle connections in the renderer database pool      |
+| `PREVIEW_DRAIN_TIMEOUT`     | No       | `8`                        | Graceful shutdown timeout in seconds after `SIGINT` or `SIGTERM`     |
+| `PREVIEW_HEALTH_PORT`       | No       | `8080`                     | Renderer `/live` and `/ready` health server port                     |
+| `PREVIEW_MAX_SLIDES`        | No       | `200`                      | Slide ceiling for one render                                         |
+| `PREVIEW_WIDTH`             | No       | `1600`                     | Rasterized preview width in pixels                                   |
+| `PREVIEW_TIMEOUT_SECONDS`   | No       | `240`                      | Wall-clock budget for one deck conversion                            |
+| `PREVIEW_WEBP_QUALITY`      | No       | `82`                       | `cwebp` quality factor                                               |
+| `PREVIEW_TEMP_DIR`          | No       | Operating system temporary directory | Parent directory for per-render working directories        |
+| `SOFFICE_PATH`              | No       | `soffice`                  | LibreOffice executable                                               |
+| `PDFTOPPM_PATH`             | No       | `pdftoppm`                 | poppler rasterizer executable                                        |
+| `CWEBP_PATH`                | No       | `cwebp`                    | WebP encoder executable                                              |
+
+The renderer also requires `DATABASE_URL` and `PRESENTATION_GCS_BUCKET`. It reads revisions and writes preview images with the attached service account. See [SLIDE_PREVIEWS.md](SLIDE_PREVIEWS.md).
+
+## Office editor
+
+| Variable                       | Required                | Secret | Purpose                                                                         |
+| ------------------------------ | ----------------------- | ------ | ------------------------------------------------------------------------------- |
+| `ONLYOFFICE_DOCUMENT_SERVER_URL` | For the browser editor | No     | ONLYOFFICE Docs origin; the browser loads its API from here and decks are fetched from it |
+| `ONLYOFFICE_JWT_SECRET`        | For the browser editor  | Yes    | Shared secret signing the editor configuration and verifying callbacks           |
+| `ONLYOFFICE_JWT_HEADER`        | No                      | No     | Header carrying the callback token; defaults to `Authorization`                  |
+| `PUBLIC_API_URL`               | No                      | No     | Base URL the document server uses to reach this API; defaults to `BASE_URL`      |
+| `EDITOR_SOURCE_TOKEN_SECRET`   | No                      | Yes    | Signs short-lived deck download URLs; defaults to `ONLYOFFICE_JWT_SECRET`        |
+
+The editor is optional. An API process with none of this configured logs that the editor is disabled; a partial configuration fails at startup. Configuring the editor also requires `PRESENTATION_GCS_BUCKET`, because the document server downloads decks from object storage through the API. See [OFFICE_EDITOR.md](OFFICE_EDITOR.md).
+
 ## AI and research
 
 | Variable                        | Required                                  | Default                              | Purpose                                                                                                                                    |

@@ -84,6 +84,9 @@ func main() {
 	generation.RegisterRoutes(mux, database, func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
 	}, ai.ConnectionService{DB: database}, generation.RouteConfig{StreamContext: streamContext, Research: researchService})
+	if err := registerEditorRoutes(mux, database, service, baseURL); err != nil {
+		log.Fatal(err)
+	}
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", notFoundHandler)
 

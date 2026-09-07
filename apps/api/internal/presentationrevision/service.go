@@ -97,7 +97,9 @@ func (s *Service) Commit(ctx context.Context, input CommitInput) (RepositoryComm
 	if err != nil {
 		return RepositoryCommit{}, err
 	}
-	if slideCount != input.ExpectedSlideCount {
+	// Editor saves may legitimately add or remove slides, so they are the one
+	// operation allowed to arrive without an expected count.
+	if input.ExpectedSlideCount > 0 && slideCount != input.ExpectedSlideCount {
 		return RepositoryCommit{}, fmt.Errorf("%w: got %d, want %d", ErrSlideCountMismatch, slideCount, input.ExpectedSlideCount)
 	}
 
@@ -150,7 +152,7 @@ func validateCommitInput(input CommitInput) error {
 	if input.ExpectedRevision < 0 {
 		return fmt.Errorf("%w: expected revision cannot be negative", ErrInvalidCommit)
 	}
-	if input.ExpectedSlideCount <= 0 {
+	if input.ExpectedSlideCount < 0 || (input.ExpectedSlideCount == 0 && input.Operation.Kind != SourceOperationEditorSave) {
 		return fmt.Errorf("%w: expected slide count must be positive", ErrInvalidCommit)
 	}
 	if input.PPTX == nil {
