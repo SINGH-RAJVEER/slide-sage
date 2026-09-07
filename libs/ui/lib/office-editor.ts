@@ -12,10 +12,7 @@ interface DocEditorInstance {
 }
 
 interface DocsAPI {
-	DocEditor: new (
-		containerId: string,
-		config: Record<string, unknown>,
-	) => DocEditorInstance;
+	DocEditor: new (containerId: string, config: Record<string, unknown>) => DocEditorInstance;
 }
 
 declare global {
@@ -35,11 +32,14 @@ export async function fetchEditorSession(
 	options: { readOnly?: boolean; signal?: AbortSignal } = {},
 ): Promise<EditorSession> {
 	const query = options.readOnly ? "?mode=view" : "";
-	const response = await fetch(`${API_URL}/presentations/${presentationId}/editor/session${query}`, {
-		method: "POST",
-		credentials: "include",
-		signal: options.signal,
-	});
+	const response = await fetch(
+		`${API_URL}/presentations/${presentationId}/editor/session${query}`,
+		{
+			method: "POST",
+			credentials: "include",
+			signal: options.signal,
+		},
+	);
 	if (response.status === 409) {
 		throw new Error("This presentation has no PowerPoint revision to edit yet.");
 	}

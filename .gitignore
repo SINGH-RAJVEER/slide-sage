@@ -7,7 +7,7 @@ node_modules/
 .direnv/
 .DS_Store
 
-# Local source presentations are compiled and uploaded to object storage.
+# Templates
 templates/
 
 # Terraform
@@ -36,6 +36,7 @@ apps/web/.DS_Store
 AGENTS.md
 CLAUDE.md
 CONTEXT.md
+TODO.md
 
 # Go build artifacts
 apps/api/api

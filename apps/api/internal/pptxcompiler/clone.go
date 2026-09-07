@@ -41,6 +41,10 @@ func cloneAssignedSlides(source *pkg, assignments []Assignment) error {
 
 	// Capture every source slide before anything is removed, since a later
 	// clone may name a part an earlier removal would have deleted.
+	original := make(map[string][]byte, len(source.parts))
+	for name, body := range source.parts {
+		original[name] = body
+	}
 	captured, err := captureSlides(source, assignments)
 	if err != nil {
 		return err
@@ -61,6 +65,11 @@ func cloneAssignedSlides(source *pkg, assignments []Assignment) error {
 		partName := "ppt/slides/slide" + strconv.Itoa(slideNumber) + ".xml"
 		clone := captured[assignment.Archetype.PartName]
 
+		ownedRels, err := cloneOwnedParts(source, original, assignment.Archetype.PartName, partName, slideNumber, types)
+		if err != nil {
+			return err
+		}
+		clone.rels = ownedRels
 		source.setPart(partName, clone.body)
 		if len(clone.rels) > 0 {
 			source.setPart(relsPartFor(partName), clone.rels)

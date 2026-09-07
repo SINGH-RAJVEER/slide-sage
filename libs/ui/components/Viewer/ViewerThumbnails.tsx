@@ -1,10 +1,10 @@
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import type React from "react";
-import type { PptxDocument } from "../../lib/pptx-document";
-import { PptxSlide } from "./PptxSlide";
+import type { PreviewDocument } from "../../hooks/useRevisionPreviews";
+import { PreviewSlide } from "./PreviewSlide";
 
 export const ViewerThumbnails: React.FC<{
-	document: PptxDocument | null;
+	document: PreviewDocument | null;
 	currentSlide: number;
 	isStreamingMode: boolean;
 	isStreaming: boolean;
@@ -43,7 +43,7 @@ export const ViewerThumbnails: React.FC<{
                 backdrop-blur-sm relative`}
 							>
 								<div className="relative h-full w-full bg-white">
-									<PptxSlide document={document} index={index} className="w-full" />
+									<PreviewSlide document={document} index={index} className="w-full" />
 									<span className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
 										{index + 1}
 									</span>

@@ -3,7 +3,6 @@ package officeeditor
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -100,7 +99,9 @@ func (h *handler) document(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", revision.MIMEType)
 	writer.Header().Set("Content-Length", strconv.FormatInt(revision.ByteSize, 10))
 	writer.Header().Set("Cache-Control", "private, no-store")
-	writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", documentTitle("presentation")))
+	// The document server takes its title from the editor configuration, so the
+	// download only needs a stable, safe filename.
+	writer.Header().Set("Content-Disposition", `attachment; filename="presentation.pptx"`)
 	if _, err := io.Copy(writer, io.LimitReader(object, revision.ByteSize)); err != nil {
 		log.Printf("streaming editor document %s: %v", revision.ObjectKey, err)
 	}

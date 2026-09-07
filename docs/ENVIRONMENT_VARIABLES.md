@@ -79,6 +79,8 @@ The renderer also requires `DATABASE_URL` and `PRESENTATION_GCS_BUCKET`. It read
 | `ONLYOFFICE_JWT_HEADER`        | No                      | No     | Header carrying the callback token; defaults to `Authorization`                  |
 | `PUBLIC_API_URL`               | No                      | No     | Base URL the document server uses to reach this API; defaults to `BASE_URL`      |
 | `EDITOR_SOURCE_TOKEN_SECRET`   | No                      | Yes    | Signs short-lived deck download URLs; defaults to `ONLYOFFICE_JWT_SECRET`        |
+| `EDITOR_SOURCE_TOKEN_TTL_SECONDS` | No                   | No     | Lifetime of a signed deck download URL; defaults to `300` seconds                |
+| `EDITOR_MAX_SAVE_BYTES`        | No                      | No     | Ceiling on one editor save; defaults to 64 MiB                                   |
 
 The editor is optional. An API process with none of this configured logs that the editor is disabled; a partial configuration fails at startup. Configuring the editor also requires `PRESENTATION_GCS_BUCKET`, because the document server downloads decks from object storage through the API. See [OFFICE_EDITOR.md](OFFICE_EDITOR.md).
 
@@ -137,6 +139,10 @@ Set `VITE_API_URL=https://api.slidesage.app` for the `slidesage.app` production 
 | `CDN_SIGNING_KEY_NAME`       | Signed template delivery | No | Active Cloud CDN signing-key identifier sent as `KeyName` |
 | `CDN_SIGNING_KEY_SECRET`     | Signed template delivery | Yes | Base64url-encoded 128-bit shared key used by the server-side signer |
 | `CDN_SIGNED_URL_TTL_SECONDS` | No | No | Signed template URL lifetime; defaults to `900` seconds |
+
+Set `CDN_URL` to the API load balancer host, `https://api.slidesage.app`. Only that host rule routes `/pptx-templates/*` to the template backend bucket; any other subdomain is unrouted. Development processes use the same production origin, because signing happens on the server and a process on `localhost` mints valid URLs with the same key. The API reads these variables once at startup: with none of them set it logs that template thumbnails are disabled and skips the route, and with a partial or malformed set it exits.
+
+`CDN_SIGNED_URL_TTL_SECONDS` applies to both consumers of the signer, the generation template fetch and the marketplace thumbnail route.
 
 `CDN_SIGNING_KEY_NAME` is only an identifier and cannot create a valid signed URL by itself. The signer must retain the corresponding 16-byte secret because Google does not return key values through its APIs after configuration. Keep `CDN_SIGNING_KEY_SECRET` in Secret Manager and never expose it through a `VITE_` variable. See Google's [Cloud CDN signed URL documentation](https://cloud.google.com/cdn/docs/using-signed-urls#createkeys).
 

@@ -15,17 +15,21 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	PPTXContentType       = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-	DefaultMaxAssetBytes  = int64(64 << 20)
-	DefaultSignedURLTTL   = 15 * time.Minute
-	defaultRequestTimeout = 30 * time.Second
+	PPTXContentType          = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+	ThumbnailContentType     = "image/webp"
+	DefaultMaxAssetBytes     = int64(64 << 20)
+	DefaultMaxThumbnailBytes = int64(4 << 20)
+	DefaultSignedURLTTL      = 15 * time.Minute
+	defaultRequestTimeout    = 30 * time.Second
 )
 
 var (
@@ -109,7 +113,30 @@ func (fetcher *CDNFetcher) Fetch(ctx context.Context, asset Asset) ([]byte, erro
 	if err := validateAsset(asset); err != nil {
 		return nil, err
 	}
-	signedURL := fetcher.signedURL(assetPath(asset), fetcher.now().Add(fetcher.ttl))
+	contents, err := fetcher.object(ctx, assetPath(asset), PPTXContentType, fetcher.maxBytes)
+	if err != nil {
+		return nil, err
+	}
+	digest := sha256.Sum256(contents)
+	want, _ := hex.DecodeString(asset.SHA256)
+	if subtle.ConstantTimeCompare(digest[:], want) != 1 {
+		return nil, ErrDigestMismatch
+	}
+	return contents, nil
+}
+
+// FetchThumbnail retrieves a template's marketplace cover image. Thumbnails are
+// not digest-pinned: they sit beside the package under a version prefix that
+// publication never rewrites, so the version is the only pin available.
+func (fetcher *CDNFetcher) FetchThumbnail(ctx context.Context, id string, version int) ([]byte, error) {
+	if !assetIDPattern.MatchString(id) || version <= 0 {
+		return nil, errors.New("invalid template asset identity")
+	}
+	return fetcher.object(ctx, thumbnailPath(id, version), ThumbnailContentType, DefaultMaxThumbnailBytes)
+}
+
+func (fetcher *CDNFetcher) object(ctx context.Context, objectPath, contentType string, maxBytes int64) ([]byte, error) {
+	signedURL := fetcher.signedURL(objectPath, fetcher.now().Add(fetcher.ttl))
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, signedURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create template request: %w", err)
@@ -128,24 +155,19 @@ func (fetcher *CDNFetcher) Fetch(ctx context.Context, asset Asset) ([]byte, erro
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("fetch template asset: unexpected HTTP status %d", response.StatusCode)
 	}
-	if response.ContentLength > fetcher.maxBytes {
+	if response.ContentLength > maxBytes {
 		return nil, ErrAssetTooLarge
 	}
 	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
-	if err != nil || mediaType != PPTXContentType {
+	if err != nil || mediaType != contentType {
 		return nil, ErrUnexpectedType
 	}
-	contents, err := io.ReadAll(io.LimitReader(response.Body, fetcher.maxBytes+1))
+	contents, err := io.ReadAll(io.LimitReader(response.Body, maxBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("read template asset: %w", err)
 	}
-	if int64(len(contents)) > fetcher.maxBytes {
+	if int64(len(contents)) > maxBytes {
 		return nil, ErrAssetTooLarge
-	}
-	digest := sha256.Sum256(contents)
-	want, _ := hex.DecodeString(asset.SHA256)
-	if subtle.ConstantTimeCompare(digest[:], want) != 1 {
-		return nil, ErrDigestMismatch
 	}
 	return contents, nil
 }
@@ -185,4 +207,30 @@ func validateAsset(asset Asset) error {
 
 func assetPath(asset Asset) string {
 	return fmt.Sprintf("pptx-templates/%s/%d/%s/template.pptx", asset.ID, asset.Version, asset.SHA256)
+}
+
+func thumbnailPath(id string, version int) string {
+	return fmt.Sprintf("pptx-templates/%s/%d/thumbnails/cover.webp", id, version)
+}
+
+// CDNConfigured reports whether the deployment names a template CDN. A process
+// with none of these variables set runs without template delivery; a partial
+// configuration is an error, because a signer missing its key cannot fetch.
+func CDNConfigured() bool {
+	return os.Getenv("CDN_URL") != "" || os.Getenv("CDN_SIGNING_KEY_NAME") != "" || os.Getenv("CDN_SIGNING_KEY_SECRET") != ""
+}
+
+// NewCDNFetcherFromEnv builds a fetcher from the deployment's CDN variables so
+// every caller signs with the same origin, key, and lifetime.
+func NewCDNFetcherFromEnv() (*CDNFetcher, error) {
+	ttl := time.Duration(0)
+	if seconds, err := strconv.Atoi(os.Getenv("CDN_SIGNED_URL_TTL_SECONDS")); err == nil && seconds > 0 {
+		ttl = time.Duration(seconds) * time.Second
+	}
+	return NewCDNFetcher(CDNFetcherConfig{
+		BaseURL:   os.Getenv("CDN_URL"),
+		KeyName:   os.Getenv("CDN_SIGNING_KEY_NAME"),
+		KeySecret: os.Getenv("CDN_SIGNING_KEY_SECRET"),
+		TTL:       ttl,
+	})
 }

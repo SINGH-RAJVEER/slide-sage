@@ -1,11 +1,11 @@
 import { Card } from "@slidesage/ui/components/card";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import type React from "react";
-import type { PptxDocument } from "../../lib/pptx-document";
-import { PptxSlide } from "./PptxSlide";
+import type { PreviewDocument } from "../../hooks/useRevisionPreviews";
+import { PreviewSlide } from "./PreviewSlide";
 
 interface ViewerSlideCarouselProps {
-	document: PptxDocument | null;
+	document: PreviewDocument | null;
 	visibleSlide: number;
 	containerRef: React.RefObject<HTMLDivElement | null>;
 	onSelectSlide: (index: number) => void;
@@ -67,7 +67,7 @@ export const ViewerSlideCarousel: React.FC<ViewerSlideCarouselProps> = ({
 								onClick={() => onSelectSlide(index)}
 							>
 								<Card className="w-full h-full cursor-pointer rounded-2xl shadow-2xl overflow-hidden bg-white transition-all duration-300 flex items-stretch">
-									<PptxSlide document={document} index={index} className="w-full" />
+									<PreviewSlide document={document} index={index} className="w-full" />
 								</Card>
 							</div>
 						);

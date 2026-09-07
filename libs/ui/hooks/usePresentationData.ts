@@ -87,11 +87,7 @@ export function usePresentationData({
 		if (consumesStreamingState && streamingState.isStreaming && streamingSlidesCount > 0) {
 			setPresentation(streamingPresentation(streamingState, streamingSlidesCount));
 		}
-	}, [
-		streamingState,
-		streamingSlidesCount,
-		consumesStreamingState,
-	]);
+	}, [streamingState, streamingSlidesCount, consumesStreamingState]);
 
 	// Capture final presentation state when streaming completes
 	useEffect(() => {
@@ -234,28 +230,13 @@ export function usePresentationData({
 				}
 
 				const slidesData = pres.slides || pres.slides_data || {};
-				const fetchedSlides = slidesData.slides || [];
-
-				if (fetchedSlides.length > 0 && pres.title !== "Generating...") {
-					setPresentation({
-						...slidesData,
-						title: pres.title || slidesData.title,
-						theme: slidesData.theme || "corporate-blue",
-						slides: fetchedSlides,
-						totalSlides: slidesData.totalSlides || fetchedSlides.length || 0,
-					});
-					setPresentationId(pres.id);
-					return;
-				}
-
-				if (pres.title === "Generating..." || fetchedSlides.length === 0) {
-					navigate("/presentation-error", {
-						state: {
-							presentationId: pres.id,
-							error: "This presentation failed to generate content.",
-						},
-					});
-				}
+				setPresentation({
+					...slidesData,
+					title: pres.title || slidesData.title,
+					documentKind: slidesData.documentKind || "legacy",
+					totalSlides: slidesData.currentRevision?.slideCount || slidesData.totalSlides || 0,
+				});
+				setPresentationId(pres.id);
 			} catch (error) {
 				console.error("Error fetching presentation:", error);
 				navigate("/presentation-error", {

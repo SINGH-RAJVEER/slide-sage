@@ -11,8 +11,14 @@ import { API_URL } from "./api";
 export async function fetchPresentationRevision(
 	presentationId: string,
 	signal?: AbortSignal,
+	revision?: number,
+	format: "pptx" | "pdf" = "pptx",
 ): Promise<ArrayBuffer> {
-	const response = await fetch(`${API_URL}/presentations/${presentationId}/revision`, {
+	const path =
+		format === "pdf"
+			? `revisions/${revision}/pdf`
+			: `revision${revision ? `?revision=${revision}` : ""}`;
+	const response = await fetch(`${API_URL}/presentations/${presentationId}/${path}`, {
 		credentials: "include",
 		signal,
 	});

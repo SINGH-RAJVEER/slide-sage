@@ -72,7 +72,17 @@ func (service *Service) render(ctx context.Context, revision presentationrevisio
 	if err != nil {
 		return err
 	}
-	images, err := service.renderer.Render(ctx, pptx, service.limits)
+	var images [][]byte
+	var pdf []byte
+	if renderer, ok := service.renderer.(DocumentRenderer); ok {
+		document, renderErr := renderer.RenderDocument(ctx, pptx, service.limits)
+		images, pdf, err = document.Images, document.PDF, renderErr
+		if err == nil && len(pdf) == 0 {
+			err = errors.New("renderer produced no PDF")
+		}
+	} else {
+		images, err = service.renderer.Render(ctx, pptx, service.limits)
+	}
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrRenderFailed, err)
 	}
@@ -89,6 +99,13 @@ func (service *Service) render(ctx context.Context, revision presentationrevisio
 			presentationrevision.PreviewContentType, hex.EncodeToString(digest[:]))
 		if err != nil {
 			return fmt.Errorf("store preview %s: %w", key, err)
+		}
+	}
+	if len(pdf) > 0 {
+		key := presentationrevision.PDFObjectKey(revision.PresentationID, revision.Number)
+		digest := sha256.Sum256(pdf)
+		if err := service.objects.PutImmutable(ctx, key, bytes.NewReader(pdf), int64(len(pdf)), "application/pdf", hex.EncodeToString(digest[:])); err != nil {
+			return fmt.Errorf("store PDF: %w", err)
 		}
 	}
 	// The revision is only marked ready once the complete set is stored, so a

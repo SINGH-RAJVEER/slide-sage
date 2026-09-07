@@ -54,9 +54,15 @@ entrypoint ["/app/worker"]
 # shells out to headless LibreOffice, poppler, and cwebp.
 from docker.io/library/alpine:3.22 as preview
 
+# libreoffice-writer is not optional despite this image only rendering Impress
+# decks. Alpine ships the shared configuration registry split across the app
+# packages, and impress alone leaves out writer.xcd, which the UNO bootstrap
+# needs; without it every soffice invocation aborts on a RuntimeException
+# before it reads the deck.
 run apk add --no-cache \
 	ca-certificates \
 	libreoffice-impress \
+	libreoffice-writer \
 	openjdk17-jre-headless \
 	poppler-utils \
 	libwebp-tools \

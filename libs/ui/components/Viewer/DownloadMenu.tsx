@@ -16,7 +16,7 @@ interface Props {
 	onExport?: PresentationExporter;
 }
 
-export type ExportFormat = "pptx";
+export type ExportFormat = "pptx" | "pdf";
 export type PresentationExporter = (
 	format: ExportFormat,
 	presentation: PresentationData,
@@ -81,6 +81,13 @@ const DownloadMenu: React.FC<Props> = ({ presentation, onExport }) => {
 					>
 						<Presentation />
 						<span>PowerPoint</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						disabled={isExporting || revision?.previewStatus !== "ready"}
+						onSelect={() => void download("pdf")}
+					>
+						<Download />
+						<span>PDF</span>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

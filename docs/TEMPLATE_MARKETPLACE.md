@@ -18,6 +18,16 @@ Marketplace metadata comes from the binary catalog. The UI does not invent creat
 
 Preview routes remain available at `/marketplace/:marketplaceId/preview`. They use the binary template ID in the URL and include its versioned template reference in the sample presentation.
 
+## Cover thumbnails
+
+Cards and preview pages load covers from `GET /template-thumbnails/{path}` on the API, where the path is the URL-encoded object path `pptx-templates/{id}/{version}/thumbnails/cover.webp` that `libs/types/src/template-catalog.ts` advertises. `libs/ui/lib/template-thumbnails.ts` builds the URL.
+
+The browser cannot address the CDN itself: unsigned requests to `/pptx-templates/*` are refused, and giving the client a signing key would let anyone mint URLs for the packages. The API signs each request with the deployment's Cloud CDN key and streams the image back. It also keeps the marketplace from downloading a package of tens of megabytes to show one cover.
+
+The route refuses anything that is not exactly a cover path, and refuses templates absent from `apps/api/internal/templatecatalog/published.json`, so it cannot be used to sign arbitrary bucket objects. Responses carry `Cache-Control: public, max-age=604800`, matching the CDN's client TTL, because a cover is immutable for the life of a template version. An upstream failure answers `502`.
+
+Covers are produced by `scripts/render-template-thumbnails.ts` and uploaded beside the package. A template with no uploaded cover answers `502` until one exists.
+
 ## Presentation selection
 
 A presentation stores its PowerPoint template separately from its browser preview theme:

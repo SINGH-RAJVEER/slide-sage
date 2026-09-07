@@ -14,6 +14,8 @@ import (
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/slidepreview"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 )
@@ -42,6 +44,7 @@ func (JobArgs) InsertOpts() river.InsertOpts {
 }
 
 type jobPayload struct {
+	PPTXRevision     int                             `json:"pptx_revision"`
 	UserID           string                          `json:"user_id"`
 	OperationID      string                          `json:"operation_id"`
 	PresentationID   string                          `json:"presentation_id"`
@@ -63,7 +66,7 @@ type jobPayload struct {
 
 func payloadFromJob(job streamJob) jobPayload {
 	return jobPayload{
-		UserID: job.userID, OperationID: job.operationID, PresentationID: job.presentationID,
+		PPTXRevision: job.pptxRevision, UserID: job.userID, OperationID: job.operationID, PresentationID: job.presentationID,
 		Kind: job.kind, Prompt: job.prompt, SlideCount: job.slideCount,
 		DetailLevel: job.detailLevel, Tonality: job.tonality,
 		Research: job.research, ResearchPayload: job.researchPayload, Selection: job.selection, Template: job.template, Theme: job.theme,
@@ -74,7 +77,7 @@ func payloadFromJob(job streamJob) jobPayload {
 
 func (payload jobPayload) streamJob() streamJob {
 	return streamJob{
-		userID: payload.UserID, operationID: payload.OperationID, presentationID: payload.PresentationID,
+		pptxRevision: payload.PPTXRevision, userID: payload.UserID, operationID: payload.OperationID, presentationID: payload.PresentationID,
 		expectedRevision: payload.ExpectedRevision, quote: payload.QuotedMillis,
 		prompt: payload.Prompt, slideCount: payload.SlideCount, detailLevel: payload.DetailLevel,
 		tonality: payload.Tonality, research: payload.Research,
@@ -105,13 +108,11 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 		maxWorkers = 1
 	}
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &generationWorker{
-		handler: &handler{
-			database:    database,
-			client:      &http.Client{Timeout: 3 * time.Minute},
-			connections: connections,
-		},
-	})
+	h := &handler{database: database, client: &http.Client{Timeout: 3 * time.Minute}, connections: connections}
+	if err := h.configureDocuments(context.Background()); err != nil {
+		return nil, fmt.Errorf("configure canonical generation: %w", err)
+	}
+	river.AddWorker(workers, &generationWorker{handler: h})
 	return river.NewClient(riverdatabasesql.New(database), &river.Config{
 		FetchPollInterval:    time.Second,
 		JobTimeout:           7 * time.Minute,
@@ -252,82 +253,21 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 	}
 	job.selection, job.credential = selection, credential
 
-	var plan map[string]any
-	tokens := 0
-	if job.kind == "generation" {
-		var planTokens int
-		plan, planTokens, err = h.generatePlan(ctx, job)
-		if err != nil {
-			if retryableProviderError(err) && riverJob.Attempt < riverJob.MaxAttempts {
-				return h.scheduleRetry(ctx, record, riverJob, err)
-			}
-			return h.finalizeQueuedFailure(ctx, record, riverJob, job, "planning_failure", err.Error())
-		}
-		tokens += planTokens
-		_ = h.appendEvent(ctx, record.ID, "plan", plan)
-		_ = h.updateStage(ctx, record.ID, "drafting", "Writing planned slide content", 2, 4)
-	}
-
-	document, draftTokens, err := h.generateDocument(ctx, job, plan)
+	_ = h.updateStage(ctx, record.ID, "drafting", "Writing revision content", 2, 4)
+	revision, document, tokens, err := h.compileJob(ctx, job)
 	if err != nil {
 		if retryableProviderError(err) && riverJob.Attempt < riverJob.MaxAttempts {
 			return h.scheduleRetry(ctx, record, riverJob, err)
 		}
-		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "provider_failure", err.Error())
-	}
-	tokens += draftTokens
-	if cancelled, err := h.cancelRequested(ctx, record.ID); err != nil {
-		return err
-	} else if cancelled {
-		return h.cancelQueuedJob(ctx, record, riverJob, "Generation was cancelled")
-	}
-	if job.quote > 0 && tokens <= 0 {
-		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "usage_unavailable", "Provider usage was unavailable")
-	}
-
-	document["title"] = truncate(text(document["title"], "Untitled Presentation"), 255)
-	preserveJobTemplate(document, job)
-	document["status"] = "ready"
-	document["tokens_used"] = tokens
-	if plan != nil {
-		document = presentation.ApplyDeckPlan(document, plan)
-	}
-	rawSlides, ok := document["slides"].([]any)
-	if !ok || len(rawSlides) < job.slideCount {
-		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "incomplete_document", "The provider returned fewer slides than requested")
-	}
-	if len(rawSlides) > job.slideCount {
-		document["slides"] = rawSlides[:job.slideCount]
-	}
-	if job.researchPayload != nil {
-		document["sources"] = job.researchPayload.Sources
-	}
-	document, err = presentation.NormalizeDocument(document)
-	slides, ok := document["slides"].([]any)
-	if err == nil {
-		err = validateDocumentForTemplate(document, job.template)
-	}
-	if err != nil || !ok || len(slides) == 0 || !hasSubstantiveGeneratedContent(slides) {
-		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "invalid_document", "Generated presentation was invalid")
-	}
-
-	title := text(document["title"], "Untitled Presentation")
-	if plan == nil {
-		_ = h.updateStage(ctx, record.ID, "drafting", "Writing slide content", 2, 3)
-	}
-	for index, slide := range slides {
-		_ = h.appendEvent(ctx, record.ID, "slide", map[string]any{"index": index, "slide": slide, "title": title})
-	}
-	if plan != nil {
-		_ = h.updateStage(ctx, record.ID, "designing", "Compiling semantic layouts", 3, 4)
+		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "compilation_failure", err.Error())
 	}
 	completed, _ := json.Marshal(document)
 	charged := actualCharge(tokens, job.quote)
-	if err := h.completeQueuedJob(ctx, riverJob, record, job, completed, document, truncate(title, 255), charged, tokens); err != nil {
+	if err := h.completeQueuedJob(ctx, riverJob, record, job, completed, document, text(document["title"], "Untitled Presentation"), charged, tokens, revision); err != nil {
 		if errors.Is(err, errGenerationCancelled) {
 			return nil
 		}
-		if errors.Is(err, errInactiveReservation) || errors.Is(err, errPresentationChanged) {
+		if errors.Is(err, errInactiveReservation) || errors.Is(err, errPresentationChanged) || errors.Is(err, presentationrevision.ErrRevisionConflict) {
 			return h.finalizeQueuedFailure(ctx, record, riverJob, job, "persistence_failure", err.Error())
 		}
 		return err
@@ -473,7 +413,7 @@ func (h *handler) finalizeQueuedFailure(ctx context.Context, record generationJo
 	return tx.Commit()
 }
 
-func (h *handler) completeQueuedJob(ctx context.Context, riverJob *river.Job[JobArgs], record generationJobRecord, job streamJob, completed []byte, document map[string]any, title string, charged int64, providerTokens int) error {
+func (h *handler) completeQueuedJob(ctx context.Context, riverJob *river.Job[JobArgs], record generationJobRecord, job streamJob, completed []byte, document map[string]any, title string, charged int64, providerTokens int, prepared ...presentationrevision.Revision) error {
 	tx, err := h.database.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -510,6 +450,17 @@ func (h *handler) completeQueuedJob(ctx context.Context, riverJob *river.Job[Job
 	if err != nil {
 		return err
 	}
+	if len(prepared) != 1 {
+		return fmt.Errorf("canonical revision is required")
+	}
+	committed, err := presentationrevision.CommitRevisionTx(ctx, tx, presentationrevision.RevisionNumber(job.pptxRevision), prepared[0])
+	if err != nil {
+		return err
+	}
+	if err := slidepreview.Enqueue(ctx, h.previewQueue, tx, job.presentationID, committed.Revision.Number); err != nil {
+		return err
+	}
+	document["currentRevision"] = map[string]any{"revision": committed.Revision.Number, "sha256": committed.Revision.SHA256, "byteSize": committed.Revision.ByteSize, "slideCount": committed.Revision.SlideCount, "previewStatus": "pending", "previewCount": 0}
 	total := 3
 	if job.kind == "generation" {
 		total = 4

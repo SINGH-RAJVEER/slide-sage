@@ -10,7 +10,7 @@
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 
 interface Options {
 	source: string;
@@ -79,16 +79,23 @@ async function main() {
 	await mkdir(options.out, { recursive: true });
 	// NixOS cannot run Playwright's downloaded build, so honour an explicit path.
 	const executablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"];
-	const browser = await chromium.launch(executablePath ? { executablePath } : {});
+	const launchOptions = executablePath ? { executablePath } : {};
+	let browser = await chromium.launch(launchOptions);
 	let rendered = 0;
 	let failed = 0;
 
 	try {
 		for (const id of entries) {
-			const page = await browser.newPage({ viewport: { width: options.width, height: 720 } });
+			// A package that crashes the renderer takes the browser with it.
+			// Relaunch so one bad deck cannot cost every deck after it.
+			if (!browser.isConnected()) browser = await chromium.launch(launchOptions);
+			let page: Page | undefined;
 			try {
+				page = await browser.newPage({ viewport: { width: options.width, height: 720 } });
 				await page.setContent(HARNESS);
-				await page.addScriptTag({ content: bundle });
+				// The bundle carries import.meta, which a classic script cannot
+				// compile; a module script can, and still assigns the global.
+				await page.addScriptTag({ content: bundle, type: "module" });
 
 				const pptx = await readFile(join(options.source, `${id}.pptx`));
 				const size = await page.evaluate(
@@ -102,15 +109,38 @@ async function main() {
 				);
 
 				const stage = page.locator("#stage");
-				const shot = await stage.screenshot({ type: "jpeg", quality: options.quality });
-				await writeFile(join(options.out, `${id}.jpg`), shot);
+				// Playwright encodes PNG or JPEG only, so the cover is re-encoded
+				// in the page. The catalog advertises cover.webp and the API
+				// refuses anything else, so a silent fallback must fail loudly.
+				const shot = await stage.screenshot({ type: "png" });
+				const cover = await page.evaluate(
+					async ([png, quality]) => {
+						const source = await fetch(`data:image/png;base64,${png}`).then((response) =>
+							response.blob(),
+						);
+						const bitmap = await createImageBitmap(source);
+						const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+						canvas.getContext("2d")?.drawImage(bitmap, 0, 0);
+						const encoded = await canvas.convertToBlob({
+							type: "image/webp",
+							quality: Number(quality) / 100,
+						});
+						if (encoded.type !== "image/webp") throw new Error(`browser encoded ${encoded.type}`);
+						const bytes = new Uint8Array(await encoded.arrayBuffer());
+						let binary = "";
+						for (const byte of bytes) binary += String.fromCharCode(byte);
+						return btoa(binary);
+					},
+					[shot.toString("base64"), String(options.quality)] as const,
+				);
+				await writeFile(join(options.out, `${id}.webp`), Buffer.from(cover, "base64"));
 				rendered += 1;
 				console.log(`rendered  ${id.padEnd(52)} ${size.width}x${size.height}`);
 			} catch (error) {
 				failed += 1;
 				console.log(`FAIL      ${id.padEnd(52)} ${(error as Error).message}`);
 			} finally {
-				await page.close();
+				await page?.close().catch(() => {});
 			}
 		}
 	} finally {

@@ -54,3 +54,12 @@ func (limits Limits) withDefaults() Limits {
 type Renderer interface {
 	Render(ctx context.Context, pptx []byte, limits Limits) ([][]byte, error)
 }
+
+// RenderedDocument retains the PDF used to produce the complete preview set.
+type RenderedDocument struct {
+	Images [][]byte
+	PDF    []byte
+}
+type DocumentRenderer interface {
+	RenderDocument(context.Context, []byte, Limits) (RenderedDocument, error)
+}

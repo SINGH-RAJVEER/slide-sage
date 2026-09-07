@@ -6,9 +6,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/pptxcompiler"
 	"io"
 	"net/url"
 	"path"
@@ -84,28 +86,69 @@ func (s *Service) Commit(ctx context.Context, input CommitInput) (RepositoryComm
 		if !found {
 			return RepositoryCommit{}, fmt.Errorf("%w: base revision does not exist", ErrInvalidCommit)
 		}
-		input.TemplateID = base.TemplateID
-		input.TemplateVersion = base.TemplateVersion
-		input.TemplateSHA256 = base.TemplateSHA256
+		_ = base
 	}
 
-	contents, err := readBounded(input.PPTX, s.maxBytes)
+	revision, err := s.Prepare(ctx, input)
 	if err != nil {
 		return RepositoryCommit{}, err
+	}
+
+	committed, err := s.repository.CommitRevision(ctx, input.ExpectedRevision, revision)
+	if err != nil {
+		if errors.Is(err, ErrRevisionConflict) {
+			return RepositoryCommit{}, ErrRevisionConflict
+		}
+		return RepositoryCommit{}, fmt.Errorf("commit presentation revision: %w", err)
+	}
+	return committed, nil
+}
+
+// Prepare validates and uploads bytes before the caller opens its database transaction.
+// The revision becomes visible only when CommitRevisionTx advances the pointer.
+func (s *Service) Prepare(ctx context.Context, input CommitInput) (Revision, error) {
+	if err := validateLookupInput(input); err != nil {
+		return Revision{}, err
+	}
+	if err := validateCommitInput(input); err != nil {
+		return Revision{}, err
+	}
+	if input.BaseRevision != nil {
+		base, found, err := s.repository.FindRevision(ctx, input.PresentationID, *input.BaseRevision)
+		if err != nil {
+			return Revision{}, err
+		}
+		if !found {
+			return Revision{}, ErrRevisionConflict
+		}
+		input.TemplateID, input.TemplateVersion, input.TemplateSHA256 = base.TemplateID, base.TemplateVersion, base.TemplateSHA256
+	}
+	contents, err := readBounded(input.PPTX, s.maxBytes)
+	if err != nil {
+		return Revision{}, err
 	}
 	slideCount, err := inspectPPTX(contents)
 	if err != nil {
-		return RepositoryCommit{}, err
+		return Revision{}, err
 	}
 	// Editor saves may legitimately add or remove slides, so they are the one
 	// operation allowed to arrive without an expected count.
 	if input.ExpectedSlideCount > 0 && slideCount != input.ExpectedSlideCount {
-		return RepositoryCommit{}, fmt.Errorf("%w: got %d, want %d", ErrSlideCountMismatch, slideCount, input.ExpectedSlideCount)
+		return Revision{}, fmt.Errorf("%w: got %d, want %d", ErrSlideCountMismatch, slideCount, input.ExpectedSlideCount)
 	}
 
+	index, err := pptxcompiler.Index(contents)
+	if err != nil {
+		return Revision{}, err
+	}
+	indexJSON, err := json.Marshal(index)
+	if err != nil {
+		return Revision{}, err
+	}
 	digest := sha256.Sum256(contents)
 	digestString := hex.EncodeToString(digest[:])
 	revision := Revision{
+		Index:           indexJSON,
 		PresentationID:  input.PresentationID,
 		ObjectKey:       fmt.Sprintf("presentations/%s/objects/%s.pptx", input.PresentationID, digestString),
 		SHA256:          digestString,
@@ -124,17 +167,10 @@ func (s *Service) Commit(ctx context.Context, input CommitInput) (RepositoryComm
 		CreatedAt:       s.now().UTC(),
 	}
 	if err := s.blobs.PutImmutable(ctx, revision.ObjectKey, bytes.NewReader(contents), revision.ByteSize, revision.MIMEType, revision.SHA256); err != nil {
-		return RepositoryCommit{}, fmt.Errorf("store presentation revision: %w", err)
+		return Revision{}, fmt.Errorf("store presentation revision: %w", err)
 	}
 
-	committed, err := s.repository.CommitRevision(ctx, input.ExpectedRevision, revision)
-	if err != nil {
-		if errors.Is(err, ErrRevisionConflict) {
-			return RepositoryCommit{}, ErrRevisionConflict
-		}
-		return RepositoryCommit{}, fmt.Errorf("commit presentation revision: %w", err)
-	}
-	return committed, nil
+	return revision, nil
 }
 
 func validateLookupInput(input CommitInput) error {

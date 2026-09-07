@@ -6,6 +6,7 @@
 // compiler reads, and records the digest so the catalog can be backfilled.
 //
 //	go run ./cmd/publish-templates -source ../../templates/v1 -dry-run
+//	go run ./cmd/publish-templates -source ../../templates/v1 -out /tmp/staged
 //	go run ./cmd/publish-templates -source ../../templates/v1 -bucket slidesage-504414-templates
 package main
 
@@ -14,6 +15,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -47,6 +49,7 @@ func main() {
 	digestFile := flag.String("digests", "libs/types/src/template-digests.json", "digest map the browser catalog reads")
 	catalogFile := flag.String("published", "apps/api/internal/templatecatalog/published.json", "published set the API embeds to gate generation")
 	bucket := flag.String("bucket", "", "GCS bucket for published packages; empty means prepare only")
+	outDir := flag.String("out", "", "write published packages to this directory instead of a bucket, in the object layout the CDN serves")
 	version := flag.Int("version", 1, "template version to publish")
 	only := flag.String("only", "", "comma-separated template IDs; empty means every file in -source")
 	skip := flag.String("skip", "quarantine-agriculture-business-plan", "comma-separated template IDs to leave unpublished")
@@ -78,8 +81,15 @@ func main() {
 		log.Fatalf("no templates matched in %s", *source)
 	}
 
+	if *bucket != "" && *outDir != "" {
+		log.Fatal("choose either -bucket or -out, not both")
+	}
+
 	ctx := context.Background()
 	var uploader templatepublish.Uploader
+	if *outDir != "" && !*dryRun {
+		uploader = directoryUploader{root: *outDir}
+	}
 	if *bucket != "" && !*dryRun {
 		store, storeErr := presentationrevision.NewGCSBlobStore(ctx, *bucket)
 		if storeErr != nil {
@@ -148,6 +158,32 @@ func main() {
 	}
 }
 
+// directoryUploader mirrors the bucket layout on local disk so a publication
+// run can be staged, inspected, or uploaded by another tool. It refuses to
+// overwrite, matching the create-only precondition the GCS store uses: an
+// object path names a digest, so identical bytes are the only thing that could
+// legitimately land there twice.
+type directoryUploader struct{ root string }
+
+func (u directoryUploader) PutImmutable(_ context.Context, key string, body io.Reader, _ int64, _, _ string) error {
+	destination := filepath.Join(u.root, filepath.FromSlash(key))
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if os.IsExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(file, body); err != nil {
+		file.Close()
+		return err
+	}
+	return file.Close()
+}
+
 func publishOne(ctx context.Context, path, id string, version int, maxBytes int64, uploader templatepublish.Uploader) (templatepublish.Result, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -199,9 +235,7 @@ func writeDigests(path string, digests map[string]digestRecord) error {
 	return os.WriteFile(path, append(contents, '\n'), 0o644)
 }
 
-// writeCatalog projects the digest map onto the set the API embeds. The version
-// comes from the object path the digest was recorded against, so the two files
-// can never disagree about which bytes a template resolves to.
+// writeCatalog projects the digest map onto the set the API embeds. The version comes from the object path the digest was recorded against, so the two files can never disagree about which bytes a template resolves to.
 func writeCatalog(path string, digests map[string]digestRecord) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err

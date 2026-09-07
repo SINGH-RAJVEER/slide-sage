@@ -39,7 +39,7 @@ func TestLibreOfficeRendererPassesRequestedWidth(t *testing.T) {
 		t.Fatalf("Render() error = %v", err)
 	}
 	rasterize := runner.commandFor(t, defaultPDFToPPMPath)
-	if !containsPair(rasterize, "-scale-to-x", "1280") {
+	if !containsPair(rasterize, "-scale-to", "1280") {
 		t.Fatalf("pdftoppm arguments = %v", rasterize)
 	}
 	convert := runner.commandFor(t, defaultSofficePath)

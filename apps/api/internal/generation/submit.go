@@ -137,12 +137,29 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		h.reservationError(writer, err)
 		return
 	}
-	resolvedTemplate, err := resolveGenerationTemplate(job.template)
-	if err != nil {
-		writeError(writer, http.StatusBadRequest, err.Error())
-		return
+	if job.kind == "generation" {
+		resolvedTemplate, err := resolveGenerationTemplate(job.template)
+		if err != nil {
+			writeError(writer, http.StatusBadRequest, err.Error())
+			return
+		}
+		job.template = &resolvedTemplate
+		if _, err := assignmentForJob(job); err != nil {
+			writeError(writer, http.StatusBadRequest, err.Error())
+			return
+		}
+	} else {
+		var count int
+		err := h.database.QueryRowContext(request.Context(), `SELECT r.revision,r.slide_count FROM presentations p JOIN presentation_revisions r ON r.presentation_id=p.id AND r.revision=p.current_pptx_revision WHERE p.id=$1 AND p.user_id=$2`, job.presentationID, userID).Scan(&job.pptxRevision, &count)
+		if err != nil {
+			writeError(writer, http.StatusConflict, "Regenerate this legacy presentation before editing")
+			return
+		}
+		if job.slideCount != count {
+			writeError(writer, http.StatusBadRequest, "AI text revisions preserve slide count. Add or remove slides in the Office editor.")
+			return
+		}
 	}
-	job.template = &resolvedTemplate
 
 	balance, _, err := h.enqueue(request.Context(), job, requestHashValue, create, input.Topic, placeholder)
 	if err != nil {
@@ -289,15 +306,11 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 	}
 	count := input.SlideCount
 	if count == 0 {
-		var document struct {
-			Slides []any `json:"slides"`
-		}
-		_ = json.Unmarshal(base.Data, &document)
-		count = len(document.Slides)
-		if count == 0 {
-			count = 5
+		if err := h.database.QueryRowContext(ctx, `SELECT r.slide_count FROM presentations p JOIN presentation_revisions r ON r.presentation_id=p.id AND r.revision=p.current_pptx_revision WHERE p.id=$1 AND p.user_id=$2`, base.ID, userID).Scan(&count); err != nil {
+			return streamJob{}, writeStatusError{http.StatusConflict, "Regenerate this legacy presentation before editing"}
 		}
 	}
+
 	operationID, err := uuid()
 	if err != nil {
 		return streamJob{}, err
@@ -319,6 +332,7 @@ func buildIterationJob(jobID, userID, operationID string, base persistedPresenta
 }
 
 type streamJob struct {
+	pptxRevision                               int
 	jobID, userID, operationID, presentationID string
 	expectedRevision                           int
 	quote                                      int64

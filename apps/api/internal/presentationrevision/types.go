@@ -3,6 +3,7 @@ package presentationrevision
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -71,6 +72,7 @@ const (
 
 // Revision is immutable after RevisionRepository.CommitRevision succeeds.
 type Revision struct {
+	Index           json.RawMessage
 	PresentationID  string
 	Number          RevisionNumber
 	ObjectKey       string
@@ -150,4 +152,11 @@ type RevisionRepository interface {
 	// current pointer when its compare-and-swap succeeds. Stale editor saves are
 	// inserted without advancing the pointer; other stale operations conflict.
 	CommitRevision(ctx context.Context, expected RevisionNumber, revision Revision) (RepositoryCommit, error)
+}
+
+func PDFObjectKey(id string, number RevisionNumber) string {
+	return fmt.Sprintf("presentations/%s/revisions/%d/document.pdf", id, number)
+}
+func Snapshot(r Revision) map[string]any {
+	return map[string]any{"revision": r.Number, "slideCount": r.SlideCount, "byteSize": r.ByteSize, "sha256": r.SHA256, "previewStatus": r.PreviewStatus, "previewCount": r.PreviewCount, "createdAt": r.CreatedAt}
 }

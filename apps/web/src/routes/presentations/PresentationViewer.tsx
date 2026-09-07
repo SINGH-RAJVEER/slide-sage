@@ -1,10 +1,18 @@
 import { BINARY_PPTX_TEMPLATE_CATALOG, type PresentationData } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
+import { Button } from "@slidesage/ui/components/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@slidesage/ui/components/select";
 import {
 	CenteredStatusScreen,
 	IterateModal,
 	type PresentationExporter,
-	PptxSlide,
+	PreviewSlide,
 	ViewerFullscreenOverlayControls,
 	ViewerHeaderControls,
 	ViewerNavigationControls,
@@ -18,7 +26,7 @@ import {
 	usePresentationData,
 	type ViewerLocationState,
 } from "@slidesage/ui/hooks/usePresentationData";
-import { usePptxRevision } from "@slidesage/ui/hooks/usePptxRevision";
+import { useRevisionPreviews } from "@slidesage/ui/hooks/useRevisionPreviews";
 import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@slidesage/ui/lib/api";
@@ -35,6 +43,9 @@ function templateLabelFor(reference?: PresentationData["template"]): string | un
 	)?.name;
 }
 
+// Radix rejects an empty option value, so the live pointer needs a sentinel.
+const CURRENT_REVISION = "current";
+
 export default function PresentationViewerPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -50,28 +61,39 @@ export default function PresentationViewerPage() {
 
 	const isStreamingMode = locationState?.isStreaming === true;
 
-	const {
-		presentation,
-		presentationId,
-		isLoading,
-		streamingSlidesCount,
-		shouldShowGenerating,
-	} = usePresentationData({
-		apiUrl: API_URL,
-		navigate,
-		locationState,
-		presentationIdFromParams,
-		isStreamingMode,
-		streamingState,
-		getPresentation,
-	});
+	const { presentation, presentationId, isLoading, streamingSlidesCount, shouldShowGenerating } =
+		usePresentationData({
+			apiUrl: API_URL,
+			navigate,
+			locationState,
+			presentationIdFromParams,
+			isStreamingMode,
+			streamingState,
+			getPresentation,
+		});
 
-	// The deck is the committed revision, so the viewer renders the package
-	// itself rather than a separate description of it.
-	const { document: pptxDocument, isLoading: isRevisionLoading } = usePptxRevision(
+	const [selectedRevision, setSelectedRevision] = useState<number>();
+	const [history, setHistory] = useState<Array<{ revision: number; source: string }>>([]);
+	const previews = useRevisionPreviews(
 		presentationId,
 		presentation?.currentRevision?.revision,
+		!shouldShowGenerating,
+		selectedRevision,
 	);
+	const { document: pptxDocument, isLoading: isRevisionLoading } = previews;
+	useEffect(() => {
+		if (!presentationId || !previews.revision) return;
+		const controller = new AbortController();
+		void fetch(`${API_URL}/presentations/${presentationId}/revisions`, {
+			credentials: "include",
+			signal: controller.signal,
+		})
+			.then(async (response) => {
+				if (response.ok) setHistory(await response.json());
+			})
+			.catch(() => {});
+		return () => controller.abort();
+	}, [presentationId, previews.revision?.revision]);
 
 	const slideContainerRef = useRef<HTMLDivElement | null>(null);
 	const slideCount = pptxDocument?.slides.length ?? 0;
@@ -181,18 +203,26 @@ export default function PresentationViewerPage() {
 
 	// Download serves the revision's exact bytes; the deck is already a PPTX, so
 	// there is nothing to convert and nothing that can diverge from what renders.
-	const exportPresentation: PresentationExporter = async (_format, presentationToExport) => {
+	const exportPresentation: PresentationExporter = async (format, presentationToExport) => {
 		if (!presentationId) return;
-		const bytes = await fetchPresentationRevision(presentationId);
+		const bytes = await fetchPresentationRevision(
+			presentationId,
+			undefined,
+			previews.revision?.revision,
+			format,
+		);
 		const url = URL.createObjectURL(
 			new Blob([bytes], {
-				type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+				type:
+					format === "pdf"
+						? "application/pdf"
+						: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 			}),
 		);
 		try {
 			const link = document.createElement("a");
 			link.href = url;
-			link.download = `${presentationToExport.title || "presentation"}.pptx`;
+			link.download = `${presentationToExport.title || "presentation"}.${format}`;
 			link.click();
 		} finally {
 			URL.revokeObjectURL(url);
@@ -219,11 +249,15 @@ export default function PresentationViewerPage() {
 
 	// ViewerNavigationControls reports deck metadata; while a deck is still
 	// generating there is no committed revision to describe yet.
-	const navigationPresentation: PresentationData = presentation ?? {
-		title: viewerTitle,
-		template: streamingState.template ?? { id: "", version: 0 },
-		documentKind: "pptx",
-		totalSlides: 0,
+	const navigationPresentation: PresentationData = {
+		...(presentation ?? {
+			title: viewerTitle,
+			template: streamingState.template ?? { id: "", version: 0 },
+			documentKind: "pptx",
+			totalSlides: 0,
+		}),
+		currentRevision: previews.revision ?? presentation?.currentRevision,
+		totalSlides: previews.revision?.slideCount ?? 0,
 	};
 
 	return (
@@ -238,7 +272,7 @@ export default function PresentationViewerPage() {
 				{showControls && !isFullscreenMode && (
 					<ViewerHeaderControls
 						title={viewerTitle}
-						canIterate={hasSlides && !!presentationId}
+						canIterate={!!previews.revision && !!presentationId && !selectedRevision}
 						templateLabel={templateLabelFor(presentation?.template)}
 						onBack={() => navigate(isStreamingMode ? ROUTES.generate : ROUTES.presentations)}
 						onIterate={() => setShowIterateModal((current) => !current)}
@@ -247,6 +281,48 @@ export default function PresentationViewerPage() {
 					/>
 				)}
 
+				{!isFullscreenMode && history.length > 1 && (
+					<div className="flex items-center gap-2 px-4 text-sm">
+						<span>Revision</span>
+						<Select
+							value={selectedRevision ? String(selectedRevision) : CURRENT_REVISION}
+							onValueChange={(value) =>
+								setSelectedRevision(value === CURRENT_REVISION ? undefined : Number(value))
+							}
+						>
+							<SelectTrigger aria-label="Revision history" className="h-9 w-64">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={CURRENT_REVISION}>Current</SelectItem>
+								{history.map((item) => (
+									<SelectItem key={item.revision} value={String(item.revision)}>
+										Revision {item.revision} · {item.source}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+				)}
+				{!isFullscreenMode &&
+					(previews.error ||
+						(previews.revision && previews.revision.previewStatus !== "ready")) && (
+						<div role="status" className="px-4 py-3 text-sm">
+							{previews.error ??
+								(previews.revision?.previewStatus === "failed"
+									? "Preview rendering failed. Your PowerPoint is available to download."
+									: "Rendering slide previews. Your PowerPoint is available to download.")}
+							{previews.revision && previews.revision.previewStatus !== "ready" && (
+								<Button
+									variant="link"
+									className="ml-3 h-auto p-0"
+									onClick={() => void previews.retry()}
+								>
+									Retry previews
+								</Button>
+							)}
+						</div>
+					)}
 				{!isFullscreenMode && (
 					<ViewerSlideCarousel
 						document={pptxDocument}
@@ -304,7 +380,7 @@ export default function PresentationViewerPage() {
 
 				{isFullscreenMode && pptxDocument && hasSlides && (
 					<div className="min-h-0 flex-1 bg-black">
-						<PptxSlide
+						<PreviewSlide
 							document={pptxDocument}
 							index={navigation.currentSlide}
 							className="h-full w-full"

@@ -40,7 +40,7 @@ func (r *Repository) Create(ctx context.Context, input NewPresentation) (Present
 }
 
 func (r *Repository) FindByID(ctx context.Context, presentationID string) (Presentation, error) {
-	const query = `SELECT id, user_id, title, prompt, slides_data, ai_provider, ai_model, parent_presentation_id, revision, created_at, updated_at
+	const query = `SELECT id, user_id, title, prompt, ` + documentProjection + `, ai_provider, ai_model, parent_presentation_id, revision, created_at, updated_at
         FROM presentations WHERE id = $1`
 	presentation, err := scanPresentation(r.db.QueryRowContext(ctx, query, presentationID))
 	if errors.Is(err, ErrPresentationNotFound) {
@@ -57,7 +57,7 @@ func (r *Repository) ListByUserID(ctx context.Context, userID string, limit, off
 	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM presentations WHERE user_id = $1`, userID).Scan(&total); err != nil {
 		return PresentationPage{}, fmt.Errorf("count presentations: %w", err)
 	}
-	rows, err := r.db.QueryContext(ctx, `SELECT id, user_id, title, prompt, slides_data, ai_provider, ai_model, parent_presentation_id, revision, created_at, updated_at
+	rows, err := r.db.QueryContext(ctx, `SELECT id, user_id, title, prompt, `+documentProjection+`, ai_provider, ai_model, parent_presentation_id, revision, created_at, updated_at
         FROM presentations WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3`, userID, limit, offset)
 	if err != nil {
 		return PresentationPage{}, fmt.Errorf("list presentations: %w", err)
@@ -151,3 +151,6 @@ func newUUID() (string, error) {
 	encoded := hex.EncodeToString(bytes)
 	return encoded[0:8] + "-" + encoded[8:12] + "-" + encoded[12:16] + "-" + encoded[16:20] + "-" + encoded[20:], nil
 }
+
+// Canonical document metadata comes from the current revision, including editor saves.
+const documentProjection = `(CASE WHEN document_kind='pptx' THEN slides_data - 'slides' ELSE slides_data END) || jsonb_build_object('documentKind',document_kind) || COALESCE((SELECT jsonb_build_object('totalSlides',r.slide_count,'currentRevision',jsonb_build_object('revision',r.revision,'slideCount',r.slide_count,'byteSize',r.byte_size,'sha256',r.sha256,'previewStatus',r.preview_status,'previewCount',r.preview_count,'createdAt',r.created_at)) FROM presentation_revisions r WHERE r.presentation_id=presentations.id AND r.revision=presentations.current_pptx_revision),'{}'::jsonb)`

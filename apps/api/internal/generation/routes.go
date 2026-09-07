@@ -15,6 +15,8 @@ import (
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templateasset"
 )
 
 const (
@@ -97,6 +99,11 @@ func RecoverExpired(ctx context.Context, database *sql.DB) error {
 }
 
 type handler struct {
+	templates    *templateasset.CDNFetcher
+	objects      presentationrevision.ObjectStore
+	revisions    *presentationrevision.PostgresRepository
+	previewQueue *queueClient
+
 	database      *sql.DB
 	identity      Identity
 	client        *http.Client

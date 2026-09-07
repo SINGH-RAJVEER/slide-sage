@@ -23,20 +23,18 @@
 - Add passkeys auth
 - Merge observability
 - Merge a finished landing page
+- Implement an 'add and edit esitsting PPT' flow to the ooxml template implementation
+- Provision the ONLYOFFICE document server and turn the browser editor on, tracked on the `onlyoffice-editor` bookmark. The API callback flow, the signed session route and the `OfficeEditor` component are already written and dormant; what is missing is the deployment.
+  Decide the hosting form first: a GCE VM running the container is vendor supported and keeps editing state on a persistent disk, Cloud Run matches the rest of the stack but would hold the bundled Postgres on an in-memory disk that can be recycled mid edit, and GKE with the Helm chart externalises state but adds a cluster.
+  Then wire a `docs.slidesage.app` hostname on the existing load balancer using a separate managed certificate so the API certificate is never recreated, add `ONLYOFFICE_JWT_SECRET` and the Developer Edition licence file to Secret Manager, mount the licence at `/var/www/onlyoffice/Data/license.lic`, and set `ONLYOFFICE_DOCUMENT_SERVER_URL` on the API.
+  The viewer deliberately ships preview only until then, so restoring the `Edit presentation` control is part of that work.
 
 ## Issues
 
-- In the deployment sign out button does not function properly
-- When checking presentations, the entire page shouldnt load, instead just the part with the actual presentations listing
-- The second generate is pressed it should lead to the viewer page with loaders waiting for the stream to start
 - The charts showing percentages and other metrics on hover should instead have it displayed from the get go
-- Fix the pricing model and make the discounts apply to the custom values
-- Opening a seperate ppt when another is already generating leads to the generating ppt on the viewer page
-- Generation indicator on hover too small
-- The indicator for a generating ppt shows as retry instead of generating in the viewer page
-- Figure out what a better auth session token is doing being assigned during login
 - Current export functionality is a liability
 - The nav controls in fullscreen view should dissapear after a delay and also be narrower
 - Iterations not working
 - When a user has just retreved a web result switching away from it should retain it in the generate page still
 - The marketplace search bar looks nothing like the presentaion page bar
+- URGENT: Replace `semantic caching` with normal word to word match being a cache hit.

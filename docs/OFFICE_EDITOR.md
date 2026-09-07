@@ -22,7 +22,7 @@ The key changes with every revision, which is how ONLYOFFICE knows a document ha
 
 ## Source URL
 
-The configuration hands the document server a read-only URL scoped to one presentation and one revision, signed with HMAC-SHA256 and valid for `EDITOR_SOURCE_TOKEN_TTL` (five minutes by default). The endpoint is authenticated by that signature, never by a user cookie, because the document server fetches it server-side.
+The configuration hands the document server a read-only URL scoped to one presentation and one revision, signed with HMAC-SHA256 and valid for `EDITOR_SOURCE_TOKEN_TTL_SECONDS` (five minutes by default). The endpoint is authenticated by that signature, never by a user cookie, because the document server fetches it server-side.
 
 ## Callback
 
@@ -51,7 +51,21 @@ The editor is optional. An API process with no ONLYOFFICE configuration logs tha
 
 The document server must be configured with the same JWT secret, and it must be able to reach `PUBLIC_API_URL` to download decks and post callbacks.
 
+## Browser
+
+`OfficeEditor` in `libs/ui/components/Viewer` hosts the editor. It requests a session, loads the document server's editor API once per origin, and mounts the iframe. Saves travel from the document server to the API rather than through the browser, so the component owns nothing but the iframe's lifetime. Pass `readOnly` for a view-only session.
+
+The viewer does not currently mount `OfficeEditor`. It renders preview images only, and offers no
+control that opens the editor. That is deliberate rather than missing: there is no document server
+to open, so an entry point would only ever fail. Restoring it is part of the provisioning work.
+
 ## Not yet implemented
 
-- The browser has no editor iframe yet; the session endpoint is ready for it.
-- Vendor licensing and production terms still need confirmation before launch, as ADR 0001 requires.
+- No document server is provisioned, so the editor is off. `infra/prod` has no ONLYOFFICE service,
+  and the API disables the editor whenever `ONLYOFFICE_DOCUMENT_SERVER_URL` and
+  `ONLYOFFICE_JWT_SECRET` are absent. Everything else in this document is written and dormant.
+- The work is parked on the `onlyoffice-editor` bookmark. It has to settle the hosting form, add a
+  `docs` hostname on the existing load balancer under its own managed certificate, put the JWT
+  secret and the Developer Edition licence file in Secret Manager, and re-add the viewer control.
+- Licensing is confirmed. The Developer Edition licence is validated from a file mounted at
+  `/var/www/onlyoffice/Data/license.lic`, not from an environment variable.

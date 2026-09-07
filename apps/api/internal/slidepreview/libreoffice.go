@@ -81,35 +81,48 @@ func NewLibreOfficeRenderer(config LibreOfficeConfig) *LibreOfficeRenderer {
 }
 
 func (renderer *LibreOfficeRenderer) Render(ctx context.Context, pptx []byte, limits Limits) ([][]byte, error) {
+	result, err := renderer.RenderDocument(ctx, pptx, limits)
+	return result.Images, err
+}
+
+func (renderer *LibreOfficeRenderer) RenderDocument(ctx context.Context, pptx []byte, limits Limits) (RenderedDocument, error) {
 	limits = limits.withDefaults()
 	if int64(len(pptx)) > limits.MaxRevisionBytes {
-		return nil, fmt.Errorf("deck is %d bytes, over the %d byte render limit", len(pptx), limits.MaxRevisionBytes)
+		return RenderedDocument{}, fmt.Errorf("deck is %d bytes, over the %d byte render limit", len(pptx), limits.MaxRevisionBytes)
 	}
 	if len(pptx) == 0 {
-		return nil, errors.New("deck is empty")
+		return RenderedDocument{}, errors.New("deck is empty")
 	}
 	renderContext, cancel := context.WithTimeout(ctx, limits.Timeout)
 	defer cancel()
 
 	workDir, err := os.MkdirTemp(renderer.tempDir, "slidesage-preview-")
 	if err != nil {
-		return nil, fmt.Errorf("create preview working directory: %w", err)
+		return RenderedDocument{}, fmt.Errorf("create preview working directory: %w", err)
 	}
 	defer os.RemoveAll(workDir)
 
 	deckPath := filepath.Join(workDir, "deck.pptx")
 	if err := os.WriteFile(deckPath, pptx, 0o600); err != nil {
-		return nil, fmt.Errorf("write deck for conversion: %w", err)
+		return RenderedDocument{}, fmt.Errorf("write deck for conversion: %w", err)
 	}
 	pdfPath, err := renderer.convertToPDF(renderContext, workDir, deckPath)
 	if err != nil {
-		return nil, err
+		return RenderedDocument{}, err
 	}
 	pages, err := renderer.rasterize(renderContext, workDir, pdfPath, limits)
 	if err != nil {
-		return nil, err
+		return RenderedDocument{}, err
 	}
-	return renderer.encode(renderContext, workDir, pages)
+	images, err := renderer.encode(renderContext, workDir, pages)
+	if err != nil {
+		return RenderedDocument{}, err
+	}
+	pdf, err := os.ReadFile(pdfPath)
+	if err != nil {
+		return RenderedDocument{}, err
+	}
+	return RenderedDocument{Images: images, PDF: pdf}, nil
 }
 
 func (renderer *LibreOfficeRenderer) convertToPDF(ctx context.Context, workDir, deckPath string) (string, error) {
@@ -141,8 +154,8 @@ func (renderer *LibreOfficeRenderer) rasterize(ctx context.Context, workDir, pdf
 	arguments := []string{
 		"-png",
 		"-cropbox",
-		"-scale-to-x", strconv.Itoa(limits.Width),
-		"-scale-to-y", "-1",
+		"-scale-to", strconv.Itoa(limits.Width),
+		"-f", "1", "-l", strconv.Itoa(limits.MaxSlides + 1),
 		pdfPath,
 		filepath.Join(workDir, pagePrefix),
 	}

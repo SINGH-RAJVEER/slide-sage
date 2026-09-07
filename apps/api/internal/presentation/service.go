@@ -72,10 +72,11 @@ func (s *Service) Update(ctx context.Context, presentationID, userID string, mut
 
 func presentationSummary(presentation Presentation) PresentationSummary {
 	var document struct {
-		Slides  []json.RawMessage `json:"slides"`
-		Status  string            `json:"status"`
-		Sources []json.RawMessage `json:"sources"`
-		Failure struct {
+		Slides      []json.RawMessage `json:"slides"`
+		TotalSlides int               `json:"totalSlides"`
+		Status      string            `json:"status"`
+		Sources     []json.RawMessage `json:"sources"`
+		Failure     struct {
 			Retry struct {
 				ResearchPayload struct {
 					Sources []json.RawMessage `json:"sources"`
@@ -93,6 +94,6 @@ func presentationSummary(presentation Presentation) PresentationSummary {
 		hasResearch = len(document.Failure.Retry.ResearchPayload.Sources) > 0
 	}
 	return PresentationSummary{ID: presentation.ID, Title: presentation.Title, Prompt: presentation.Prompt,
-		SlideCount: len(document.Slides), Status: status, HasResearch: hasResearch,
+		SlideCount: max(document.TotalSlides, len(document.Slides)), Status: status, HasResearch: hasResearch,
 		CreatedAt: presentation.CreatedAt, UpdatedAt: presentation.UpdatedAt}
 }

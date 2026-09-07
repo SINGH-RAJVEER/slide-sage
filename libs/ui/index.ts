@@ -19,6 +19,5 @@ export * from "./components/thinking-orb";
 export * from "./components/Viewer";
 export * from "./context/AuthContext";
 export * from "./context/StreamingContext";
-export * from "./lib/pptx-document";
 export * from "./lib/presentation-motion";
 export * from "./lib/utils";

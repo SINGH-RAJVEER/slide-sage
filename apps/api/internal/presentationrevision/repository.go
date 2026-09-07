@@ -3,6 +3,7 @@ package presentationrevision
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -14,7 +15,7 @@ const DefaultStalePreviewClaim = 15 * time.Minute
 
 const revisionColumns = `presentation_id, revision, object_key, sha256, byte_size, slide_count, mime_type,
 	author_id, source_operation_id, source_operation_kind, preview_status, preview_count,
-	template_id, template_version, template_sha256, compiler_version, editor_provider, base_revision, created_at`
+	template_id, template_version, template_sha256, compiler_version, editor_provider, base_revision, created_at, revision_index`
 
 type PostgresRepository struct {
 	database *sql.DB
@@ -70,6 +71,18 @@ func (repository *PostgresRepository) CommitRevision(ctx context.Context, expect
 		}
 	}()
 
+	result, err = CommitRevisionTx(ctx, transaction, expected, revision)
+	if err != nil {
+		return RepositoryCommit{}, err
+	}
+	if err := transaction.Commit(); err != nil {
+		return RepositoryCommit{}, err
+	}
+	return result, nil
+}
+
+// CommitRevisionTx joins revision persistence to billing and preview scheduling.
+func CommitRevisionTx(ctx context.Context, transaction *sql.Tx, expected RevisionNumber, revision Revision) (RepositoryCommit, error) {
 	var current RevisionNumber
 	lockErr := transaction.QueryRowContext(ctx, `SELECT COALESCE(current_pptx_revision, 0)
 		FROM presentations WHERE id = $1 FOR UPDATE`, revision.PresentationID).Scan(&current)
@@ -85,9 +98,6 @@ func (repository *PostgresRepository) CommitRevision(ctx context.Context, expect
 		return RepositoryCommit{}, findErr
 	}
 	if found {
-		if commitErr := transaction.Commit(); commitErr != nil {
-			return RepositoryCommit{}, fmt.Errorf("commit duplicate presentation revision lookup: %w", commitErr)
-		}
 		return RepositoryCommit{Revision: duplicate, Duplicate: true}, nil
 	}
 
@@ -109,9 +119,6 @@ func (repository *PostgresRepository) CommitRevision(ctx context.Context, expect
 			WHERE id = $2`, revision.Number, revision.PresentationID); err != nil {
 			return RepositoryCommit{}, fmt.Errorf("advance current presentation revision: %w", err)
 		}
-	}
-	if err := transaction.Commit(); err != nil {
-		return RepositoryCommit{}, fmt.Errorf("commit presentation revision transaction: %w", err)
 	}
 	return RepositoryCommit{Revision: revision, Advanced: !stale}, nil
 }
@@ -192,13 +199,13 @@ func insertRevision(ctx context.Context, transaction *sql.Tx, revision Revision)
 	_, err := transaction.ExecContext(ctx, `INSERT INTO presentation_revisions (
 		presentation_id, revision, object_key, sha256, byte_size, slide_count, mime_type,
 		author_id, source_operation_id, source_operation_kind, preview_status, preview_count,
-		template_id, template_version, template_sha256, compiler_version, editor_provider, base_revision, created_at
-	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+		template_id, template_version, template_sha256, compiler_version, editor_provider, base_revision, created_at, revision_index
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::jsonb)`,
 		revision.PresentationID, revision.Number, revision.ObjectKey, revision.SHA256, revision.ByteSize,
 		revision.SlideCount, revision.MIMEType, revision.AuthorID, revision.SourceOperation.ID,
 		revision.SourceOperation.Kind, revision.PreviewStatus, revision.PreviewCount, nullableString(revision.TemplateID),
 		nullablePositiveInt(revision.TemplateVersion), nullableString(revision.TemplateSHA256), nullableString(revision.CompilerVersion),
-		nullableString(revision.EditorProvider), nullableRevision(revision.BaseRevision), revision.CreatedAt)
+		nullableString(revision.EditorProvider), nullableRevision(revision.BaseRevision), revision.CreatedAt, revision.Index)
 	if err != nil {
 		return fmt.Errorf("insert presentation revision: %w", err)
 	}
@@ -213,14 +220,18 @@ func scanRevision(row rowScanner) (Revision, error) {
 	var revision Revision
 	var templateID, templateSHA256, compilerVersion, editorProvider sql.NullString
 	var templateVersion, baseRevision sql.NullInt64
+	var revisionIndex []byte
 	err := row.Scan(
 		&revision.PresentationID, &revision.Number, &revision.ObjectKey, &revision.SHA256, &revision.ByteSize,
 		&revision.SlideCount, &revision.MIMEType, &revision.AuthorID, &revision.SourceOperation.ID,
 		&revision.SourceOperation.Kind, &revision.PreviewStatus, &revision.PreviewCount, &templateID,
-		&templateVersion, &templateSHA256, &compilerVersion, &editorProvider, &baseRevision, &revision.CreatedAt,
+		&templateVersion, &templateSHA256, &compilerVersion, &editorProvider, &baseRevision, &revision.CreatedAt, &revisionIndex,
 	)
 	if err != nil {
 		return Revision{}, err
+	}
+	if len(revisionIndex) > 0 {
+		revision.Index = json.RawMessage(revisionIndex)
 	}
 	revision.TemplateID = templateID.String
 	revision.TemplateVersion = int(templateVersion.Int64)
