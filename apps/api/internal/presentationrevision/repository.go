@@ -5,7 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
+
+// DefaultStalePreviewClaim bounds how long a crashed renderer can hold a
+// revision before another worker may take the claim over.
+const DefaultStalePreviewClaim = 15 * time.Minute
 
 const revisionColumns = `presentation_id, revision, object_key, sha256, byte_size, slide_count, mime_type,
 	author_id, source_operation_id, source_operation_kind, preview_status, preview_count,
@@ -15,7 +20,10 @@ type PostgresRepository struct {
 	database *sql.DB
 }
 
-var _ RevisionRepository = (*PostgresRepository)(nil)
+var (
+	_ RevisionRepository = (*PostgresRepository)(nil)
+	_ PreviewRepository  = (*PostgresRepository)(nil)
+)
 
 func NewPostgresRepository(database *sql.DB) *PostgresRepository {
 	return &PostgresRepository{database: database}
@@ -106,6 +114,61 @@ func (repository *PostgresRepository) CommitRevision(ctx context.Context, expect
 		return RepositoryCommit{}, fmt.Errorf("commit presentation revision transaction: %w", err)
 	}
 	return RepositoryCommit{Revision: revision, Advanced: !stale}, nil
+}
+
+func (repository *PostgresRepository) ClaimPreviewRender(ctx context.Context, presentationID string, number RevisionNumber, staleAfter time.Duration) (Revision, bool, error) {
+	seconds := staleAfter.Seconds()
+	if seconds <= 0 {
+		seconds = DefaultStalePreviewClaim.Seconds()
+	}
+	query := `UPDATE presentation_revisions
+		SET preview_status = 'rendering', preview_count = 0, preview_started_at = NOW()
+		WHERE presentation_id = $1 AND revision = $2
+			AND (preview_status IN ('pending', 'failed')
+				OR (preview_status = 'rendering'
+					AND preview_started_at < NOW() - make_interval(secs => $3)))
+		RETURNING ` + revisionColumns
+	revision, err := scanRevision(repository.database.QueryRowContext(ctx, query, presentationID, number, seconds))
+	if errors.Is(err, sql.ErrNoRows) {
+		return Revision{}, false, nil
+	}
+	if err != nil {
+		return Revision{}, false, fmt.Errorf("claim presentation revision previews: %w", err)
+	}
+	return revision, true, nil
+}
+
+func (repository *PostgresRepository) MarkPreviewsReady(ctx context.Context, presentationID string, number RevisionNumber, count int) error {
+	result, err := repository.database.ExecContext(ctx, `UPDATE presentation_revisions
+		SET preview_status = 'ready', preview_count = slide_count, preview_started_at = NULL
+		WHERE presentation_id = $1 AND revision = $2 AND preview_status = 'rendering' AND slide_count = $3`,
+		presentationID, number, count)
+	if err != nil {
+		return fmt.Errorf("mark presentation revision previews ready: %w", err)
+	}
+	return requireAffectedRow(result)
+}
+
+func (repository *PostgresRepository) MarkPreviewsFailed(ctx context.Context, presentationID string, number RevisionNumber) error {
+	result, err := repository.database.ExecContext(ctx, `UPDATE presentation_revisions
+		SET preview_status = 'failed', preview_count = 0, preview_started_at = NULL
+		WHERE presentation_id = $1 AND revision = $2 AND preview_status = 'rendering'`,
+		presentationID, number)
+	if err != nil {
+		return fmt.Errorf("mark presentation revision previews failed: %w", err)
+	}
+	return requireAffectedRow(result)
+}
+
+func requireAffectedRow(result sql.Result) error {
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("read affected presentation revision rows: %w", err)
+	}
+	if affected == 0 {
+		return ErrPreviewStateConflict
+	}
+	return nil
 }
 
 type revisionQuerier interface {

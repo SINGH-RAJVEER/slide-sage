@@ -4,11 +4,22 @@ package presentationrevision
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 )
 
-const PPTXContentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+const (
+	PPTXContentType    = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+	PreviewContentType = "image/webp"
+)
+
+// PreviewObjectKey names the preview image of one slide in one revision. Slide
+// indexes are zero-based and follow package slide order. A revision is
+// immutable, so a preview key always describes the same slide.
+func PreviewObjectKey(presentationID string, number RevisionNumber, slideIndex int) string {
+	return fmt.Sprintf("presentations/%s/revisions/%d/previews/%d.webp", presentationID, number, slideIndex)
+}
 
 var (
 	ErrInvalidCommit           = errors.New("invalid presentation revision commit")
@@ -20,6 +31,8 @@ var (
 	ErrPresentationNotFound    = errors.New("presentation not found")
 	ErrRevisionConflict        = errors.New("presentation revision conflict")
 	ErrSlideCountMismatch      = errors.New("PPTX slide count does not match the expected count")
+	ErrObjectNotFound          = errors.New("object does not exist")
+	ErrPreviewStateConflict    = errors.New("presentation revision no longer holds the preview claim")
 )
 
 type RevisionNumber int
@@ -98,6 +111,28 @@ type BlobStore interface {
 	// PutImmutable is idempotent when key already contains identical bytes. It
 	// returns an error when the key contains different bytes.
 	PutImmutable(ctx context.Context, key string, body io.Reader, size int64, contentType, sha256 string) error
+}
+
+// ObjectStore adds read access for callers that consume stored objects, such as
+// the preview renderer and the download endpoint.
+type ObjectStore interface {
+	BlobStore
+	// OpenObject returns ErrObjectNotFound when key holds no object.
+	OpenObject(ctx context.Context, key string) (io.ReadCloser, error)
+}
+
+// PreviewRepository owns the preview lifecycle of a committed revision. Preview
+// state is the only mutable part of a revision row.
+type PreviewRepository interface {
+	// ClaimPreviewRender marks a revision as rendering and returns it. It
+	// returns false when previews are already ready or another worker holds a
+	// claim that is younger than staleAfter.
+	ClaimPreviewRender(ctx context.Context, presentationID string, number RevisionNumber, staleAfter time.Duration) (Revision, bool, error)
+	// MarkPreviewsReady requires the full preview set, so count must equal the
+	// revision slide count. It returns ErrPreviewStateConflict when the claim
+	// was taken over in the meantime.
+	MarkPreviewsReady(ctx context.Context, presentationID string, number RevisionNumber, count int) error
+	MarkPreviewsFailed(ctx context.Context, presentationID string, number RevisionNumber) error
 }
 
 type RepositoryCommit struct {

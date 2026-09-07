@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"cloud.google.com/go/storage"
 	"google.golang.org/api/googleapi"
 )
 
@@ -118,6 +119,8 @@ type fakeGCSBackend struct {
 	createError     error
 	attributes      gcsObjectAttributes
 	attributesError error
+	openBody        []byte
+	openError       error
 }
 
 type failingWriter struct {
@@ -141,6 +144,48 @@ func (backend *fakeGCSBackend) Attributes(context.Context, string) (gcsObjectAtt
 	return backend.attributes, backend.attributesError
 }
 
+func (backend *fakeGCSBackend) Open(_ context.Context, key string) (io.ReadCloser, error) {
+	backend.key = key
+	if backend.openError != nil {
+		return nil, backend.openError
+	}
+	return io.NopCloser(bytes.NewReader(backend.openBody)), nil
+}
+
 func (backend *fakeGCSBackend) Close() error {
 	return nil
+}
+
+func TestGCSBlobStoreOpenObject(t *testing.T) {
+	backend := &fakeGCSBackend{openBody: []byte("canonical pptx")}
+	store := &GCSBlobStore{backend: backend}
+
+	reader, err := store.OpenObject(context.Background(), "presentations/one/objects/deck.pptx")
+	if err != nil {
+		t.Fatalf("OpenObject() error = %v", err)
+	}
+	defer reader.Close()
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("read object error = %v", err)
+	}
+	if !bytes.Equal(contents, backend.openBody) {
+		t.Fatalf("OpenObject() body = %q", contents)
+	}
+}
+
+func TestGCSBlobStoreOpenObjectRejectsUnsafeKey(t *testing.T) {
+	store := &GCSBlobStore{backend: &fakeGCSBackend{}}
+
+	if _, err := store.OpenObject(context.Background(), "../secrets"); err == nil {
+		t.Fatal("OpenObject() accepted an unsafe key")
+	}
+}
+
+func TestGCSBlobStoreOpenObjectReportsMissingObject(t *testing.T) {
+	store := &GCSBlobStore{backend: &fakeGCSBackend{openError: storage.ErrObjectNotExist}}
+
+	if _, err := store.OpenObject(context.Background(), "presentations/one/objects/deck.pptx"); !errors.Is(err, ErrObjectNotFound) {
+		t.Fatalf("OpenObject() error = %v, want ErrObjectNotFound", err)
+	}
 }

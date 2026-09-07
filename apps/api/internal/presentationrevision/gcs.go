@@ -21,7 +21,7 @@ type GCSBlobStore struct {
 	backend immutableGCSBackend
 }
 
-var _ BlobStore = (*GCSBlobStore)(nil)
+var _ ObjectStore = (*GCSBlobStore)(nil)
 
 func NewGCSBlobStore(ctx context.Context, bucket string) (*GCSBlobStore, error) {
 	if strings.TrimSpace(bucket) == "" {
@@ -59,11 +59,32 @@ func (store *GCSBlobStore) PutImmutable(ctx context.Context, key string, body io
 	return nil
 }
 
-func validateObjectWrite(key string, body io.Reader, size int64, contentType, sha256 string) error {
+func (store *GCSBlobStore) OpenObject(ctx context.Context, key string) (io.ReadCloser, error) {
+	if err := validateObjectKey(key); err != nil {
+		return nil, err
+	}
+	reader, err := store.backend.Open(ctx, key)
+	if err != nil {
+		if errors.Is(err, storage.ErrObjectNotExist) {
+			return nil, ErrObjectNotFound
+		}
+		return nil, fmt.Errorf("open GCS object: %w", err)
+	}
+	return reader, nil
+}
+
+func validateObjectKey(key string) error {
 	if key == "" || key == "." || key == ".." || !utf8.ValidString(key) || len([]byte(key)) > 1024 || strings.HasPrefix(key, "/") ||
 		strings.HasPrefix(key, ".well-known/acme-challenge/") || strings.ContainsAny(key, "\\\r\n") ||
 		path.Clean(key) != key || strings.HasPrefix(key, "../") {
 		return errors.New("invalid GCS object key")
+	}
+	return nil
+}
+
+func validateObjectWrite(key string, body io.Reader, size int64, contentType, sha256 string) error {
+	if err := validateObjectKey(key); err != nil {
+		return err
 	}
 	if body == nil {
 		return errors.New("object body is required")
@@ -89,6 +110,7 @@ type gcsObjectAttributes struct {
 type immutableGCSBackend interface {
 	Create(context.Context, string, io.Reader, int64, string, string) error
 	Attributes(context.Context, string) (gcsObjectAttributes, error)
+	Open(context.Context, string) (io.ReadCloser, error)
 	Close() error
 }
 
@@ -169,6 +191,10 @@ func (backend *googleStorageBackend) Attributes(ctx context.Context, key string)
 		ContentType: attributes.ContentType,
 		SHA256:      attributes.Metadata["sha256"],
 	}, nil
+}
+
+func (backend *googleStorageBackend) Open(ctx context.Context, key string) (io.ReadCloser, error) {
+	return backend.bucket.Object(key).NewReader(ctx)
 }
 
 func (backend *googleStorageBackend) Close() error {
