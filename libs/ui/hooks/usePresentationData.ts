@@ -1,4 +1,4 @@
-import type { PresentationData, PresentationTemplateReference, Slide } from "@slidesage/types";
+import type { PresentationData, PresentationTemplateReference } from "@slidesage/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -12,8 +12,8 @@ export interface ViewerLocationState {
 interface StreamingLikeState {
 	isStreaming: boolean;
 	isComplete: boolean;
-	slides: Slide[];
-	theme: string;
+	/** Slides completed so far, for progress only. The deck itself is the revision. */
+	slideCount: number;
 	template?: PresentationTemplateReference;
 	title: string;
 	operation?: "generation" | "iteration";
@@ -63,7 +63,7 @@ export function usePresentationData({
 			!!(presentationIdFromParams || locationState?.presentationId),
 	);
 
-	const streamingSlidesCount = streamingState.slides.length;
+	const streamingSlidesCount = streamingState.slideCount;
 	const consumesStreamingState =
 		isStreamingMode ||
 		(!!presentationIdFromParams && streamingState.presentationId === presentationIdFromParams);
@@ -85,27 +85,11 @@ export function usePresentationData({
 	// Update presentation while streaming
 	useEffect(() => {
 		if (consumesStreamingState && streamingState.isStreaming && streamingSlidesCount > 0) {
-			setPresentation({
-				...streamingState.completedDocument,
-				title: streamingState.title,
-				theme: streamingState.theme,
-				template: streamingState.template,
-				dimensions: streamingState.completedDocument?.dimensions || {
-					width: 1280,
-					height: 720,
-				},
-				slides: streamingState.slides.map((s) => ({ ...s })),
-				totalSlides: streamingSlidesCount,
-			});
+			setPresentation(streamingPresentation(streamingState, streamingSlidesCount));
 		}
 	}, [
-		streamingState.isStreaming,
+		streamingState,
 		streamingSlidesCount,
-		streamingState.title,
-		streamingState.theme,
-		streamingState.template,
-		streamingState.slides,
-		streamingState.completedDocument,
 		consumesStreamingState,
 	]);
 
@@ -115,31 +99,11 @@ export function usePresentationData({
 			streamingState.isComplete &&
 			consumesStreamingState &&
 			!streamingState.isStreaming &&
-			streamingState.slides.length > 0
+			streamingState.slideCount > 0
 		) {
-			setPresentation({
-				...streamingState.completedDocument,
-				title: streamingState.title,
-				theme: streamingState.theme,
-				template: streamingState.template,
-				dimensions: streamingState.completedDocument?.dimensions || {
-					width: 1280,
-					height: 720,
-				},
-				slides: streamingState.slides.map((s) => ({ ...s })),
-				totalSlides: streamingState.slides.length,
-			});
+			setPresentation(streamingPresentation(streamingState, streamingState.slideCount));
 		}
-	}, [
-		streamingState.isComplete,
-		streamingState.isStreaming,
-		streamingState.slides,
-		streamingState.title,
-		streamingState.theme,
-		streamingState.template,
-		streamingState.completedDocument,
-		consumesStreamingState,
-	]);
+	}, [streamingState, consumesStreamingState]);
 
 	// A new generation navigates to the viewer before the job submission response
 	// provides its presentation ID. Capture it once the streaming viewer learns it.
@@ -168,7 +132,7 @@ export function usePresentationData({
 		return presentationIdFromParams || presentationId || locationState?.presentationId;
 	}, [presentationIdFromParams, presentationId, locationState?.presentationId]);
 
-	const presentationHasSlides = !!presentation && presentation.slides.length > 0;
+	const presentationHasSlides = !!presentation && presentation.totalSlides > 0;
 
 	const lastFetchedPresentationIdRef = useRef<string | undefined>(undefined);
 	useEffect(() => {
@@ -199,7 +163,7 @@ export function usePresentationData({
 				return;
 			}
 
-			if (consumesStreamingState && streamingState.isComplete && streamingState.slides.length > 0) {
+			if (consumesStreamingState && streamingState.isComplete && streamingState.slideCount > 0) {
 				setIsLoading(false);
 				return;
 			}
@@ -318,7 +282,7 @@ export function usePresentationData({
 		presentationHasSlides,
 		streamingState.isComplete,
 		streamingState.isStreaming,
-		streamingState.slides.length,
+		streamingState.slideCount,
 	]);
 
 	// Redirect home when we have no way to render anything
@@ -329,7 +293,7 @@ export function usePresentationData({
 	useEffect(() => {
 		if (isLoading) return;
 		if (streamingState.isStreaming) return;
-		if (streamingState.isComplete && streamingState.slides.length > 0) return;
+		if (streamingState.isComplete && streamingState.slideCount > 0) return;
 		if (presentationHasSlides) return;
 		if (presentationId) return;
 
@@ -346,7 +310,7 @@ export function usePresentationData({
 		presentationId,
 		streamingState.isComplete,
 		streamingState.isStreaming,
-		streamingState.slides.length,
+		streamingState.slideCount,
 	]);
 
 	useEffect(() => {
@@ -364,7 +328,7 @@ export function usePresentationData({
 	const shouldShowGenerating =
 		(streamingState.isStreaming || isStreamingMode) &&
 		!streamingState.error &&
-		(!presentation || presentation.slides.length === 0);
+		(!presentation || presentation.totalSlides === 0);
 
 	return {
 		presentation,
@@ -374,5 +338,24 @@ export function usePresentationData({
 		isLoading,
 		streamingSlidesCount,
 		shouldShowGenerating,
+	};
+}
+
+/**
+ * Builds the presentation a streaming viewer shows. The document the worker
+ * committed is authoritative; the stream only supplies the title, template, and
+ * how many slides exist so far.
+ */
+function streamingPresentation(
+	streamingState: StreamingLikeState,
+	slideCount: number,
+): PresentationData | undefined {
+	const completed = streamingState.completedDocument;
+	if (!completed) return undefined;
+	return {
+		...completed,
+		title: streamingState.title,
+		template: streamingState.template ?? completed.template,
+		totalSlides: slideCount,
 	};
 }

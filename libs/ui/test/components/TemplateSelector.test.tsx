@@ -1,59 +1,69 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
-import TemplateSelector from "@slidesage/ui/components/Viewer/TemplateSelector";
+import TemplateSelector, {
+	type InstalledTemplateOption,
+} from "@slidesage/ui/components/Generate/TemplateSelector";
 import { fireEvent, render } from "@testing-library/react";
 
-it("lists six defaults and disables templates that are not export-ready", () => {
-	const onTemplateChange = mock();
+const openSelector = (
+	onTemplateChange = mock(),
+	installedThemes: InstalledTemplateOption[] = [],
+) => {
 	const view = render(
 		<TemplateSelector
-			selectedTemplate={{
-				id: "simple-business-proposal",
-				version: 1,
-				previewThemeId: "corporate-blue",
-			}}
+			selectedTemplate={{ id: "simple-business-proposal", version: 1 }}
 			onTemplateChange={onTemplateChange}
+			installedThemes={installedThemes}
 		/>,
 	);
-
 	fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
 		button: 0,
 	});
+	return { view, onTemplateChange };
+};
+
+it("lists the default templates and lets a published one be chosen", () => {
+	const { view, onTemplateChange } = openSelector();
 
 	expect(view.getAllByRole("menuitem")).toHaveLength(6);
-	const unavailable = view.getByRole("menuitem", { name: /Soft Skills Training/ });
-	expect(unavailable.hasAttribute("data-disabled")).toBe(true);
-	fireEvent.click(unavailable);
-	expect(onTemplateChange).not.toHaveBeenCalled();
+
+	const available = view.getByRole("menuitem", { name: /Soft Skills Training/ });
+	expect(available.hasAttribute("data-disabled")).toBe(false);
+	fireEvent.click(available);
+	expect(onTemplateChange).toHaveBeenCalledTimes(1);
 });
 
 it("adds installed marketplace binary references", () => {
-	const onTemplateChange = mock();
-	const view = render(
-		<TemplateSelector
-			selectedTemplate={{
-				id: "simple-business-proposal",
-				version: 1,
-				previewThemeId: "corporate-blue",
-			}}
-			onTemplateChange={onTemplateChange}
-			installedThemes={[
-				{
-					marketplaceId: "new-jeans-y2k-style",
-					name: "New Jeans Y2K Style",
-					description: "Installed template",
-					templateReference: { id: "new-jeans-y2k-style", version: 1 },
-					previewThemeId: "bubblegum-pop",
-				},
-			]}
-		/>,
-	);
+	const { view, onTemplateChange } = openSelector(mock(), [
+		{
+			marketplaceId: "new-jeans-y2k-style",
+			name: "New Jeans Y2K Style",
+			description: "Installed template",
+			templateReference: { id: "new-jeans-y2k-style", version: 1 },
+			thumbnailPath: "pptx-templates/new-jeans-y2k-style/1/thumbnails/cover.webp",
+		},
+	]);
 
-	fireEvent.pointerDown(view.getByRole("button", { name: /Simple Business Proposal/ }), {
-		button: 0,
-	});
-	const unavailable = view.getByRole("menuitem", { name: /New Jeans Y2K Style/ });
+	const installed = view.getByRole("menuitem", { name: /New Jeans Y2K Style/ });
+	fireEvent.click(installed);
+	expect(onTemplateChange).toHaveBeenCalledWith({ id: "new-jeans-y2k-style", version: 1 });
+});
+
+// Publication is what makes a template usable, so one whose package was never
+// uploaded has to stay unselectable however it reaches the menu.
+it("disables a template that has no published package", () => {
+	const { view, onTemplateChange } = openSelector(mock(), [
+		{
+			marketplaceId: "strategic-media-planning",
+			name: "Strategic Media Planning",
+			description: "Too large to publish",
+			templateReference: { id: "strategic-media-planning", version: 1 },
+			thumbnailPath: "pptx-templates/strategic-media-planning/1/thumbnails/cover.webp",
+		},
+	]);
+
+	const unavailable = view.getByRole("menuitem", { name: /Strategic Media Planning/ });
 	expect(unavailable.hasAttribute("data-disabled")).toBe(true);
 	fireEvent.click(unavailable);
 	expect(onTemplateChange).not.toHaveBeenCalled();

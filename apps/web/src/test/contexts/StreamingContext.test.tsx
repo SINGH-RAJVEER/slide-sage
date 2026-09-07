@@ -33,7 +33,6 @@ function GenerateStarter({ onNavigateAway }: { onNavigateAway?: () => void }) {
 						template: {
 							id: "simple-business-proposal",
 							version: 1,
-							previewThemeId: "corporate-blue",
 						},
 						prompt: "Background generation",
 						slideCount: 2,
@@ -70,7 +69,6 @@ function IterateStarter() {
 						template: {
 							id: "simple-business-proposal",
 							version: 1,
-							previewThemeId: "corporate-blue",
 						},
 						prompt: "Update this presentation",
 						slideCount: 2,
@@ -101,7 +99,6 @@ function CancelStarter() {
 						template: {
 							id: "simple-business-proposal",
 							version: 1,
-							previewThemeId: "corporate-blue",
 						},
 						prompt: "Cancel this deck",
 						slideCount: 2,
@@ -127,7 +124,7 @@ function AwayPage() {
 			{[
 				streamingState.isStreaming ? "streaming" : "stopped",
 				streamingState.isComplete ? "complete" : "pending",
-				String(streamingState.slides.length),
+				String(streamingState.slideCount),
 				streamingState.presentationId ?? "none",
 				streamingState.generationStage ?? "none",
 				streamingState.error ?? "no-error",
@@ -196,7 +193,7 @@ it("submits a job and continues processing after the initiating page unmounts", 
 		await waitFor(() => expect(view.getByText("streaming")).toBeInTheDocument());
 		expect(JSON.parse(requestBody)).toMatchObject({
 			retry_presentation_id: "failed_presentation",
-			theme: "corporate-blue",
+			template: { id: "simple-business-proposal", version: 1 },
 		});
 		expect(typeof JSON.parse(requestBody).job_id).toBe("string");
 		fireEvent.click(view.getByRole("button", { name: "Navigate away" }));
@@ -490,7 +487,6 @@ it("starts a second generation after the first completes", async () => {
 								template: {
 									id: "simple-business-proposal",
 									version: 1,
-									previewThemeId: "corporate-blue",
 								},
 								prompt: `deck number ${runs + 1}`,
 								slideCount: 1,

@@ -7,35 +7,26 @@ import DownloadMenu, {
 } from "@slidesage/ui/components/Viewer/DownloadMenu";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 
-const exportOoxmlTemplatePptx = mock(async (_presentation: PresentationData) => {});
-const exportPresentationPdf = mock(async (_title: string) => {});
+const exportPptx = mock(async (_presentation: PresentationData) => {});
 
-const exportPresentation: PresentationExporter = async (format, presentation) => {
-	if (format === "pptx") {
-		await exportOoxmlTemplatePptx(presentation);
-		return;
-	}
-	await exportPresentationPdf(presentation.title);
+const exportPresentation: PresentationExporter = async (_format, presentation) => {
+	await exportPptx(presentation);
 };
 
 const presentation: PresentationData = {
 	title: "Structured deck",
-	theme: "corporate-blue",
 	template: { id: "simple-business-proposal", version: 1 },
+	documentKind: "pptx",
 	totalSlides: 1,
-	slides: [
-		{
-			id: "presentation-slide",
-			type: "content",
-			layout: "body",
-			title: "Current presentation",
-			subtitle: "",
-			tone: "default",
-			density: "standard",
-			pattern: "none",
-			blocks: [{ type: "paragraph", region: "main", text: "Current presentation content" }],
-		},
-	],
+	currentRevision: {
+		revision: 1,
+		slideCount: 1,
+		byteSize: 2048,
+		sha256: "a".repeat(64),
+		previewStatus: "ready",
+		previewCount: 1,
+		createdAt: "2026-01-01T00:00:00Z",
+	},
 };
 
 const openMenu = (button: HTMLElement) => {
@@ -44,107 +35,65 @@ const openMenu = (button: HTMLElement) => {
 
 describe("DownloadMenu", () => {
 	beforeEach(() => {
-		exportOoxmlTemplatePptx.mockClear();
-		exportPresentationPdf.mockClear();
-		exportOoxmlTemplatePptx.mockImplementation(async () => {});
-		exportPresentationPdf.mockImplementation(async () => {});
+		exportPptx.mockClear();
+		exportPptx.mockImplementation(async () => {});
 	});
 
 	it("downloads the current presentation as PPTX", async () => {
-		const view = render(<DownloadMenu presentation={presentation} onExport={exportPresentation} />);
-		openMenu(view.getByRole("button", { name: "Download" }));
-
-		fireEvent.click(view.getByRole("menuitem", { name: "PowerPoint" }));
-
-		await waitFor(() => expect(exportOoxmlTemplatePptx).toHaveBeenCalledWith(presentation));
-	});
-
-	it("downloads the rendered presentation as PDF", async () => {
-		const view = render(<DownloadMenu presentation={presentation} onExport={exportPresentation} />);
-		openMenu(view.getByRole("button", { name: "Download" }));
-
-		fireEvent.click(view.getByRole("menuitem", { name: "PDF document" }));
-
-		await waitFor(() => expect(exportPresentationPdf).toHaveBeenCalledWith(presentation.title));
-	});
-
-	it("disables PPTX without a binary template while keeping PDF enabled", async () => {
-		const presentationWithoutTemplate = { ...presentation, template: undefined };
 		const view = render(
-			<DownloadMenu presentation={presentationWithoutTemplate} onExport={exportPresentation} />,
+			<DownloadMenu presentation={presentation} onExport={exportPresentation} />,
 		);
-		openMenu(view.getByRole("button", { name: "Download" }));
+		openMenu(view.getByRole("button", { name: /Download/ }));
+		fireEvent.click(await view.findByText("PowerPoint"));
 
-		expect(view.getByRole("menuitem", { name: "PowerPoint" })).toHaveAttribute("data-disabled");
-		const pdf = view.getByRole("menuitem", { name: "PDF document" });
-		expect(pdf).not.toHaveAttribute("data-disabled");
-		fireEvent.click(pdf);
-
-		await waitFor(() => expect(exportPresentationPdf).toHaveBeenCalledWith(presentation.title));
-		expect(exportOoxmlTemplatePptx).not.toHaveBeenCalled();
+		await waitFor(() => expect(exportPptx).toHaveBeenCalledTimes(1));
+		expect(exportPptx.mock.calls[0]?.[0]?.title).toBe("Structured deck");
 	});
 
-	it("disables PPTX for a template that is not export-ready", () => {
-		const pendingTemplate = {
-			...presentation,
-			template: { id: "5s-training", version: 1 },
-		};
-		const view = render(
-			<DownloadMenu presentation={pendingTemplate} onExport={exportPresentation} />,
-		);
-		openMenu(view.getByRole("button", { name: "Download" }));
-
-		expect(view.getByRole("menuitem", { name: "PowerPoint" })).toHaveAttribute("data-disabled");
-	});
-
-	it("disables downloads when there are no slides", () => {
+	// Download serves the bytes of a committed revision, so a deck that has not
+	// produced one yet has nothing to hand over.
+	it("disables downloads until a revision exists", () => {
 		const view = render(
 			<DownloadMenu
-				presentation={{ ...presentation, slides: [], totalSlides: 0 }}
+				presentation={{ ...presentation, currentRevision: undefined }}
 				onExport={exportPresentation}
 			/>,
 		);
-
-		expect(view.getByRole("button", { name: "Download" })).toBeDisabled();
+		expect(view.getByRole("button", { name: /Download/ })).toBeDisabled();
 	});
 
 	it("ignores a second export while the first export is pending", async () => {
-		let finishExport = () => {};
-		const pendingExport = new Promise<void>((resolve) => {
-			finishExport = resolve;
-		});
-		const onExport = mock(() => pendingExport);
-		const view = render(<DownloadMenu presentation={presentation} onExport={onExport} />);
-		openMenu(view.getByRole("button", { name: "Download" }));
-		const item = view.getByRole("menuitem", { name: "PowerPoint" });
+		let release: (() => void) | undefined;
+		exportPptx.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					release = resolve;
+				}),
+		);
+		const view = render(
+			<DownloadMenu presentation={presentation} onExport={exportPresentation} />,
+		);
+		openMenu(view.getByRole("button", { name: /Download/ }));
+		fireEvent.click(await view.findByText("PowerPoint"));
+		await waitFor(() => expect(exportPptx).toHaveBeenCalledTimes(1));
 
-		fireEvent.click(item);
-		fireEvent.click(item);
+		openMenu(view.getByRole("button", { name: /Exporting/ }));
+		expect(exportPptx).toHaveBeenCalledTimes(1);
 
-		expect(onExport).toHaveBeenCalledTimes(1);
-		finishExport();
-		await waitFor(() => expect(view.getByRole("button", { name: "Download" })).toBeEnabled());
+		release?.();
 	});
 
-	it("shows a format-specific accessible error", async () => {
-		const originalConsoleError = console.error;
-		console.error = mock(() => {});
-		exportPresentationPdf.mockImplementation(async () => {
-			throw new Error("write failed");
+	it("shows an accessible error when the export fails", async () => {
+		exportPptx.mockImplementation(async () => {
+			throw new Error("export boom");
 		});
-		try {
-			const view = render(
-				<DownloadMenu presentation={presentation} onExport={exportPresentation} />,
-			);
-			openMenu(view.getByRole("button", { name: "Download" }));
-			fireEvent.click(view.getByRole("menuitem", { name: "PDF document" }));
+		const view = render(
+			<DownloadMenu presentation={presentation} onExport={exportPresentation} />,
+		);
+		openMenu(view.getByRole("button", { name: /Download/ }));
+		fireEvent.click(await view.findByText("PowerPoint"));
 
-			expect(await view.findByRole("alert")).toHaveTextContent(
-				"PDF export failed. Please try again.",
-			);
-			expect(view.getByRole("button", { name: "Download" })).toBeEnabled();
-		} finally {
-			console.error = originalConsoleError;
-		}
+		const alert = await view.findByRole("alert");
+		expect(alert.textContent).toContain("PPTX export failed");
 	});
 });

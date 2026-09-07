@@ -23,8 +23,7 @@ describe("installed marketplace templates", () => {
 				name: item.name,
 				description: item.description,
 				templateReference: item.templateReference,
-				previewThemeId: item.previewThemeId,
-				themeId: item.previewThemeId,
+				thumbnailPath: item.thumbnailPath,
 			},
 		]);
 	});

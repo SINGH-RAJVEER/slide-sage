@@ -1,55 +1,11 @@
 /// <reference lib="dom" />
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-mock.module("@slidesage/ui/components/Viewer/ScaledSlide", () => ({
-	ScaledSlide: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-mock.module("@slidesage/ui/components/Viewer/ViewerSlideCarousel", () => ({
-	ViewerSlideCarousel: ({
-		slides,
-		currentTemplate,
-	}: {
-		slides: unknown[];
-		currentTemplate: string;
-	}) => <div>{`${slides.length} preview slides using ${currentTemplate}`}</div>,
-}));
-
-mock.module("@slidesage/ui/components/Viewer/ViewerNavigationControls", () => ({
-	ViewerNavigationControls: () => <div>Viewer navigation</div>,
-}));
-
-mock.module("@slidesage/ui/components/Viewer/ViewerThumbnails", () => ({
-	ViewerThumbnails: () => <div>Viewer thumbnails</div>,
-}));
-
-mock.module("@slidesage/ui/components/Viewer/ViewerFullscreenOverlayControls", () => ({
-	ViewerFullscreenOverlayControls: () => <div>Fullscreen controls</div>,
-}));
-
-mock.module("@slidesage/ui/components/Viewer/SlideRenderer", () => ({
-	SlideRenderer: ({
-		slide,
-		currentTemplate,
-	}: {
-		slide: { title: string };
-		currentTemplate: string;
-	}) => <div>{`${slide.title}|${currentTemplate}`}</div>,
-}));
-
-mock.module("@/hooks/useFullscreenMode", () => ({
-	useFullscreenMode: () => ({
-		isFullscreenMode: false,
-		enter: mock(),
-		exit: mock(),
-	}),
-}));
-
 describe("MarketplaceThemePreviewPage", () => {
-	it("renders the selected binary offering with its semantic preview theme", async () => {
+	it("previews a template with the cover rendered from its package", async () => {
 		const { default: MarketplaceThemePreviewPage } = await import(
 			"@/routes/marketplace/MarketplaceThemePreviewPage"
 		);
@@ -60,17 +16,19 @@ describe("MarketplaceThemePreviewPage", () => {
 						path="/marketplace/:marketplaceId/preview"
 						element={<MarketplaceThemePreviewPage />}
 					/>
+					<Route path="/marketplace" element={<div>Marketplace catalog</div>} />
 				</Routes>
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("4 preview slides using neon-district")).toBeInTheDocument();
-		expect(view.getByText("Viewer navigation")).toBeInTheDocument();
-		expect(view.getByText("Viewer thumbnails")).toBeInTheDocument();
-		expect(view.getByText("Charli XCX Brat Album-Inspired")).toBeInTheDocument();
-		expect(view.queryByRole("button", { name: "Iterate" })).toBeNull();
-		expect(view.queryByRole("combobox")).toBeNull();
-		expect(view.getByRole("button", { name: "Present slideshow" })).toBeInTheDocument();
+		const cover = await view.findByRole("img", {
+			name: "Charli XCX Brat Album-Inspired cover slide",
+		});
+		// The cover comes from the published package, so the preview never has to
+		// download the template itself.
+		expect(cover.getAttribute("src")).toContain(
+			encodeURIComponent("pptx-templates/charli-xcx-brat-album-inspired/1/thumbnails/cover.webp"),
+		);
 	});
 
 	it("redirects unknown themes to the marketplace", async () => {
@@ -78,7 +36,7 @@ describe("MarketplaceThemePreviewPage", () => {
 			"@/routes/marketplace/MarketplaceThemePreviewPage"
 		);
 		const view = render(
-			<MemoryRouter initialEntries={["/marketplace/unknown/preview"]}>
+			<MemoryRouter initialEntries={["/marketplace/not-a-template/preview"]}>
 				<Routes>
 					<Route
 						path="/marketplace/:marketplaceId/preview"
@@ -89,6 +47,6 @@ describe("MarketplaceThemePreviewPage", () => {
 			</MemoryRouter>,
 		);
 
-		expect(view.getByText("Marketplace catalog")).toBeInTheDocument();
+		expect(await view.findByText("Marketplace catalog")).toBeInTheDocument();
 	});
 });

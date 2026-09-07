@@ -1,171 +1,53 @@
-import { Card } from "@slidesage/ui/components/card";
-import { ScaledSlide } from "@slidesage/ui/components/Viewer/ScaledSlide";
-import { SlideRenderer } from "@slidesage/ui/components/Viewer/SlideRenderer";
-import { ViewerFullscreenOverlayControls } from "@slidesage/ui/components/Viewer/ViewerFullscreenOverlayControls";
 import { ViewerHeaderControls } from "@slidesage/ui/components/Viewer/ViewerHeaderControls";
-import { ViewerNavigationControls } from "@slidesage/ui/components/Viewer/ViewerNavigationControls";
-import { ViewerSlideCarousel } from "@slidesage/ui/components/Viewer/ViewerSlideCarousel";
-import { ViewerThumbnails } from "@slidesage/ui/components/Viewer/ViewerThumbnails";
-import { useAutoHideControls } from "@slidesage/ui/hooks/useAutoHideControls";
-import { useFullscreenMode } from "@slidesage/ui/hooks/useFullscreenMode";
-import { usePlayback } from "@slidesage/ui/hooks/usePlayback";
-import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
-import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
-import { createMarketplacePreviewPresentation, MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
-import { useRef, useState } from "react";
+import { MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
+import { templateThumbnailUrl } from "@slidesage/ui/lib/template-thumbnails";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/paths";
-import { useVimMode } from "@/context/VimModeContext";
 
+/**
+ * Previews one marketplace template.
+ *
+ * The preview is the template's own cover slide, rendered from the package at
+ * publication, rather than a mock deck styled to look like it. Showing the
+ * cover alone also keeps the page cheap: a template package runs to tens of
+ * megabytes, and nothing here needs the whole thing.
+ */
 export default function MarketplaceThemePreviewPage() {
 	const navigate = useNavigate();
-	const { isVimMode } = useVimMode();
 	const { marketplaceId } = useParams();
 	const item = MARKETPLACE_ITEMS.find((candidate) => candidate.id === marketplaceId);
-	const presentation = item ? createMarketplacePreviewPresentation(item) : undefined;
-	const slideContainerRef = useRef<HTMLDivElement | null>(null);
-	const navigation = useSlideNavigation({
-		slideCount: presentation?.slides.length ?? 0,
-		slideContainerRef,
-	});
-	const { isFullscreenMode, enter: enterFullscreen, exit: exitFullscreen } = useFullscreenMode();
-	const { showControls, setShowControls } = useAutoHideControls({ enabled: isFullscreenMode });
-	const [slideInterval, setSlideInterval] = useState(5);
-	const [intervalMode, setIntervalMode] = useState<"preset" | "custom">("preset");
-	const [customInterval, setCustomInterval] = useState("5");
-	const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
-	const customInputRef = useRef<HTMLInputElement | null>(null);
-	const playback = usePlayback({
-		slideCount: presentation?.slides.length ?? 0,
-		currentSlide: navigation.currentSlide,
-		slideIntervalSeconds: slideInterval,
-		onAdvance: (nextIndex) => navigation.scrollToSlide(nextIndex, "smooth"),
-	});
-	useViewerKeyboardNavigation({
-		enabled: isVimMode,
-		currentSlide: navigation.currentSlide,
-		slideCount: presentation?.slides.length ?? 0,
-		onNavigate: (index) => navigation.scrollToSlide(index, "auto"),
-		onStopPlayback: playback.stop,
-	});
 
-	if (!item || !presentation) return <Navigate to={ROUTES.marketplace} replace />;
-
-	const activeSlide = presentation.slides[navigation.currentSlide];
-	const stopAndNavigate = (action: () => void) => {
-		playback.stop();
-		action();
-	};
+	if (!item) return <Navigate to={ROUTES.marketplace} replace />;
 
 	return (
-		<div className="flex h-dvh min-h-dvh max-h-dvh bg-transparent p-0">
-			<div
-				className={
-					isFullscreenMode
-						? "flex h-dvh w-screen flex-col"
-						: "mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3"
-				}
-			>
-				{showControls && !isFullscreenMode && (
-					<ViewerHeaderControls
-						title={presentation.title}
-						canIterate={false}
-						currentTemplate={item.previewThemeId}
-						themeLabel={item.name}
-						showIterate={false}
-						showLayoutSelector={false}
-						onBack={() => navigate(ROUTES.marketplace)}
-						onTemplateChange={() => undefined}
-						onLayoutChange={() => undefined}
-						layoutDisabled={true}
-						onIterate={() => undefined}
-						onPresent={() => void enterFullscreen()}
-					/>
-				)}
+		<div className="flex h-dvh min-h-dvh max-h-dvh flex-col bg-transparent p-0">
+			<div className="mx-auto flex h-full min-w-0 w-full max-w-[95vw] flex-1 flex-col pt-3">
+				<ViewerHeaderControls
+					title={item.name}
+					canIterate={false}
+					showIterate={false}
+					templateLabel={item.aspectRatio.label}
+					onBack={() => navigate(ROUTES.marketplace)}
+					onIterate={() => undefined}
+					onPresent={() => undefined}
+					presentDisabled={true}
+				/>
 
-				{!isFullscreenMode && (
-					<ViewerSlideCarousel
-						slides={presentation.slides}
-						currentSlide={navigation.currentSlide}
-						visibleSlide={navigation.visibleSlide}
-						currentTemplate={item.previewThemeId}
-						containerRef={slideContainerRef}
-						onSelectSlide={(index) =>
-							stopAndNavigate(() => navigation.scrollToSlide(index, "smooth"))
-						}
+				<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-4 pb-8">
+					<img
+						src={templateThumbnailUrl(item.thumbnailPath)}
+						alt={`${item.name} cover slide`}
+						className="max-h-[65vh] w-auto max-w-full rounded-xl border border-white/10 object-contain shadow-[0_24px_65px_rgba(0,0,0,0.28)]"
 					/>
-				)}
-
-				{showControls && !isFullscreenMode && (
-					<ViewerNavigationControls
-						presentation={presentation}
-						currentSlide={navigation.currentSlide}
-						totalSlides={presentation.slides.length}
-						onFirst={() => stopAndNavigate(navigation.first)}
-						onPrev={() => stopAndNavigate(navigation.prev)}
-						onNext={() => stopAndNavigate(navigation.next)}
-						onLast={() => stopAndNavigate(navigation.last)}
-						onDelete={() => undefined}
-						deleteDisabled={true}
-						showDownload={false}
-						showDelete={false}
-					/>
-				)}
-
-				{showControls && !isFullscreenMode && (
-					<ViewerThumbnails
-						slides={presentation.slides}
-						currentSlide={navigation.currentSlide}
-						isStreamingMode={false}
-						isStreaming={false}
-						currentTemplate={item.previewThemeId}
-						onSelect={(index) => stopAndNavigate(() => navigation.scrollToSlide(index, "smooth"))}
-					/>
-				)}
-
-				{isFullscreenMode && activeSlide && (
-					<div className="min-h-0 flex-1 bg-black">
-						<ScaledSlide
-							key={activeSlide.id}
-							className="ss-slide-enter"
-							stageClassName="shadow-2xl"
-							onReadyChange={setFullscreenSlideReady}
-						>
-							<Card className="h-full w-full overflow-hidden rounded-none border-0 bg-black">
-								<SlideRenderer
-									key={`${activeSlide.id}-${fullscreenSlideReady ? "ready" : "measuring"}`}
-									slide={activeSlide}
-									currentTemplate={item.previewThemeId}
-									isActive={fullscreenSlideReady}
-								/>
-							</Card>
-						</ScaledSlide>
+					<div className="max-w-2xl text-center">
+						<p className="text-sm text-white/60">{item.description}</p>
+						{!item.available && (
+							<p className="mt-3 text-sm text-amber-200/70">
+								This template is not published yet, so it cannot be used for generation.
+							</p>
+						)}
 					</div>
-				)}
-
-				{isFullscreenMode && (
-					<ViewerFullscreenOverlayControls
-						showControls={showControls}
-						intervalMode={intervalMode}
-						slideInterval={slideInterval}
-						customInterval={customInterval}
-						customInputRef={customInputRef}
-						setIntervalMode={setIntervalMode}
-						setSlideInterval={setSlideInterval}
-						setCustomInterval={setCustomInterval}
-						isPlaying={playback.isPlaying}
-						onTogglePlayback={playback.toggle}
-						playbackDisabled={presentation.slides.length <= 1}
-						currentSlide={navigation.currentSlide}
-						totalSlides={presentation.slides.length}
-						onFirst={() => stopAndNavigate(navigation.first)}
-						onPrev={() => stopAndNavigate(navigation.prev)}
-						onNext={() => stopAndNavigate(navigation.next)}
-						onLast={() => stopAndNavigate(navigation.last)}
-						onExit={() => void exitFullscreen()}
-						onMouseEnter={() => setShowControls(true)}
-					/>
-				)}
+				</div>
 			</div>
 		</div>
 	);

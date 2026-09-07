@@ -1,6 +1,6 @@
 import {
 	type AIModelSelection,
-	type BinaryTemplateSelection,
+	type PresentationTemplateReference,
 	DEFAULT_BINARY_PPTX_TEMPLATE,
 	type ResearchPayload,
 } from "@slidesage/types";
@@ -22,7 +22,7 @@ interface ResearchRouteState {
 	researchPayload?: ResearchPayload;
 	retryPresentationId?: string;
 	ai?: AIModelSelection;
-	template: BinaryTemplateSelection;
+	template: PresentationTemplateReference;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -43,7 +43,6 @@ export default function GenerateResearchPage() {
 	const template = routeState?.template ?? {
 		id: DEFAULT_BINARY_PPTX_TEMPLATE.id,
 		version: DEFAULT_BINARY_PPTX_TEMPLATE.version,
-		previewThemeId: DEFAULT_BINARY_PPTX_TEMPLATE.previewThemeId,
 	};
 
 	const [isProceeding, setIsProceeding] = useState(false);

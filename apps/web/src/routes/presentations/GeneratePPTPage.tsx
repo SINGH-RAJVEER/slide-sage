@@ -1,12 +1,12 @@
 import {
 	BINARY_PPTX_TEMPLATE_CATALOG,
-	type BinaryTemplateSelection,
+	type PresentationTemplateReference,
 	DEFAULT_BINARY_PPTX_TEMPLATE,
 	type PresentationRetryOptions,
 } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
-import TemplateSelector from "@slidesage/ui/components/Viewer/TemplateSelector";
+import TemplateSelector from "@slidesage/ui/components/Generate/TemplateSelector";
 import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { templateIsSelectable } from "@slidesage/ui/lib/template-selection";
@@ -23,14 +23,13 @@ interface GenerateRouteState {
 
 function templateSelection(
 	reference: PresentationRetryOptions["template"],
-): BinaryTemplateSelection {
+): PresentationTemplateReference {
 	const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
 		(candidate) => candidate.id === reference?.id && candidate.version === reference.version,
 	);
 	return {
 		id: template?.id ?? DEFAULT_BINARY_PPTX_TEMPLATE.id,
 		version: template?.version ?? DEFAULT_BINARY_PPTX_TEMPLATE.version,
-		previewThemeId: template?.previewThemeId ?? DEFAULT_BINARY_PPTX_TEMPLATE.previewThemeId,
 	};
 }
 

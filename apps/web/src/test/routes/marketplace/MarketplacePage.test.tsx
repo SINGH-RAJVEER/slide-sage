@@ -63,7 +63,7 @@ describe("MarketplacePage", () => {
 
 		const view = render(
 			<MarketplaceCard
-				item={item}
+				item={{ ...item, thumbnailUrl: "https://cdn.example.com/cover.webp" }}
 				installed={false}
 				onOpen={() => undefined}
 				onInstall={() => undefined}

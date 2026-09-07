@@ -6,6 +6,7 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import MarketplaceCard from "@slidesage/ui/components/Marketplace/MarketplaceCard";
 import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@slidesage/ui/lib/catalog";
+import { templateThumbnailUrl } from "@slidesage/ui/lib/template-thumbnails";
 import {
 	getInstalledMarketplaceThemes,
 	installMarketplaceTheme,
@@ -134,7 +135,7 @@ export default function MarketplacePage() {
 								{visibleItems.map((item) => (
 									<MarketplaceCard
 										key={item.id}
-										item={item}
+										item={{ ...item, thumbnailUrl: templateThumbnailUrl(item.thumbnailPath) }}
 										installed={installedThemeIds.has(item.id)}
 										onOpen={handleOpen}
 										onInstall={handleInstall}

@@ -5,7 +5,6 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { StreamingProvider } from "@/modules/contexts/StreamingContext";
 import GeneratePPTPage from "@/routes/presentations/GeneratePPTPage";
-import PresentationViewerPage from "@/routes/presentations/PresentationViewer";
 
 function RouteStateProbe() {
 	const location = useLocation();
@@ -128,94 +127,6 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			model: "claude-sonnet-4-20250514",
 		});
 		expect(requestBody["template"]).toEqual({ id: "simple-business-proposal", version: 1 });
-		expect(requestBody["theme"]).toBe("corporate-blue");
-	} finally {
-		globalThis.fetch = originalFetch;
-	}
-});
-
-it("does not switch to an unavailable template while the generation skeleton is visible", async () => {
-	const originalFetch = globalThis.fetch;
-	const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) => {
-		const url = String(input);
-		if (url.includes("/ai/config")) {
-			return Promise.resolve(
-				Response.json({
-					generation: { mode: "openrouter", model: "openrouter/default", billing: "points" },
-					eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
-					connections: [],
-					models: [],
-					selection: null,
-				}),
-			);
-		}
-		if (url.includes("/presentation-jobs")) {
-			return Promise.resolve(
-				Response.json(
-					{ job_id: "job_1", presentation_id: "pres_1", status: "queued" },
-					{ status: 202 },
-				),
-			);
-		}
-		return new Promise<Response>(() => {});
-	});
-	globalThis.fetch = fetchMock as unknown as typeof fetch;
-
-	try {
-		const view = render(
-			<MemoryRouter
-				initialEntries={[
-					{
-						pathname: "/generate",
-						state: {
-							retry: {
-								prompt: "Skeleton theme selection",
-								slide_count: 5,
-								detail_level: "balanced",
-								tonality: "professional",
-								research_enabled: false,
-							},
-						},
-					},
-				]}
-			>
-				<StreamingProvider>
-					<Routes>
-						<Route path="/generate" element={<GeneratePPTPage />} />
-						<Route path="/presentation" element={<PresentationViewerPage />} />
-						<Route path="/presentations" element={<div>Presentations grid</div>} />
-					</Routes>
-				</StreamingProvider>
-			</MemoryRouter>,
-		);
-
-		fireEvent.click(view.getByRole("button", { name: "Generate" }));
-		await waitFor(() =>
-			expect(
-				fetchMock.mock.calls.some(([input]) => String(input).includes("/presentation-jobs")),
-			).toBe(true),
-		);
-		await waitFor(() =>
-			expect(view.getByRole("button", { name: /Simple Business Proposal/ })).toBeInTheDocument(),
-		);
-
-		const templateSelector = view.getByRole("button", { name: /Simple Business Proposal/ });
-		fireEvent.pointerDown(templateSelector, {
-			button: 0,
-		});
-		const unavailable = view.getByRole("menuitem", {
-			name: /Modern Minimal Grid Financial Management/,
-		});
-		expect(unavailable.hasAttribute("data-disabled")).toBe(true);
-		fireEvent.click(unavailable);
-
-		expect(templateSelector).toHaveTextContent("Simple Business Proposal");
-		expect(
-			fetchMock.mock.calls.some(
-				([input, init]) =>
-					String(input).includes("/presentations/pres_1") && init?.method === "PATCH",
-			),
-		).toBe(false);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
@@ -234,7 +145,7 @@ it("disables generation when retry state names an unavailable template", () => {
 							detail_level: "balanced",
 							tonality: "professional",
 							research_enabled: false,
-							template: { id: "soft-skills-training", version: 1 },
+							template: { id: "strategic-media-planning", version: 1 },
 						},
 					},
 				},

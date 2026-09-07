@@ -8,8 +8,7 @@ import { usePresentationData } from "@/hooks/usePresentationData";
 const baseStreamingState = {
 	isStreaming: false,
 	isComplete: false,
-	slides: [],
-	theme: "corporate-blue",
+	slideCount: 0,
 	title: "Untitled Presentation",
 };
 

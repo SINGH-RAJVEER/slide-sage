@@ -18,7 +18,6 @@ function Starter() {
 					template: {
 						id: "simple-business-proposal",
 						version: 1,
-						previewThemeId: "corporate-blue",
 					},
 					prompt: "solar policy deck",
 					slideCount: 1,

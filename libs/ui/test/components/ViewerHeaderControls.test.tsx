@@ -12,12 +12,7 @@ const renderHeader = (
 	const props: React.ComponentProps<typeof ViewerHeaderControls> = {
 		title: "Quarterly review",
 		canIterate: true,
-		currentTemplate: "corporate-blue",
 		onBack: mock(),
-		onTemplateChange: mock(),
-		selectedLayout: "body",
-		onLayoutChange: mock(),
-		layoutDisabled: false,
 		onIterate: mock(),
 		onPresent,
 		presentDisabled: false,
@@ -45,11 +40,10 @@ it("disables Present until slides are available", () => {
 	expect(onPresent).not.toHaveBeenCalled();
 });
 
-it("shows a fixed theme indicator and omits generation controls in preview mode", () => {
+it("names the template and omits generation controls in preview mode", () => {
 	const { view } = renderHeader({
-		themeLabel: "Midnight Signal",
+		templateLabel: "Midnight Signal",
 		showIterate: false,
-		showLayoutSelector: false,
 	});
 
 	expect(view.getByText("Midnight Signal")).toBeInTheDocument();
