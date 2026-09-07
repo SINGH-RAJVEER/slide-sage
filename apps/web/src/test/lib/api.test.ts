@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { normalizeApiUrl, readJsonResponse, resolveApiUrl } from "@/lib/api";
+import { normalizeApiUrl, readJsonResponse, resolveApiUrl } from "@slidesage/ui/lib/api";
 
 describe("normalizeApiUrl", () => {
 	it("adds HTTPS to a bare deployed API hostname", () => {

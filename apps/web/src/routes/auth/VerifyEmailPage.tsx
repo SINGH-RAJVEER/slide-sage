@@ -3,8 +3,8 @@ import { API_URL } from "@slidesage/ui/lib/api";
 import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 function sanitizeRedirectPath(value: string | null) {
 	if (!value) return "/";

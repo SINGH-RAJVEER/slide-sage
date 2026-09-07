@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, expect, it, mock } from "bun:test";
 import { ActiveGenerationIndicator } from "@slidesage/ui/components/StatusIndicator/ActiveGenerationIndicator";
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import { StreamingProvider, useStreaming } from "@/modules/contexts/StreamingContext";
+import { StreamingProvider, useStreaming } from "@slidesage/ui";
 
 beforeEach(() => localStorage.removeItem("slidesage-active-generation"));
 afterEach(() => localStorage.removeItem("slidesage-active-generation"));

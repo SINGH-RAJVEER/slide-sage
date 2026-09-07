@@ -7,7 +7,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 describe("MarketplaceThemePreviewPage", () => {
 	it("previews a template with the cover rendered from its package", async () => {
 		const { default: MarketplaceThemePreviewPage } = await import(
-			"@/routes/marketplace/MarketplaceThemePreviewPage"
+			"../../../routes/marketplace/MarketplaceThemePreviewPage"
 		);
 		const view = render(
 			<MemoryRouter initialEntries={["/marketplace/charli-xcx-brat-album-inspired/preview"]}>
@@ -33,7 +33,7 @@ describe("MarketplaceThemePreviewPage", () => {
 
 	it("redirects unknown themes to the marketplace", async () => {
 		const { default: MarketplaceThemePreviewPage } = await import(
-			"@/routes/marketplace/MarketplaceThemePreviewPage"
+			"../../../routes/marketplace/MarketplaceThemePreviewPage"
 		);
 		const view = render(
 			<MemoryRouter initialEntries={["/marketplace/not-a-template/preview"]}>

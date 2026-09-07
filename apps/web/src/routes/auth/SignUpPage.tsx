@@ -2,7 +2,7 @@ import { useAuth } from "@slidesage/ui";
 import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Header from "@/app/Header";
+import Header from "../../app/Header";
 
 function sanitizeRedirectPath(value: string | null) {
 	if (!value) return "/";

@@ -15,8 +15,8 @@ import {
 import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 type MarketplaceSort = "catalog" | "name";
 

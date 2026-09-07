@@ -2,7 +2,7 @@ import { useAuth } from "@slidesage/ui";
 import { type HeaderRoutes, Header as HeaderView } from "@slidesage/ui/components/Header";
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ROUTES } from "@/app/router/paths";
+import { ROUTES } from "./router/paths";
 
 const HEADER_ROUTES: HeaderRoutes = {
 	home: ROUTES.home,

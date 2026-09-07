@@ -6,8 +6,8 @@ import { useState } from "react";
 import {
 	PRESENTATIONS_UPDATED_EVENT,
 	type PresentationUpdatedDetail,
-} from "@/lib/presentation-events";
-import { StreamingProvider, useStreaming } from "@/modules/contexts/StreamingContext";
+} from "@slidesage/ui/lib/presentation-events";
+import { StreamingProvider, useStreaming } from "@slidesage/ui";
 
 beforeEach(() => {
 	localStorage.removeItem("slidesage-active-generation");

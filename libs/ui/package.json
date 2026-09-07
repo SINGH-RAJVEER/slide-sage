@@ -9,6 +9,7 @@
 		"./components/Presentations": "./components/Presentations/index.ts",
 		"./components/Viewer": "./components/Viewer/index.ts",
 		"./components/*": "./components/*.tsx",
+		"./context/*": "./context/*.tsx",
 		"./hooks/*": "./hooks/*.ts",
 		"./lib/*": "./lib/*.ts",
 		"./styles/*": "./styles/*"

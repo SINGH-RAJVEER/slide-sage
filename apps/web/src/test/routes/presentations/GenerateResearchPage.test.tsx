@@ -3,8 +3,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
-import { StreamingProvider } from "@/modules/contexts/StreamingContext";
-import GenerateResearchPage from "@/routes/presentations/GenerateResearchPage";
+import { StreamingProvider } from "@slidesage/ui";
+import GenerateResearchPage from "../../../routes/presentations/GenerateResearchPage";
 
 function AwayPage() {
 	const navigate = useNavigate();

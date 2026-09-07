@@ -4,7 +4,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
-mock.module("@/modules/Header", () => ({
+mock.module("../../app/Header", () => ({
 	default: () => <header data-testid="app-header" />,
 }));
 
@@ -16,7 +16,7 @@ function RouteStateProbe() {
 describe("PresentationErrorPage", () => {
 	it("shows the routed error without a presentations shortcut", async () => {
 		const { default: PresentationErrorPage } = await import(
-			"@/routes/presentations/PresentationErrorPage"
+			"../../../routes/presentations/PresentationErrorPage"
 		);
 		const view = render(
 			<MemoryRouter
@@ -45,7 +45,7 @@ describe("PresentationErrorPage", () => {
 
 	it("reopens a saved failure for retry from the error page", async () => {
 		const { default: PresentationErrorPage } = await import(
-			"@/routes/presentations/PresentationErrorPage"
+			"../../../routes/presentations/PresentationErrorPage"
 		);
 		const originalFetch = globalThis.fetch;
 		const retryRequest = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -108,7 +108,7 @@ describe("PresentationErrorPage", () => {
 
 	it("handles an HTML deployment error without exposing a JSON parser failure", async () => {
 		const { default: PresentationErrorPage } = await import(
-			"@/routes/presentations/PresentationErrorPage"
+			"../../../routes/presentations/PresentationErrorPage"
 		);
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = mock(() =>
@@ -140,7 +140,7 @@ describe("PresentationErrorPage", () => {
 
 	it("uses the provided delete action for an unfinished presentation", async () => {
 		const { default: PresentationErrorPage } = await import(
-			"@/routes/presentations/PresentationErrorPage"
+			"../../../routes/presentations/PresentationErrorPage"
 		);
 		const onDelete = mock(() => {});
 		const view = render(
@@ -158,7 +158,7 @@ describe("PresentationErrorPage", () => {
 
 	it("deletes a saved unfinished presentation with the current session", async () => {
 		const { default: PresentationErrorPage } = await import(
-			"@/routes/presentations/PresentationErrorPage"
+			"../../../routes/presentations/PresentationErrorPage"
 		);
 		const originalFetch = globalThis.fetch;
 		const deleteRequest = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {

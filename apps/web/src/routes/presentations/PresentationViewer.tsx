@@ -26,8 +26,8 @@ import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/gener
 import { fetchPresentationRevision } from "@slidesage/ui/lib/presentation-revision";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ROUTES } from "@/app/router/paths";
-import { useVimMode } from "@/context/VimModeContext";
+import { ROUTES } from "../../app/router/paths";
+import { useVimMode } from "../../context/VimModeContext";
 
 function templateLabelFor(reference?: PresentationData["template"]): string | undefined {
 	return BINARY_PPTX_TEMPLATE_CATALOG.find(

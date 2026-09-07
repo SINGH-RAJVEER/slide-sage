@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { act, render, waitFor } from "@testing-library/react";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { fetchSessionWithRetry, isSessionCheckStale } from "@/lib/session";
+import { AuthProvider, useAuth } from "@slidesage/ui/context/AuthContext";
+import { fetchSessionWithRetry, isSessionCheckStale } from "@slidesage/ui/lib/session";
 
 describe("AuthProvider", () => {
 	it("only considers a checked session stale after five minutes", () => {

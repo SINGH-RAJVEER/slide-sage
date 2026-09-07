@@ -1,7 +1,27 @@
-import { afterEach, expect } from "bun:test";
+import { afterAll, afterEach, expect, mock } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
 GlobalRegistrator.register();
+
+// Bun keeps mock.module registrations for the life of the process, and
+// --isolate does not undo them, so a file that mocks a shared module changes
+// what every later file imports. The real modules are captured before any test
+// runs and put back when a file finishes, which makes the suite independent of
+// the order its files happen to run in.
+const restorableModules = [
+	"@slidesage/ui/context/AuthContext",
+	"@slidesage/ui/lib/auth-client",
+] as const;
+
+const realModules = await Promise.all(
+	restorableModules.map(async (specifier) => [specifier, { ...(await import(specifier)) }] as const),
+);
+
+afterAll(() => {
+	for (const [specifier, exports] of realModules) {
+		mock.module(specifier, () => exports);
+	}
+});
 
 const { default: _defaultMatchers, ...matchers } = await import(
 	"@testing-library/jest-dom/matchers"
@@ -15,8 +35,11 @@ if (typeof document === "undefined") {
 
 afterEach(() => {
 	cleanup();
-	window.localStorage.removeItem("slidesage-active-generation");
-	window.localStorage.removeItem("slidesage-vim-mode");
+	// Clear everything rather than the two known keys: a test that leaves any
+	// stored state behind changes what the next one sees, and the streaming
+	// context resumes an active generation from storage on mount.
+	window.localStorage.clear();
+	window.sessionStorage.clear();
 	document.body.innerHTML = "";
 });
 

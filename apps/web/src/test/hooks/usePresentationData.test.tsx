@@ -3,7 +3,7 @@
 import { expect, it, mock } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { NavigateFunction } from "react-router-dom";
-import { usePresentationData } from "@/hooks/usePresentationData";
+import { usePresentationData } from "@slidesage/ui/hooks/usePresentationData";
 
 const baseStreamingState = {
 	isStreaming: false,

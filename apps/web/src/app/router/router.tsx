@@ -1,18 +1,18 @@
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import RequireSignedInLayout from "@/app/router/RequireSignedInLayout";
-import RootLayout from "@/app/router/RootLayout";
-import ForgotPasswordPage from "@/routes/auth/ForgotPasswordPage";
-import ResetPasswordPage from "@/routes/auth/ResetPasswordPage";
-import SignInPage from "@/routes/auth/SignInPage";
-import SignUpPage from "@/routes/auth/SignUpPage";
-import VerifyEmailPage from "@/routes/auth/VerifyEmailPage";
-import NotFoundPage from "@/routes/NotFoundPage";
-import HomePage from "@/routes/presentations/HomePage";
-import RouteErrorPage from "@/routes/RouteErrorPage";
-import ProfilePage from "@/routes/settings/ProfilePage";
-import SettingsPage from "@/routes/settings/SettingsPage";
+import RequireSignedInLayout from "./RequireSignedInLayout";
+import RootLayout from "./RootLayout";
+import ForgotPasswordPage from "../../routes/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../../routes/auth/ResetPasswordPage";
+import SignInPage from "../../routes/auth/SignInPage";
+import SignUpPage from "../../routes/auth/SignUpPage";
+import VerifyEmailPage from "../../routes/auth/VerifyEmailPage";
+import NotFoundPage from "../../routes/NotFoundPage";
+import HomePage from "../../routes/presentations/HomePage";
+import RouteErrorPage from "../../routes/RouteErrorPage";
+import ProfilePage from "../../routes/settings/ProfilePage";
+import SettingsPage from "../../routes/settings/SettingsPage";
 
 function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise<T>) {
 	return async () => {
@@ -40,40 +40,40 @@ export const router = createBrowserRouter([
 					{ path: "settings", element: <SettingsPage /> },
 					{
 						path: "generate",
-						lazy: lazyRoute(() => import("@/routes/presentations/GeneratePPTPage")),
+						lazy: lazyRoute(() => import("../../routes/presentations/GeneratePPTPage")),
 					},
 					{
 						path: "generate/research",
-						lazy: lazyRoute(() => import("@/routes/presentations/GenerateResearchPage")),
+						lazy: lazyRoute(() => import("../../routes/presentations/GenerateResearchPage")),
 					},
 					{
 						path: "marketplace",
-						lazy: lazyRoute(() => import("@/routes/marketplace/MarketplacePage")),
+						lazy: lazyRoute(() => import("../../routes/marketplace/MarketplacePage")),
 					},
 					{
 						path: "marketplace/:marketplaceId/preview",
-						lazy: lazyRoute(() => import("@/routes/marketplace/MarketplaceThemePreviewPage")),
+						lazy: lazyRoute(() => import("../../routes/marketplace/MarketplaceThemePreviewPage")),
 					},
 					{
 						path: "presentations",
-						lazy: lazyRoute(() => import("@/routes/presentations/PresentationsGridPage")),
+						lazy: lazyRoute(() => import("../../routes/presentations/PresentationsGridPage")),
 					},
 					{
 						path: "presentations/:presentationId",
-						lazy: lazyRoute(() => import("@/routes/presentations/PresentationViewer")),
+						lazy: lazyRoute(() => import("../../routes/presentations/PresentationViewer")),
 					},
 					// Streaming / legacy route (kept because generation navigates here before an id exists)
 					{
 						path: "presentation",
-						lazy: lazyRoute(() => import("@/routes/presentations/PresentationViewer")),
+						lazy: lazyRoute(() => import("../../routes/presentations/PresentationViewer")),
 					},
 					{
 						path: "presentation-error",
-						lazy: lazyRoute(() => import("@/routes/presentations/PresentationErrorPage")),
+						lazy: lazyRoute(() => import("../../routes/presentations/PresentationErrorPage")),
 					},
 					{
 						path: "purchase",
-						lazy: lazyRoute(() => import("@/routes/billing/PurchaseTokensPage")),
+						lazy: lazyRoute(() => import("../../routes/billing/PurchaseTokensPage")),
 					},
 				],
 			},

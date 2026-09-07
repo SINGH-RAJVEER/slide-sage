@@ -25,8 +25,8 @@ import { PRESENTATIONS_UPDATED_EVENT } from "@slidesage/ui/lib/presentation-even
 import { getPresentationRetryDestination } from "@slidesage/ui/lib/presentation-retry";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 interface SearchFilters {
 	query: string;

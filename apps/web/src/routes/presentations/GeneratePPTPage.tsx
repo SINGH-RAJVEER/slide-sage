@@ -13,8 +13,8 @@ import { templateIsSelectable } from "@slidesage/ui/lib/template-selection";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 interface GenerateRouteState {
 	retry?: PresentationRetryOptions;

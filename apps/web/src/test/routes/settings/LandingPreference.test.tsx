@@ -8,7 +8,7 @@ const authState = {
 	user: null as null | { landingPage?: "generate" | "presentations" },
 };
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => ({
 		user: authState.user,
 		loading: false,
@@ -20,7 +20,7 @@ mock.module("@/contexts/AuthContext", () => ({
 
 const putBody: Array<string | undefined> = [];
 
-const { LandingPreference } = await import("@/routes/settings/LandingPreference");
+const { LandingPreference } = await import("../../../routes/settings/LandingPreference");
 
 function selectTrigger(view: ReturnType<typeof render>) {
 	return view.getByRole("combobox", { name: "Default landing page" });

@@ -3,8 +3,8 @@
 import { expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { StreamingProvider } from "@/modules/contexts/StreamingContext";
-import GeneratePPTPage from "@/routes/presentations/GeneratePPTPage";
+import { StreamingProvider } from "@slidesage/ui";
+import GeneratePPTPage from "../../../routes/presentations/GeneratePPTPage";
 
 function RouteStateProbe() {
 	const location = useLocation();
@@ -217,13 +217,28 @@ it("starts generation on Enter even when focus sits on an options-bar control", 
 			</MemoryRouter>,
 		);
 
-		// Focus the slide count slider as if the user had just moved it.
+		// Generation is gated on the eligibility response, so waiting for the
+		// prompt alone can fire Enter while the form is still disabled.
 		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
-		fireEvent.focus(view.getByRole("slider", { name: "Slide count" }));
-		fireEvent.keyDown(view.getByRole("slider", { name: "Slide count" }), { key: "Enter" });
+		await waitFor(() =>
+			expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled(),
+		);
 
-		await waitFor(() => expect(generationBody?.["topic"]).toBe("Enter submits from anywhere"));
-		expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+		// Focus the slide count slider as if the user had just moved it. The
+		// options bar mounts after the eligibility response, so the control has to
+		// be awaited rather than queried synchronously.
+		const slider = await view.findByRole("slider", { name: "Slide count" });
+		fireEvent.focus(slider);
+		fireEvent.keyDown(slider, { key: "Enter" });
+
+		// The submit goes through the streaming context and a queued job request,
+		// which is slower than the default budget when the whole suite is running.
+		await waitFor(() => expect(generationBody?.["topic"]).toBe("Enter submits from anywhere"), {
+			timeout: 5000,
+		});
+		// Navigation happens after the job request resolves, so the viewer route
+		// has to be awaited rather than asserted synchronously.
+		expect(await view.findByText("Viewer waiting for stream")).toBeInTheDocument();
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

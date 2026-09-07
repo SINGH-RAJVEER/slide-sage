@@ -2,8 +2,8 @@
 
 import { expect, it, mock } from "bun:test";
 import { fireEvent, render } from "@testing-library/react";
-import { VimModeProvider } from "@/context/VimModeContext";
-import { VimModePreference } from "@/routes/settings/VimModePreference";
+import { VimModeProvider } from "../../../context/VimModeContext";
+import { VimModePreference } from "../../../routes/settings/VimModePreference";
 
 it("persists the Vim mode setting", () => {
 	window.localStorage.removeItem("slidesage-vim-mode");

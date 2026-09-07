@@ -3,8 +3,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { PRESENTATIONS_UPDATED_EVENT } from "@/lib/presentation-events";
-import PresentationsGridPage from "@/routes/presentations/PresentationsGridPage";
+import { PRESENTATIONS_UPDATED_EVENT } from "@slidesage/ui/lib/presentation-events";
+import PresentationsGridPage from "../../../routes/presentations/PresentationsGridPage";
 
 function RouteStateProbe() {
 	const location = useLocation();

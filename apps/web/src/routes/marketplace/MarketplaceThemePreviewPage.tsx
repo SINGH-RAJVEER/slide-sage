@@ -2,7 +2,7 @@ import { ViewerHeaderControls } from "@slidesage/ui/components/Viewer/ViewerHead
 import { MARKETPLACE_ITEMS } from "@slidesage/ui/lib/catalog";
 import { templateThumbnailUrl } from "@slidesage/ui/lib/template-thumbnails";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { ROUTES } from "@/app/router/paths";
+import { ROUTES } from "../../app/router/paths";
 
 /**
  * Previews one marketplace template.

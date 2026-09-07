@@ -4,21 +4,15 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { fireEvent, render } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => ({ user: null, signOut: () => Promise.resolve() }),
-}));
-
-mock.module("@slidesage/ui/components/Viewer/SlideRenderer", () => ({
-	SlideRenderer: ({ slide }: { slide: { title?: string } }) => (
-		<div data-testid="slide-preview">{slide.title}</div>
-	),
 }));
 
 describe("MarketplacePage", () => {
 	beforeEach(() => localStorage.clear());
 
 	it("lists all 24 binary marketplace templates", async () => {
-		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
+		const { default: MarketplacePage } = await import("../../../routes/marketplace/MarketplacePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
 				<MarketplacePage />
@@ -32,7 +26,7 @@ describe("MarketplacePage", () => {
 	});
 
 	it("opens a binary template ID in its preview route", async () => {
-		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
+		const { default: MarketplacePage } = await import("../../../routes/marketplace/MarketplacePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
 				<Routes>
@@ -75,7 +69,7 @@ describe("MarketplacePage", () => {
 	});
 
 	it("installs and removes a versioned binary reference", async () => {
-		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
+		const { default: MarketplacePage } = await import("../../../routes/marketplace/MarketplacePage");
 		const { MARKETPLACE_ITEMS } = await import("@slidesage/ui/lib/catalog");
 		const item = MARKETPLACE_ITEMS[0];
 		if (!item) throw new Error("Expected marketplace fixture");
@@ -95,7 +89,7 @@ describe("MarketplacePage", () => {
 	});
 
 	it("searches binary catalog metadata", async () => {
-		const { default: MarketplacePage } = await import("@/routes/marketplace/MarketplacePage");
+		const { default: MarketplacePage } = await import("../../../routes/marketplace/MarketplacePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/marketplace"]}>
 				<MarketplacePage />
