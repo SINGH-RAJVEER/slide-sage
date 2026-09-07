@@ -1,7 +1,8 @@
 import { useAuth } from "@slidesage/ui";
+import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import { auth } from "@slidesage/ui/lib/auth-client";
 import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/app/Header";
 
 function sanitizeRedirectPath(value: string | null) {
@@ -27,7 +28,10 @@ export default function SignUpPage() {
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [submitting, setSubmitting] = useState(false);
+	const [switching, setSwitching] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const signInTo =
+		redirectTo === "/" ? "/sign-in" : `/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`;
 
 	// Redirect to dashboard if already signed in
 	useEffect(() => {
@@ -108,6 +112,7 @@ export default function SignUpPage() {
 
 	return (
 		<div className="min-h-screen bg-transparent flex flex-col">
+			{switching ? <LoadingScreen label="Loading sign in" /> : null}
 			<Header />
 			<div className="flex flex-1 flex-col">
 				<div className="px-4 py-6 md:px-8 md:py-8">
@@ -259,9 +264,13 @@ export default function SignUpPage() {
 
 						<p className="mt-6 text-center text-sm text-white/55">
 							Already have an account?{" "}
-							<a href="/sign-in" className="text-white hover:underline font-semibold">
+							<Link
+								to={signInTo}
+								onClick={() => setSwitching(true)}
+								className="text-white hover:underline font-semibold"
+							>
 								Sign in
-							</a>
+							</Link>
 						</p>
 					</div>
 				</div>

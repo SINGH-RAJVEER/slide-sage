@@ -68,3 +68,34 @@ it("resends verification when an unverified user signs in", async () => {
 		type: "email-verification",
 	});
 });
+
+it("shows the orb loader when switching to sign up", async () => {
+	const { default: SignInPage } = await import("@/routes/auth/SignInPage");
+	const view = render(
+		<MemoryRouter initialEntries={["/sign-in"]}>
+			<SignInPage />
+		</MemoryRouter>,
+	);
+
+	const switchLink = view.getByRole("link", { name: "Sign up" });
+	expect(switchLink.getAttribute("href")).toBe("/sign-up");
+
+	fireEvent.click(switchLink);
+
+	expect(view.getByLabelText("Loading sign up")).toBeInTheDocument();
+});
+
+it("preserves redirect_url when switching to sign up", async () => {
+	const { default: SignInPage } = await import("@/routes/auth/SignInPage");
+	const view = render(
+		<MemoryRouter initialEntries={["/sign-in?redirect_url=%2Fgenerate"]}>
+			<Routes>
+				<Route path="/sign-in" element={<SignInPage />} />
+			</Routes>
+		</MemoryRouter>,
+	);
+
+	expect(view.getByRole("link", { name: "Sign up" }).getAttribute("href")).toBe(
+		"/sign-up?redirect_url=%2Fgenerate",
+	);
+});
