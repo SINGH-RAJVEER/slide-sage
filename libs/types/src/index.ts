@@ -353,7 +353,7 @@ export interface PresentationResponse {
 	presentation: SavedPresentation;
 }
 
-export const LANDING_PAGES = ["generate", "presentations"] as const;
+export const LANDING_PAGES = ["generate", "presentations", "landing"] as const;
 export type LandingPage = (typeof LANDING_PAGES)[number];
 
 export interface UserProfile {

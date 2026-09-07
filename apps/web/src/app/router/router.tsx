@@ -1,18 +1,19 @@
 import { LoadingScreen } from "@slidesage/ui/components/loading-screen";
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import RequireSignedInLayout from "./RequireSignedInLayout";
-import RootLayout from "./RootLayout";
 import ForgotPasswordPage from "../../routes/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../../routes/auth/ResetPasswordPage";
 import SignInPage from "../../routes/auth/SignInPage";
 import SignUpPage from "../../routes/auth/SignUpPage";
 import VerifyEmailPage from "../../routes/auth/VerifyEmailPage";
+import LandingPage from "../../routes/landing/LandingPage";
 import NotFoundPage from "../../routes/NotFoundPage";
-import HomePage from "../../routes/presentations/HomePage";
 import RouteErrorPage from "../../routes/RouteErrorPage";
 import ProfilePage from "../../routes/settings/ProfilePage";
 import SettingsPage from "../../routes/settings/SettingsPage";
+import EntranceRoute from "./EntranceRoute";
+import RequireSignedInLayout from "./RequireSignedInLayout";
+import RootLayout from "./RootLayout";
 
 function lazyRoute<T extends { default: ComponentType }>(importer: () => Promise<T>) {
 	return async () => {
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
 		errorElement: <RouteErrorPage />,
 		hydrateFallbackElement: <LoadingScreen label="Loading page" />,
 		children: [
+			{ index: true, element: <EntranceRoute /> },
+			/* the landing page is always public, so a signed-in user can still
+			   reach it even when it is not their default page */
+			{ path: "landing", element: <LandingPage /> },
 			{ path: "sign-in/*", element: <SignInPage /> },
 			{ path: "sign-up/*", element: <SignUpPage /> },
 			{ path: "sign-up/verify-email", element: <VerifyEmailPage /> },
@@ -35,7 +40,6 @@ export const router = createBrowserRouter([
 			{
 				element: <RequireSignedInLayout />,
 				children: [
-					{ index: true, element: <HomePage /> },
 					{ path: "profile", element: <ProfilePage /> },
 					{ path: "settings", element: <SettingsPage /> },
 					{

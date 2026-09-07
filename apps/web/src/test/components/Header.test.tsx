@@ -1,9 +1,9 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
+import type { User } from "@slidesage/ui/context/AuthContext";
 import { fireEvent, render } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
-import type { User } from "@slidesage/ui/context/AuthContext";
 
 const mockAuthState: {
 	user: User | null;
@@ -25,6 +25,20 @@ mock.module("@slidesage/ui/context/AuthContext", () => {
 });
 
 describe("Header", () => {
+	it("links the SlideSage icon to the landing page", async () => {
+		mockAuthState.user = null;
+
+		const { default: Header } = await import("../../app/Header");
+
+		const { getByRole } = render(
+			<MemoryRouter>
+				<Header />
+			</MemoryRouter>,
+		);
+
+		expect(getByRole("link", { name: "SlideSage — landing" })).toHaveAttribute("href", "/landing");
+	});
+
 	it("renders header component", async () => {
 		mockAuthState.user = null;
 
