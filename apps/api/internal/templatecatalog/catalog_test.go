@@ -1,6 +1,11 @@
 package templatecatalog
 
-import "testing"
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"testing"
+)
 
 const (
 	digestA = "3b1f4c5d6e7a8b9c0d1e2f30415263748596a7b8c9dae0f1023456789abcdef0"
@@ -92,4 +97,46 @@ func TestLoadRejectsDuplicateEntries(t *testing.T) {
 		{"id":"a-template","version":1,"sha256":"` + digestA + `"},
 		{"id":"a-template","version":1,"sha256":"` + digestB + `"}
 	]`))
+}
+
+// digestFile is the browser catalog's copy of the same publication output. It
+// lives outside apps/api, so go:embed cannot reach it and the API keeps its own
+// copy; the publication command writes both in one run. A test can read across
+// the repo at runtime, which is the only place the two can be compared.
+const digestFile = "../../../../libs/types/src/template-digests.json"
+
+func TestEmbeddedCatalogMatchesTheBrowserDigests(t *testing.T) {
+	contents, err := os.ReadFile(digestFile)
+	if errors.Is(err, os.ErrNotExist) {
+		t.Skipf("%s is not present, so the two copies cannot be compared here", digestFile)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	var browser map[string]struct {
+		SHA256     string `json:"sha256"`
+		ObjectPath string `json:"objectPath"`
+	}
+	if err := json.Unmarshal(contents, &browser); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(browser) != len(entries) {
+		t.Fatalf("browser lists %d published templates, the API embeds %d", len(browser), len(entries))
+	}
+	for id, record := range browser {
+		entry, found := Lookup(id, 1)
+		if !found {
+			t.Fatalf("%s is published for the browser but not for the API, so generation would reject it", id)
+		}
+		if entry.SHA256 != record.SHA256 {
+			t.Fatalf("%s resolves to %q for the API and %q for the browser", id, entry.SHA256, record.SHA256)
+		}
+		// The fetcher builds this path from the entry, so a mismatch means a
+		// signed URL would point at an object that is not there.
+		wantPath := "pptx-templates/" + id + "/1/" + record.SHA256 + "/template.pptx"
+		if record.ObjectPath != wantPath {
+			t.Fatalf("%s object path = %q, want %q", id, record.ObjectPath, wantPath)
+		}
+	}
 }

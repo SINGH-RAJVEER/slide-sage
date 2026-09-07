@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
@@ -31,10 +32,20 @@ type digestRecord struct {
 	ObjectPath string `json:"objectPath"`
 }
 
+// catalogEntry mirrors templatecatalog.Entry. The API embeds its own copy of
+// the published set because go:embed cannot reach outside apps/api, so this
+// command writes both files from one run and they cannot drift apart.
+type catalogEntry struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	SHA256  string `json:"sha256"`
+}
+
 func main() {
 	source := flag.String("source", "templates/v1", "directory of curated .pptx files named {template-id}.pptx")
 	manifestDir := flag.String("manifests", "apps/api/internal/templatemanifest/manifests", "directory to write compiler manifests into")
-	digestFile := flag.String("digests", "libs/types/src/template-digests.json", "digest map the catalog reads")
+	digestFile := flag.String("digests", "libs/types/src/template-digests.json", "digest map the browser catalog reads")
+	catalogFile := flag.String("published", "apps/api/internal/templatecatalog/published.json", "published set the API embeds to gate generation")
 	bucket := flag.String("bucket", "", "GCS bucket for published packages; empty means prepare only")
 	version := flag.Int("version", 1, "template version to publish")
 	only := flag.String("only", "", "comma-separated template IDs; empty means every file in -source")
@@ -108,10 +119,28 @@ func main() {
 	}
 
 	if !*dryRun {
+		// A narrowed run only knows about the templates it was asked for, so it
+		// updates those records and leaves the rest alone. A full run is
+		// authoritative: a template that no longer publishes drops out.
+		partial := len(selected) > 0
+		if partial {
+			existing, readErr := readDigests(*digestFile)
+			if readErr != nil {
+				log.Fatalf("read existing digests: %v", readErr)
+			}
+			for id, record := range digests {
+				existing[id] = record
+			}
+			digests = existing
+		}
 		if err := writeDigests(*digestFile, digests); err != nil {
 			log.Fatalf("write digests: %v", err)
 		}
-		fmt.Printf("\nwrote %d manifests to %s\nwrote digests to %s\n", len(digests), *manifestDir, *digestFile)
+		if err := writeCatalog(*catalogFile, digests); err != nil {
+			log.Fatalf("write published catalog: %v", err)
+		}
+		fmt.Printf("\nwrote %d manifests to %s\nwrote %d digests to %s\nwrote %d published entries to %s\n",
+			len(ids)-failures, *manifestDir, len(digests), *digestFile, len(digests), *catalogFile)
 	}
 	fmt.Printf("\n%d succeeded, %d failed\n", len(digests), failures)
 	if failures > 0 {
@@ -144,6 +173,21 @@ func writeManifest(dir, id string, manifest templatepublish.Manifest) error {
 	return os.WriteFile(filepath.Join(dir, id+".json"), append(contents, '\n'), 0o644)
 }
 
+func readDigests(path string) (map[string]digestRecord, error) {
+	contents, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return map[string]digestRecord{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	existing := map[string]digestRecord{}
+	if err := json.Unmarshal(contents, &existing); err != nil {
+		return nil, err
+	}
+	return existing, nil
+}
+
 func writeDigests(path string, digests map[string]digestRecord) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
@@ -153,6 +197,47 @@ func writeDigests(path string, digests map[string]digestRecord) error {
 		return err
 	}
 	return os.WriteFile(path, append(contents, '\n'), 0o644)
+}
+
+// writeCatalog projects the digest map onto the set the API embeds. The version
+// comes from the object path the digest was recorded against, so the two files
+// can never disagree about which bytes a template resolves to.
+func writeCatalog(path string, digests map[string]digestRecord) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	ids := make([]string, 0, len(digests))
+	for id := range digests {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+
+	published := make([]catalogEntry, 0, len(ids))
+	for _, id := range ids {
+		record := digests[id]
+		version, err := versionFromObjectPath(record.ObjectPath, id, record.SHA256)
+		if err != nil {
+			return err
+		}
+		published = append(published, catalogEntry{ID: id, Version: version, SHA256: record.SHA256})
+	}
+	contents, err := json.MarshalIndent(published, "", "\t")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, append(contents, '\n'), 0o644)
+}
+
+func versionFromObjectPath(objectPath, id, digest string) (int, error) {
+	segments := strings.Split(objectPath, "/")
+	if len(segments) != 5 || segments[0] != "pptx-templates" || segments[1] != id || segments[3] != digest || segments[4] != "template.pptx" {
+		return 0, fmt.Errorf("template %s has an object path the fetcher cannot address: %q", id, objectPath)
+	}
+	version, err := strconv.Atoi(segments[2])
+	if err != nil || version <= 0 {
+		return 0, fmt.Errorf("template %s has an invalid version in %q", id, objectPath)
+	}
+	return version, nil
 }
 
 func commaSet(value string) map[string]bool {
