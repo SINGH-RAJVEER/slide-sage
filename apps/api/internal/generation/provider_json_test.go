@@ -14,6 +14,7 @@ import (
 )
 
 func TestGenerateDocumentRepairsParseableEmptyDraft(t *testing.T) {
+	publishTestTemplate(t)
 	responses := []string{
 		`{"title":"Infant Mortality in India","slides":[]}`,
 		`{"title":"Infant Mortality in India","slides":[{"id":"slide-1","type":"content","layout":"cover","title":"Infant Mortality in India","blocks":[{"type":"paragraph","region":"main","text":"India has reduced infant mortality, but progress remains uneven across states."}]}]}`,

@@ -79,9 +79,9 @@ variable "presentation_gcs_bucket" {
 }
 
 variable "cdn_url" {
-  description = "Public HTTPS origin used when signing Cloud CDN template URLs."
+  description = "HTTPS origin used when signing template URLs. Templates are served by the API load balancer under /pptx-templates/."
   type        = string
-  default     = "https://cdn.slidesage.app"
+  default     = "https://api.slidesage.app"
 }
 
 variable "cdn_signing_key_name" {

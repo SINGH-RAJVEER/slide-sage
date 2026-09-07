@@ -11,7 +11,22 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 )
+
+// testTemplateDigest stands in for a real package digest. Nothing reads the
+// bytes it names; it only has to satisfy the catalog's format check.
+const testTemplateDigest = "3b1f4c5d6e7a8b9c0d1e2f30415263748596a7b8c9dae0f1023456789abcdef0"
+
+// publishTestTemplate makes simple-business-proposal generation-ready for one
+// test. The embedded catalog is empty until the publication command runs, so a
+// test that expects a ready template has to say so.
+func publishTestTemplate(t *testing.T) {
+	t.Helper()
+	t.Cleanup(templatecatalog.Swap([]templatecatalog.Entry{
+		{ID: "simple-business-proposal", Version: 1, SHA256: testTemplateDigest},
+	}))
+}
 
 func decodeSubmitBody(t *testing.T, raw string) map[string]any {
 	t.Helper()
@@ -183,6 +198,7 @@ func TestPlanningPromptDefinesBoundedVisualIntents(t *testing.T) {
 }
 
 func TestExportReadyTemplatePromptsExcludeUnsupportedVisuals(t *testing.T) {
+	publishTestTemplate(t)
 	template := &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}
 	planning := planningSystemPromptForTemplate(template)
 	if strings.Contains(planning, `"kind":"chart"`) || strings.Contains(planning, `"kind":"image-hero"`) {
@@ -195,6 +211,7 @@ func TestExportReadyTemplatePromptsExcludeUnsupportedVisuals(t *testing.T) {
 }
 
 func TestGenerationTemplateReadiness(t *testing.T) {
+	publishTestTemplate(t)
 	for _, test := range []struct {
 		name      string
 		template  *presentation.TemplateReference
@@ -215,6 +232,7 @@ func TestGenerationTemplateReadiness(t *testing.T) {
 }
 
 func TestExportReadyTemplateRejectsUnsupportedProviderOutput(t *testing.T) {
+	publishTestTemplate(t)
 	template := &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}
 	plan := map[string]any{"slides": []any{map[string]any{
 		"visualIntent": map[string]any{"kind": "chart"},
