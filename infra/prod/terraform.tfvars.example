@@ -1,7 +1,11 @@
 gcp_project_id       = "slidesage-504414"
-cloudflare_account_id = "your-cloudflare-account-id"
+cloudflare_account_id = "1f4b64abf5ce89626a42b88a12d71cdc"
 api_image     = "asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:<commit-sha>"
 worker_image  = "asia-south1-docker.pkg.dev/slidesage-504414/slidesage/worker:<commit-sha>"
+preview_image = "asia-south1-docker.pkg.dev/slidesage-504414/slidesage/preview:<commit-sha>"
 migrate_image = "asia-south1-docker.pkg.dev/slidesage-504414/slidesage/migrate:<commit-sha>"
 presentation_gcs_bucket = "slidesage-504414-presentation-revisions"
 template_gcs_bucket     = "slidesage-504414-templates"
+
+# Preserve the repository name returned by the existing Pages integration.
+github_repository = "slide-sage"

@@ -1,6 +1,7 @@
 locals {
   api_name     = "api"
   worker_name  = "worker"
+  preview_name = "preview-worker"
   migrate_name = "slidesage-migrate"
 
   api_secret_names = toset([
@@ -28,7 +29,13 @@ locals {
     "CDN_SIGNING_KEY_SECRET",
   ])
 
-  runtime_secret_names = setunion(local.api_secret_names, local.worker_secret_names)
+  # The preview renderer only reads revisions from object storage, so it needs
+  # nothing beyond the database.
+  preview_secret_names = toset([
+    "DATABASE_URL",
+  ])
+
+  runtime_secret_names = setunion(local.api_secret_names, local.worker_secret_names, local.preview_secret_names)
 
   required_services = toset([
     "artifactregistry.googleapis.com",
@@ -56,7 +63,7 @@ resource "google_artifact_registry_repository" "containers" {
   project       = var.gcp_project_id
   location      = var.gcp_region
   repository_id = "slidesage"
-  description   = "SlideSage production containers"
+  description   = "SlideSage api images"
   format        = "DOCKER"
 
   depends_on = [google_project_service.required]
@@ -97,6 +104,12 @@ resource "google_cloud_run_v2_service" "api" {
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 
+  # Preserve service-level scaling as well as revision-level limits.
+  scaling {
+    min_instance_count    = 0
+    manual_instance_count = 0
+  }
+
   template {
     service_account                  = google_service_account.runtime.email
     timeout                          = "300s"
@@ -124,7 +137,8 @@ resource "google_cloud_run_v2_service" "api" {
           cpu    = "1"
           memory = "512Mi"
         }
-        cpu_idle = true
+        cpu_idle          = true
+        startup_cpu_boost = true
       }
 
       env {
@@ -205,6 +219,11 @@ resource "google_cloud_run_v2_service" "api" {
     }
   }
 
+  # Client metadata describes the tool that last touched the resource.
+  lifecycle {
+    ignore_changes = [client, client_version]
+  }
+
   depends_on = [google_secret_manager_secret_iam_member.runtime_accessor]
 }
 
@@ -212,6 +231,12 @@ resource "google_cloud_run_v2_service" "worker" {
   name     = local.worker_name
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+
+  # Preserve service-level scaling as well as revision-level limits.
+  scaling {
+    min_instance_count    = 0
+    manual_instance_count = 0
+  }
 
   template {
     service_account                  = google_service_account.runtime.email
@@ -223,6 +248,7 @@ resource "google_cloud_run_v2_service" "worker" {
     }
 
     containers {
+      name  = "worker-1"
       image = var.worker_image
 
       volume_mounts {
@@ -239,7 +265,8 @@ resource "google_cloud_run_v2_service" "worker" {
           cpu    = "1"
           memory = "1Gi"
         }
-        cpu_idle = false
+        cpu_idle          = false
+        startup_cpu_boost = true
       }
 
       env {
@@ -312,6 +339,102 @@ resource "google_cloud_run_v2_service" "worker" {
     }
   }
 
+  # Client metadata describes the tool that last touched the resource.
+  lifecycle {
+    ignore_changes = [client, client_version]
+  }
+
+  depends_on = [google_secret_manager_secret_iam_member.runtime_accessor]
+}
+
+# The preview renderer runs headless LibreOffice, so it needs far more memory
+# and a longer request budget than the generation worker, and it scales to zero
+# because rendering is bursty.
+resource "google_cloud_run_v2_service" "preview" {
+  name     = local.preview_name
+  location = var.gcp_region
+  ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+
+  template {
+    service_account                  = google_service_account.runtime.email
+    max_instance_request_concurrency = 1
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 4
+    }
+
+    containers {
+      image = var.preview_image
+
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+
+      ports {
+        container_port = 8080
+      }
+
+      resources {
+        limits = {
+          cpu    = "2"
+          memory = "4Gi"
+        }
+        cpu_idle          = false
+        startup_cpu_boost = true
+      }
+
+      env {
+        name  = "NODE_ENV"
+        value = "production"
+      }
+      env {
+        name  = "PREVIEW_CONCURRENCY"
+        value = "1"
+      }
+      env {
+        name  = "PREVIEW_TEMP_DIR"
+        value = "/tmp"
+      }
+      env {
+        name  = "PRESENTATION_GCS_BUCKET"
+        value = local.presentation_gcs_bucket
+      }
+
+      dynamic "env" {
+        for_each = local.preview_secret_names
+        content {
+          name = env.value
+          value_source {
+            secret_key_ref {
+              secret  = data.google_secret_manager_secret.runtime[env.value].secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      startup_probe {
+        http_get {
+          path = "/ready"
+          port = 8080
+        }
+        failure_threshold     = 10
+        period_seconds        = 3
+        timeout_seconds       = 1
+        initial_delay_seconds = 0
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [google_sql_database_instance.primary.connection_name]
+      }
+    }
+  }
+
   depends_on = [google_secret_manager_secret_iam_member.runtime_accessor]
 }
 
@@ -331,7 +454,7 @@ resource "google_cloud_run_v2_job" "migrate" {
     template {
       service_account = google_service_account.runtime.email
       timeout         = "600s"
-      max_retries     = 0
+      max_retries     = 3
 
       containers {
         image = var.migrate_image
@@ -359,6 +482,10 @@ resource "google_cloud_run_v2_job" "migrate" {
         }
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [client, client_version]
   }
 
   depends_on = [google_secret_manager_secret_iam_member.runtime_accessor]

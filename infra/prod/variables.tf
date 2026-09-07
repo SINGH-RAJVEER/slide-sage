@@ -33,9 +33,9 @@ variable "github_owner" {
 }
 
 variable "github_repository" {
-  description = "GitHub repository name connected to Cloudflare Pages."
+  description = "Repository name reported by the existing Cloudflare Pages Git integration. Preserve it during adoption, even if GitHub now redirects the old name."
   type        = string
-  default     = "slidesage"
+  default     = "slide-sage"
 }
 
 variable "api_image" {
@@ -45,6 +45,11 @@ variable "api_image" {
 
 variable "worker_image" {
   description = "Artifact Registry image for the generation worker. CI should pass an immutable digest or commit tag."
+  type        = string
+}
+
+variable "preview_image" {
+  description = "Artifact Registry image for the LibreOffice preview renderer. CI should pass an immutable digest or commit tag."
   type        = string
 }
 

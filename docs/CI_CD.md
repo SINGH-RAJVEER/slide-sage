@@ -4,17 +4,20 @@ The repository deploys its Go API and generation worker to Google Cloud Run. Eve
 
 ## Flow
 
-1. GitHub Actions builds three image targets from `apps/api/Dockerfile` using Docker BuildKit. The Dockerfile also provides Linux/amd64 defaults for `BUILDPLATFORM`, `TARGETOS`, and `TARGETARCH`, so plain Docker builds (including Google Cloud Build's Docker builder) do not expand the platform to an empty value:
+1. GitHub Actions builds four image targets from `apps/api/Dockerfile` using Docker BuildKit. The Dockerfile also provides Linux/amd64 defaults for `BUILDPLATFORM`, `TARGETOS`, and `TARGETARCH`, so plain Docker builds (including Google Cloud Build's Docker builder) do not expand the platform to an empty value:
    - `api` (web server, port 8000) -> Cloud Run **service** `api`
    - `worker` (River queue consumer with a health server, port 8080) -> Cloud Run **service** `worker`
+   - `preview` (LibreOffice preview renderer with a health server, port 8080) -> Cloud Run **service** `preview-worker`
    - `migrate` (Goose + River migrations, one-shot) -> Cloud Run **job** `slidesage-migrate`
 2. Each image is tagged with the full git commit SHA (e.g. `api:a1b2c3d...`) plus `latest` and pushed to Artifact Registry.
 3. `terraform apply -target=google_cloud_run_v2_job.migrate` updates the migration job to the new image, then `gcloud run jobs execute` runs it against the database and waits.
-4. A full `terraform apply` points the `api` and `worker` Cloud Run services at the SHA-tagged image. Cloud Run creates a new revision and routes 100% of traffic to it, which is the "latest iteration" seen by users. Previous revisions remain available by SHA for rollback.
+4. A fresh full plan and `terraform apply` point the `api`, `worker`, and `preview-worker` Cloud Run services at the SHA-tagged image. Cloud Run creates a new revision and routes 100% of traffic to it, which is the "latest iteration" seen by users. Previous revisions remain available by SHA for rollback.
 
-Terraform owns the Cloud Run services, the job, the load balancer, and the supporting IAM. The workflow supplies only the three image references, through `TF_VAR_api_image`, `TF_VAR_worker_image`, and `TF_VAR_migrate_image`. It needs the `TF_STATE_BUCKET`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` repository secrets alongside the existing workload-identity secrets. See [Production infrastructure](PRODUCTION_INFRASTRUCTURE.md).
+After this testing bookmark is merged through dev into main and the documented bootstrap is complete, Terraform will own the Cloud Run services, the job, the load balancer, and supporting IAM. The currently deployed services were created with gcloud; no adoption has been applied from this bookmark. The workflow supplies only the image references, through `TF_VAR_api_image`, `TF_VAR_worker_image`, `TF_VAR_preview_image`, and `TF_VAR_migrate_image`. It needs the `TF_STATE_BUCKET`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` repository secrets alongside the existing workload-identity secrets. See [Production infrastructure](PRODUCTION_INFRASTRUCTURE.md).
 
-Trigger: `git push origin main` (or `workflow_dispatch` for a manual run). Concurrency is locked per branch so two pushes never race a deploy.
+Trigger: a push to `main` after the dev-to-main PR is merged, or a manual dispatch on `main`. Both jobs explicitly reject other refs, so dispatching from the testing bookmark cannot publish images or change production. All production runs share one concurrency group.
+
+A complete plan runs before the targeted migration update. Missing secrets, missing Cloudflare DNS permissions, or invalid import IDs stop deployment before any Terraform apply. The first deployment also needs the state bucket, credentials, and imports described in [Production infrastructure](PRODUCTION_INFRASTRUCTURE.md).
 
 ## Artifact Registry layout
 
@@ -25,6 +28,8 @@ asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/api:<sha>
 asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/api:latest
 asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/worker:<sha>
 asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/worker:latest
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/preview:<sha>
+asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/preview:latest
 asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:<sha>
 asia-south1-docker.pkg.dev/<PROJECT_ID>/slidesage/migrate:latest
 ```
@@ -33,7 +38,7 @@ Cloud Run runs in `asia-south1`. Change `RUN_REGION` and `REGISTRY_LOCATION` in 
 
 The production API is served at `https://api.slidesage.app` through a global external HTTPS load balancer. Its reserved IPv4 address is `34.107.143.198`; the Cloudflare `api` record must be a DNS-only `A` record pointing to that address. Cloud Run custom domain mappings are unavailable in `asia-south1`, so the load balancer connects to the `api` service through the `slidesage-api-neg` serverless NEG.
 
-Cloudflare Pages runs `bun run build` from `apps/web`. Vite bundles the React application into `apps/web/dist`, handles route-level code splitting, processes Tailwind through `@tailwindcss/vite`, and copies static files from `apps/web/public`.
+Cloudflare Pages runs `bun install --frozen-lockfile && bun run build` from `apps/web`. Vite bundles the React application into `apps/web/dist`, handles route-level code splitting, processes Tailwind through `@tailwindcss/vite`, and copies static files from `apps/web/public`.
 
 The Pages deployment copies `apps/web/public/_headers` into the build and sends `Cache-Control: no-cache` for the application and its assets. Do not add a Cloudflare Browser TTL or Cache Everything rule for `slidesage.app`. Pages manages its own CDN cache, and an extra zone cache can keep HTML from one deployment while its hashed JavaScript chunks come from another. The web entry point also listens for Vite's `vite:preloadError` event. If an open tab requests a chunk removed by a newer deployment, it reloads once to fetch the current HTML and then leaves any repeated failure to the route error page instead of entering a reload loop.
 
@@ -91,46 +96,9 @@ gcloud iam service-accounts add-iam-policy-binding \
 
 The workflow signs in to GCP through Workload Identity Federation using short-lived OIDC tokens from GitHub, so no long-lived service account keys are stored anywhere.
 
-The project-level `roles/run.admin` grant above permits the first deployment, when the Cloud Run resources do not exist yet. After the first successful deployment, scope the CI/CD identity to the resources it manages:
+The commands above describe the existing image-build and Cloud Run identity bootstrap. They are not a complete Terraform permission setup. Before adoption, authorize the CI identity to manage the resources in `infra/prod`, including Compute load balancing, Cloud SQL, Artifact Registry, service accounts, project services/IAM, Secret Manager IAM, and storage buckets/IAM. It also needs object access to the Terraform state bucket. Grant permissions at the narrowest supported scope through a separately approved IAM change; no permissions are granted by editing this repository.
 
-```bash
-DEPLOY_SA="slidesage-deploy@$PROJECT_ID.iam.gserviceaccount.com"
-
-gcloud run services add-iam-policy-binding api \
-  --project=$PROJECT_ID \
-  --region=asia-south1 \
-  --member="serviceAccount:$DEPLOY_SA" \
-  --role=roles/run.admin
-
-gcloud run services add-iam-policy-binding worker \
-  --project=$PROJECT_ID \
-  --region=asia-south1 \
-  --member="serviceAccount:$DEPLOY_SA" \
-  --role=roles/run.admin
-
-gcloud run jobs add-iam-policy-binding slidesage-migrate \
-  --project=$PROJECT_ID \
-  --region=asia-south1 \
-  --member="serviceAccount:$DEPLOY_SA" \
-  --role=roles/run.developer
-
-gcloud projects remove-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$DEPLOY_SA" \
-  --role=roles/run.admin
-```
-
-The API and worker grants use `roles/run.admin` at the individual service because the workflow enforces their public/private invocation policies during each deployment. The migration job only grants the CI/CD identity `roles/run.developer`, which permits updating and executing that existing job without granting access to other Cloud Run resources. Project owners retain administrative access.
-
-Audit project-level Cloud Run grants after applying the scoped bindings:
-
-```bash
-gcloud projects get-iam-policy $PROJECT_ID \
-  --flatten='bindings[].members' \
-  --filter='bindings.role:roles/run' \
-  --format='table(bindings.role,bindings.members)'
-```
-
-Remove unexpected `roles/run.admin`, `roles/run.developer`, or `roles/run.invoker` grants. Cloud Run runtime service accounts do not need these deployment roles.
+Do not reduce the identity to the old service-scoped Cloud Run roles while expecting it to manage the full Terraform stack. Runtime service accounts remain separate from the deployment identity.
 
 ## GitHub repository setup
 
@@ -141,12 +109,11 @@ Create secrets in Settings -> Secrets and variables -> Actions:
 | `GCP_PROJECT_ID`      | `slidesage-504414`                                          |
 | `GCP_WIF_PROVIDER`    | `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/slidesage/providers/github` |
 | `GCP_SERVICE_ACCOUNT` | `slidesage-deploy@slidesage-504414.iam.gserviceaccount.com` |
+| `TF_STATE_BUCKET` | `slidesage-504414-tfstate`, after the versioned bucket exists |
+| `CLOUDFLARE_ACCOUNT_ID` | `1f4b64abf5ce89626a42b88a12d71cdc` |
+| `CLOUDFLARE_API_TOKEN` | Token with Zone Read, DNS Read/Edit, and Pages Read/Edit |
 
-Optional variable:
-
-| Variable        | Value                                                               | Purpose                                                                                                                                                                                                                  |
-| --------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `API_AUTH_FLAG` | `--allow-unauthenticated` (default) or `--no-allow-unauthenticated` | Whether Cloud Run requires Google IAM authentication before requests reach the API. Keep the default while browsers and external webhooks call the public API. Application authentication still protects private routes. |
+API invocation policy is defined by `google_cloud_run_v2_service_iam_member.api_public_invoker`. The old `API_AUTH_FLAG` variable is no longer used. Application authentication still protects private routes.
 
 ## Secret Manager
 
@@ -236,7 +203,7 @@ gcloud run services update worker \
   --invoker-iam-check
 ```
 
-The migration deployment remains a job command with no ingress flag:
+The historical gcloud equivalent below is for manual recovery only. Normal releases update the job through Terraform and execute it with `gcloud run jobs execute`:
 
 ```bash
 gcloud run jobs deploy slidesage-migrate \
@@ -244,13 +211,13 @@ gcloud run jobs deploy slidesage-migrate \
   --image="$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION" \
   --region=asia-south1 \
 	--service-account="slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com" \
-	--add-cloudsql-instances="$PROJECT_ID:$RUN_REGION:slidesage-postgres" \
+	--set-cloudsql-instances="$PROJECT_ID:$RUN_REGION:slidesage-postgres" \
   --set-secrets=DATABASE_URL=DATABASE_URL:latest \
   --execute-now \
   --wait
 ```
 
-`roles/run.invoker` is enough to execute an existing job without overrides. This workflow also updates the migration job before executing it, so its scoped job binding uses `roles/run.developer`.
+The CI identity needs both job update and execution permissions, alongside the Terraform permissions described above.
 
 ## Rollback
 

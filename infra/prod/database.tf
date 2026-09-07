@@ -10,6 +10,7 @@ resource "google_sql_database_instance" "primary" {
     availability_type           = "ZONAL"
     disk_size                   = 10
     disk_autoresize             = false
+    connector_enforcement       = "REQUIRED"
 
     backup_configuration {
       enabled                        = false

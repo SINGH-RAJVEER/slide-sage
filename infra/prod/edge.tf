@@ -59,17 +59,14 @@ resource "google_compute_url_map" "api" {
   name            = "slidesage-api-map"
   default_service = google_compute_backend_service.api.id
 
-  # Templates are served from the API host so they reuse its DNS record and
-  # certificate. A dedicated cdn host cannot hold a managed certificate: the
-  # only backend behind it rejects the unsigned requests Google issues to
-  # validate the domain, so the certificate never provisions.
+  # Match the existing API-host route. Keep the live matcher name during adoption.
   host_rule {
     hosts        = ["api.${var.domain_name}"]
-    path_matcher = "path-matcher-1"
+    path_matcher = "api-matcher"
   }
 
   path_matcher {
-    name            = "path-matcher-1"
+    name            = "api-matcher"
     default_service = google_compute_backend_service.api.id
 
     path_rule {
@@ -126,9 +123,15 @@ resource "google_compute_global_forwarding_rule" "api_http" {
   target                = google_compute_target_http_proxy.https_redirect.id
 }
 
-# Carries both the API and the signed template traffic. Signed URLs must reach
-# the Cloud CDN backend bucket directly, so the record stays DNS-only: proxying
-# it would strip the signature parameters and every template fetch would 403.
+# Discover the existing record for the import block rather than creating a
+# duplicate. Planning requires DNS Read permission on this zone.
+data "cloudflare_record" "existing_api" {
+  zone_id  = data.cloudflare_zone.production.id
+  hostname = "api.${var.domain_name}"
+  type     = "A"
+}
+
+# Keep the API hostname pointed directly at the Google load balancer.
 resource "cloudflare_record" "api" {
   zone_id = data.cloudflare_zone.production.id
   name    = "api"
@@ -144,13 +147,17 @@ resource "cloudflare_pages_project" "web" {
   production_branch = "main"
 
   build_config {
-    build_command   = "bun run build"
+    build_command   = "bun install --frozen-lockfile && bun run build"
+    build_caching   = true
     destination_dir = "dist"
     root_dir        = "apps/web"
   }
 
   deployment_configs {
     production {
+      fail_open   = true
+      usage_model = "standard"
+
       environment_variables = {
         VITE_API_URL = "https://api.${var.domain_name}"
       }
@@ -177,8 +184,5 @@ resource "cloudflare_pages_domain" "apex" {
   domain       = var.domain_name
 }
 
-resource "cloudflare_pages_domain" "www" {
-  account_id   = var.cloudflare_account_id
-  project_name = cloudflare_pages_project.web.name
-  domain       = "www.${var.domain_name}"
-}
+# www has a DNS record, but is not attached to the live Pages project.
+# Domain attachment is a separate future change, not part of adoption.

@@ -7,6 +7,7 @@
         pkgs.go
         pkgs.goose
         pkgs.just
+        pkgs.terraform
         # Renders template thumbnails. Playwright's own download is dynamically
         # linked against libraries NixOS does not place on the default path.
         pkgs.chromium

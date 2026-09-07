@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: cloudrun-${{ github.ref }}
+  group: slidesage-production
   cancel-in-progress: false
 
 env:
@@ -15,10 +15,11 @@ env:
   REGISTRY_REPOSITORY: slidesage
   RUN_REGION: asia-south1
   IMAGE_VERSION: ${{ github.sha }}
-  API_AUTH_FLAG: ${{ vars.API_AUTH_FLAG || '--allow-unauthenticated' }}
 
 jobs:
   build:
+    # workflow_dispatch can select a branch; only main may publish or deploy.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -64,6 +65,18 @@ jobs:
             ${{ env.REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/worker:${{ env.IMAGE_VERSION }}
             ${{ env.REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/worker:latest
 
+      - name: Build and push preview renderer image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: preview
+          push: true
+          cache-from: type=gha
+          tags: |
+            ${{ env.REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/preview:${{ env.IMAGE_VERSION }}
+            ${{ env.REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/preview:latest
+
       - name: Build and push migrate image
         uses: docker/build-push-action@v6
         with:
@@ -76,40 +89,24 @@ jobs:
             ${{ env.REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/migrate:${{ env.IMAGE_VERSION }}
             ${{ env.REGISTRY_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/migrate:latest
 
-  migrate:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
-      - name: Deploy and run migrations
-        run: |
-          IMAGE=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/migrate:$IMAGE_VERSION
-          gcloud run jobs deploy slidesage-migrate \
-            --image=$IMAGE \
-            --region=$RUN_REGION \
-            --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
-            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
-            --set-secrets=DATABASE_URL=DATABASE_URL:latest \
-            --execute-now \
-            --wait
-
   deploy:
-    needs: [build, migrate]
+    needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      TF_VAR_gcp_region: asia-south1
+      TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
+      - uses: actions/checkout@v4
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -118,45 +115,55 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy API service
-        run: |
-          IMAGE=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/api:$IMAGE_VERSION
-          gcloud run deploy api \
-            $API_AUTH_FLAG \
-            --image=$IMAGE \
-            --region=$RUN_REGION \
-            --ingress=internal-and-cloud-load-balancing \
-            --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
-            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
-            --port=8000 \
-            --cpu=1 \
-            --memory=512Mi \
-            --min-instances=0 \
-            --max-instances=10 \
-            --concurrency=80 \
-            --timeout=300s \
-            --set-secrets=DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,RATE_LIMIT_HASH_SECRET=RATE_LIMIT_HASH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,EXA_API_KEY=EXA_API_KEY:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest,RESEND_API_KEY=RESEND_API_KEY:latest,RESEND_FROM_EMAIL=RESEND_FROM_EMAIL:latest,CDN_SIGNING_KEY_SECRET=CDN_SIGNING_KEY_SECRET:latest \
-            --set-env-vars='^@^NODE_ENV=production@BASE_URL=https://api.slidesage.app@CORS_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@BETTER_AUTH_TRUSTED_ORIGINS=https://slidesage.app,https://www.slidesage.app,https://slidesage.pages.dev,https://slide-sage.pages.dev@OPEN_ROUTER_MODEL=openrouter/free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions@PRESENTATION_GCS_BUCKET=slidesage-504414-presentation-revisions@CDN_URL=https://api.slidesage.app@CDN_SIGNING_KEY_NAME=templates-key-v2@CDN_SIGNED_URL_TTL_SECONDS=900'
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.0
+          terraform_wrapper: false
 
-      - name: Deploy worker service
+      - name: Configure Terraform inputs
+        shell: bash
         run: |
-          IMAGE=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/worker:$IMAGE_VERSION
-          gcloud run deploy worker \
-            --no-allow-unauthenticated \
-            --image=$IMAGE \
-            --region=$RUN_REGION \
-            --ingress=internal \
-            --service-account=slidesage-runtime@$PROJECT_ID.iam.gserviceaccount.com \
-            --add-cloudsql-instances=$PROJECT_ID:$RUN_REGION:slidesage-postgres \
-            --port=8080 \
-            --cpu=1 \
-            --memory=1Gi \
-            --no-cpu-throttling \
-            --min-instances=0 \
-            --max-instances=10 \
-            --concurrency=1 \
-            --set-secrets=DATABASE_URL=DATABASE_URL:latest,OPEN_ROUTER_API_KEY=OPEN_ROUTER_API_KEY:latest,CDN_SIGNING_KEY_SECRET=CDN_SIGNING_KEY_SECRET:latest \
-            --set-env-vars='^@^NODE_ENV=production@WORKER_CONCURRENCY=2@BASE_URL=https://api.slidesage.app@OPEN_ROUTER_MODEL=openrouter/free@OPEN_ROUTER_API_BASE=https://openrouter.ai/api/v1/chat/completions@PRESENTATION_GCS_BUCKET=slidesage-504414-presentation-revisions@CDN_URL=https://api.slidesage.app@CDN_SIGNING_KEY_NAME=templates-key-v2@CDN_SIGNED_URL_TTL_SECONDS=900'
+          set -euo pipefail
+          : "${TF_STATE_BUCKET:?Set TF_STATE_BUCKET after provisioning the state bucket}"
+          : "${TF_VAR_gcp_project_id:?Set GCP_PROJECT_ID}"
+          : "${TF_VAR_cloudflare_account_id:?Set CLOUDFLARE_ACCOUNT_ID}"
+          : "${TF_VAR_cloudflare_api_token:?Set CLOUDFLARE_API_TOKEN}"
+          for component in api worker preview migrate; do
+            echo "TF_VAR_${component}_image=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/$component:$IMAGE_VERSION" >> "$GITHUB_ENV"
+          done
+
+      - name: Initialize Terraform
+        working-directory: infra/prod
+        run: |
+          terraform init -input=false -lockfile=readonly \
+            -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="prefix=prod"
+          terraform validate -no-color
+
+      # Check the whole configuration before the targeted migration update.
+      # Missing secrets, DNS permissions, or invalid imports stop here.
+      - name: Plan the release
+        working-directory: infra/prod
+        run: terraform plan -input=false -lock-timeout=5m -no-color
+
+      - name: Update the migration job
+        working-directory: infra/prod
+        run: |
+          terraform plan -input=false -lock-timeout=5m -no-color \
+            -target=google_cloud_run_v2_job.migrate -out=migrate.tfplan
+          terraform apply -input=false -lock-timeout=5m -no-color migrate.tfplan
+
+      - name: Run migrations
+        run: |
+          gcloud run jobs execute slidesage-migrate \
+            --project="$PROJECT_ID" --region="$RUN_REGION" --wait
+
+      # Re-plan after the targeted apply, which changed Terraform state.
+      - name: Apply the release
+        working-directory: infra/prod
+        run: |
+          terraform plan -input=false -lock-timeout=5m -no-color -out=release.tfplan
+          terraform apply -input=false -lock-timeout=5m -no-color release.tfplan
 
       - name: Verify Cloud Run exposure
         run: |
@@ -168,7 +175,18 @@ jobs:
             --project=$PROJECT_ID \
             --region=$RUN_REGION \
             --format="value(metadata.annotations.'run.googleapis.com/ingress')")
+          PREVIEW_INGRESS=$(gcloud run services describe preview-worker \
+            --project=$PROJECT_ID \
+            --region=$RUN_REGION \
+            --format="value(metadata.annotations.'run.googleapis.com/ingress')")
           WORKER_PUBLIC_BINDING=$(gcloud run services get-iam-policy worker \
+            --project=$PROJECT_ID \
+            --region=$RUN_REGION \
+            --flatten='bindings[].members' \
+            --filter='bindings.role=roles/run.invoker AND bindings.members=allUsers' \
+            --format='value(bindings.members)')
+
+          PREVIEW_PUBLIC_BINDING=$(gcloud run services get-iam-policy preview-worker \
             --project=$PROJECT_ID \
             --region=$RUN_REGION \
             --flatten='bindings[].members' \
@@ -177,4 +195,6 @@ jobs:
 
           test "$API_INGRESS" = internal-and-cloud-load-balancing
           test "$WORKER_INGRESS" = internal
+          test "$PREVIEW_INGRESS" = internal
           test -z "$WORKER_PUBLIC_BINDING"
+          test -z "$PREVIEW_PUBLIC_BINDING"

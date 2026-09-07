@@ -1,24 +1,26 @@
-# One-time adoption of the resources created with the gcloud CLI before Terraform
-# owned this environment. Run `terraform plan`, confirm every target is imported
-# and nothing is scheduled for replacement or destruction, then `terraform apply`
-# and delete this file. Terraform skips import blocks whose target is already in
-# state, so leaving it in place is harmless but noisy.
+# Adopt the existing deployment only after this bookmark reaches dev and the
+# dev-to-main PR is merged. Import blocks are evaluated by plan; apply writes
+# their results into state and may also change resource settings.
 #
-# Cloudflare resources are not listed because their IDs are account-scoped. Add
-# these once you have the zone, record, and account IDs:
-#
-#   cloudflare_record.api        -> "<zone_id>/<record_id>"
-#   cloudflare_pages_project.web -> "<account_id>/slidesage"
-#   cloudflare_pages_domain.apex -> "<account_id>/slidesage/slidesage.app"
-#   cloudflare_pages_domain.www  -> "<account_id>/slidesage/www.slidesage.app"
-#
-# These are absent from the project and are created by the first apply rather
-# than imported:
-#
-#   google_storage_bucket.presentation_revisions
-#   google_storage_bucket_iam_member.runtime_revision_creator
-#   google_storage_bucket_iam_member.runtime_revision_viewer
-#   google_artifact_registry_repository_iam_member.cloud_run_reader
+# The revision bucket, its runtime IAM, registry reader IAM, and preview worker
+# are planned additions. Secret values and the GCS state bucket are provisioned
+# separately before the first approved apply.
+
+import {
+  to = cloudflare_record.api
+  id = "${data.cloudflare_zone.production.id}/${data.cloudflare_record.existing_api.id}"
+}
+
+import {
+  to = cloudflare_pages_project.web
+  id = "${var.cloudflare_account_id}/slidesage"
+}
+
+import {
+  to = cloudflare_pages_domain.apex
+  id = "${var.cloudflare_account_id}/slidesage/${var.domain_name}"
+}
+
 
 import {
   for_each = local.required_services
@@ -49,105 +51,105 @@ import {
 
 import {
   to = google_artifact_registry_repository.containers
-  id = "projects/slidesage-504414/locations/asia-south1/repositories/slidesage"
+  id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/repositories/slidesage"
 }
 
 import {
   to = google_service_account.runtime
-  id = "projects/slidesage-504414/serviceAccounts/slidesage-runtime@slidesage-504414.iam.gserviceaccount.com"
+  id = "projects/${var.gcp_project_id}/serviceAccounts/slidesage-runtime@${var.gcp_project_id}.iam.gserviceaccount.com"
 }
 
 import {
   to = google_cloud_run_v2_service.api
-  id = "projects/slidesage-504414/locations/asia-south1/services/api"
+  id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/services/api"
 }
 
 import {
   to = google_cloud_run_v2_service.worker
-  id = "projects/slidesage-504414/locations/asia-south1/services/worker"
+  id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/services/worker"
 }
 
 import {
   to = google_cloud_run_v2_service_iam_member.api_public_invoker
-  id = "projects/slidesage-504414/locations/asia-south1/services/api roles/run.invoker allUsers"
+  id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/services/api roles/run.invoker allUsers"
 }
 
 import {
   to = google_cloud_run_v2_job.migrate
-  id = "projects/slidesage-504414/locations/asia-south1/jobs/slidesage-migrate"
+  id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/jobs/slidesage-migrate"
 }
 
 import {
   to = google_sql_database_instance.primary
-  id = "projects/slidesage-504414/instances/slidesage-postgres"
+  id = "projects/${var.gcp_project_id}/instances/slidesage-postgres"
 }
 
 import {
   to = google_sql_database.application
-  id = "projects/slidesage-504414/instances/slidesage-postgres/databases/slidesage"
+  id = "projects/${var.gcp_project_id}/instances/slidesage-postgres/databases/slidesage"
 }
 
 import {
   to = google_project_iam_member.runtime_cloud_sql_client
-  id = "slidesage-504414 roles/cloudsql.client serviceAccount:slidesage-runtime@slidesage-504414.iam.gserviceaccount.com"
+  id = "${var.gcp_project_id} roles/cloudsql.client serviceAccount:slidesage-runtime@${var.gcp_project_id}.iam.gserviceaccount.com"
 }
 
 import {
   to = google_storage_bucket_iam_member.cdn_template_viewer
-  id = "b/slidesage-504414-templates roles/storage.objectViewer serviceAccount:service-94621805506@cloud-cdn-fill.iam.gserviceaccount.com"
+  id = "b/${var.template_gcs_bucket} roles/storage.objectViewer serviceAccount:service-${data.google_project.current.number}@cloud-cdn-fill.iam.gserviceaccount.com"
 }
 
 import {
   to = google_compute_global_address.api
-  id = "projects/slidesage-504414/global/addresses/slidesage-api-ip"
+  id = "projects/${var.gcp_project_id}/global/addresses/slidesage-api-ip"
 }
 
 import {
   to = google_compute_region_network_endpoint_group.api
-  id = "projects/slidesage-504414/regions/asia-south1/networkEndpointGroups/slidesage-api-neg"
+  id = "projects/${var.gcp_project_id}/regions/${var.gcp_region}/networkEndpointGroups/slidesage-api-neg"
 }
 
 import {
   to = google_compute_backend_service.api
-  id = "projects/slidesage-504414/global/backendServices/slidesage-api-backend"
+  id = "projects/${var.gcp_project_id}/global/backendServices/slidesage-api-backend"
 }
 
 import {
   to = google_compute_backend_bucket.templates
-  id = "projects/slidesage-504414/global/backendBuckets/templates"
+  id = "projects/${var.gcp_project_id}/global/backendBuckets/templates"
 }
 
 import {
   to = google_compute_url_map.api
-  id = "projects/slidesage-504414/global/urlMaps/slidesage-api-map"
+  id = "projects/${var.gcp_project_id}/global/urlMaps/slidesage-api-map"
 }
 
 import {
   to = google_compute_url_map.https_redirect
-  id = "projects/slidesage-504414/global/urlMaps/slidesage-api-http-redirect"
+  id = "projects/${var.gcp_project_id}/global/urlMaps/slidesage-api-http-redirect"
 }
 
 import {
   to = google_compute_managed_ssl_certificate.api
-  id = "projects/slidesage-504414/global/sslCertificates/slidesage-api-cert"
+  id = "projects/${var.gcp_project_id}/global/sslCertificates/slidesage-api-cert"
 }
 
 import {
   to = google_compute_target_https_proxy.api
-  id = "projects/slidesage-504414/global/targetHttpsProxies/slidesage-api-https-proxy"
+  id = "projects/${var.gcp_project_id}/global/targetHttpsProxies/slidesage-api-https-proxy"
 }
 
 import {
   to = google_compute_target_http_proxy.https_redirect
-  id = "projects/slidesage-504414/global/targetHttpProxies/slidesage-api-http-proxy"
+  id = "projects/${var.gcp_project_id}/global/targetHttpProxies/slidesage-api-http-proxy"
 }
 
 import {
   to = google_compute_global_forwarding_rule.api_https
-  id = "projects/slidesage-504414/global/forwardingRules/slidesage-api-https-rule"
+  id = "projects/${var.gcp_project_id}/global/forwardingRules/slidesage-api-https-rule"
 }
 
 import {
   to = google_compute_global_forwarding_rule.api_http
-  id = "projects/slidesage-504414/global/forwardingRules/slidesage-api-http-rule"
+  id = "projects/${var.gcp_project_id}/global/forwardingRules/slidesage-api-http-rule"
 }
