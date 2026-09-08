@@ -31,6 +31,7 @@ const (
 	relationshipNamespace  = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 	slideRelationshipType  = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide"
 	officeDocumentRelType  = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+	hyperlinkRelType       = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
 	packageRelationshipsNS = "http://schemas.openxmlformats.org/package/2006/relationships"
 	packageContentTypesNS  = "http://schemas.openxmlformats.org/package/2006/content-types"
 )
@@ -248,8 +249,10 @@ type packageIndex struct {
 }
 
 type packageRelationship struct {
-	target  string
-	typeURI string
+	// target is a package part name, or the raw URI when external is set.
+	target   string
+	typeURI  string
+	external bool
 }
 
 func inspectPPTX(contents []byte) (int, error) {
@@ -367,6 +370,9 @@ func indexPackage(reader *zip.Reader) (packageIndex, error) {
 	}
 	for relationshipPart, relationships := range index.relationships {
 		for _, relationship := range relationships {
+			if relationship.external {
+				continue
+			}
 			if index.files[relationship.target] == nil {
 				return packageIndex{}, fmt.Errorf("relationship in %q targets missing part %q", relationshipPart, relationship.target)
 			}
@@ -533,7 +539,14 @@ func parseRelationships(relsName string, file *zip.File) (map[string]packageRela
 			return nil, errors.New("duplicate relationship ID")
 		}
 		if relationship.TargetMode != "" && relationship.TargetMode != "Internal" {
-			return nil, errors.New("external relationships are not allowed")
+			// Ordinary hyperlinks fetch nothing when a deck is opened and
+			// survive publication, so they are kept; everything else that
+			// leaves the package is rejected.
+			if relationship.Type != hyperlinkRelType {
+				return nil, errors.New("external relationships are not allowed")
+			}
+			result[relationship.ID] = packageRelationship{target: relationship.Target, typeURI: relationship.Type, external: true}
+			continue
 		}
 		target, err := resolveRelationshipTarget(source, relationship.Target)
 		if err != nil {

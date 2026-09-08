@@ -15,7 +15,8 @@ type relationship struct {
 	Type   string `xml:"Type,attr"`
 	Target string `xml:"Target,attr"`
 	// TargetMode is "External" for relationships that leave the package.
-	// Publication rejects those, so a template should never carry one.
+	// Publication keeps ordinary hyperlinks and drops every other external
+	// relationship, so a template should carry nothing else.
 	TargetMode string `xml:"TargetMode,attr,omitempty"`
 }
 
@@ -56,6 +57,19 @@ func escapeAttribute(value string) string {
 	var escaped strings.Builder
 	_ = xml.EscapeText(&escaped, []byte(value))
 	return escaped.String()
+}
+
+// isExternal reports whether a relationship points outside the package, in
+// which case its target is a URI rather than a part name.
+func (item relationship) isExternal() bool {
+	return item.TargetMode == "External"
+}
+
+// isHyperlink matches the relationship type PowerPoint uses for ordinary
+// hyperlinks, which fetch nothing when a deck is opened. Publication keeps
+// those, so the compiler carries them through untouched.
+func (item relationship) isHyperlink() bool {
+	return strings.HasSuffix(item.Type, "/hyperlink")
 }
 
 // relsPartFor returns the .rels part name holding a part's relationships.

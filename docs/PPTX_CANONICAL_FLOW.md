@@ -36,7 +36,7 @@ The interface guarantees revision checks, idempotency, exact slide counts, packa
 The ignored root `templates/` directory remains the local authoring source. A publication command performs these steps:
 
 1. Reject corrupt, encrypted, macro-enabled, oversized, or policy-violating packages.
-2. Remove comments, author metadata, unused slides, external relationships, signatures, and unapproved embedded objects.
+2. Remove comments, author metadata, unused slides, signatures, unapproved embedded objects, and every external relationship other than an ordinary hyperlink.
 3. Validate relationships, content types, slide dimensions, and manifest shape references.
 4. Calculate the package SHA-256 digest.
 5. Render source-slide previews for review.
@@ -84,6 +84,8 @@ Slot limits alone do not make a deck substantive, because most slots are optiona
 ### Compilation
 
 The compiler downloads and verifies the immutable template package, clones the assigned source slides and ownership-sensitive relationships, writes native content, rebuilds presentation-level references, removes unreachable source parts, updates document properties, and emits reproducible ZIP metadata.
+
+Hyperlink relationships survive cloning unchanged: they name a URI rather than a package part, so they are neither resolved nor pruned. Compilation and revision validation apply the same policy as publication, which keeps a template carrying template-author links compilable.
 
 The first implementation must support native text and images. Charts and tables require dedicated native OOXML writers before manifests may expose those slot types. Unsupported slots fail before generation.
 
@@ -171,4 +173,4 @@ Legacy presentation rows remain identifiable but cannot open in the new editor u
 - Validate each revision with an OOXML validator and desktop PowerPoint smoke test.
 - Compare LibreOffice previews with approved images for fonts, charts, tables, groups, SmartArt, media, portrait slides, and embedded fonts.
 - Exercise callback retries, duplicate saves, stale revisions, concurrent AI and editor saves, expired URLs, object-store failures, editor crashes, and preview-worker failures.
-- Reject ZIP bombs, path traversal, macros, external relationships, unapproved embedded objects, oversized media, and callbacks to untrusted result URLs.
+- Reject ZIP bombs, path traversal, macros, external relationships other than ordinary hyperlinks, unapproved embedded objects, oversized media, and callbacks to untrusted result URLs.

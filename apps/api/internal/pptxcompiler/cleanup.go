@@ -29,8 +29,12 @@ func prunePackage(p *pkg) error {
 			return err
 		}
 		for _, rel := range rels {
-			if rel.TargetMode == "External" {
-				return fmt.Errorf("external relationship in %s", relName)
+			if rel.isExternal() {
+				// A hyperlink has no part to reach, so it is kept as it is.
+				if !rel.isHyperlink() {
+					return fmt.Errorf("external relationship in %s", relName)
+				}
+				continue
 			}
 			target, err := resolveTarget(part, rel.Target)
 			if err != nil {
@@ -78,6 +82,10 @@ func cloneOwnedParts(p *pkg, original map[string][]byte, sourcePart, targetPart 
 			return nil, err
 		}
 		for i, rel := range rels {
+			// External targets are URIs, not parts, and are cloned unchanged.
+			if rel.isExternal() {
+				continue
+			}
 			resolved, err := resolveTarget(source, rel.Target)
 			if err != nil {
 				return nil, err
