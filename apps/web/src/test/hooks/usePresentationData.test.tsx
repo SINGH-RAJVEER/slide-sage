@@ -55,6 +55,7 @@ it("leaves the pre-stream loader when generation fails", async () => {
 it("keeps the committed deck mounted while iteration starts and fails", () => {
 	const presentation = {
 		title: "Existing deck",
+		documentKind: "pptx" as const,
 		totalSlides: 12,
 		template: { id: "simple-business-proposal", version: 1 },
 	};
