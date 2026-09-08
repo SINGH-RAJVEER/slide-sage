@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/slidepreview"
@@ -34,7 +35,9 @@ type queueClient = river.Client[*sql.Tx]
 // JobArgs is intentionally small so queue internals never become the source of
 // truth for user-visible generation state.
 type JobArgs struct {
-	JobID string `json:"job_id"`
+	JobID       string `json:"job_id"`
+	TraceParent string `json:"traceparent,omitempty"`
+	TraceState  string `json:"tracestate,omitempty"`
 }
 
 func (JobArgs) Kind() string { return "presentation_generation_v1" }
@@ -108,7 +111,7 @@ func NewWorkerClient(database *sql.DB, connections ai.ConnectionService, maxWork
 		maxWorkers = 1
 	}
 	workers := river.NewWorkers()
-	h := &handler{database: database, client: &http.Client{Timeout: 3 * time.Minute}, connections: connections}
+	h := &handler{database: database, client: &http.Client{Timeout: 3 * time.Minute, Transport: observability.HTTPTransport(nil)}, connections: connections}
 	if err := h.configureDocuments(context.Background()); err != nil {
 		return nil, fmt.Errorf("configure canonical generation: %w", err)
 	}
@@ -200,7 +203,11 @@ type generationWorker struct {
 }
 
 func (worker *generationWorker) Work(ctx context.Context, riverJob *river.Job[JobArgs]) error {
-	return worker.handler.processQueuedJob(ctx, riverJob)
+	ctx, span := startJobSpan(ctx, riverJob.Args, riverJob.Attempt)
+	started := time.Now()
+	err := worker.handler.processQueuedJob(ctx, riverJob)
+	finishJobSpan(span, started, riverJob.Attempt, err)
+	return err
 }
 
 func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobArgs]) error {
@@ -261,6 +268,7 @@ func (h *handler) processQueuedJob(ctx context.Context, riverJob *river.Job[JobA
 		}
 		return h.finalizeQueuedFailure(ctx, record, riverJob, job, "compilation_failure", err.Error())
 	}
+	recordTokenUsage(ctx, job.kind, tokens)
 	completed, _ := json.Marshal(document)
 	charged := actualCharge(tokens, job.quote)
 	if err := h.completeQueuedJob(ctx, riverJob, record, job, completed, document, text(document["title"], "Untitled Presentation"), charged, tokens, revision); err != nil {

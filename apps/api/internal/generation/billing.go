@@ -103,7 +103,7 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string
 	if _, err := tx.ExecContext(ctx, `INSERT INTO generation_jobs (id, operation_id, user_id, presentation_id, kind, payload, expected_revision, status, stage, progress_completed, progress_total) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, 'queued', 'planning', 1, 3)`, job.jobID, job.operationID, job.userID, job.presentationID, job.kind, payload, revision); err != nil {
 		return 0, 0, err
 	}
-	inserted, err := h.queue.InsertTx(ctx, tx, JobArgs{JobID: job.jobID}, nil)
+	inserted, err := h.queue.InsertTx(ctx, tx, newJobArgs(ctx, job.jobID), nil)
 	if err != nil {
 		return 0, 0, err
 	}
