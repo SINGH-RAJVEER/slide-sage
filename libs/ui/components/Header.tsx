@@ -43,7 +43,6 @@ interface HeaderProps {
 	sticky?: boolean;
 	onNavigate: (path: string) => void;
 	onSignOut: () => Promise<void>;
-	templateSelector?: ReactNode;
 }
 
 export function Header({
@@ -54,7 +53,6 @@ export function Header({
 	sticky = false,
 	onNavigate,
 	onSignOut,
-	templateSelector,
 }: HeaderProps) {
 	const [signingOut, setSigningOut] = useState(false);
 
@@ -131,7 +129,6 @@ export function Header({
 									</LinkComponent>
 								))}
 							</nav>
-							{templateSelector}
 						</div>
 					</div>
 				)}

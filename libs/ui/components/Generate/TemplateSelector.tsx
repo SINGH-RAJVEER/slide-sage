@@ -43,17 +43,18 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 	);
 
 	return (
-		<div className={`flex items-center gap-2 ${className}`}>
+		<div className={`flex items-center ${className}`}>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button
-						variant="outline"
-						className="w-44 bg-black/20 border-white/5 text-white/80 hover:bg-white/5 hover:text-white justify-between backdrop-blur-sm transition-all duration-200"
+						variant="ghost"
+						className="flex h-12 items-center gap-3 rounded-lg px-5 text-base font-light text-white/70 transition-all hover:bg-white/5 hover:text-white"
 					>
-						<div className="flex items-center gap-2">
-							<span className="truncate">{currentTemplate?.name || "Select template"}</span>
-						</div>
-						<ChevronDown className="w-4 h-4 opacity-30 group-hover:opacity-50" />
+						<span className="opacity-50">Template</span>
+						<span className="max-w-40 truncate text-white">
+							{currentTemplate?.name || "Select"}
+						</span>
+						<ChevronDown className="h-4 w-4 opacity-50" />
 					</Button>
 				</DropdownMenuTrigger>
 

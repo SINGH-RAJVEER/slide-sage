@@ -1,12 +1,11 @@
 import {
 	BINARY_PPTX_TEMPLATE_CATALOG,
-	type PresentationTemplateReference,
 	DEFAULT_BINARY_PPTX_TEMPLATE,
 	type PresentationRetryOptions,
+	type PresentationTemplateReference,
 } from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
-import TemplateSelector from "@slidesage/ui/components/Generate/TemplateSelector";
 import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
 import { templateIsSelectable } from "@slidesage/ui/lib/template-selection";
@@ -167,15 +166,7 @@ export default function GeneratePPTPage() {
 
 	return (
 		<div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-transparent">
-			<Header
-				templateSelector={
-					<TemplateSelector
-						selectedTemplate={selectedTemplate}
-						onTemplateChange={setSelectedTemplate}
-						installedThemes={installedThemes}
-					/>
-				}
-			/>
+			<Header />
 
 			<div
 				data-generation-selectors
@@ -186,10 +177,13 @@ export default function GeneratePPTPage() {
 					tonality={tonality}
 					useWebResearch={useWebResearch}
 					slideCount={slideCount}
+					selectedTemplate={selectedTemplate}
+					installedThemes={installedThemes}
 					onDetailLevelChange={setDetailLevel}
 					onTonalityChange={setTonality}
 					onUseWebResearchChange={setUseWebResearch}
 					onSlideCountChange={setSlideCount}
+					onTemplateChange={setSelectedTemplate}
 				/>
 			</div>
 
