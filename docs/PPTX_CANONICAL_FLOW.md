@@ -119,6 +119,12 @@ Template delivery through a private Cloud CDN origin uses signed URLs. `KeyName`
 
 ## ONLYOFFICE integration
 
+This section describes the target design, not this build. The implementation is complete but is
+not on the dev line: it lives on the `onlyoffice-editor` bookmark, because no document server is
+provisioned and an editor with nothing to connect to is worse than none. Dev renders preview
+images and serves downloads; everything below returns with that bookmark.
+
+
 The Go API creates a signed editor configuration for one user, presentation, permission set, and base revision. The ONLYOFFICE document key derives from the presentation ID and immutable revision. The stable file identity remains the presentation ID.
 
 The source URL is read-only and expires after the editor has fetched the document. The callback verifies the ONLYOFFICE JWT, session identity, callback status, base revision, result origin, size, content type, and package structure.
@@ -154,7 +160,9 @@ The compiler applies those operations to a copy of the current PPTX rather than 
 
 ## Legacy behavior removed
 
-The final implementation removes these paths:
+These paths are gone from the code, not merely unused. `NormalizeDocument`, the deck planner, the
+mutation API and its `PATCH /presentations/{id}` route, the semantic generation and planning
+prompts, and the browser mutation client have all been deleted.
 
 - semantic `ContentSlide`, `SceneSlide`, and `ChartSlide` generation;
 - AI layout, region, tone, density, pattern, and visual-intent output;
@@ -164,7 +172,12 @@ The final implementation removes these paths:
 - DOM-to-image PDF export;
 - fixed 1280 by 720 viewer geometry.
 
-Legacy presentation rows remain identifiable but cannot open in the new editor until the user regenerates them with a current template.
+Legacy presentation rows remain identifiable but cannot open in the new editor until the user
+regenerates them with a current template. `document_kind` still distinguishes them, which is the
+only thing the removal preserves. The row projection strips the stored `slides` array from every
+presentation, legacy included, because nothing renders it: canonical decks draw from preview
+images and legacy decks have no renderer at all. A legacy deck reports its slide count from the
+stored `totalSlides`, and one written without that field reports zero.
 
 ## Acceptance tests
 

@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 )
 
 // defaultModel is used when no model is configured and no per-user AI selection exists.
@@ -76,73 +75,6 @@ func parseRetryAfter(value string) time.Duration {
 		}
 	}
 	return 0
-}
-
-func (h *handler) generatePlan(ctx context.Context, job streamJob) (map[string]any, int, error) {
-	plan, tokens, err := h.generateJSON(ctx, job, planningSystemPromptForTemplate(job.template), generationUserPrompt(job), maxPlanOutputTokens(job.slideCount))
-	if err != nil {
-		return nil, 0, err
-	}
-	normalized, err := presentation.NormalizeDeckPlan(plan, job.slideCount)
-	if err != nil {
-		return nil, 0, err
-	}
-	if err := validatePlanForTemplate(normalized, job.template); err != nil {
-		return nil, 0, err
-	}
-	return normalized, tokens, nil
-}
-
-func (h *handler) generateDocument(ctx context.Context, job streamJob, plan map[string]any) (map[string]any, int, error) {
-	user := generationUserPrompt(job)
-	if plan != nil {
-		encoded, _ := json.Marshal(plan)
-		user += "\n\nDraft this validated DeckPlan in order. Preserve every planned slide's id, title, message, evidence, and semantic layout intent. Write substantive slide copy for each plan entry: " + string(encoded)
-	}
-	document, tokens, err := h.generateJSON(ctx, job, generationSystemPromptForTemplate(job.template), user, maxOutputTokens(job.slideCount))
-	if err != nil {
-		return nil, tokens, err
-	}
-	issue := draftValidationIssue(document, job, plan)
-	if issue == "" {
-		return document, tokens, nil
-	}
-
-	previous, _ := json.Marshal(document)
-	repairPrompt := user + "\n\nRepair the previous response and return a complete replacement JSON object. The previous response failed validation because " + issue + ". Return exactly the requested number of slides, and give every slide at least one substantive text block. Previous response: " + string(previous)
-	repaired, repairTokens, err := h.generateJSON(ctx, job, generationSystemPromptForTemplate(job.template), repairPrompt, maxOutputTokens(job.slideCount))
-	return repaired, tokens + repairTokens, err
-}
-
-func draftValidationIssue(document map[string]any, job streamJob, plan map[string]any) string {
-	rawSlides, ok := document["slides"].([]any)
-	if !ok {
-		return "slides was not an array"
-	}
-	if len(rawSlides) != job.slideCount {
-		return fmt.Sprintf("it contained %d slides instead of %d", len(rawSlides), job.slideCount)
-	}
-	encoded, _ := json.Marshal(document)
-	var candidate map[string]any
-	if json.Unmarshal(encoded, &candidate) != nil {
-		return "it could not be normalized"
-	}
-	preserveJobTemplate(candidate, job)
-	if plan != nil {
-		candidate = presentation.ApplyDeckPlan(candidate, plan)
-	}
-	normalized, _ := presentation.NormalizeDocument(candidate)
-	slides, _ := normalized["slides"].([]any)
-	if len(slides) != job.slideCount {
-		return "one or more slides had an invalid structure"
-	}
-	if !hasSubstantiveGeneratedContent(slides) {
-		return "it contained no substantive slide text"
-	}
-	if err := validateDocumentForTemplate(normalized, job.template); err != nil {
-		return err.Error()
-	}
-	return ""
 }
 
 func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user string, maxOutput int) (map[string]any, int, error) {
@@ -557,38 +489,6 @@ func repairTruncatedObject(content string) string {
 		repaired = append(repaired, closer)
 	}
 	return string(repaired)
-}
-
-func hasSubstantiveGeneratedContent(slides []any) bool {
-	for _, value := range slides {
-		slide, ok := value.(map[string]any)
-		if !ok || slide["type"] != "content" {
-			return false
-		}
-		blocks, ok := slide["blocks"].([]any)
-		if !ok {
-			return false
-		}
-		hasContent := false
-		for _, value := range blocks {
-			block, _ := value.(map[string]any)
-			switch block["type"] {
-			case "paragraph", "quote", "callout":
-				content := strings.TrimSpace(text(block["text"], ""))
-				if content != "" && content != "Content to be developed." {
-					hasContent = true
-				}
-			case "bullets":
-				if items, ok := block["items"].([]any); ok && len(items) > 0 {
-					hasContent = true
-				}
-			}
-		}
-		if !hasContent {
-			return false
-		}
-	}
-	return len(slides) > 0
 }
 
 func model() string {

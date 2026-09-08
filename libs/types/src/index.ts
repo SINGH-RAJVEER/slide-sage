@@ -188,15 +188,6 @@ export interface PresentationJSON {
 	[key: string]: unknown;
 }
 
-export type PresentationMutation = {
-	type: "update-presentation";
-	title?: string;
-};
-
-export interface PresentationMutationRequest {
-	mutations: PresentationMutation[];
-}
-
 export interface StreamStartEvent {
 	event: "start";
 	data: { status: string };

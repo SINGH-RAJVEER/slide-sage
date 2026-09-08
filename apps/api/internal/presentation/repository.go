@@ -153,4 +153,7 @@ func newUUID() (string, error) {
 }
 
 // Canonical document metadata comes from the current revision, including editor saves.
-const documentProjection = `(CASE WHEN document_kind='pptx' THEN slides_data - 'slides' ELSE slides_data END) || jsonb_build_object('documentKind',document_kind) || COALESCE((SELECT jsonb_build_object('totalSlides',r.slide_count,'currentRevision',jsonb_build_object('revision',r.revision,'slideCount',r.slide_count,'byteSize',r.byte_size,'sha256',r.sha256,'previewStatus',r.preview_status,'previewCount',r.preview_count,'createdAt',r.created_at)) FROM presentation_revisions r WHERE r.presentation_id=presentations.id AND r.revision=presentations.current_pptx_revision),'{}'::jsonb)`
+// The stored semantic slides array is never returned. Nothing renders it: canonical decks draw
+// from preview images and legacy decks have no renderer at all. Legacy rows stay identifiable
+// through document_kind, and report their slide count from the stored totalSlides.
+const documentProjection = `(slides_data - 'slides') || jsonb_build_object('documentKind',document_kind) || COALESCE((SELECT jsonb_build_object('totalSlides',r.slide_count,'currentRevision',jsonb_build_object('revision',r.revision,'slideCount',r.slide_count,'byteSize',r.byte_size,'sha256',r.sha256,'previewStatus',r.preview_status,'previewCount',r.preview_count,'createdAt',r.created_at)) FROM presentation_revisions r WHERE r.presentation_id=presentations.id AND r.revision=presentations.current_pptx_revision),'{}'::jsonb)`

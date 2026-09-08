@@ -24,7 +24,6 @@ func RegisterRoutes(mux *http.ServeMux, service *Service, identity UserIdentity,
 	mux.HandleFunc("GET /presentations", handler.list)
 	mux.HandleFunc("GET /presentations/{id}", handler.detail)
 	mux.HandleFunc("DELETE /presentations/{id}", handler.delete)
-	mux.HandleFunc("PATCH /presentations/{id}", handler.patch)
 }
 
 type presentationHandler struct {
@@ -94,38 +93,6 @@ func (h *presentationHandler) delete(writer http.ResponseWriter, request *http.R
 		return
 	}
 	writer.WriteHeader(http.StatusNoContent)
-}
-
-func (h *presentationHandler) patch(writer http.ResponseWriter, request *http.Request) {
-	userID, ok := h.userID(writer, request)
-	if !ok {
-		return
-	}
-	id := strings.TrimSpace(request.PathValue("id"))
-	if id == "" {
-		writeError(writer, http.StatusBadRequest, "Invalid presentation ID")
-		return
-	}
-	if h.hasActiveOperation(request.Context(), id, userID) {
-		writeError(writer, http.StatusConflict, "Presentation generation is still active")
-		return
-	}
-	body, err := readRequestBody(request, 1024*1024)
-	if err != nil {
-		writeInputError(writer, err)
-		return
-	}
-	mutations, err := ParseMutations(body)
-	if err != nil {
-		writeInputError(writer, err)
-		return
-	}
-	presentation, err := h.service.Update(request.Context(), id, userID, mutations)
-	if err != nil {
-		writeServiceError(writer, err)
-		return
-	}
-	writeJSON(writer, http.StatusOK, map[string]any{"presentation": presentation})
 }
 
 func (h *presentationHandler) hasActiveOperation(ctx context.Context, presentationID, userID string) bool {

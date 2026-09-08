@@ -45,34 +45,8 @@ func (s *Service) Delete(ctx context.Context, presentationID, userID string) err
 	return s.repository.DeleteOwned(ctx, presentationID, userID)
 }
 
-func (s *Service) Update(ctx context.Context, presentationID, userID string, mutations []Mutation) (PresentationDetail, error) {
-	presentation, err := s.repository.FindByID(ctx, presentationID)
-	if err != nil {
-		return PresentationDetail{}, err
-	}
-	if presentation.UserID != userID {
-		return PresentationDetail{}, ErrUnauthorized
-	}
-	document, err := ApplyMutations(presentation.SlidesData, mutations)
-	if err != nil {
-		return PresentationDetail{}, err
-	}
-	document, err = NormalizeDocument(document)
-	if err != nil {
-		return PresentationDetail{}, err
-	}
-	title, _ := document["title"].(string)
-	updated, err := s.repository.UpdateOwnedAtRevision(ctx, presentationID, userID, presentation.Revision, title, documentJSON(document))
-	if err != nil {
-		return PresentationDetail{}, err
-	}
-	return PresentationDetail{ID: updated.ID, Title: updated.Title, Prompt: updated.Prompt,
-		SlidesData: updated.SlidesData, CreatedAt: updated.CreatedAt, UpdatedAt: updated.UpdatedAt}, nil
-}
-
 func presentationSummary(presentation Presentation) PresentationSummary {
 	var document struct {
-		Slides      []json.RawMessage `json:"slides"`
 		TotalSlides int               `json:"totalSlides"`
 		Status      string            `json:"status"`
 		Sources     []json.RawMessage `json:"sources"`
@@ -94,6 +68,6 @@ func presentationSummary(presentation Presentation) PresentationSummary {
 		hasResearch = len(document.Failure.Retry.ResearchPayload.Sources) > 0
 	}
 	return PresentationSummary{ID: presentation.ID, Title: presentation.Title, Prompt: presentation.Prompt,
-		SlideCount: max(document.TotalSlides, len(document.Slides)), Status: status, HasResearch: hasResearch,
+		SlideCount: document.TotalSlides, Status: status, HasResearch: hasResearch,
 		CreatedAt: presentation.CreatedAt, UpdatedAt: presentation.UpdatedAt}
 }

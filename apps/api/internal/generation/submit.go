@@ -261,7 +261,7 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 			return streamJob{}, nil, writeStatusError{http.StatusConflict, "Only failed presentations can be retried"}
 		}
 	}
-	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
+	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, repairHeadroomTokens(input.SlideCount))
 	operationID, err := uuid()
 	if err != nil {
 		return streamJob{}, nil, err

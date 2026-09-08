@@ -303,14 +303,15 @@ func recordLedger(tx *sql.Tx, userID, operationID, entryType string, delta, bala
 	return err
 }
 
-func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, planningOutputTokens int) int64 {
+func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, repairHeadroom int) int64 {
 	encodedResearch, _ := json.Marshal(research)
 	encodedSources, _ := json.Marshal(payload)
-	inputBytes := len(generationSystemPrompt) + len(prompt) + len(current) + len(encodedResearch) + len(encodedSources) + 256
-	// The validated plan becomes part of the drafting input after the planning
-	// call, so reserve for its bounded output a second time as prompt context.
-	inputTokens := (inputBytes+3)/4 + planningOutputTokens
-	outputTokens := maxOutputTokens(slideCount) + planningOutputTokens
+	inputBytes := len(slotSystemPrompt) + len(prompt) + len(current) + len(encodedResearch) + len(encodedSources) + 256
+	// A slide that fails validation is repaired in a second call that resends the
+	// prompt, so the headroom is reserved once as extra input and once as extra
+	// output rather than only against the reply.
+	inputTokens := (inputBytes+3)/4 + repairHeadroom
+	outputTokens := maxOutputTokens(slideCount) + repairHeadroom
 	// The provider may add protocol tokens beyond the serialized prompt. The
 	// buffer makes the authorization a real maximum while settlement charges the
 	// provider's exact aggregate usage.
@@ -328,7 +329,13 @@ func maxOutputTokens(slideCount int) int {
 	return outputTokens
 }
 
-func maxPlanOutputTokens(slideCount int) int {
+// repairHeadroomTokens covers the bounded repair passes the compiler makes when
+// a generated slide fails slot validation. It is headroom, not a worst case:
+// every slide could in principle be repaired twice, and reserving for that would
+// demand a balance far beyond what any real generation spends. Usage past the
+// authorization is clamped by actualCharge, so an underestimate costs SlideSage
+// the difference rather than failing the deck.
+func repairHeadroomTokens(slideCount int) int {
 	outputTokens := 600 + slideCount*240
 	if outputTokens > 4000 {
 		return 4000
