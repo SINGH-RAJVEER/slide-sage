@@ -5,7 +5,7 @@ import { API_URL } from "../lib/api";
 export interface PreviewDocument {
 	slides: string[];
 }
-export type RevisionStatus = PresentationRevision & { editorEnabled: boolean };
+export type RevisionStatus = PresentationRevision;
 
 export function useRevisionPreviews(
 	id: string | undefined,

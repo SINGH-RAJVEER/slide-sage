@@ -86,7 +86,7 @@ func main() {
 	generation.RegisterRoutes(mux, database, func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
 	}, ai.ConnectionService{DB: database}, generation.RouteConfig{StreamContext: streamContext, Research: researchService})
-	if err := registerEditorRoutes(mux, database, service, baseURL); err != nil {
+	if err := registerDocumentRoutes(mux, database, service); err != nil {
 		log.Fatal(err)
 	}
 	if templateasset.CDNConfigured() {

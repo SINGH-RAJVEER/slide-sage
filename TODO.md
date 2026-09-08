@@ -24,7 +24,7 @@
 - Merge observability
 - Merge a finished landing page
 - Implement an 'add and edit esitsting PPT' flow to the ooxml template implementation
-- Provision the ONLYOFFICE document server and turn the browser editor on, tracked on the `onlyoffice-editor` bookmark. The API callback flow, the signed session route and the `OfficeEditor` component are already written and dormant; what is missing is the deployment.
+- Provision the ONLYOFFICE document server and turn the browser editor on. The whole implementation lives on the `onlyoffice-editor` bookmark and is not on dev: the `officeeditor` package, the signed session route, the callback handler, the `OfficeEditor` component, and their docs and environment variables all moved there, so dev ships no unreachable editor code.
   Decide the hosting form first: a GCE VM running the container is vendor supported and keeps editing state on a persistent disk, Cloud Run matches the rest of the stack but would hold the bundled Postgres on an in-memory disk that can be recycled mid edit, and GKE with the Helm chart externalises state but adds a cluster.
   Then wire a `docs.slidesage.app` hostname on the existing load balancer using a separate managed certificate so the API certificate is never recreated, add `ONLYOFFICE_JWT_SECRET` and the Developer Edition licence file to Secret Manager, mount the licence at `/var/www/onlyoffice/Data/license.lic`, and set `ONLYOFFICE_DOCUMENT_SERVER_URL` on the API.
   The viewer deliberately ships preview only until then, so restoring the `Edit presentation` control is part of that work.

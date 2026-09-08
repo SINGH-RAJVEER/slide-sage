@@ -51,4 +51,3 @@ Converters run with a minimal environment (`HOME` and `TMPDIR` inside the per-re
 
 - [ADR 0001: Make PPTX revisions canonical](adr/0001-canonical-pptx-office-editor.md)
 - [Canonical PPTX presentation flow](PPTX_CANONICAL_FLOW.md)
-- [Office editor](OFFICE_EDITOR.md)

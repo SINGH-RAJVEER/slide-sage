@@ -2,7 +2,6 @@ export { CenteredStatusScreen } from "./CenteredStatusScreen";
 export type { ExportFormat, PresentationExporter } from "./DownloadMenu";
 export { default as DownloadMenu } from "./DownloadMenu";
 export { default as IterateModal } from "./IterateModal";
-export { OfficeEditor } from "./OfficeEditor";
 export { PreviewSlide } from "./PreviewSlide";
 export { ViewerFullscreenOverlayControls } from "./ViewerFullscreenOverlayControls";
 export { ViewerHeaderControls } from "./ViewerHeaderControls";

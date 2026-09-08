@@ -15,11 +15,10 @@ import (
 )
 
 type Handler struct {
-	DB            *sql.DB
-	Objects       presentationrevision.ObjectStore
-	Identity      func(*http.Request) (string, error)
-	Queue         *river.Client[*sql.Tx]
-	EditorEnabled bool
+	DB       *sql.DB
+	Objects  presentationrevision.ObjectStore
+	Identity func(*http.Request) (string, error)
+	Queue    *river.Client[*sql.Tx]
 }
 
 func RegisterRoutes(mux *http.ServeMux, h Handler) {
@@ -92,9 +91,7 @@ func (h Handler) status(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	snapshot := presentationrevision.Snapshot(revision)
-	snapshot["editorEnabled"] = h.EditorEnabled
-	respond(w, snapshot)
+	respond(w, presentationrevision.Snapshot(revision))
 }
 func (h Handler) stream(w http.ResponseWriter, r *http.Request, key, mime string) {
 	if h.Objects == nil {

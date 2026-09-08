@@ -72,17 +72,10 @@ The renderer also requires `DATABASE_URL` and `PRESENTATION_GCS_BUCKET`. It read
 
 ## Office editor
 
-| Variable                       | Required                | Secret | Purpose                                                                         |
-| ------------------------------ | ----------------------- | ------ | ------------------------------------------------------------------------------- |
-| `ONLYOFFICE_DOCUMENT_SERVER_URL` | For the browser editor | No     | ONLYOFFICE Docs origin; the browser loads its API from here and decks are fetched from it |
-| `ONLYOFFICE_JWT_SECRET`        | For the browser editor  | Yes    | Shared secret signing the editor configuration and verifying callbacks           |
-| `ONLYOFFICE_JWT_HEADER`        | No                      | No     | Header carrying the callback token; defaults to `Authorization`                  |
-| `PUBLIC_API_URL`               | No                      | No     | Base URL the document server uses to reach this API; defaults to `BASE_URL`      |
-| `EDITOR_SOURCE_TOKEN_SECRET`   | No                      | Yes    | Signs short-lived deck download URLs; defaults to `ONLYOFFICE_JWT_SECRET`        |
-| `EDITOR_SOURCE_TOKEN_TTL_SECONDS` | No                   | No     | Lifetime of a signed deck download URL; defaults to `300` seconds                |
-| `EDITOR_MAX_SAVE_BYTES`        | No                      | No     | Ceiling on one editor save; defaults to 64 MiB                                   |
-
-The editor is optional. An API process with none of this configured logs that the editor is disabled; a partial configuration fails at startup. Configuring the editor also requires `PRESENTATION_GCS_BUCKET`, because the document server downloads decks from object storage through the API. See [OFFICE_EDITOR.md](OFFICE_EDITOR.md).
+The browser editor is not part of this build. No API process reads any `ONLYOFFICE_*` or `EDITOR_*`
+variable, because the document server is not provisioned and the integration has been moved to the
+`onlyoffice-editor` bookmark. The variables and their documentation live there, and come back with
+it.
 
 ## AI and research
 
