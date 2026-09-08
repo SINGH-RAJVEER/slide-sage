@@ -6,6 +6,7 @@ func TestIsValidLandingPageAcceptsOnlySupportedPages(t *testing.T) {
 	supported := map[string]bool{
 		"generate":      true,
 		"presentations": true,
+		"landing":       true,
 	}
 	for _, landingPage := range LandingPages {
 		if !supported[landingPage] {
