@@ -1,13 +1,13 @@
 /// <reference lib="dom" />
 
 import { afterEach, beforeEach, expect, it, mock } from "bun:test";
-import { fireEvent, render, waitFor } from "@testing-library/react";
-import { useState } from "react";
+import { StreamingProvider, useStreaming } from "@slidesage/ui";
 import {
 	PRESENTATIONS_UPDATED_EVENT,
 	type PresentationUpdatedDetail,
 } from "@slidesage/ui/lib/presentation-events";
-import { StreamingProvider, useStreaming } from "@slidesage/ui";
+import { fireEvent, render, waitFor } from "@testing-library/react";
+import { useState } from "react";
 
 beforeEach(() => {
 	localStorage.removeItem("slidesage-active-generation");
@@ -55,9 +55,11 @@ function GenerateStarter({ onNavigateAway }: { onNavigateAway?: () => void }) {
 
 function IterateStarter() {
 	const { generate, streamingState } = useStreaming();
+	const [result, setResult] = useState<boolean>();
 
 	return (
 		<div>
+			<output data-testid="iteration-result">{String(result)}</output>
 			<output data-testid="iteration-state">
 				{streamingState.isStreaming ? "streaming" : "idle"}:
 				{streamingState.isComplete ? "complete" : "pending"}:{streamingState.error ?? "no-error"}
@@ -75,7 +77,7 @@ function IterateStarter() {
 						detailLevel: "balanced",
 						tonality: "professional",
 						parentPresentationId: "presentation_1",
-					});
+					}).then(setResult);
 				}}
 			>
 				Iterate
@@ -327,6 +329,7 @@ it("treats saved as terminal when a later frame follows it", async () => {
 		fireEvent.click(view.getByRole("button", { name: "Iterate" }));
 		await waitFor(() => {
 			expect(view.getByTestId("iteration-state")).toHaveTextContent("idle:complete:no-error");
+			expect(view.getByTestId("iteration-result")).toHaveTextContent("true");
 		});
 	} finally {
 		globalThis.fetch = originalFetch;
@@ -515,6 +518,32 @@ it("starts a second generation after the first completes", async () => {
 		fireEvent.click(view.getByRole("button", { name: "Start" }));
 		await waitFor(() => expect(view.getByTestId("runs")).toHaveTextContent("2"));
 		expect(submitCount).toBe(2);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+it("returns failure to the iteration form when the worker emits an error", async () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+		if (String(input).endsWith("/presentation-jobs"))
+			return Response.json(
+				{ job_id: "job_failed", presentation_id: "presentation_1" },
+				{ status: 202 },
+			);
+		return sse('id: 1\nevent: error\ndata: {"error":"Could not revise the deck"}\n\n');
+	}) as unknown as typeof fetch;
+	try {
+		const view = render(
+			<StreamingProvider>
+				<IterateStarter />
+			</StreamingProvider>,
+		);
+		fireEvent.click(view.getByRole("button", { name: "Iterate" }));
+		await waitFor(() => expect(view.getByTestId("iteration-result")).toHaveTextContent("false"));
+		expect(view.getByTestId("iteration-state")).toHaveTextContent(
+			"idle:pending:Could not revise the deck",
+		);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

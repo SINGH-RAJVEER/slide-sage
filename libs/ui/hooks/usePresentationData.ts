@@ -77,10 +77,20 @@ export function usePresentationData({
 
 	// When streaming starts and we have no slides yet, clear previous state
 	useEffect(() => {
-		if (consumesStreamingState && streamingState.isStreaming && streamingSlidesCount === 0) {
+		if (
+			consumesStreamingState &&
+			streamingState.operation !== "iteration" &&
+			streamingState.isStreaming &&
+			streamingSlidesCount === 0
+		) {
 			setPresentation(undefined);
 		}
-	}, [consumesStreamingState, streamingState.isStreaming, streamingSlidesCount]);
+	}, [
+		consumesStreamingState,
+		streamingState.operation,
+		streamingState.isStreaming,
+		streamingSlidesCount,
+	]);
 
 	// Update presentation while streaming
 	useEffect(() => {
@@ -131,21 +141,6 @@ export function usePresentationData({
 	const presentationHasSlides = !!presentation && presentation.totalSlides > 0;
 
 	const lastFetchedPresentationIdRef = useRef<string | undefined>(undefined);
-	useEffect(() => {
-		if (
-			streamingState.operation === "iteration" &&
-			streamingState.error &&
-			streamingState.presentationId === presentationIdFromParams
-		) {
-			lastFetchedPresentationIdRef.current = undefined;
-			setPresentation(undefined);
-		}
-	}, [
-		presentationIdFromParams,
-		streamingState.error,
-		streamingState.operation,
-		streamingState.presentationId,
-	]);
 	useEffect(() => {
 		const fetchPresentation = async () => {
 			if (consumesStreamingState && streamingState.isStreaming) {
