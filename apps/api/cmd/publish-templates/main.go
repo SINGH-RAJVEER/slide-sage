@@ -1,7 +1,10 @@
-// Command publish-templates turns curated PPTX files into immutable, digest-pinned template packages.
-
-// It sanitizes each package, hashes the sanitized bytes, uploads it to pptx-templates/{id}/{version}/{sha256}/template.pptx, writes the manifest the compiler reads, and records the digest so the catalog can be backfilled.
-
+// Command publish-templates turns curated PPTX files into immutable,
+// digest-pinned template packages.
+//
+// It sanitizes each package, hashes the sanitized bytes, uploads it to
+// pptx-templates/{id}/{version}/{sha256}/template.pptx, writes the manifest the
+// compiler reads, and records the digest so the catalog can be backfilled.
+//
 //	go run ./cmd/publish-templates -source ../../templates/v1 -dry-run
 //	go run ./cmd/publish-templates -source ../../templates/v1 -out /tmp/staged
 //	go run ./cmd/publish-templates -source ../../templates/v1 -bucket slidesage-504414-templates

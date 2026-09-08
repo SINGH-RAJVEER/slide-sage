@@ -162,7 +162,7 @@ func (h *handler) revisePPTX(ctx context.Context, job streamJob, source []byte) 
 	}
 	encoded, _ := json.Marshal(index)
 	system := `Return one JSON object with title and operations. Each operation replaces text on the current revision: {"position":1,"shapeId":2,"expectedText":"exact indexed text","text":"replacement"}. Use only indexed text shapes, preserve all other objects and slide order. Do not return templates, slides, styling or geometry.`
-	user := job.prompt + "\nCurrent revision index: " + string(encoded)
+	user := generationUserPrompt(job) + "\nUse a " + job.detailLevel + " level of detail and a " + job.tonality + " tone.\nCurrent revision index: " + string(encoded)
 	var tokens int
 	for attempt := 0; attempt < 2; attempt++ {
 		response, used, e := h.generateJSON(ctx, job, system, user, maxOutputTokens(job.slideCount))

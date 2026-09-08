@@ -423,6 +423,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 			let cursor = startCursor;
 			let retryDelay = 1000;
 			let receivedComplete = false;
+			const outcome = { succeeded: false };
 
 			const fail = (message: string) => {
 				clearStoredGeneration(jobId);
@@ -498,6 +499,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 										return true;
 									}
 									terminal = true;
+									outcome.succeeded = true;
 									setStreamingState((prev) => ({
 										...prev,
 										...(persisted ?? {}),
@@ -527,7 +529,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						});
 					}
 					if (terminal || controller.signal.aborted || abortControllerRef.current !== controller) {
-						return;
+						return outcome.succeeded;
 					}
 				} catch (error) {
 					if (controller.signal.aborted) return;
@@ -584,11 +586,13 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 				}));
 				// Release the stream slot no matter how consumption ends, so later
 				// generations are not blocked by a finished or failed stream.
-				await consumeJobEvents(
-					jobId,
-					attachedPresentationId || targetPresentationId,
-					controller,
-				).finally(() => releaseActiveStream(controller));
+				return (
+					(await consumeJobEvents(
+						jobId,
+						attachedPresentationId || targetPresentationId,
+						controller,
+					).finally(() => releaseActiveStream(controller))) === true
+				);
 			};
 
 			try {
@@ -659,8 +663,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 					return false;
 				}
 
-				await attachAndConsume(data.presentation_id);
-				return true;
+				return await attachAndConsume(data.presentation_id);
 			} catch (error) {
 				const isAbort =
 					(error instanceof Error && error.name === "AbortError") || controller.signal.aborted;
@@ -678,8 +681,7 @@ export function StreamingProvider({ children }: { children: ReactNode }) {
 						const job = (await recovery.json().catch(() => null)) as {
 							presentation_id?: string;
 						} | null;
-						await attachAndConsume(job?.presentation_id);
-						return true;
+						return await attachAndConsume(job?.presentation_id);
 					}
 					clearStoredGeneration(jobId);
 					releaseActiveStream(controller);

@@ -156,7 +156,7 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 		if job.slideCount != count {
-			writeError(writer, http.StatusBadRequest, "AI text revisions preserve slide count. Add or remove slides in the Office editor.")
+			writeError(writer, http.StatusBadRequest, "AI text revisions preserve the current slide count. Generate a new presentation to change the number of slides.")
 			return
 		}
 	}
@@ -328,7 +328,7 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 }
 
 func buildIterationJob(jobID, userID, operationID string, base persistedPresentation, input submitInput, count int, quote int64, selection *ai.Selection) streamJob {
-	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, template: templateFromDocument(base.Data), theme: documentTheme(base.Data), current: base.Data, kind: "iteration"}
+	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, template: templateFromDocument(base.Data), theme: documentTheme(base.Data), current: base.Data, kind: "iteration"}
 }
 
 type streamJob struct {

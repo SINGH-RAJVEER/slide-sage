@@ -173,7 +173,7 @@ export default function PresentationViewerPage() {
 		tonality: string,
 		useWebResearch: boolean,
 	) => {
-		if (!prompt.trim() || !presentationId || !presentation?.template) return;
+		if (!prompt.trim() || !presentationId || !presentation?.template) return false;
 		requestGenerationNotificationPermission();
 
 		const success = await generate({
@@ -189,6 +189,7 @@ export default function PresentationViewerPage() {
 		if (success) {
 			setShowIterateModal(false);
 		}
+		return success;
 	};
 
 	const handleCancelGeneration = async () => {
@@ -429,6 +430,8 @@ export default function PresentationViewerPage() {
 					open={showIterateModal}
 					onOpenChange={setShowIterateModal}
 					onIterate={handleIteratePresentation}
+					currentSlideCount={previews.revision?.slideCount}
+					error={streamingState.operation === "iteration" ? streamingState.error : undefined}
 					isStreaming={streamingState.isStreaming}
 				/>
 			)}
