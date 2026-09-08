@@ -1,13 +1,11 @@
-// Command publish-templates turns curated PPTX files into immutable,
-// digest-pinned template packages.
-//
-// It sanitizes each package, hashes the sanitized bytes, uploads it to
-// pptx-templates/{id}/{version}/{sha256}/template.pptx, writes the manifest the
-// compiler reads, and records the digest so the catalog can be backfilled.
-//
+// Command publish-templates turns curated PPTX files into immutable, digest-pinned template packages.
+
+// It sanitizes each package, hashes the sanitized bytes, uploads it to pptx-templates/{id}/{version}/{sha256}/template.pptx, writes the manifest the compiler reads, and records the digest so the catalog can be backfilled.
+
 //	go run ./cmd/publish-templates -source ../../templates/v1 -dry-run
 //	go run ./cmd/publish-templates -source ../../templates/v1 -out /tmp/staged
 //	go run ./cmd/publish-templates -source ../../templates/v1 -bucket slidesage-504414-templates
+//	go run ./cmd/publish-templates -verify
 package main
 
 import (
@@ -24,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templateasset"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatepublish"
 )
 
@@ -34,9 +33,7 @@ type digestRecord struct {
 	ObjectPath string `json:"objectPath"`
 }
 
-// catalogEntry mirrors templatecatalog.Entry. The API embeds its own copy of
-// the published set because go:embed cannot reach outside apps/api, so this
-// command writes both files from one run and they cannot drift apart.
+// catalogEntry mirrors templatecatalog.Entry. The API embeds its own copy of the published set because go:embed cannot reach outside apps/api, so this command writes both files from one run and they cannot drift apart.
 type catalogEntry struct {
 	ID      string `json:"id"`
 	Version int    `json:"version"`
@@ -55,7 +52,15 @@ func main() {
 	skip := flag.String("skip", "quarantine-agriculture-business-plan", "comma-separated template IDs to leave unpublished")
 	maxBytes := flag.Int64("max-bytes", templatepublish.DefaultMaxPackageBytes, "reject packages larger than this many bytes")
 	dryRun := flag.Bool("dry-run", false, "prepare and report without uploading or writing files")
+	verify := flag.Bool("verify", false, "check that every published template resolves in the bucket, and report nothing else")
 	flag.Parse()
+
+	if *verify {
+		if failures := verifyPublished(*catalogFile, *digestFile, *manifestDir); failures > 0 {
+			os.Exit(1)
+		}
+		return
+	}
 
 	entries, err := os.ReadDir(*source)
 	if err != nil {
@@ -156,6 +161,73 @@ func main() {
 	if failures > 0 {
 		os.Exit(1)
 	}
+}
+
+// verifyPublished checks the three artifacts a usable template needs: the
+// digest records the browser and the API each keep, the compiler manifest, and
+// the object itself. The first two are local and free; the object is checked
+// with a signed HEAD, because a package present in the catalog but absent from
+// the bucket fails at generation time with nothing to point at.
+func verifyPublished(catalogFile, digestFile, manifestDir string) int {
+	published, err := readCatalog(catalogFile)
+	if err != nil {
+		log.Fatalf("read published catalog: %v", err)
+	}
+	digests, err := readDigests(digestFile)
+	if err != nil {
+		log.Fatalf("read digests: %v", err)
+	}
+	var fetcher *templateasset.CDNFetcher
+	if templateasset.CDNConfigured() {
+		fetcher, err = templateasset.NewCDNFetcherFromEnv()
+		if err != nil {
+			log.Fatalf("configure template CDN: %v", err)
+		}
+	} else {
+		fmt.Println("CDN is not configured; checking local records only")
+	}
+
+	ctx := context.Background()
+	failures := 0
+	for _, entry := range published {
+		problems := []string{}
+		if record, found := digests[entry.ID]; !found {
+			problems = append(problems, "no digest record")
+		} else if record.SHA256 != entry.SHA256 {
+			problems = append(problems, "digest record disagrees with the published catalog")
+		}
+		if _, err := os.Stat(filepath.Join(manifestDir, entry.ID+".json")); err != nil {
+			problems = append(problems, "no compiler manifest")
+		}
+		if fetcher != nil {
+			if err := fetcher.Exists(ctx, templateasset.Asset{ID: entry.ID, Version: entry.Version, SHA256: entry.SHA256}); err != nil {
+				problems = append(problems, fmt.Sprintf("package unreachable: %v", err))
+			}
+			if err := fetcher.ThumbnailExists(ctx, entry.ID, entry.Version); err != nil {
+				problems = append(problems, fmt.Sprintf("cover unreachable: %v", err))
+			}
+		}
+		if len(problems) == 0 {
+			fmt.Printf("ok    %-52s %s\n", entry.ID, entry.SHA256[:12])
+			continue
+		}
+		failures++
+		fmt.Printf("FAIL  %-52s %s\n", entry.ID, strings.Join(problems, "; "))
+	}
+	fmt.Printf("\n%d verified, %d failed\n", len(published)-failures, failures)
+	return failures
+}
+
+func readCatalog(path string) ([]catalogEntry, error) {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	published := []catalogEntry{}
+	if err := json.Unmarshal(contents, &published); err != nil {
+		return nil, err
+	}
+	return published, nil
 }
 
 // directoryUploader mirrors the bucket layout on local disk so a publication

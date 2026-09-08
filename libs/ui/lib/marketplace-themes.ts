@@ -53,7 +53,9 @@ export function getInstalledMarketplaceThemes(): InstalledMarketplaceTheme[] {
 
 export function installMarketplaceTheme(marketplaceId: string) {
 	const item = MARKETPLACE_ITEMS.find((candidate) => candidate.id === marketplaceId);
-	if (!item || typeof window === "undefined") return false;
+	// An unpublished template has no package to compile, so installing it would
+	// only add a permanently disabled entry to the selector.
+	if (!item?.available || typeof window === "undefined") return false;
 
 	const installedReferences = getStoredReferences();
 	if (!installedReferences.some((reference) => reference.id === marketplaceId)) {

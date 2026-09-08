@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatepublish"
 )
 
@@ -66,6 +67,27 @@ func TestEmbeddedManifestsUseTheCurrentSchema(t *testing.T) {
 		}
 		if manifest.ManifestVersion != templatepublish.ManifestVersion {
 			t.Fatalf("%s has manifest version %d, want %d", id, manifest.ManifestVersion, templatepublish.ManifestVersion)
+		}
+	}
+}
+
+// TestEveryPublishedTemplateHasAManifest checks the direction the other tests
+// do not: a template can be published, and its digest recorded, while the
+// compiler manifest it needs is missing. Generation would then accept the
+// template and fail once it tried to compile.
+func TestEveryPublishedTemplateHasAManifest(t *testing.T) {
+	published := templatecatalog.Entries()
+	if len(published) == 0 {
+		t.Skip("nothing is published")
+	}
+	for _, entry := range published {
+		manifest, err := Lookup(entry.ID, entry.Version)
+		if err != nil {
+			t.Errorf("published template %s@%d has no manifest: %v", entry.ID, entry.Version, err)
+			continue
+		}
+		if manifest.TemplateID != entry.ID {
+			t.Errorf("manifest for %s names template %s", entry.ID, manifest.TemplateID)
 		}
 	}
 }

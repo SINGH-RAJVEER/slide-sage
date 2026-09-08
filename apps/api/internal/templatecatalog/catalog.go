@@ -88,6 +88,14 @@ func Published(id string, version int) bool {
 	return found
 }
 
+// Entries returns the published set. The slice is a copy, so a caller cannot
+// change what generation resolves.
+func Entries() []Entry {
+	published := make([]Entry, len(entries))
+	copy(published, entries)
+	return published
+}
+
 // Empty reports whether nothing has been published yet, which lets callers
 // distinguish "you picked an unpublished template" from "no template exists".
 func Empty() bool {

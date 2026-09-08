@@ -6,6 +6,8 @@ export interface MarketplaceCardItem {
 	description: string;
 	/** Signed URL of the cover slide rendered from the template package. */
 	thumbnailUrl: string;
+	/** Whether a published package exists, which is what makes it installable. */
+	available: boolean;
 }
 
 interface MarketplaceCardProps {
@@ -52,12 +54,14 @@ export default function MarketplaceCard({
 				</button>
 				<button
 					type="button"
+					disabled={!installed && !item.available}
+					title={!installed && !item.available ? "This template is not published yet." : undefined}
 					aria-label={`${installed ? "Remove" : "Install"} ${item.name}`}
 					onClick={() => (installed ? onRemove(item.id) : onInstall(item.id))}
 					className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:border-emerald-300/20 disabled:bg-emerald-300/10 disabled:text-emerald-100"
 				>
 					{installed ? <Trash2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-					{installed ? "Remove" : "Install"}
+					{installed ? "Remove" : item.available ? "Install" : "Unpublished"}
 				</button>
 			</div>
 		</article>

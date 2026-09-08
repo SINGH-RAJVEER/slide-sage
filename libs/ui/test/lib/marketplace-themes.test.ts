@@ -37,6 +37,17 @@ describe("installed marketplace templates", () => {
 		expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")).toEqual([item.templateReference]);
 	});
 
+	it("refuses to install a template with no published package", () => {
+		// Installing one would only add a permanently disabled entry to the
+		// selector, since generation resolves the digest and rejects the rest.
+		const unpublished = MARKETPLACE_ITEMS.find((item) => !item.available);
+		if (!unpublished) return;
+
+		expect(installMarketplaceTheme(unpublished.id)).toBe(false);
+		expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+		expect(getInstalledMarketplaceThemes()).toEqual([]);
+	});
+
 	it("removes a stored binary template reference", () => {
 		const item = MARKETPLACE_ITEMS[0];
 		if (!item) throw new Error("Expected a marketplace template");

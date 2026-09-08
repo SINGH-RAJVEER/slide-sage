@@ -135,6 +135,50 @@ func (fetcher *CDNFetcher) FetchThumbnail(ctx context.Context, id string, versio
 	return fetcher.object(ctx, thumbnailPath(id, version), ThumbnailContentType, DefaultMaxThumbnailBytes)
 }
 
+// Exists reports whether a published package resolves at its digest-pinned key.
+// It exists because the catalog files and the bucket can drift apart — the
+// digest is recorded in the repository while the object lives in the bucket —
+// and downloading tens of megabytes per template only to discard them is a
+// wasteful way to learn that they still agree.
+func (fetcher *CDNFetcher) Exists(ctx context.Context, asset Asset) error {
+	if err := validateAsset(asset); err != nil {
+		return err
+	}
+	return fetcher.head(ctx, assetPath(asset), PPTXContentType)
+}
+
+// ThumbnailExists reports whether a template's cover resolves.
+func (fetcher *CDNFetcher) ThumbnailExists(ctx context.Context, id string, version int) error {
+	if !assetIDPattern.MatchString(id) || version <= 0 {
+		return errors.New("invalid template asset identity")
+	}
+	return fetcher.head(ctx, thumbnailPath(id, version), ThumbnailContentType)
+}
+
+func (fetcher *CDNFetcher) head(ctx context.Context, objectPath, contentType string) error {
+	signedURL := fetcher.signedURL(objectPath, fetcher.now().Add(fetcher.ttl))
+	request, err := http.NewRequestWithContext(ctx, http.MethodHead, signedURL, nil)
+	if err != nil {
+		return fmt.Errorf("create template request: %w", err)
+	}
+	response, err := fetcher.client.Do(request)
+	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("head template asset: %w", err)
+		}
+		return ErrFetchFailed
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("head template asset: unexpected HTTP status %d", response.StatusCode)
+	}
+	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	if err != nil || mediaType != contentType {
+		return ErrUnexpectedType
+	}
+	return nil
+}
+
 func (fetcher *CDNFetcher) object(ctx context.Context, objectPath, contentType string, maxBytes int64) ([]byte, error) {
 	signedURL := fetcher.signedURL(objectPath, fetcher.now().Add(fetcher.ttl))
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, signedURL, nil)

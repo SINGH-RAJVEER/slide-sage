@@ -28,6 +28,14 @@ The route refuses anything that is not exactly a cover path, and refuses templat
 
 Covers are produced by `scripts/render-template-thumbnails.ts` and uploaded beside the package. A template with no uploaded cover answers `502` until one exists.
 
+## Publication gating
+
+Three artifacts must exist before a template can produce a presentation: the digest-pinned object in the bucket, a digest recorded in both `libs/types/src/template-digests.json` and `apps/api/internal/templatecatalog/published.json`, and a compiler manifest under `apps/api/internal/templatemanifest/manifests`. A template missing any of them is listed but not usable.
+
+The browser derives `asset.status` from the digest map, so an unpublished template reads as `pending-upload` without anyone maintaining a second list. Selection is gated on it in three places: the template dropdown disables the entry, `GeneratePPTPage` disables generation while an unselectable template is chosen, and `installMarketplaceTheme` refuses to install one, because installing it would only add a permanently disabled entry to the selector. Marketplace cards show `Unpublished` in place of `Install`.
+
+`go run ./cmd/publish-templates -verify` checks all three artifacts for every published entry and exits non-zero on any mismatch. The object check is a signed `HEAD`, so it costs one request per template rather than a download. Nothing checks this automatically: the catalog files live in the repository while the objects live in the bucket, and the two drift apart silently until a generation fails.
+
 ## Presentation selection
 
 A presentation stores its PowerPoint template separately from its browser preview theme:
