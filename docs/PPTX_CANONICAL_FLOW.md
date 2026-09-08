@@ -79,6 +79,8 @@ The AI receives the ordered assignments and slot limits. A slide response contai
 
 The worker validates every slot. It performs targeted repair for missing slides, malformed values, or content that exceeds a slot limit. It does not accept a shorter deck and does not silently discard invalid slides.
 
+Slot limits alone do not make a deck substantive, because most slots are optional. A slide that has any text or list slot must fill at least one of them, so an empty slot map fails validation and repair rather than compiling into a blank deck at the requested slide count.
+
 ### Compilation
 
 The compiler downloads and verifies the immutable template package, clones the assigned source slides and ownership-sensitive relationships, writes native content, rebuilds presentation-level references, removes unreachable source parts, updates document properties, and emits reproducible ZIP metadata.

@@ -57,8 +57,14 @@ func ValidateSlide(a Assignment, content SlideContent) error {
 		return fmt.Errorf("missing slide %d", a.Position)
 	}
 	known := map[string]bool{}
+	// A slide whose text slots are all optional would otherwise compile empty,
+	// so at least one of them has to carry content.
+	textSlots, filled := 0, 0
 	for _, s := range a.Archetype.Slots {
 		known[s.ID] = true
+		if s.Kind != templatepublish.SlotImage {
+			textSlots++
+		}
 		value := content.Slots[s.ID]
 		if value == nil {
 			if s.Required {
@@ -76,8 +82,12 @@ func ValidateSlide(a Assignment, content SlideContent) error {
 		if err != nil {
 			return err
 		}
-		if s.Required && strings.TrimSpace(strings.Join(lines, "")) == "" {
-			return fmt.Errorf("required slot %s is empty", s.ID)
+		if strings.TrimSpace(strings.Join(lines, "")) == "" {
+			if s.Required {
+				return fmt.Errorf("required slot %s is empty", s.ID)
+			}
+		} else {
+			filled++
 		}
 		for _, line := range lines {
 			if utf8.RuneCountInString(line) > s.MaxCharacters {
@@ -89,6 +99,9 @@ func ValidateSlide(a Assignment, content SlideContent) error {
 		if !known[id] {
 			return fmt.Errorf("unknown slot %s", id)
 		}
+	}
+	if textSlots > 0 && filled == 0 {
+		return fmt.Errorf("slide %d has no text content", a.Position)
 	}
 	return nil
 }

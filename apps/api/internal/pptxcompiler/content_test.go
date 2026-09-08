@@ -44,3 +44,27 @@ func TestCompileWritesMappedShapesAndClearsSamples(t *testing.T) {
 		t.Fatal("short deck accepted")
 	}
 }
+
+func TestValidateSlideRejectsSlidesWithNoText(t *testing.T) {
+	a := assignmentsFrom(1, 1)[0]
+	a.Archetype.Slots = []templatepublish.Slot{
+		{ID: "title", ShapeID: 2, Kind: templatepublish.SlotText, MaxCharacters: 40},
+		{ID: "points", ShapeID: 3, Kind: templatepublish.SlotList, MaxCharacters: 40, MaxListItems: 4},
+	}
+	for _, slots := range []map[string]any{nil, {}, {"title": "   "}, {"points": []any{"", " "}}} {
+		if err := ValidateSlide(a, SlideContent{Position: 1, Slots: slots}); err == nil {
+			t.Fatalf("empty slide accepted: %v", slots)
+		}
+	}
+	if err := ValidateSlide(a, SlideContent{Position: 1, Slots: map[string]any{"points": []any{"One"}}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestValidateSlideAllowsImageOnlySlides(t *testing.T) {
+	a := assignmentsFrom(1, 1)[0]
+	a.Archetype.Slots = []templatepublish.Slot{{ID: "art", ShapeID: 2, Kind: templatepublish.SlotImage}}
+	if err := ValidateSlide(a, SlideContent{Position: 1, Slots: map[string]any{}}); err != nil {
+		t.Fatal(err)
+	}
+}
