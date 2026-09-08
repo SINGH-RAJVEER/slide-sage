@@ -123,7 +123,7 @@ func CommitRevisionTx(ctx context.Context, transaction *sql.Tx, expected Revisio
 	return RepositoryCommit{Revision: revision, Advanced: !stale}, nil
 }
 
-func (repository *PostgresRepository) ClaimPreviewRender(ctx context.Context, presentationID string, number RevisionNumber, staleAfter time.Duration) (Revision, bool, error) {
+func (repository *PostgresRepository) ClaimPreviewRender(ctx context.Context, presentationID string, number RevisionNumber, staleAfter time.Duration) (Revision, PreviewClaim, error) {
 	seconds := staleAfter.Seconds()
 	if seconds <= 0 {
 		seconds = DefaultStalePreviewClaim.Seconds()
@@ -137,12 +137,28 @@ func (repository *PostgresRepository) ClaimPreviewRender(ctx context.Context, pr
 		RETURNING ` + revisionColumns
 	revision, err := scanRevision(repository.database.QueryRowContext(ctx, query, presentationID, number, seconds))
 	if errors.Is(err, sql.ErrNoRows) {
-		return Revision{}, false, nil
+		// The claim was refused. Only a revision whose previews are ready is
+		// finished; anything else is held by another worker, or not committed
+		// yet, and has to be claimed again later.
+		var status PreviewStatus
+		err := repository.database.QueryRowContext(ctx,
+			`SELECT preview_status FROM presentation_revisions WHERE presentation_id = $1 AND revision = $2`,
+			presentationID, number).Scan(&status)
+		if errors.Is(err, sql.ErrNoRows) {
+			return Revision{}, PreviewClaimBusy, nil
+		}
+		if err != nil {
+			return Revision{}, PreviewClaimBusy, fmt.Errorf("read presentation revision preview status: %w", err)
+		}
+		if status == PreviewReady {
+			return Revision{}, PreviewClaimSettled, nil
+		}
+		return Revision{}, PreviewClaimBusy, nil
 	}
 	if err != nil {
-		return Revision{}, false, fmt.Errorf("claim presentation revision previews: %w", err)
+		return Revision{}, PreviewClaimBusy, fmt.Errorf("claim presentation revision previews: %w", err)
 	}
-	return revision, true, nil
+	return revision, PreviewClaimGranted, nil
 }
 
 func (repository *PostgresRepository) MarkPreviewsReady(ctx context.Context, presentationID string, number RevisionNumber, count int) error {

@@ -15,6 +15,8 @@ const (
 	DefaultMaxSlides        = 200
 	DefaultWidth            = 1600
 	DefaultTimeout          = 4 * time.Minute
+	// DefaultClaimRetryAfter delays a job whose revision another worker claimed.
+	DefaultClaimRetryAfter = time.Minute
 )
 
 var (
@@ -22,6 +24,7 @@ var (
 	ErrSlideCountMismatch = errors.New("rendered preview count does not match the revision slide count")
 	ErrRevisionCorrupt    = errors.New("stored revision does not match its recorded digest")
 	ErrTooManySlides      = errors.New("revision exceeds the preview slide limit")
+	ErrPreviewClaimHeld   = errors.New("another worker holds the preview render claim")
 )
 
 // Limits bound one render so a hostile or pathological deck cannot exhaust the

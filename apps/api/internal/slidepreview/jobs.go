@@ -8,6 +8,7 @@ import (
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 )
 
 // Queue is separate from generation so a slow render never delays a deck that
@@ -27,7 +28,15 @@ func (JobArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{
 		Queue:       Queue,
 		MaxAttempts: 4,
-		UniqueOpts:  river.UniqueOpts{ByArgs: true},
+		// Completed jobs are left out of the uniqueness check so a revision
+		// whose earlier job finished without previews can be enqueued again.
+		UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: []rivertype.JobState{
+			rivertype.JobStateAvailable,
+			rivertype.JobStatePending,
+			rivertype.JobStateRunning,
+			rivertype.JobStateRetryable,
+			rivertype.JobStateScheduled,
+		}},
 	}
 }
 
@@ -50,6 +59,11 @@ func (worker *Worker) Work(ctx context.Context, job *river.Job[JobArgs]) error {
 	if errors.Is(err, ErrRevisionCorrupt) || errors.Is(err, ErrTooManySlides) ||
 		errors.Is(err, presentationrevision.ErrPackageTooLarge) || errors.Is(err, presentationrevision.ErrObjectNotFound) {
 		return river.JobCancel(err)
+	}
+	// A held claim is not a failure of this deck, so the job waits for the claim
+	// to clear instead of spending an attempt on it.
+	if errors.Is(err, ErrPreviewClaimHeld) {
+		return river.JobSnooze(DefaultClaimRetryAfter)
 	}
 	return err
 }

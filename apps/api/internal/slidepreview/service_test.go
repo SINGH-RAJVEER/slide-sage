@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 )
 
 func TestServiceRenderStoresCompletePreviewSet(t *testing.T) {
@@ -37,10 +39,10 @@ func TestServiceRenderStoresCompletePreviewSet(t *testing.T) {
 	}
 }
 
-func TestServiceRenderSkipsRevisionItCannotClaim(t *testing.T) {
+func TestServiceRenderSkipsRevisionWhosePreviewsAreReady(t *testing.T) {
 	deck := []byte("canonical pptx bytes")
 	repository := newMemoryPreviewRepository(revisionFor(deck, 1))
-	repository.claimable = false
+	repository.claim = presentationrevision.PreviewClaimSettled
 	renderer := &stubRenderer{}
 	service := newTestService(t, repository, newMemoryObjectStore("", nil), renderer)
 
@@ -49,6 +51,35 @@ func TestServiceRenderSkipsRevisionItCannotClaim(t *testing.T) {
 	}
 	if renderer.calls != 0 {
 		t.Fatalf("renderer calls = %d, want 0", renderer.calls)
+	}
+}
+
+// A claim another worker holds says nothing about whether the previews exist,
+// so the render has to be reported as unfinished rather than as a success.
+func TestServiceRenderReportsAHeldClaim(t *testing.T) {
+	deck := []byte("canonical pptx bytes")
+	repository := newMemoryPreviewRepository(revisionFor(deck, 1))
+	repository.claim = presentationrevision.PreviewClaimBusy
+	renderer := &stubRenderer{}
+	service := newTestService(t, repository, newMemoryObjectStore("", nil), renderer)
+
+	err := service.Render(context.Background(), "presentation-1", 4)
+	if !errors.Is(err, ErrPreviewClaimHeld) {
+		t.Fatalf("Render() error = %v, want %v", err, ErrPreviewClaimHeld)
+	}
+	if renderer.calls != 0 {
+		t.Fatalf("renderer calls = %d, want 0", renderer.calls)
+	}
+
+	// The job retries later instead of completing without previews.
+	worker := NewWorker(service)
+	workErr := worker.Work(context.Background(), &river.Job[JobArgs]{
+		JobRow: &rivertype.JobRow{},
+		Args:   JobArgs{PresentationID: "presentation-1", Revision: 4},
+	})
+	var snooze *rivertype.JobSnoozeError
+	if !errors.As(workErr, &snooze) {
+		t.Fatalf("Work() error = %v, want a snooze", workErr)
 	}
 }
 
@@ -175,21 +206,24 @@ func (renderer *stubRenderer) Render(context.Context, []byte, Limits) ([][]byte,
 
 type memoryPreviewRepository struct {
 	revision   presentationrevision.Revision
-	claimable  bool
+	claim      presentationrevision.PreviewClaim
 	status     presentationrevision.PreviewStatus
 	readyCount int
 }
 
 func newMemoryPreviewRepository(revision presentationrevision.Revision) *memoryPreviewRepository {
-	return &memoryPreviewRepository{revision: revision, claimable: true, status: revision.PreviewStatus}
+	return &memoryPreviewRepository{revision: revision, claim: presentationrevision.PreviewClaimGranted, status: revision.PreviewStatus}
 }
 
-func (repository *memoryPreviewRepository) ClaimPreviewRender(_ context.Context, presentationID string, number presentationrevision.RevisionNumber, _ time.Duration) (presentationrevision.Revision, bool, error) {
-	if !repository.claimable || presentationID != repository.revision.PresentationID || number != repository.revision.Number {
-		return presentationrevision.Revision{}, false, nil
+func (repository *memoryPreviewRepository) ClaimPreviewRender(_ context.Context, presentationID string, number presentationrevision.RevisionNumber, _ time.Duration) (presentationrevision.Revision, presentationrevision.PreviewClaim, error) {
+	if presentationID != repository.revision.PresentationID || number != repository.revision.Number {
+		return presentationrevision.Revision{}, presentationrevision.PreviewClaimBusy, nil
+	}
+	if repository.claim != presentationrevision.PreviewClaimGranted {
+		return presentationrevision.Revision{}, repository.claim, nil
 	}
 	repository.status = presentationrevision.PreviewRendering
-	return repository.revision, true, nil
+	return repository.revision, presentationrevision.PreviewClaimGranted, nil
 }
 
 func (repository *memoryPreviewRepository) MarkPreviewsReady(_ context.Context, _ string, _ presentationrevision.RevisionNumber, count int) error {

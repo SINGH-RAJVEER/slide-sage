@@ -123,13 +123,27 @@ type ObjectStore interface {
 	OpenObject(ctx context.Context, key string) (io.ReadCloser, error)
 }
 
+// PreviewClaim says what happened to a preview render claim. The three
+// outcomes need different handling: a granted claim renders, a settled revision
+// is done, and a busy one has to be tried again later.
+type PreviewClaim int
+
+const (
+	// PreviewClaimGranted means the caller owns the render.
+	PreviewClaimGranted PreviewClaim = iota
+	// PreviewClaimSettled means previews are already ready.
+	PreviewClaimSettled
+	// PreviewClaimBusy means another worker holds a claim younger than
+	// staleAfter, or the revision row is not visible yet.
+	PreviewClaimBusy
+)
+
 // PreviewRepository owns the preview lifecycle of a committed revision. Preview
 // state is the only mutable part of a revision row.
 type PreviewRepository interface {
-	// ClaimPreviewRender marks a revision as rendering and returns it. It
-	// returns false when previews are already ready or another worker holds a
-	// claim that is younger than staleAfter.
-	ClaimPreviewRender(ctx context.Context, presentationID string, number RevisionNumber, staleAfter time.Duration) (Revision, bool, error)
+	// ClaimPreviewRender marks a revision as rendering and returns it. The
+	// revision is only populated for PreviewClaimGranted.
+	ClaimPreviewRender(ctx context.Context, presentationID string, number RevisionNumber, staleAfter time.Duration) (Revision, PreviewClaim, error)
 	// MarkPreviewsReady requires the full preview set, so count must equal the
 	// revision slide count. It returns ErrPreviewStateConflict when the claim
 	// was taken over in the meantime.

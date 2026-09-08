@@ -48,15 +48,22 @@ func NewService(config Config) (*Service, error) {
 }
 
 // Render produces the preview set for one committed revision. It is safe to
-// call repeatedly: a revision whose previews are ready, or whose claim another
-// worker holds, is left alone.
+// call repeatedly: a revision whose previews are ready is left alone, and one
+// whose claim another worker holds returns ErrPreviewClaimHeld so the caller
+// can try again once the claim clears.
 func (service *Service) Render(ctx context.Context, presentationID string, number presentationrevision.RevisionNumber) error {
-	revision, claimed, err := service.revisions.ClaimPreviewRender(ctx, presentationID, number, service.staleClaimAfter)
+	revision, claim, err := service.revisions.ClaimPreviewRender(ctx, presentationID, number, service.staleClaimAfter)
 	if err != nil {
 		return fmt.Errorf("claim previews for %s revision %d: %w", presentationID, number, err)
 	}
-	if !claimed {
+	switch claim {
+	case presentationrevision.PreviewClaimSettled:
 		return nil
+	case presentationrevision.PreviewClaimBusy:
+		// Reporting success here would let the caller treat an unrendered
+		// revision as done, and a claim left behind by an interrupted worker
+		// would keep the previews missing until someone asked again.
+		return fmt.Errorf("%w: %s revision %d", ErrPreviewClaimHeld, presentationID, number)
 	}
 	if err := service.render(ctx, revision); err != nil {
 		return errors.Join(err, service.markFailed(ctx, revision))

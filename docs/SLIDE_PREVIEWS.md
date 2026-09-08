@@ -25,6 +25,10 @@ Slide indexes are zero-based and follow package slide order.
 
 `preview_started_at` records when a worker took a claim. Another worker may take over a claim older than `presentationrevision.DefaultStalePreviewClaim` (15 minutes), which is how a crashed renderer recovers. A cancelled render deliberately leaves its claim in place to expire rather than recording a failure the user would read as permanently broken.
 
+A worker that cannot take the claim does not report success. When the revision is already `ready` there is nothing to do, but a claim another worker holds, or a revision row that is not visible yet, snoozes the job for a minute instead of completing it. Completing it would mark a revision rendered when no images were ever written.
+
+Preview jobs are unique by arguments across the live states only, not across completed ones, so a revision whose earlier job finished without previews can be enqueued again by `POST /presentations/{id}/revisions/{revision}/previews/retry`.
+
 A render that cannot succeed on a later attempt cancels its job instead of retrying: a corrupt package, a missing object, an oversized package, or a deck over the slide limit. Everything else retries under River's normal backoff.
 
 ## Limits
