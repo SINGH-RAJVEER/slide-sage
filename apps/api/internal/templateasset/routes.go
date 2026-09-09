@@ -28,12 +28,14 @@ type Handler struct {
 	Published func(id string, version int) bool
 }
 
-// RegisterRoutes installs the public template thumbnail endpoint.
+// RegisterRoutes installs public template cover and full-deck preview endpoints.
 func RegisterRoutes(mux *http.ServeMux, handler Handler) {
 	if mux == nil || handler.Fetcher == nil || handler.Published == nil {
 		panic("template thumbnail routes require a mux, fetcher, and published lookup")
 	}
 	mux.HandleFunc("GET /template-thumbnails/{path...}", handler.cover)
+	mux.HandleFunc("GET /template-previews/{id}/{version}", handler.previewManifest)
+	mux.HandleFunc("GET /template-previews/{id}/{version}/{digest}/{index}", handler.previewSlide)
 }
 
 func (h Handler) cover(writer http.ResponseWriter, request *http.Request) {
