@@ -5,7 +5,7 @@ import type React from "react";
 import DownloadMenu, { type PresentationExporter } from "./DownloadMenu";
 
 interface ViewerNavigationControlsProps {
-	presentation: PresentationData;
+	presentation?: PresentationData;
 	currentSlide: number;
 	totalSlides: number;
 	onFirst: () => void;
@@ -37,7 +37,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
 			aria-label="Slide navigation"
 			style={{ minHeight: 36, fontSize: "0.95rem" }}
 		>
-			{showDownload && (
+			{showDownload && presentation && (
 				<div className="viewer-navigation__download absolute left-0 top-1/2 -translate-y-1/2">
 					<DownloadMenu presentation={presentation} onExport={onExport} />
 				</div>
