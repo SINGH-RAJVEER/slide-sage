@@ -12,6 +12,7 @@ import {
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import type React from "react";
 import { templateIsSelectable } from "../../lib/template-selection";
+import { MarqueeText } from "./MarqueeText";
 
 export interface InstalledTemplateOption {
 	marketplaceId: string;
@@ -48,12 +49,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 				<DropdownMenuTrigger asChild>
 					<Button
 						variant="ghost"
-						className="flex h-12 items-center gap-3 rounded-lg px-5 text-base font-light text-white/70 transition-all hover:bg-white/5 hover:text-white"
+						className="flex h-12 select-none items-center gap-3 rounded-lg px-5 text-base font-light text-white/70 transition-all outline-none hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus-visible:ring-0 focus-visible:outline-none"
 					>
 						<span className="opacity-50">Template</span>
-						<span className="max-w-40 truncate text-white">
-							{currentTemplate?.name || "Select"}
-						</span>
+						<MarqueeText className="max-w-40 text-white" text={currentTemplate?.name || "Select"} />
 						<ChevronDown className="h-4 w-4 opacity-50" />
 					</Button>
 				</DropdownMenuTrigger>

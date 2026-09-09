@@ -42,7 +42,7 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 						type="button"
 						variant="ghost"
 						onClick={() => onUseWebResearchChange(!useWebResearch)}
-						className={`h-10 rounded-md border px-4 transition-colors ${
+						className={`h-10 rounded-md border px-4 transition-colors outline-none select-none focus-visible:ring-0 focus-visible:outline-none ${
 							useWebResearch
 								? "border-white/20 bg-white/10 text-white"
 								: "border-transparent bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
