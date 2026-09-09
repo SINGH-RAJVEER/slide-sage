@@ -2,8 +2,12 @@
 // digest-pinned template packages.
 //
 // It sanitizes each package, hashes the sanitized bytes, uploads it to
-// pptx-templates/{id}/{version}/{sha256}/template.pptx, writes the manifest the
-// compiler reads, and records the digest so the catalog can be backfilled.
+// pptx-templates/{id}/{version}/{sha256}/template.pptx, renders the full-slide
+// previews the marketplace reads, writes the manifest the compiler reads, and
+// records the digest so the catalog can be backfilled.
+//
+// Rendering previews needs LibreOffice on PATH. Use -skip-previews where it is
+// unavailable, then backfill with cmd/publish-template-previews.
 //
 //	go run ./cmd/publish-templates -source ../../templates/v1 -dry-run
 //	go run ./cmd/publish-templates -source ../../templates/v1 -out /tmp/staged
@@ -25,7 +29,9 @@ import (
 	"strings"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/slidepreview"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templateasset"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatepreview"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatepublish"
 )
 
@@ -54,6 +60,7 @@ func main() {
 	only := flag.String("only", "", "comma-separated template IDs; empty means every file in -source")
 	skip := flag.String("skip", "quarantine-agriculture-business-plan", "comma-separated template IDs to leave unpublished")
 	maxBytes := flag.Int64("max-bytes", templatepublish.DefaultMaxPackageBytes, "reject packages larger than this many bytes")
+	skipPreviews := flag.Bool("skip-previews", false, "upload packages without rendering marketplace previews; they must be backfilled with cmd/publish-template-previews")
 	dryRun := flag.Bool("dry-run", false, "prepare and report without uploading or writing files")
 	verify := flag.Bool("verify", false, "check that every published template resolves in the bucket, and report nothing else")
 	flag.Parse()
@@ -101,14 +108,22 @@ func main() {
 	if *bucket != "" && !*dryRun {
 		store, storeErr := presentationrevision.NewGCSBlobStore(ctx, *bucket)
 		if storeErr != nil {
-			log.Fatalf("open bucket %s: %v", *bucket, storeErr)
+			log.Fatal(bucketError(*bucket, storeErr))
 		}
 		defer store.Close()
 		uploader = store
 	}
 
+	// Previews are rendered from the same sanitized bytes that were uploaded,
+	// so a published template can never be missing the previews for its digest.
+	var renderer slidepreview.Renderer
+	if uploader != nil && !*skipPreviews {
+		renderer = slidepreview.NewLibreOfficeRenderer(slidepreview.LibreOfficeConfig{})
+	}
+
 	digests := map[string]digestRecord{}
 	failures := 0
+	previewFailures := 0
 	for _, id := range ids {
 		result, publishErr := publishOne(ctx, filepath.Join(*source, id+".pptx"), id, *version, *maxBytes, uploader)
 		if publishErr != nil {
@@ -133,6 +148,16 @@ func main() {
 			if err := writeManifest(*manifestDir, id, result.Manifest); err != nil {
 				log.Fatalf("write manifest for %s: %v", id, err)
 			}
+		}
+
+		if renderer != nil {
+			asset := templateasset.Asset{ID: id, Version: *version, SHA256: result.SHA256}
+			if err := templatepreview.Publish(ctx, uploader, renderer, asset, result.Package, result.Manifest.SlideCount); err != nil {
+				previewFailures++
+				fmt.Printf("FAIL      %-52s previews: %v\n", id, err)
+				continue
+			}
+			fmt.Printf("previews  %-52s %d slides\n", id, result.Manifest.SlideCount)
 		}
 	}
 
@@ -161,16 +186,39 @@ func main() {
 			len(ids)-failures, *manifestDir, len(digests), *digestFile, len(digests), *catalogFile)
 	}
 	fmt.Printf("\n%d succeeded, %d failed\n", len(digests), failures)
-	if failures > 0 {
+	if previewFailures > 0 {
+		// The packages themselves are published, so the catalog records stand;
+		// only the previews need another run.
+		fmt.Printf("%d published without previews; backfill with cmd/publish-template-previews\n", previewFailures)
+	}
+	if *skipPreviews && uploader != nil {
+		fmt.Println("previews were skipped; backfill with cmd/publish-template-previews")
+	}
+	if failures > 0 || previewFailures > 0 {
 		os.Exit(1)
 	}
 }
 
-// verifyPublished checks the three artifacts a usable template needs: the
-// digest records the browser and the API each keep, the compiler manifest, and
-// the object itself. The first two are local and free; the object is checked
+// bucketError explains the credentials a bucket upload needs. A workstation
+// that can reach the bucket through gcloud still has no application default
+// credentials until they are created separately.
+func bucketError(bucket string, err error) string {
+	return fmt.Sprintf(`open bucket %s: %v
+
+Uploading needs application default credentials:
+  gcloud auth application-default login
+
+Without them, stage the files and upload them with gcloud:
+  go run ./cmd/publish-templates -source ../../templates/v1 -out /tmp/staged
+  gcloud storage cp -r -n /tmp/staged/pptx-templates gs://%s/`, bucket, err, bucket)
+}
+
+// verifyPublished checks the artifacts a usable template needs: the digest
+// records the browser and the API each keep, the compiler manifest, and the
+// published objects. The first two are local and free; the objects are checked
 // with a signed HEAD, because a package present in the catalog but absent from
-// the bucket fails at generation time with nothing to point at.
+// the bucket fails at generation time with nothing to point at, and a package
+// without previews fails the moment a visitor opens it in the marketplace.
 func verifyPublished(catalogFile, digestFile, manifestDir string) int {
 	published, err := readCatalog(catalogFile)
 	if err != nil {
@@ -203,11 +251,17 @@ func verifyPublished(catalogFile, digestFile, manifestDir string) int {
 			problems = append(problems, "no compiler manifest")
 		}
 		if fetcher != nil {
-			if err := fetcher.Exists(ctx, templateasset.Asset{ID: entry.ID, Version: entry.Version, SHA256: entry.SHA256}); err != nil {
+			asset := templateasset.Asset{ID: entry.ID, Version: entry.Version, SHA256: entry.SHA256}
+			if err := fetcher.Exists(ctx, asset); err != nil {
 				problems = append(problems, fmt.Sprintf("package unreachable: %v", err))
 			}
 			if err := fetcher.ThumbnailExists(ctx, entry.ID, entry.Version); err != nil {
 				problems = append(problems, fmt.Sprintf("cover unreachable: %v", err))
+			}
+			// A template with no previews is listed by the marketplace and then
+			// fails when opened, which is invisible until someone opens it.
+			if err := fetcher.PreviewExists(ctx, asset); err != nil {
+				problems = append(problems, fmt.Sprintf("previews unreachable: %v", err))
 			}
 		}
 		if len(problems) == 0 {
