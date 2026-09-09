@@ -71,6 +71,12 @@
 		"slideCount": 20,
 		"objectPath": "pptx-templates/illustrative-tv-series-social-media/1/2937e518317d90dc6c66141a7ab5136535fd67b3361555f679aa23f17ff5a2e2/template.pptx"
 	},
+	"mid-autumn-moon-festival": {
+		"sha256": "ff47ef56560bb61630d18d0478f17b7897189740568ab5e8a378933663b8ec83",
+		"byteSize": 53207232,
+		"slideCount": 19,
+		"objectPath": "pptx-templates/mid-autumn-moon-festival/1/ff47ef56560bb61630d18d0478f17b7897189740568ab5e8a378933663b8ec83/template.pptx"
+	},
 	"middle-school-functions-lesson": {
 		"sha256": "9a7ec2fab857d7c84b764bbb6deae7baadb49b5fa81d3ee3dbab077b56ed7551",
 		"byteSize": 1955278,
@@ -160,6 +166,12 @@
 		"byteSize": 5255986,
 		"slideCount": 17,
 		"objectPath": "pptx-templates/stocks-trading-business-plan/1/f441009a5a41e23f6c601d14aa5e8be936dbabad9151e72a392194d9e293d521/template.pptx"
+	},
+	"strategic-media-planning": {
+		"sha256": "31e5a65b9bdcf837db8f02485edc95c52de22ea09008832bd5cd027a80cfc826",
+		"byteSize": 53122120,
+		"slideCount": 17,
+		"objectPath": "pptx-templates/strategic-media-planning/1/31e5a65b9bdcf837db8f02485edc95c52de22ea09008832bd5cd027a80cfc826/template.pptx"
 	},
 	"textured-scrapbook-go-green": {
 		"sha256": "018c0d414ca0b54a8f48a246e7de83f8b01a912f32e948311c0f8fd69297a68d",

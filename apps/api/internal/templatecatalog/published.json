@@ -60,6 +60,11 @@
 		"sha256": "2937e518317d90dc6c66141a7ab5136535fd67b3361555f679aa23f17ff5a2e2"
 	},
 	{
+		"id": "mid-autumn-moon-festival",
+		"version": 1,
+		"sha256": "ff47ef56560bb61630d18d0478f17b7897189740568ab5e8a378933663b8ec83"
+	},
+	{
 		"id": "middle-school-functions-lesson",
 		"version": 1,
 		"sha256": "9a7ec2fab857d7c84b764bbb6deae7baadb49b5fa81d3ee3dbab077b56ed7551"
@@ -133,6 +138,11 @@
 		"id": "stocks-trading-business-plan",
 		"version": 1,
 		"sha256": "f441009a5a41e23f6c601d14aa5e8be936dbabad9151e72a392194d9e293d521"
+	},
+	{
+		"id": "strategic-media-planning",
+		"version": 1,
+		"sha256": "31e5a65b9bdcf837db8f02485edc95c52de22ea09008832bd5cd027a80cfc826"
 	},
 	{
 		"id": "textured-scrapbook-go-green",
