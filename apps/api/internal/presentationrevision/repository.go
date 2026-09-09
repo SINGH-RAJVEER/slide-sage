@@ -115,7 +115,7 @@ func CommitRevisionTx(ctx context.Context, transaction *sql.Tx, expected Revisio
 	}
 	if !stale {
 		if _, err := transaction.ExecContext(ctx, `UPDATE presentations
-			SET current_pptx_revision = $1, document_kind = 'pptx', updated_at = NOW()
+			SET current_pptx_revision = $1, updated_at = NOW()
 			WHERE id = $2`, revision.Number, revision.PresentationID); err != nil {
 			return RepositoryCommit{}, fmt.Errorf("advance current presentation revision: %w", err)
 		}

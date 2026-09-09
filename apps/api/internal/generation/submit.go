@@ -152,7 +152,7 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		var count int
 		err := h.database.QueryRowContext(request.Context(), `SELECT r.revision,r.slide_count FROM presentations p JOIN presentation_revisions r ON r.presentation_id=p.id AND r.revision=p.current_pptx_revision WHERE p.id=$1 AND p.user_id=$2`, job.presentationID, userID).Scan(&job.pptxRevision, &count)
 		if err != nil {
-			writeError(writer, http.StatusConflict, "Regenerate this legacy presentation before editing")
+			writeError(writer, http.StatusConflict, "This presentation has no completed revision to edit yet")
 			return
 		}
 		if job.slideCount != count {
@@ -307,7 +307,7 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 	count := input.SlideCount
 	if count == 0 {
 		if err := h.database.QueryRowContext(ctx, `SELECT r.slide_count FROM presentations p JOIN presentation_revisions r ON r.presentation_id=p.id AND r.revision=p.current_pptx_revision WHERE p.id=$1 AND p.user_id=$2`, base.ID, userID).Scan(&count); err != nil {
-			return streamJob{}, writeStatusError{http.StatusConflict, "Regenerate this legacy presentation before editing"}
+			return streamJob{}, writeStatusError{http.StatusConflict, "This presentation has no completed revision to edit yet"}
 		}
 	}
 

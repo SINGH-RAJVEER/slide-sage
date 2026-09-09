@@ -227,7 +227,7 @@ func insertRevisionFixture(t *testing.T, database *sql.DB) (string, string) {
 	}
 	t.Cleanup(func() {
 		_, _ = database.ExecContext(context.Background(), `UPDATE presentations
-			SET current_pptx_revision = NULL, document_kind = 'legacy' WHERE id = $1`, presentationID)
+			SET current_pptx_revision = NULL WHERE id = $1`, presentationID)
 		_, _ = database.ExecContext(context.Background(), `DELETE FROM presentation_revisions WHERE presentation_id = $1`, presentationID)
 		_, _ = database.ExecContext(context.Background(), `DELETE FROM presentations WHERE id = $1`, presentationID)
 		_, _ = database.ExecContext(context.Background(), `DELETE FROM users WHERE id = $1`, userID)

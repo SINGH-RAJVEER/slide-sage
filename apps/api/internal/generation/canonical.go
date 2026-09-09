@@ -135,7 +135,7 @@ func (h *handler) compileJob(ctx context.Context, job streamJob) (presentationre
 	}
 	input.PPTX = bytes.NewReader(output)
 	revision, err := presentationrevision.NewService(h.revisions, h.objects, 0).Prepare(ctx, input)
-	document := map[string]any{"title": title, "status": "ready", "documentKind": "pptx", "totalSlides": job.slideCount, "tokens_used": tokens}
+	document := map[string]any{"title": title, "status": "ready", "totalSlides": job.slideCount, "tokens_used": tokens}
 	preserveJobTemplate(document, job)
 	return revision, document, tokens, err
 }
