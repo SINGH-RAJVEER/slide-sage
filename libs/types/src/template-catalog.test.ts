@@ -51,11 +51,11 @@ describe("binary PPTX template catalog", () => {
 		}
 	});
 
-	it("leaves templates without a published package pending", () => {
+	it("has a published package for every release template", () => {
 		expect(
 			BINARY_PPTX_TEMPLATE_CATALOG.filter((entry) => entry.asset.status !== "available").map(
 				(entry) => entry.id,
 			),
-		).toEqual(["mid-autumn-moon-festival", "strategic-media-planning"]);
+		).toEqual([]);
 	});
 });

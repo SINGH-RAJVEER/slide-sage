@@ -8,8 +8,10 @@
  * Upload the results to pptx-templates/{id}/{version}/thumbnails/cover.webp,
  * which is the path libs/types/src/template-catalog.ts advertises.
  */
+
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { PluginBuilder } from "bun";
 import { chromium, type Page } from "playwright";
 
 interface Options {
@@ -64,7 +66,7 @@ async function main() {
 		plugins: [
 			{
 				name: "resolve-from-ui",
-				setup(builder) {
+				setup(builder: PluginBuilder) {
 					builder.onResolve({ filter: /^@aiden0z\/pptx-renderer$/ }, () => ({
 						path: Bun.resolveSync("@aiden0z/pptx-renderer", `${process.cwd()}/libs/ui`),
 					}));

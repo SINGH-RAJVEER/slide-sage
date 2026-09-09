@@ -1,9 +1,10 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
+import { BINARY_PPTX_TEMPLATE_CATALOG } from "@slidesage/types";
+import { StreamingProvider } from "@slidesage/ui";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { StreamingProvider } from "@slidesage/ui";
 import GeneratePPTPage from "../../../routes/presentations/GeneratePPTPage";
 
 function RouteStateProbe() {
@@ -133,34 +134,44 @@ it("opens the viewer immediately while generation waits for the stream", async (
 });
 
 it("disables generation when retry state names an unavailable template", () => {
-	const view = render(
-		<MemoryRouter
-			initialEntries={[
-				{
-					pathname: "/generate",
-					state: {
-						retry: {
-							prompt: "Retry with an unavailable template",
-							slide_count: 5,
-							detail_level: "balanced",
-							tonality: "professional",
-							research_enabled: false,
-							template: { id: "strategic-media-planning", version: 1 },
+	const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(entry) => entry.id === "strategic-media-planning",
+	);
+	if (!template) throw new Error("Missing fixture template");
+	const publishedAsset = template.asset;
+	template.asset = { status: "pending-upload" };
+	try {
+		const view = render(
+			<MemoryRouter
+				initialEntries={[
+					{
+						pathname: "/generate",
+						state: {
+							retry: {
+								prompt: "Retry with an unavailable template",
+								slide_count: 5,
+								detail_level: "balanced",
+								tonality: "professional",
+								research_enabled: false,
+								template: { id: "strategic-media-planning", version: 1 },
+							},
 						},
 					},
-				},
-			]}
-		>
-			<StreamingProvider>
-				<Routes>
-					<Route path="/generate" element={<GeneratePPTPage />} />
-				</Routes>
-			</StreamingProvider>
-		</MemoryRouter>,
-	);
+				]}
+			>
+				<StreamingProvider>
+					<Routes>
+						<Route path="/generate" element={<GeneratePPTPage />} />
+					</Routes>
+				</StreamingProvider>
+			</MemoryRouter>,
+		);
 
-	expect(view.getByRole("textbox", { name: "Prompt" })).toBeEnabled();
-	expect(view.getByRole("button", { name: "Generate" })).toBeDisabled();
+		expect(view.getByRole("textbox", { name: "Prompt" })).toBeEnabled();
+		expect(view.getByRole("button", { name: "Generate" })).toBeDisabled();
+	} finally {
+		template.asset = publishedAsset;
+	}
 });
 
 it("starts generation on Enter even when focus sits on an options-bar control", async () => {
@@ -220,9 +231,7 @@ it("starts generation on Enter even when focus sits on an options-bar control", 
 		// Generation is gated on the eligibility response, so waiting for the
 		// prompt alone can fire Enter while the form is still disabled.
 		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
-		await waitFor(() =>
-			expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled(),
-		);
+		await waitFor(() => expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled());
 
 		// Focus the slide count slider as if the user had just moved it. The
 		// options bar mounts after the eligibility response, so the control has to

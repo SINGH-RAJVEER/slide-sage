@@ -52,13 +52,13 @@ it("adds installed marketplace binary references", () => {
 
 // Publication is what makes a template usable, so one whose package was never
 // uploaded has to stay unselectable however it reaches the menu.
-it("disables a template that has no published package", () => {
+it("disables an installed template version that has no published package", () => {
 	const { view, onTemplateChange } = openSelector(mock(), [
 		{
 			marketplaceId: "strategic-media-planning",
 			name: "Strategic Media Planning",
-			description: "Too large to publish",
-			templateReference: { id: "strategic-media-planning", version: 1 },
+			description: "Unpublished version",
+			templateReference: { id: "strategic-media-planning", version: 2 },
 			thumbnailPath: "pptx-templates/strategic-media-planning/1/thumbnails/cover.webp",
 		},
 	]);
