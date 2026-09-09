@@ -130,8 +130,6 @@ export interface ResearchOptions {
 	maxAgeHours?: number;
 }
 
-export type PresentationDocumentKind = "legacy" | "pptx";
-
 export type PresentationPreviewStatus = "pending" | "rendering" | "ready" | "failed";
 
 /** One immutable PPTX revision. Downloads and previews both come from it. */
@@ -148,7 +146,6 @@ export interface PresentationRevision {
 export interface PresentationData {
 	title: string;
 	template: import("./template-catalog").PresentationTemplateReference;
-	documentKind: PresentationDocumentKind;
 	currentRevision?: PresentationRevision;
 	totalSlides: number;
 	sources?: Source[];
@@ -177,7 +174,6 @@ export interface PresentationFailure {
 export interface PresentationJSON {
 	title: string;
 	template?: import("./template-catalog").PresentationTemplateReference;
-	documentKind?: PresentationDocumentKind;
 	currentRevision?: PresentationRevision;
 	status?: PresentationStatus;
 	failure?: PresentationFailure;

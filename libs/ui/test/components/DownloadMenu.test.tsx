@@ -16,7 +16,6 @@ const exportPresentation: PresentationExporter = async (_format, presentation) =
 const presentation: PresentationData = {
 	title: "Structured deck",
 	template: { id: "simple-business-proposal", version: 1 },
-	documentKind: "pptx",
 	totalSlides: 1,
 	currentRevision: {
 		revision: 1,

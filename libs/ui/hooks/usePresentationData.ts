@@ -228,7 +228,6 @@ export function usePresentationData({
 				setPresentation({
 					...slidesData,
 					title: pres.title || slidesData.title,
-					documentKind: slidesData.documentKind || "legacy",
 					totalSlides: slidesData.currentRevision?.slideCount || slidesData.totalSlides || 0,
 				});
 				setPresentationId(pres.id);

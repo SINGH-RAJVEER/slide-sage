@@ -10,7 +10,6 @@ import { createRef } from "react";
 const emptyPresentation: PresentationData = {
 	title: "Generating presentation",
 	template: { id: "simple-business-proposal", version: 1 },
-	documentKind: "pptx",
 	totalSlides: 0,
 };
 

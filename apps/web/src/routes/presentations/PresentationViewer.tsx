@@ -254,7 +254,6 @@ export default function PresentationViewerPage() {
 		...(presentation ?? {
 			title: viewerTitle,
 			template: streamingState.template ?? { id: "", version: 0 },
-			documentKind: "pptx",
 			totalSlides: 0,
 		}),
 		currentRevision: previews.revision ?? presentation?.currentRevision,
