@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"math"
 	"net/http"
 
@@ -251,9 +252,13 @@ func (h *handler) recoverExpired(ctx context.Context, userID string) error {
 	expired := []expiredOperation{}
 	for rows.Next() {
 		var item expiredOperation
-		if err := rows.Scan(&item.id, &item.quote, &item.presentationID, &item.kind); err != nil {
+		// presentation_id is nullable and becomes NULL when the presentation is
+		// deleted, so a reservation outliving its presentation still refunds.
+		var presentationID sql.NullString
+		if err := rows.Scan(&item.id, &item.quote, &presentationID, &item.kind); err != nil {
 			return err
 		}
+		item.presentationID = presentationID.String
 		expired = append(expired, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -388,5 +393,8 @@ func (h *handler) reservationError(writer http.ResponseWriter, err error) {
 		writeError(writer, http.StatusConflict, "Idempotency key was reused with a different request")
 		return
 	}
+	// Every remaining cause is a database or queue fault the client cannot act
+	// on, so the response stays generic and the reason is logged instead of lost.
+	slog.Error("reserve generation points", "error", err)
 	writeError(writer, http.StatusInternalServerError, "Unable to reserve generation points")
 }
