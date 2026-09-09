@@ -77,7 +77,7 @@ user 65532:65532
 entrypoint ["/app/previewworker"]
 
 
-#migrate
+# migrate
 from base as migrate
 
 copy --from=build /out/migrate /app/migrate
