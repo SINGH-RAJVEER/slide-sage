@@ -113,7 +113,7 @@ Cloud Run Worker Pools use fixed/manual scaling rather than request-driven autos
 | `worker`  | `/app/worker`  | Cloud Run Worker Pool |
 | `migrate` | `/app/migrate` | One-off migration job |
 
-Run the `migrate` target successfully before starting or updating either runtime. `cmd/migrate` applies embedded Goose migrations first and River migrations second. It also recognizes the legacy Go API schema and baselines migrations 1-13 before applying migration 14. Migration 14 is an intentional pre-launch accounting reset that removes existing user-owned data, so do not run it against a database containing data that must be retained. The required deployment order is therefore:
+Run the `migrate` target successfully before starting or updating either runtime. `cmd/migrate` applies embedded Goose migrations first and River migrations second. It also recognizes the legacy Go API schema and baselines migrations 1-13 before applying migration 14. Migration 14 is an intentional pre-launch accounting reset that removes existing user-owned data, so do not run it against a database containing data that must be retained. Migration 25 is a second intentional deletion: it removes every presentation without a committed PPTX revision, which discards semantic-pipeline decks and any generation that is still in flight when it runs. The required deployment order is therefore:
 
 ```text
 PostgreSQL ready -> migrate succeeds -> API and worker start

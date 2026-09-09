@@ -6,7 +6,7 @@ This document specifies the replacement for semantic slide generation, React sli
 
 ## Product invariants
 
-1. Every non-legacy presentation has a current immutable PPTX revision.
+1. Every completed presentation has a current immutable PPTX revision.
 2. Download returns the exact bytes of that revision.
 3. Browser previews come from that same revision.
 4. The selected template package and manifest are immutable inputs identified by version and SHA-256 digest.
@@ -172,12 +172,12 @@ prompts, and the browser mutation client have all been deleted.
 - DOM-to-image PDF export;
 - fixed 1280 by 720 viewer geometry.
 
-Legacy presentation rows remain identifiable but cannot open in the new editor until the user
-regenerates them with a current template. `document_kind` still distinguishes them, which is the
-only thing the removal preserves. The row projection strips the stored `slides` array from every
-presentation, legacy included, because nothing renders it: canonical decks draw from preview
-images and legacy decks have no renderer at all. A legacy deck reports its slide count from the
-stored `totalSlides`, and one written without that field reports zero.
+Presentations produced by the semantic pipeline are deleted, not migrated. Migration 25 removes
+every presentation without a committed PPTX revision and drops the `document_kind` column along
+with its check constraints, so a presentation is either generating or backed by a revision. The
+row projection still strips the stored `slides` array, because nothing renders it: canonical decks
+draw from preview images. A presentation with no committed revision reports no revision and zero
+slides, and AI iteration on it is refused until generation completes.
 
 ## Acceptance tests
 
