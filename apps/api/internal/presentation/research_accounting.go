@@ -184,4 +184,3 @@ func (h *presentationHandler) refundResearch(ctx context.Context, operationID, u
 	}
 	return tx.Commit()
 }
-

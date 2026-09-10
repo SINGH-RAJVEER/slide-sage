@@ -11,22 +11,7 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 )
-
-// testTemplateDigest stands in for a real package digest. Nothing reads the
-// bytes it names; it only has to satisfy the catalog's format check.
-const testTemplateDigest = "3b1f4c5d6e7a8b9c0d1e2f30415263748596a7b8c9dae0f1023456789abcdef0"
-
-// publishTestTemplate makes simple-business-proposal generation-ready for one
-// test. The embedded catalog is empty until the publication command runs, so a
-// test that expects a ready template has to say so.
-func publishTestTemplate(t *testing.T) {
-	t.Helper()
-	t.Cleanup(templatecatalog.Swap([]templatecatalog.Entry{
-		{ID: "simple-business-proposal", Version: 1, SHA256: testTemplateDigest},
-	}))
-}
 
 func decodeSubmitBody(t *testing.T, raw string) map[string]any {
 	t.Helper()
