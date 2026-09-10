@@ -40,3 +40,20 @@ jobs:
         working-directory: apps/api
       - run: bun run build
       - run: bun run build:api
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.0
+          terraform_wrapper: false
+      - name: Check Terraform formatting
+        working-directory: infra/prod
+        run: terraform fmt -check -recursive
+      - name: Validate Terraform configuration
+        working-directory: infra/prod
+        run: |
+          terraform init -backend=false -input=false -lockfile=readonly
+          terraform validate -no-color
