@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -94,19 +93,6 @@ func researchOperationID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
-}
-
-func researchIdempotencyKey(request *http.Request) (string, error) {
-	key := strings.TrimSpace(request.Header.Get("Idempotency-Key"))
-	if len(key) < 16 || len(key) > 128 {
-		return "", errors.New("Idempotency-Key must contain 16-128 characters")
-	}
-	for _, character := range key {
-		if !(character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || character >= '0' && character <= '9' || character == '-' || character == '_' || character == '.') {
-			return "", errors.New("Idempotency-Key contains invalid characters")
-		}
-	}
-	return key, nil
 }
 
 func (h *presentationHandler) reserveResearch(ctx context.Context, operationID, userID, key, hash string) (int64, error) {
@@ -199,21 +185,3 @@ func (h *presentationHandler) refundResearch(ctx context.Context, operationID, u
 	return tx.Commit()
 }
 
-func (h *presentationHandler) writeResearchReservationError(writer http.ResponseWriter, err error) {
-	var insufficient researchInsufficient
-	if errors.As(err, &insufficient) {
-		writeJSON(writer, http.StatusPaymentRequired, map[string]any{"error": map[string]string{"message": "Insufficient points", "code": "INSUFFICIENT_TOKENS"}, "slide_tokens_remaining": float64(insufficient.balance) / 1000, "slide_tokens_required": float64(researchFeeMillis) / 1000, "slide_tokens_shortfall": float64(researchFeeMillis-insufficient.balance) / 1000})
-		return
-	}
-	var duplicate researchDuplicate
-	if errors.As(err, &duplicate) {
-		writeError(writer, http.StatusConflict, "This research request is already being processed")
-		return
-	}
-	var conflict researchIdempotencyConflict
-	if errors.As(err, &conflict) {
-		writeError(writer, http.StatusConflict, "Idempotency key was reused with a different request")
-		return
-	}
-	writeError(writer, http.StatusInternalServerError, "Unable to reserve research points")
-}

@@ -265,10 +265,6 @@ func (service *Service) VerifyAccountEmail(ctx context.Context, email, code stri
 	return verified, err
 }
 
-func (service *Service) Profile(ctx context.Context, userID string) (User, error) {
-	return service.repository.UserByID(ctx, userID)
-}
-
 func (service *Service) UpdateName(ctx context.Context, userID, name string) (User, error) {
 	name = strings.TrimSpace(name)
 	if name == "" || len(name) > 100 {

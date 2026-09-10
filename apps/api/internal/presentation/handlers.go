@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"io"
 	"math"
 	"net/http"
 	"strconv"
@@ -110,20 +109,6 @@ func (h *presentationHandler) userID(writer http.ResponseWriter, request *http.R
 	return userID, true
 }
 
-func readRequestBody(request *http.Request, maximum int64) ([]byte, error) {
-	if request.ContentLength > maximum {
-		return nil, inputError("Request body is too large", http.StatusRequestEntityTooLarge)
-	}
-	body, err := io.ReadAll(io.LimitReader(request.Body, maximum+1))
-	if err != nil {
-		return nil, err
-	}
-	if int64(len(body)) > maximum {
-		return nil, inputError("Request body is too large", http.StatusRequestEntityTooLarge)
-	}
-	return body, nil
-}
-
 func pagination(raw, field string, fallback, minimum, maximum int) (int, error) {
 	if raw == "" {
 		return fallback, nil
@@ -149,15 +134,6 @@ func writeServiceError(writer http.ResponseWriter, err error) {
 	default:
 		writeError(writer, http.StatusBadRequest, err.Error())
 	}
-}
-
-func writeInputError(writer http.ResponseWriter, err error) {
-	var input *InputError
-	if errors.As(err, &input) {
-		writeError(writer, input.Status, input.Message)
-		return
-	}
-	writeError(writer, http.StatusBadRequest, "Invalid request body")
 }
 
 func writeError(writer http.ResponseWriter, status int, message string) {

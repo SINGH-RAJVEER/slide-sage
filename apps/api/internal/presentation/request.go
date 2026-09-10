@@ -1,10 +1,8 @@
 package presentation
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"net/url"
 	"regexp"
@@ -145,18 +143,6 @@ func ParseResearchPayload(input any) (ResearchPayload, error) {
 	return payload, nil
 }
 
-func decodeObject(body []byte) (map[string]any, error) {
-	decoder := json.NewDecoder(bytes.NewReader(body))
-	decoder.UseNumber()
-	var result map[string]any
-	if err := decoder.Decode(&result); err != nil || result == nil {
-		return nil, inputError("Invalid JSON body", 400)
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return nil, inputError("Invalid JSON body", 400)
-	}
-	return result, nil
-}
 func inputError(message string, status int) error {
 	return &InputError{Message: message, Status: status}
 }

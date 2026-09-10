@@ -491,12 +491,6 @@ func (h *handler) completeQueuedJob(ctx context.Context, riverJob *river.Job[Job
 	return tx.Commit()
 }
 
-func (h *handler) cancelRequested(ctx context.Context, jobID string) (bool, error) {
-	var cancelled bool
-	err := h.database.QueryRowContext(ctx, `SELECT cancel_requested_at IS NOT NULL FROM generation_jobs WHERE id = $1`, jobID).Scan(&cancelled)
-	return cancelled, err
-}
-
 func (h *handler) cancelQueuedJob(ctx context.Context, record generationJobRecord, riverJob *river.Job[JobArgs], message string) error {
 	job := record.Payload.streamJob()
 	tx, err := h.database.BeginTx(ctx, nil)

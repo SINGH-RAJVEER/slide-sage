@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"math"
 	"net/http"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
@@ -361,18 +360,6 @@ func actualCharge(tokens int, quote int64) int64 {
 		return quote
 	}
 	return charge
-}
-
-func estimate(slides int, detail, tonality string, researchTokens int) float64 {
-	detailMultiplier := map[string]float64{"brief": .6, "concise": .8, "balanced": 1, "detailed": 2, "comprehensive": 2.5}[detail]
-	if detailMultiplier == 0 {
-		detailMultiplier = 1
-	}
-	toneMultiplier := map[string]float64{"casual": .9, "professional": 1, "enthusiastic": 1.05, "persuasive": 1.1}[tonality]
-	if toneMultiplier == 0 {
-		toneMultiplier = 1
-	}
-	return math.Round((float64(slides)*detailMultiplier*toneMultiplier+float64(researchTokens)/1000)*10) / 10
 }
 
 func (h *handler) reservationError(writer http.ResponseWriter, err error) {
