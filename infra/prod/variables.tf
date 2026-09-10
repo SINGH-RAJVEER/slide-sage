@@ -128,3 +128,9 @@ variable "otel_logs_exporter" {
     error_message = "otel_logs_exporter must be otlp or none."
   }
 }
+
+variable "maintenance_mode" {
+  description = "Disable API and queue consumers during incompatible database migrations. CI restores automatic scaling after the release apply."
+  type        = bool
+  default     = false
+}

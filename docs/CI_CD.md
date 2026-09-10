@@ -170,9 +170,10 @@ The Cloud SQL socket mount and the `roles/cloudsql.client` grant on the runtime 
 | Service | Port | Instances     | Concurrency | Notes                       |
 | ------- | ---- | ------------- | ----------- | --------------------------- |
 | `api`   | 8000 | min 0, max 10 | 80          | Scales from zero on traffic |
-| `worker` | 8080 | min 0, max 10 | 1           | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`; instances may scale to zero. |
+| `worker` | 8080 | min 1, max 10 | 1           | Polls River and performs OpenRouter generation using `OPEN_ROUTER_API_KEY`. |
+| `preview-worker` | 8080 | min 1, max 4 | 1 | Polls River and renders committed PPTX revisions with LibreOffice. |
 
-The worker is configured with zero minimum and ten maximum instances. River uses row-level `SKIP LOCKED`, so concurrent workers can claim jobs safely. Cloud Run service autoscaling responds to HTTP traffic, not queued PostgreSQL work. With no request source for the private worker service, scaling to zero stops River polling until Cloud Run starts an instance again. Use a request-based wake-up mechanism or a nonzero minimum before relying on this topology for unattended queue processing.
+Both queue services keep at least one instance running with CPU available between requests (`cpu_idle = false`). API-to-worker coordination uses PostgreSQL only; queued work cannot wake a Cloud Run service from zero instances. River uses row-level `SKIP LOCKED`, so concurrent workers can claim jobs safely. Monitor queue latency and size worker capacity explicitly; Cloud Run does not scale on PostgreSQL queue depth.
 
 ### Ingress and invocation
 
@@ -250,3 +251,11 @@ docker push asia-south1-docker.pkg.dev/slidesage-504414/slidesage/api:dev
 - `Permission 'iam.serviceAccounts.actAs' denied` during deploy: re-apply the `roles/iam.serviceAccountUser` binding.
 - WIF auth step fails: confirm `GCP_WIF_PROVIDER`/`GCP_SERVICE_ACCOUNT` match the pool that was created and that the binding uses the same `REPO_URL` casing as the repository.
 - `error loading dynamically imported module` after a web deploy: confirm the failed `/assets/*.js` URL belongs to an older build, then check Cloudflare Cache Rules for a custom Browser TTL or Cache Everything rule and remove it. Pages should return `Cache-Control: no-cache` from `public/_headers`. Purge the zone cache once after removing the rule so cached SPA HTML is not served for missing asset URLs.
+
+## Migration cutover
+
+Every production release takes an on-demand Cloud SQL backup before running migrations. Terraform then sets the existing API and queue services to manual scaling with zero instances, preserving their previous images for this phase. This stops new submissions and queue processing while schema changes run. The API is temporarily unavailable during the cutover.
+
+The full release apply restores automatic scaling with the new images. Generation and preview workers retain at least one instance so database queues continue processing. If migration or release apply fails, services remain paused; inspect the failure before retrying rather than restarting an old binary against a changed schema.
+
+Migration 25 deletes presentations without a committed PPTX revision, as required by the canonical-only transition. The backup preserves the pre-release database for recovery; it does not make the deletion reversible through a schema downgrade.

@@ -123,7 +123,8 @@ resource "google_cloud_run_v2_service" "api" {
   # Preserve service-level scaling as well as revision-level limits.
   scaling {
     min_instance_count    = 0
-    manual_instance_count = 0
+    scaling_mode          = var.maintenance_mode ? "MANUAL" : "AUTOMATIC"
+    manual_instance_count = var.maintenance_mode ? 0 : null
   }
 
   template {
@@ -269,10 +270,11 @@ resource "google_cloud_run_v2_service" "worker" {
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 
-  # Preserve service-level scaling as well as revision-level limits.
+  # Keep River polling alive: PostgreSQL queue activity cannot wake a zero-instance service.
   scaling {
-    min_instance_count    = 0
-    manual_instance_count = 0
+    min_instance_count    = var.maintenance_mode ? 0 : 1
+    scaling_mode          = var.maintenance_mode ? "MANUAL" : "AUTOMATIC"
+    manual_instance_count = var.maintenance_mode ? 0 : null
   }
 
   template {
@@ -280,7 +282,7 @@ resource "google_cloud_run_v2_service" "worker" {
     max_instance_request_concurrency = 1
 
     scaling {
-      min_instance_count = 0
+      min_instance_count = var.maintenance_mode ? 0 : 1
       max_instance_count = 10
     }
 
@@ -406,19 +408,23 @@ resource "google_cloud_run_v2_service" "worker" {
 }
 
 # The preview renderer runs headless LibreOffice, so it needs far more memory
-# and a longer request budget than the generation worker, and it scales to zero
-# because rendering is bursty.
+# than the generation worker. Keep one instance polling the PostgreSQL queue.
 resource "google_cloud_run_v2_service" "preview" {
   name     = local.preview_name
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+
+  scaling {
+    scaling_mode          = var.maintenance_mode ? "MANUAL" : "AUTOMATIC"
+    manual_instance_count = var.maintenance_mode ? 0 : null
+  }
 
   template {
     service_account                  = google_service_account.runtime.email
     max_instance_request_concurrency = 1
 
     scaling {
-      min_instance_count = 0
+      min_instance_count = var.maintenance_mode ? 0 : 1
       max_instance_count = 4
     }
 

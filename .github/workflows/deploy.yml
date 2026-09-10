@@ -158,6 +158,39 @@ jobs:
             -target=google_cloud_run_v2_job.migrate -out=migrate.tfplan
           terraform apply -input=false -lock-timeout=5m -no-color migrate.tfplan
 
+      - name: Back up the database before migration
+        run: |
+          gcloud sql backups create --instance=slidesage-postgres \
+            --project="$PROJECT_ID" --description="Before release $IMAGE_VERSION"
+
+      # Stop requests and polling before destructive schema changes. Keep the
+      # previous images in this phase so new binaries never see the old schema.
+      - name: Pause services for database migration
+        working-directory: infra/prod
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(-var=maintenance_mode=true)
+          services=$(gcloud run services list --project="$PROJECT_ID" \
+            --region="$RUN_REGION" --format='value(metadata.name)')
+          for component in api worker preview; do
+            service="$component"
+            resource="$component"
+            if [ "$component" = preview ]; then
+              service=preview-worker
+              if ! grep -Fxq "$service" <<< "$services"; then continue; fi
+            fi
+            image=$(gcloud run services describe "$service" \
+              --project="$PROJECT_ID" --region="$RUN_REGION" \
+              --format='value(spec.template.spec.containers[0].image)')
+            test -n "$image"
+            args+=("-var=${component}_image=$image")
+            args+=("-target=google_cloud_run_v2_service.$resource")
+          done
+          terraform plan -input=false -lock-timeout=5m -no-color \
+            "${args[@]}" -out=maintenance.tfplan
+          terraform apply -input=false -lock-timeout=5m -no-color maintenance.tfplan
+
       - name: Run migrations
         run: |
           gcloud run jobs execute slidesage-migrate \
