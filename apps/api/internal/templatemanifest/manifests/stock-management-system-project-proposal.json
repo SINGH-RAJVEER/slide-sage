@@ -1,0 +1,2067 @@
+{
+	"manifestVersion": 1,
+	"templateId": "stock-management-system-project-proposal",
+	"templateVersion": 1,
+	"sha256": "acea1a6a1fe65086aa4ae93a3d41866c9555e9dbb5321082214dcc81c1d30fbb",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 20,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape169p11-169",
+					"shapeId": 169,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape172p11-172",
+					"shapeId": 172,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape175p11-175",
+					"shapeId": 175,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape178p11-178",
+					"shapeId": 178,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape181p11-181",
+					"shapeId": 181,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape184p11-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape187p11-187",
+					"shapeId": 187,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape188p11-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "STOCK MANAGEMENT SYSTEM PROJECT PROPOSAL"
+				},
+				{
+					"id": "google-shape192p11-192",
+					"shapeId": 192,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape194p11-194",
+					"shapeId": 194,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape195p11-195",
+					"shapeId": 195,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 132,
+					"maxListItems": 2,
+					"sampleText": "Customize each slide with specific data and examples relevant to your market.\nUse visuals effectively to support your points and make the presentation more engaging."
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape203p12-203",
+					"shapeId": 203,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape205p12-205",
+					"shapeId": 205,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape208p12-208",
+					"shapeId": 208,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape211p12-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape214p12-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape217p12-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape220p12-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape223p12-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape226p12-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape227p12-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "PROBLEM STATEMENT"
+				},
+				{
+					"id": "google-shape228p12-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "INTRODUCTION"
+				},
+				{
+					"id": "google-shape229p12-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape230p12-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape231p12-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape232p12-232",
+					"shapeId": 232,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape233p12-233",
+					"shapeId": 233,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape234p12-234",
+					"shapeId": 234,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape235p12-235",
+					"shapeId": 235,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "PROJECT SCOPE"
+				},
+				{
+					"id": "google-shape236p12-236",
+					"shapeId": 236,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "TABLE OF CONTENTS"
+				},
+				{
+					"id": "google-shape239p12-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape242p12-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape247p13-247",
+					"shapeId": 247,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape250p13-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape254p13-254",
+					"shapeId": 254,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape256p13-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape259p13-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape260p13-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "INTRODUCTION"
+				},
+				{
+					"id": "google-shape261p13-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape262p13-262",
+					"shapeId": 262,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 424,
+					"maxListItems": 3,
+					"sampleText": "To the world of creative writing! Here, your imagination knows no bounds, and the only limit is the sky—or perhaps, not even that. Whether you're penning a heartfelt poem, crafting an epic novel, or simply jotting down your thoughts, the act of writing allows you to explore new realms and express your deepest emotions.\n\nIn this guide, we'll journey through the essential elements of storytelling, delve into character development, and uncover the secrets to creating compelling plots."
+				},
+				{
+					"id": "google-shape265p13-265",
+					"shapeId": 265,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape268p13-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape271p13-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape274p13-274",
+					"shapeId": 274,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape279p14-279",
+					"shapeId": 279,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape280p14-280",
+					"shapeId": 280,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape281p14-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "WELCOME TO PRESENTATION"
+				},
+				{
+					"id": "google-shape282p14-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "I'm Rain, and I'll be sharing with you my beautiful ideas. Follow me at @reallygreatsite to learn more."
+				},
+				{
+					"id": "google-shape286p14-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape288p14-288",
+					"shapeId": 288,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape291p14-291",
+					"shapeId": 291,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape294p14-294",
+					"shapeId": 294,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape299p15-299",
+					"shapeId": 299,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape302p15-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape305p15-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape309p15-309",
+					"shapeId": 309,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape311p15-311",
+					"shapeId": 311,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape314p15-314",
+					"shapeId": 314,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape317p15-317",
+					"shapeId": 317,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape320p15-320",
+					"shapeId": 320,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape323p15-323",
+					"shapeId": 323,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape326p15-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape327p15-327",
+					"shapeId": 327,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "THE COMPANY"
+				},
+				{
+					"id": "google-shape328p15-328",
+					"shapeId": 328,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "WHAT WE DO?"
+				},
+				{
+					"id": "google-shape329p15-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "WHO WE ARE?"
+				},
+				{
+					"id": "google-shape330p15-330",
+					"shapeId": 330,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape331p15-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape332p15-332",
+					"shapeId": 332,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape333p15-333",
+					"shapeId": 333,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape340p16-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape344p16-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape346p16-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape349p16-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape352p16-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape355p16-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape358p16-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape359p16-359",
+					"shapeId": 359,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "OBJECTIVES AND GOALS"
+				},
+				{
+					"id": "google-shape360p16-360",
+					"shapeId": 360,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "GOALS 1"
+				},
+				{
+					"id": "google-shape361p16-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "GOALS 1"
+				},
+				{
+					"id": "google-shape362p16-362",
+					"shapeId": 362,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "GOALS 1"
+				},
+				{
+					"id": "google-shape363p16-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape364p16-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape365p16-365",
+					"shapeId": 365,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape368p16-368",
+					"shapeId": 368,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape371p16-371",
+					"shapeId": 371,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape372p16-372",
+					"shapeId": 372,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape373p16-373",
+					"shapeId": 373,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape374p16-374",
+					"shapeId": 374,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape381p17-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape382p17-382",
+					"shapeId": 382,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape383p17-383",
+					"shapeId": 383,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape387p17-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape389p17-389",
+					"shapeId": 389,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape390p17-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "OUR PROJECTS"
+				},
+				{
+					"id": "google-shape391p17-391",
+					"shapeId": 391,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 311,
+					"maxListItems": 4,
+					"sampleText": "aim to make a positive impact on the community and the environment. Whether through innovative technology, sustainable practices, or community outreach, each project is designed with a clear purpose and a commitment to excellence.\nOne of our key initiatives focuses on renewable energy solutions, aiming to reduce carbon footprints and promote cleaner, greener alternatives.\n\n By collaborating with experts and local stakeholders, we are developing solar and wind energy projects that not only provide sustainable power but also create job opportunities and boost local economies."
+				},
+				{
+					"id": "google-shape394p17-394",
+					"shapeId": 394,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape397p17-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape400p17-400",
+					"shapeId": 400,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape403p17-403",
+					"shapeId": 403,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape410p18-410",
+					"shapeId": 410,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape413p18-413",
+					"shapeId": 413,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape416p18-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape419p18-419",
+					"shapeId": 419,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape423p18-423",
+					"shapeId": 423,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape425p18-425",
+					"shapeId": 425,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape428p18-428",
+					"shapeId": 428,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape431p18-431",
+					"shapeId": 431,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape434p18-434",
+					"shapeId": 434,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape437p18-437",
+					"shapeId": 437,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape440p18-440",
+					"shapeId": 440,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape441p18-441",
+					"shapeId": 441,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "OUR OFFERINGS"
+				},
+				{
+					"id": "google-shape442p18-442",
+					"shapeId": 442,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "SERVICE ONE"
+				},
+				{
+					"id": "google-shape443p18-443",
+					"shapeId": 443,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "SERVICE TWO"
+				},
+				{
+					"id": "google-shape444p18-444",
+					"shapeId": 444,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "SERVICE THREE"
+				},
+				{
+					"id": "google-shape445p18-445",
+					"shapeId": 445,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "SERVICE FOUR"
+				},
+				{
+					"id": "google-shape446p18-446",
+					"shapeId": 446,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape447p18-447",
+					"shapeId": 447,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape448p18-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape449p18-449",
+					"shapeId": 449,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape452p18-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape453p18-453",
+					"shapeId": 453,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape454p18-454",
+					"shapeId": 454,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape455p18-455",
+					"shapeId": 455,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape456p18-456",
+					"shapeId": 456,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape461p19-461",
+					"shapeId": 461,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape462p19-462",
+					"shapeId": 462,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape466p19-466",
+					"shapeId": 466,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape468p19-468",
+					"shapeId": 468,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape469p19-469",
+					"shapeId": 469,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "GALLERY IMAGE"
+				},
+				{
+					"id": "google-shape472p19-472",
+					"shapeId": 472,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape475p19-475",
+					"shapeId": 475,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape478p19-478",
+					"shapeId": 478,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape481p19-481",
+					"shapeId": 481,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape486p20-486",
+					"shapeId": 486,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "PROBLEM STATEMENT"
+				},
+				{
+					"id": "google-shape487p20-487",
+					"shapeId": 487,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "STATEMENT"
+				},
+				{
+					"id": "google-shape488p20-488",
+					"shapeId": 488,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "STATEMENT"
+				},
+				{
+					"id": "google-shape489p20-489",
+					"shapeId": 489,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape493p20-493",
+					"shapeId": 493,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape495p20-495",
+					"shapeId": 495,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape496p20-496",
+					"shapeId": 496,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape497p20-497",
+					"shapeId": 497,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape498p20-498",
+					"shapeId": 498,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 329,
+					"sampleText": "Intent: This document outlines the goals, objectives, and strategies that will guide our efforts over the next fiscal year. Our primary focus is to enhance customer satisfaction, drive innovation, and foster a culture of continuous improvement."
+				},
+				{
+					"id": "google-shape499p20-499",
+					"shapeId": 499,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 329,
+					"sampleText": "Intent: This document outlines the goals, objectives, and strategies that will guide our efforts over the next fiscal year. Our primary focus is to enhance customer satisfaction, drive innovation, and foster a culture of continuous improvement."
+				},
+				{
+					"id": "google-shape502p20-502",
+					"shapeId": 502,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape505p20-505",
+					"shapeId": 505,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape508p20-508",
+					"shapeId": 508,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape511p20-511",
+					"shapeId": 511,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape514p20-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape522p21-522",
+					"shapeId": 522,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape524p21-524",
+					"shapeId": 524,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape525p21-525",
+					"shapeId": 525,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "IMPACT ON BUSINESS"
+				},
+				{
+					"id": "google-shape526p21-526",
+					"shapeId": 526,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 396,
+					"maxListItems": 4,
+					"sampleText": "Cannot be overstated in today's rapidly evolving landscape. Whether it's a small startup or a multinational corporation, businesses must constantly adapt to changes in technology, consumer behavior, and global economic conditions.\nOne major factor influencing business today is the rise of digital transformation. \n\nCompanies are leveraging advanced technologies like artificial intelligence, machine learning, and big data analytics to optimize operations, enhance customer experiences, and drive innovation. This shift not only increases efficiency but also opens up new revenue streams and market opportunities."
+				},
+				{
+					"id": "google-shape527p21-527",
+					"shapeId": 527,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape530p21-530",
+					"shapeId": 530,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape533p21-533",
+					"shapeId": 533,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape536p21-536",
+					"shapeId": 536,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape541p22-541",
+					"shapeId": 541,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape542p22-542",
+					"shapeId": 542,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape543p22-543",
+					"shapeId": 543,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape544p22-544",
+					"shapeId": 544,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "CLIENT NAME"
+				},
+				{
+					"id": "google-shape545p22-545",
+					"shapeId": 545,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "CLIENT NAME"
+				},
+				{
+					"id": "google-shape546p22-546",
+					"shapeId": 546,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "CLIENT NAME"
+				},
+				{
+					"id": "google-shape547p22-547",
+					"shapeId": 547,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape548p22-548",
+					"shapeId": 548,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape549p22-549",
+					"shapeId": 549,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape550p22-550",
+					"shapeId": 550,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "CLIENT FEEDBACK"
+				},
+				{
+					"id": "google-shape554p22-554",
+					"shapeId": 554,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape556p22-556",
+					"shapeId": 556,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape559p22-559",
+					"shapeId": 559,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape562p22-562",
+					"shapeId": 562,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape565p22-565",
+					"shapeId": 565,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape568p22-568",
+					"shapeId": 568,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape573p23-573",
+					"shapeId": 573,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape576p23-576",
+					"shapeId": 576,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape580p23-580",
+					"shapeId": 580,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape582p23-582",
+					"shapeId": 582,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape585p23-585",
+					"shapeId": 585,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape588p23-588",
+					"shapeId": 588,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape591p23-591",
+					"shapeId": 591,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape594p23-594",
+					"shapeId": 594,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape597p23-597",
+					"shapeId": 597,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape598p23-598",
+					"shapeId": 598,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "ABOUT US"
+				},
+				{
+					"id": "google-shape599p23-599",
+					"shapeId": 599,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 396,
+					"maxListItems": 4,
+					"sampleText": "Cannot be overstated in today's rapidly evolving landscape. Whether it's a small startup or a multinational corporation, businesses must constantly adapt to changes in technology, consumer behavior, and global economic conditions.\nOne major factor influencing business today is the rise of digital transformation. \n\nCompanies are leveraging advanced technologies like artificial intelligence, machine learning, and big data analytics to optimize operations, enhance customer experiences, and drive innovation. This shift not only increases efficiency but also opens up new revenue streams and market opportunities."
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape604p24-604",
+					"shapeId": 604,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape607p24-607",
+					"shapeId": 607,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape611p24-611",
+					"shapeId": 611,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape613p24-613",
+					"shapeId": 613,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape616p24-616",
+					"shapeId": 616,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape619p24-619",
+					"shapeId": 619,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape622p24-622",
+					"shapeId": 622,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape623p24-623",
+					"shapeId": 623,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "OUR HISTORY"
+				},
+				{
+					"id": "google-shape624p24-624",
+					"shapeId": 624,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 396,
+					"maxListItems": 4,
+					"sampleText": "Cannot be overstated in today's rapidly evolving landscape. Whether it's a small startup or a multinational corporation, businesses must constantly adapt to changes in technology, consumer behavior, and global economic conditions.\nOne major factor influencing business today is the rise of digital transformation. \n\nCompanies are leveraging advanced technologies like artificial intelligence, machine learning, and big data analytics to optimize operations, enhance customer experiences, and drive innovation. This shift not only increases efficiency but also opens up new revenue streams and market opportunities."
+				},
+				{
+					"id": "google-shape627p24-627",
+					"shapeId": 627,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape634p25-634",
+					"shapeId": 634,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape635p25-635",
+					"shapeId": 635,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape639p25-639",
+					"shapeId": 639,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape641p25-641",
+					"shapeId": 641,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape644p25-644",
+					"shapeId": 644,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape647p25-647",
+					"shapeId": 647,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape650p25-650",
+					"shapeId": 650,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape653p25-653",
+					"shapeId": 653,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape656p25-656",
+					"shapeId": 656,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape657p25-657",
+					"shapeId": 657,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "OUR HISTORY"
+				},
+				{
+					"id": "google-shape658p25-658",
+					"shapeId": 658,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape659p25-659",
+					"shapeId": 659,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape660p25-660",
+					"shapeId": 660,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape661p25-661",
+					"shapeId": 661,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape662p25-662",
+					"shapeId": 662,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "ADD A MAIN POINT"
+				},
+				{
+					"id": "google-shape663p25-663",
+					"shapeId": 663,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape664p25-664",
+					"shapeId": 664,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape665p25-665",
+					"shapeId": 665,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape666p25-666",
+					"shapeId": 666,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape671p26-671",
+					"shapeId": 671,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape672p26-672",
+					"shapeId": 672,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "A PICTURE IS WORTH A THOUSAND WORDS"
+				},
+				{
+					"id": "google-shape675p26-675",
+					"shapeId": 675,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape678p26-678",
+					"shapeId": 678,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape681p26-681",
+					"shapeId": 681,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape686p27-686",
+					"shapeId": 686,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape690p27-690",
+					"shapeId": 690,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape692p27-692",
+					"shapeId": 692,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape693p27-693",
+					"shapeId": 693,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "WRITE AN ORIGINAL STATEMENT OR INSPIRING QUOTE"
+				},
+				{
+					"id": "google-shape694p27-694",
+					"shapeId": 694,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 87,
+					"sampleText": "— Include a credit, citation, or supporting message"
+				},
+				{
+					"id": "google-shape697p27-697",
+					"shapeId": 697,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape700p27-700",
+					"shapeId": 700,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape703p27-703",
+					"shapeId": 703,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape708p28-708",
+					"shapeId": 708,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape717p28-717",
+					"shapeId": 717,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape719p28-719",
+					"shapeId": 719,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape720p28-720",
+					"shapeId": 720,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "CONTACT US"
+				},
+				{
+					"id": "google-shape721p28-721",
+					"shapeId": 721,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "123 Anywhere St., Any City,ST 12345"
+				},
+				{
+					"id": "google-shape722p28-722",
+					"shapeId": 722,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "123-456-7890"
+				},
+				{
+					"id": "google-shape723p28-723",
+					"shapeId": 723,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "hello@reallygreatsite.com"
+				},
+				{
+					"id": "google-shape724p28-724",
+					"shapeId": 724,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "reallygreatsite.com"
+				},
+				{
+					"id": "google-shape725p28-725",
+					"shapeId": 725,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "@reallygreatsite"
+				},
+				{
+					"id": "google-shape728p28-728",
+					"shapeId": 728,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape731p28-731",
+					"shapeId": 731,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape734p28-734",
+					"shapeId": 734,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "content",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape739p29-739",
+					"shapeId": 739,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape743p29-743",
+					"shapeId": 743,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape745p29-745",
+					"shapeId": 745,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "LOGO"
+				},
+				{
+					"id": "google-shape746p29-746",
+					"shapeId": 746,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "RESOURCE PAGE"
+				},
+				{
+					"id": "google-shape747p29-747",
+					"shapeId": 747,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 91,
+					"maxListItems": 13,
+					"sampleText": "Use these design resources in your Canva Presentation.\n\n\n\n\n\n\n\n\n\nYou can find these fonts online too. Happy designing! \n\nDon't forget to delete this page before presenting."
+				},
+				{
+					"id": "google-shape748p29-748",
+					"shapeId": 748,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 95,
+					"sampleText": "This presentation template uses the following free fonts:"
+				},
+				{
+					"id": "google-shape749p29-749",
+					"shapeId": 749,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 3,
+					"sampleText": "Titles: Anton\nHeaders: Anton\nBody Copy: Montserrat"
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "closing",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape754p30-754",
+					"shapeId": 754,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape755p30-755",
+					"shapeId": 755,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape756p30-756",
+					"shapeId": 756,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape757p30-757",
+					"shapeId": 757,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 79,
+					"maxListItems": 2,
+					"sampleText": "SlidesCarnival for the presentation template\nPexels for the photos"
+				},
+				{
+					"id": "google-shape758p30-758",
+					"shapeId": 758,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "HAPPY DESIGNING!"
+				},
+				{
+					"id": "google-shape761p30-761",
+					"shapeId": 761,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape764p30-764",
+					"shapeId": 764,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape767p30-767",
+					"shapeId": 767,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		}
+	]
+}

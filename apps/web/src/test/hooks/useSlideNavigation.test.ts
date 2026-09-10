@@ -3,7 +3,7 @@ import {
 	KEYBOARD_NAVIGATION_REPEAT_DELAY_MS,
 	KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS,
 	startKeyboardNavigationRepeat,
-} from "@/hooks/useSlideNavigation";
+} from "@slidesage/ui/hooks/useSlideNavigation";
 
 afterEach(() => {
 	jest.useRealTimers();

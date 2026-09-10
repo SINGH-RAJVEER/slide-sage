@@ -1,0 +1,1482 @@
+{
+	"manifestVersion": 1,
+	"templateId": "grade-1-addition",
+	"templateVersion": 1,
+	"sha256": "bd5d2c04ce95db1b3530c79546f28c5d1f91619e8c0ba7131377d60d93527f99",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 16,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape82p11-82",
+					"shapeId": 82,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Learning"
+				},
+				{
+					"id": "google-shape87p11-87",
+					"shapeId": 87,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Safari Edition"
+				},
+				{
+					"id": "google-shape89p11-89",
+					"shapeId": 89,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Grade 1"
+				},
+				{
+					"id": "google-shape90p11-90",
+					"shapeId": 90,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Addition"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape99p12-99",
+					"shapeId": 99,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape104p12-104",
+					"shapeId": 104,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape105p12-105",
+					"shapeId": 105,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Define addition"
+				},
+				{
+					"id": "google-shape107p12-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape108p12-108",
+					"shapeId": 108,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Count animals"
+				},
+				{
+					"id": "google-shape110p12-110",
+					"shapeId": 110,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape111p12-111",
+					"shapeId": 111,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Add with pictures"
+				},
+				{
+					"id": "google-shape116p12-116",
+					"shapeId": 116,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Today, you’ll..."
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "section",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape133p13-133",
+					"shapeId": 133,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 122,
+					"maxListItems": 3,
+					"sampleText": "We’re going on a safari! \n\nWhat animals can you spot?Can you count how many animals we have all together?"
+				},
+				{
+					"id": "google-shape134p13-134",
+					"shapeId": 134,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "How many do you see?"
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape139p14-139",
+					"shapeId": 139,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape140p14-140",
+					"shapeId": 140,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape142p14-142",
+					"shapeId": 142,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 87,
+					"sampleText": "Addition means putting numbers or objects together."
+				},
+				{
+					"id": "google-shape143p14-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "We use + to show addition."
+				},
+				{
+					"id": "google-shape145p14-145",
+					"shapeId": 145,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape146p14-146",
+					"shapeId": 146,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "What is addition?"
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape151p15-151",
+					"shapeId": 151,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape158p15-158",
+					"shapeId": 158,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape159p15-159",
+					"shapeId": 159,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape162p15-162",
+					"shapeId": 162,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape163p15-163",
+					"shapeId": 163,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "The language of addition"
+				},
+				{
+					"id": "google-shape164p15-164",
+					"shapeId": 164,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 85,
+					"sampleText": "Let’s meet the words you’ll use on our adventure."
+				},
+				{
+					"id": "google-shape165p15-165",
+					"shapeId": 165,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "1    +    1    =    2"
+				},
+				{
+					"id": "google-shape166p15-166",
+					"shapeId": 166,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "addend"
+				},
+				{
+					"id": "google-shape167p15-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "addend"
+				},
+				{
+					"id": "google-shape168p15-168",
+					"shapeId": 168,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "sum or total"
+				},
+				{
+					"id": "google-shape169p15-169",
+					"shapeId": 169,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "plus sign"
+				},
+				{
+					"id": "google-shape170p15-170",
+					"shapeId": 170,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "equal sign"
+				},
+				{
+					"id": "google-shape171p15-171",
+					"shapeId": 171,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape172p15-172",
+					"shapeId": 172,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "="
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape180p16-180",
+					"shapeId": 180,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape183p16-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape184p16-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape187p16-187",
+					"shapeId": 187,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape188p16-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 70,
+					"sampleText": "Find the total animals in each slide."
+				},
+				{
+					"id": "google-shape189p16-189",
+					"shapeId": 189,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Let’s practice!"
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape194p17-194",
+					"shapeId": 194,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape196p17-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape197p17-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape198p17-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape199p17-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "How many lions are there?"
+				},
+				{
+					"id": "google-shape204p17-204",
+					"shapeId": 204,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape205p17-205",
+					"shapeId": 205,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape211p17-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape212p17-212",
+					"shapeId": 212,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape215p17-215",
+					"shapeId": 215,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape216p17-216",
+					"shapeId": 216,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "="
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape221p18-221",
+					"shapeId": 221,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape222p18-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape223p18-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "How many zebras are there?"
+				},
+				{
+					"id": "google-shape225p18-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape226p18-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape229p18-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape230p18-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape241p18-241",
+					"shapeId": 241,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape242p18-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape245p18-245",
+					"shapeId": 245,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape246p18-246",
+					"shapeId": 246,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "="
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape251p19-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape252p19-252",
+					"shapeId": 252,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape253p19-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "How many giraffes are there?"
+				},
+				{
+					"id": "google-shape256p19-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape257p19-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape261p19-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape262p19-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape269p19-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape270p19-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape273p19-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape274p19-274",
+					"shapeId": 274,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "="
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape279p20-279",
+					"shapeId": 279,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape280p20-280",
+					"shapeId": 280,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape281p20-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 76,
+					"sampleText": "Select the correct way to make the number."
+				},
+				{
+					"id": "google-shape284p20-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape285p20-285",
+					"shapeId": 285,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 37,
+					"maxListItems": 2,
+					"sampleText": "Let’s build\nthe number!"
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape290p21-290",
+					"shapeId": 290,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape292p21-292",
+					"shapeId": 292,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape293p21-293",
+					"shapeId": 293,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape295p21-295",
+					"shapeId": 295,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape296p21-296",
+					"shapeId": 296,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape299p21-299",
+					"shapeId": 299,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape300p21-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape302p21-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "B"
+				},
+				{
+					"id": "google-shape303p21-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape304p21-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "How do you make 3?"
+				},
+				{
+					"id": "google-shape306p21-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape307p21-307",
+					"shapeId": 307,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape318p21-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape319p21-319",
+					"shapeId": 319,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape321p21-321",
+					"shapeId": 321,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "A"
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape326p22-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape327p22-327",
+					"shapeId": 327,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape330p22-330",
+					"shapeId": 330,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape331p22-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape333p22-333",
+					"shapeId": 333,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape334p22-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape337p22-337",
+					"shapeId": 337,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape338p22-338",
+					"shapeId": 338,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape340p22-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "A"
+				},
+				{
+					"id": "google-shape343p22-343",
+					"shapeId": 343,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape344p22-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape346p22-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "B"
+				},
+				{
+					"id": "google-shape348p22-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape349p22-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape358p22-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "How do you make 5?"
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape363p23-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape365p23-365",
+					"shapeId": 365,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape366p23-366",
+					"shapeId": 366,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape368p23-368",
+					"shapeId": 368,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape369p23-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape372p23-372",
+					"shapeId": 372,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape373p23-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape375p23-375",
+					"shapeId": 375,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "A"
+				},
+				{
+					"id": "google-shape378p23-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape379p23-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape381p23-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "B"
+				},
+				{
+					"id": "google-shape383p23-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape384p23-384",
+					"shapeId": 384,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "+"
+				},
+				{
+					"id": "google-shape400p23-400",
+					"shapeId": 400,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape401p23-401",
+					"shapeId": 401,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "How do you make 9?"
+				},
+				{
+					"id": "google-shape405p23-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape406p23-406",
+					"shapeId": 406,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape407p23-407",
+					"shapeId": 407,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "6"
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape412p24-412",
+					"shapeId": 412,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape415p24-415",
+					"shapeId": 415,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape416p24-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Safari Math Champ"
+				},
+				{
+					"id": "google-shape420p24-420",
+					"shapeId": 420,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Amazing work!"
+				},
+				{
+					"id": "google-shape421p24-421",
+					"shapeId": 421,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "You’re officially a"
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape427p25-427",
+					"shapeId": 427,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape428p25-428",
+					"shapeId": 428,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape430p25-430",
+					"shapeId": 430,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape431p25-431",
+					"shapeId": 431,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape433p25-433",
+					"shapeId": 433,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape434p25-434",
+					"shapeId": 434,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape436p25-436",
+					"shapeId": 436,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape437p25-437",
+					"shapeId": 437,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Design Elements / Icons"
+				},
+				{
+					"id": "google-shape439p25-439",
+					"shapeId": 439,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape440p25-440",
+					"shapeId": 440,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				},
+				{
+					"id": "google-shape442p25-442",
+					"shapeId": 442,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape443p25-443",
+					"shapeId": 443,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape445p25-445",
+					"shapeId": 445,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape446p25-446",
+					"shapeId": 446,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape448p25-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape449p25-449",
+					"shapeId": 449,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape451p25-451",
+					"shapeId": 451,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape452p25-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape454p25-454",
+					"shapeId": 454,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape455p25-455",
+					"shapeId": 455,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape456p25-456",
+					"shapeId": 456,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape457p25-457",
+					"shapeId": 457,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape458p25-458",
+					"shapeId": 458,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Shadows Into Light Two"
+				},
+				{
+					"id": "google-shape459p25-459",
+					"shapeId": 459,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Quicksand"
+				},
+				{
+					"id": "google-shape460p25-460",
+					"shapeId": 460,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "TITLES:"
+				},
+				{
+					"id": "google-shape461p25-461",
+					"shapeId": 461,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "BODY TEXT:"
+				},
+				{
+					"id": "google-shape462p25-462",
+					"shapeId": 462,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#FFF8E2"
+				},
+				{
+					"id": "google-shape463p25-463",
+					"shapeId": 463,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F9CF67"
+				},
+				{
+					"id": "google-shape464p25-464",
+					"shapeId": 464,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#C19336"
+				},
+				{
+					"id": "google-shape465p25-465",
+					"shapeId": 465,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#CFE185"
+				},
+				{
+					"id": "google-shape466p25-466",
+					"shapeId": 466,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#688B49"
+				},
+				{
+					"id": "google-shape468p25-468",
+					"shapeId": 468,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape469p25-469",
+					"shapeId": 469,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape470p25-470",
+					"shapeId": 470,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 119,
+					"sampleText": "Use these in your presentation. Delete or hide this page before presenting."
+				},
+				{
+					"id": "google-shape471p25-471",
+					"shapeId": 471,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "closing",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape491p26-491",
+					"shapeId": 491,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape493p26-493",
+					"shapeId": 493,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape494p26-494",
+					"shapeId": 494,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape496p26-496",
+					"shapeId": 496,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape497p26-497",
+					"shapeId": 497,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape498p26-498",
+					"shapeId": 498,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 124,
+					"sampleText": "This presentation template is free for everyone to use, thanks to the following:"
+				},
+				{
+					"id": "google-shape499p26-499",
+					"shapeId": 499,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "for this presentation template"
+				},
+				{
+					"id": "google-shape500p26-500",
+					"shapeId": 500,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "for the photos, graphics, and elements"
+				},
+				{
+					"id": "google-shape501p26-501",
+					"shapeId": 501,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape502p26-502",
+					"shapeId": 502,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape503p26-503",
+					"shapeId": 503,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Pexels, Pixabay, Sketchify"
+				},
+				{
+					"id": "google-shape504p26-504",
+					"shapeId": 504,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,59 @@
+name: Pull request checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - run: bun install --frozen-lockfile
+      - run: bun run type-check
+      - run: bun test
+        working-directory: libs/types
+      - run: bun run test:ui
+      - run: bun run test:web
+      - run: go test ./...
+        working-directory: apps/api
+      - run: go vet ./...
+        working-directory: apps/api
+      - run: bun run build
+      - run: bun run build:api
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.0
+          terraform_wrapper: false
+      - name: Check Terraform formatting
+        working-directory: infra/prod
+        run: terraform fmt -check -recursive
+      - name: Validate Terraform configuration
+        working-directory: infra/prod
+        run: |
+          terraform init -backend=false -input=false -lockfile=readonly
+          terraform validate -no-color

@@ -14,7 +14,10 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentationrevision"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templateasset"
 )
 
 const (
@@ -56,7 +59,7 @@ func RegisterRoutes(mux *http.ServeMux, database *sql.DB, identity Identity, con
 		database:      database,
 		identity:      identity,
 		connections:   connections,
-		client:        &http.Client{Timeout: 3 * time.Minute},
+		client:        &http.Client{Timeout: 3 * time.Minute, Transport: observability.HTTPTransport(nil)},
 		queue:         queue,
 		streamContext: config.StreamContext,
 		streams:       newStreamLimiter(config.MaxStreams, config.MaxStreamsPerUser),
@@ -97,6 +100,11 @@ func RecoverExpired(ctx context.Context, database *sql.DB) error {
 }
 
 type handler struct {
+	templates    *templateasset.CDNFetcher
+	objects      presentationrevision.ObjectStore
+	revisions    *presentationrevision.PostgresRepository
+	previewQueue *queueClient
+
 	database      *sql.DB
 	identity      Identity
 	client        *http.Client

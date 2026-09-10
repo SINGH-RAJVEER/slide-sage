@@ -1,0 +1,1946 @@
+{
+	"manifestVersion": 1,
+	"templateId": "illustrative-design-inspiration",
+	"templateVersion": 1,
+	"sha256": "b30bc1c3ac6e94d736f38b57debe90505e59c5b64dc6197d32ba35f5da77e913",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 20,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape106p9-106",
+					"shapeId": 106,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape107p9-107",
+					"shapeId": 107,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape108p9-108",
+					"shapeId": 108,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape109p9-109",
+					"shapeId": 109,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape111p9-111",
+					"shapeId": 111,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape112p9-112",
+					"shapeId": 112,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape113p9-113",
+					"shapeId": 113,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "DESIGN INSPIRATION FOR SOCIAL MEDIA"
+				},
+				{
+					"id": "google-shape114p9-114",
+					"shapeId": 114,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 84,
+					"sampleText": "Enhancing Engagement Through Visual Storytelling"
+				},
+				{
+					"id": "google-shape115p9-115",
+					"shapeId": 115,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape120p10-120",
+					"shapeId": 120,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape121p10-121",
+					"shapeId": 121,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape122p10-122",
+					"shapeId": 122,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape123p10-123",
+					"shapeId": 123,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "CONTENTS"
+				},
+				{
+					"id": "google-shape125p10-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape126p10-126",
+					"shapeId": 126,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Content Planning"
+				},
+				{
+					"id": "google-shape128p10-128",
+					"shapeId": 128,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape129p10-129",
+					"shapeId": 129,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Visual Creation"
+				},
+				{
+					"id": "google-shape131p10-131",
+					"shapeId": 131,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape132p10-132",
+					"shapeId": 132,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "Audience Engagement"
+				},
+				{
+					"id": "google-shape134p10-134",
+					"shapeId": 134,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "04"
+				},
+				{
+					"id": "google-shape135p10-135",
+					"shapeId": 135,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Performance Analysis"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape141p11-141",
+					"shapeId": 141,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape142p11-142",
+					"shapeId": 142,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape143p11-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape144p11-144",
+					"shapeId": 144,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape145p11-145",
+					"shapeId": 145,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "CONTENT PLANNING"
+				},
+				{
+					"id": "google-shape146p11-146",
+					"shapeId": 146,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape151p12-151",
+					"shapeId": 151,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape152p12-152",
+					"shapeId": 152,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "INTRODUCTION"
+				},
+				{
+					"id": "google-shape153p12-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape154p12-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Write an important idea here"
+				},
+				{
+					"id": "google-shape155p12-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape156p12-156",
+					"shapeId": 156,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Write an important idea here"
+				},
+				{
+					"id": "google-shape157p12-157",
+					"shapeId": 157,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape158p12-158",
+					"shapeId": 158,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Write an important idea here"
+				},
+				{
+					"id": "google-shape159p12-159",
+					"shapeId": 159,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 194,
+					"sampleText": "Highlight the significance of aligning social media content with business goals, target audience interests, and platform best practices."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape165p13-165",
+					"shapeId": 165,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape166p13-166",
+					"shapeId": 166,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape167p13-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape168p13-168",
+					"shapeId": 168,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape170p13-170",
+					"shapeId": 170,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape171p13-171",
+					"shapeId": 171,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape172p13-172",
+					"shapeId": 172,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape173p13-173",
+					"shapeId": 173,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape175p13-175",
+					"shapeId": 175,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape176p13-176",
+					"shapeId": 176,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape177p13-177",
+					"shapeId": 177,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape178p13-178",
+					"shapeId": 178,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape179p13-179",
+					"shapeId": 179,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Research"
+				},
+				{
+					"id": "google-shape180p13-180",
+					"shapeId": 180,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Ideation"
+				},
+				{
+					"id": "google-shape181p13-181",
+					"shapeId": 181,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Scheduling"
+				},
+				{
+					"id": "google-shape182p13-182",
+					"shapeId": 182,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "PLANNING CONTENT"
+				},
+				{
+					"id": "google-shape183p13-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 177,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape184p13-184",
+					"shapeId": 184,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 177,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape185p13-185",
+					"shapeId": 185,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 177,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape191p14-191",
+					"shapeId": 191,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape192p14-192",
+					"shapeId": 192,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape193p14-193",
+					"shapeId": 193,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "VISUAL CREATION"
+				},
+				{
+					"id": "google-shape194p14-194",
+					"shapeId": 194,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape195p14-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape196p14-196",
+					"shapeId": 196,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape203p15-203",
+					"shapeId": 203,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape204p15-204",
+					"shapeId": 204,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape207p15-207",
+					"shapeId": 207,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape208p15-208",
+					"shapeId": 208,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape209p15-209",
+					"shapeId": 209,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 255,
+					"sampleText": "Creating visually appealing social media content is crucial for engaging audiences and effectively conveying brand messages. High-quality images, graphics, and videos capture attention."
+				},
+				{
+					"id": "google-shape210p15-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "VISUAL CREATION"
+				},
+				{
+					"id": "google-shape211p15-211",
+					"shapeId": 211,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape212p15-212",
+					"shapeId": 212,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape217p16-217",
+					"shapeId": 217,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape218p16-218",
+					"shapeId": 218,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "REVIEW \u0026 EDITING"
+				},
+				{
+					"id": "google-shape219p16-219",
+					"shapeId": 219,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Content Evaluation"
+				},
+				{
+					"id": "google-shape220p16-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Grammar \u0026 Style Check"
+				},
+				{
+					"id": "google-shape221p16-221",
+					"shapeId": 221,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Feedback Incorporation"
+				},
+				{
+					"id": "google-shape222p16-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 120,
+					"sampleText": "Assess the quality, relevance, and accuracy of the content before publishing."
+				},
+				{
+					"id": "google-shape223p16-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 136,
+					"sampleText": "Review for spelling, grammar, and consistency in writing style to maintain professionalism"
+				},
+				{
+					"id": "google-shape224p16-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 131,
+					"sampleText": "Incorporate feedback from stakeholders or peers to refine and improve content quality."
+				},
+				{
+					"id": "google-shape225p16-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape226p16-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape227p16-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape228p16-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape229p16-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape230p16-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape235p17-235",
+					"shapeId": 235,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape236p17-236",
+					"shapeId": 236,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape237p17-237",
+					"shapeId": 237,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "123,456"
+				},
+				{
+					"id": "google-shape239p17-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape240p17-240",
+					"shapeId": 240,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 112,
+					"sampleText": "Use bold and eye-catching typography to emphasize the milestone number."
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape246p18-246",
+					"shapeId": 246,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape247p18-247",
+					"shapeId": 247,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape248p18-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "AUDIENCE ENGAGEMENT"
+				},
+				{
+					"id": "google-shape250p18-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape251p18-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape252p18-252",
+					"shapeId": 252,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape253p18-253",
+					"shapeId": 253,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape259p19-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape260p19-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape262p19-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape263p19-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape265p19-265",
+					"shapeId": 265,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape266p19-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape268p19-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape269p19-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Listening \u0026 Responding"
+				},
+				{
+					"id": "google-shape271p19-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape272p19-272",
+					"shapeId": 272,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Community Building"
+				},
+				{
+					"id": "google-shape274p19-274",
+					"shapeId": 274,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape275p19-275",
+					"shapeId": 275,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "User-Generated Content"
+				},
+				{
+					"id": "google-shape276p19-276",
+					"shapeId": 276,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 231,
+					"sampleText": "Encourage active listening to audience feedback and respond promptly to comments, messages, and mentions to build rapport and trust through personalized interactions."
+				},
+				{
+					"id": "google-shape277p19-277",
+					"shapeId": 277,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 230,
+					"sampleText": "Promote engagement with contests, challenges, and campaigns using user-generated content to boost brand authenticity and create a sense of community among followers."
+				},
+				{
+					"id": "google-shape278p19-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 190,
+					"sampleText": "Benefits of fostering community among followers through discussions, Q\u0026A sessions, and virtual events for brand loyalty and advocacy."
+				},
+				{
+					"id": "google-shape279p19-279",
+					"shapeId": 279,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "AUDIENCE ENGAGEMENT"
+				},
+				{
+					"id": "google-shape280p19-280",
+					"shapeId": 280,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape281p19-281",
+					"shapeId": 281,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape282p19-282",
+					"shapeId": 282,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "section",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape289p20-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape290p20-290",
+					"shapeId": 290,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape291p20-291",
+					"shapeId": 291,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 136,
+					"sampleText": "LOREM IPSUM DOLOR SIT AMET, CONSECTETUR ADIPISCING ELIT, SED DO EIUSMOD TEMPOR INCIDIDUNT."
+				},
+				{
+					"id": "google-shape292p20-292",
+					"shapeId": 292,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "section",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape297p21-297",
+					"shapeId": 297,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape298p21-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "PERFORMANCE ANALYSIS"
+				},
+				{
+					"id": "google-shape299p21-299",
+					"shapeId": 299,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 349,
+					"sampleText": "The slide stresses tracking and analyzing social media metrics, including reach, engagement, click-through rates, and conversion rates. Using analytics tools is crucial to optimize content strategy by understanding audience behavior and campaign effectiveness."
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape305p22-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape306p22-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape307p22-307",
+					"shapeId": 307,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "PERFORMANCE METRICS"
+				},
+				{
+					"id": "google-shape308p22-308",
+					"shapeId": 308,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape309p22-309",
+					"shapeId": 309,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "04"
+				},
+				{
+					"id": "google-shape310p22-310",
+					"shapeId": 310,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape315p23-315",
+					"shapeId": 315,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape317p23-317",
+					"shapeId": 317,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape318p23-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape319p23-319",
+					"shapeId": 319,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape321p23-321",
+					"shapeId": 321,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape322p23-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape324p23-324",
+					"shapeId": 324,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape325p23-325",
+					"shapeId": 325,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape326p23-326",
+					"shapeId": 326,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape328p23-328",
+					"shapeId": 328,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape329p23-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Lorem ipsum dolor"
+				},
+				{
+					"id": "google-shape331p23-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape332p23-332",
+					"shapeId": 332,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape334p23-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape335p23-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Lorem ipsum dolor"
+				},
+				{
+					"id": "google-shape336p23-336",
+					"shapeId": 336,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 34,
+					"maxListItems": 2,
+					"sampleText": "MARKET\nANALYSIS"
+				},
+				{
+					"id": "google-shape337p23-337",
+					"shapeId": 337,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 264,
+					"sampleText": "This slide presents key findings from a market analysis, highlighting market share and growth trends. It provides valuable insights into the competitive landscape and opportunities for growth."
+				},
+				{
+					"id": "google-shape338p23-338",
+					"shapeId": 338,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 94,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+				},
+				{
+					"id": "google-shape339p23-339",
+					"shapeId": 339,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "70%"
+				},
+				{
+					"id": "google-shape340p23-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "88%"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape346p24-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "PAGE PREVIEW"
+				},
+				{
+					"id": "google-shape347p24-347",
+					"shapeId": 347,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Clear and Professional"
+				},
+				{
+					"id": "google-shape348p24-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "Eye-Catching and Relevant"
+				},
+				{
+					"id": "google-shape349p24-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Consistency Across Platforms"
+				},
+				{
+					"id": "google-shape350p24-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 202,
+					"sampleText": "Select an authentic, high-resolution photo that reflects your personality professionally. Avoid over-edited or filtered images for credibility."
+				},
+				{
+					"id": "google-shape351p24-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 185,
+					"sampleText": "Select a captivating photo aligned with your brand or style, like a headshot against a clean background to keep the focus on you."
+				},
+				{
+					"id": "google-shape352p24-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 164,
+					"sampleText": "Maintain consistent profile photos on social media to enhance brand recognition and aid follower identification."
+				},
+				{
+					"id": "google-shape353p24-353",
+					"shapeId": 353,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape354p24-354",
+					"shapeId": 354,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape355p24-355",
+					"shapeId": 355,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape356p24-356",
+					"shapeId": 356,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape357p24-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape358p24-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape363p25-363",
+					"shapeId": 363,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape364p25-364",
+					"shapeId": 364,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape366p25-366",
+					"shapeId": 366,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape367p25-367",
+					"shapeId": 367,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Youtube"
+				},
+				{
+					"id": "google-shape369p25-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape370p25-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Facebook"
+				},
+				{
+					"id": "google-shape372p25-372",
+					"shapeId": 372,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape373p25-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "LinkedIn"
+				},
+				{
+					"id": "google-shape375p25-375",
+					"shapeId": 375,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape376p25-376",
+					"shapeId": 376,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Instagram"
+				},
+				{
+					"id": "google-shape378p25-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape379p25-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Twitter"
+				},
+				{
+					"id": "google-shape380p25-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "CONTENT DISTRIBUTION"
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape386p26-386",
+					"shapeId": 386,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape387p26-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape390p26-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape393p26-393",
+					"shapeId": 393,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape394p26-394",
+					"shapeId": 394,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape396p26-396",
+					"shapeId": 396,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape397p26-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape399p26-399",
+					"shapeId": 399,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape400p26-400",
+					"shapeId": 400,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape402p26-402",
+					"shapeId": 402,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape403p26-403",
+					"shapeId": 403,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape404p26-404",
+					"shapeId": 404,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape405p26-405",
+					"shapeId": 405,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape406p26-406",
+					"shapeId": 406,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape407p26-407",
+					"shapeId": 407,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "TARGET AUDIENCE"
+				},
+				{
+					"id": "google-shape408p26-408",
+					"shapeId": 408,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "Bio"
+				},
+				{
+					"id": "google-shape409p26-409",
+					"shapeId": 409,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Personality"
+				},
+				{
+					"id": "google-shape410p26-410",
+					"shapeId": 410,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "John Doe"
+				},
+				{
+					"id": "google-shape411p26-411",
+					"shapeId": 411,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Interest 1"
+				},
+				{
+					"id": "google-shape412p26-412",
+					"shapeId": 412,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Interest 2"
+				},
+				{
+					"id": "google-shape413p26-413",
+					"shapeId": 413,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Interest 3"
+				},
+				{
+					"id": "google-shape414p26-414",
+					"shapeId": 414,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "28, Designer"
+				},
+				{
+					"id": "google-shape415p26-415",
+					"shapeId": 415,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 177,
+					"sampleText": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape416p26-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 106,
+					"sampleText": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape417p26-417",
+					"shapeId": 417,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 106,
+					"sampleText": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				},
+				{
+					"id": "google-shape418p26-418",
+					"shapeId": 418,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 106,
+					"sampleText": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "content",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape424p27-424",
+					"shapeId": 424,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape425p27-425",
+					"shapeId": 425,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape426p27-426",
+					"shapeId": 426,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape428p27-428",
+					"shapeId": 428,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape429p27-429",
+					"shapeId": 429,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape430p27-430",
+					"shapeId": 430,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape432p27-432",
+					"shapeId": 432,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape433p27-433",
+					"shapeId": 433,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape435p27-435",
+					"shapeId": 435,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape436p27-436",
+					"shapeId": 436,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape438p27-438",
+					"shapeId": 438,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape439p27-439",
+					"shapeId": 439,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape440p27-440",
+					"shapeId": 440,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#01C892"
+				},
+				{
+					"id": "google-shape441p27-441",
+					"shapeId": 441,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#FACB65"
+				},
+				{
+					"id": "google-shape442p27-442",
+					"shapeId": 442,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F5F5F5"
+				},
+				{
+					"id": "google-shape443p27-443",
+					"shapeId": 443,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				},
+				{
+					"id": "google-shape444p27-444",
+					"shapeId": 444,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 95,
+					"sampleText": "This presentation template uses the following free fonts:"
+				},
+				{
+					"id": "google-shape445p27-445",
+					"shapeId": 445,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "Titles :"
+				},
+				{
+					"id": "google-shape446p27-446",
+					"shapeId": 446,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Headers :"
+				},
+				{
+					"id": "google-shape447p27-447",
+					"shapeId": 447,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Body Copy :"
+				},
+				{
+					"id": "google-shape448p27-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Poppins"
+				},
+				{
+					"id": "google-shape449p27-449",
+					"shapeId": 449,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "Asap"
+				},
+				{
+					"id": "google-shape450p27-450",
+					"shapeId": 450,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "Asap"
+				},
+				{
+					"id": "google-shape451p27-451",
+					"shapeId": 451,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape452p27-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "RESOURCE PAGE"
+				},
+				{
+					"id": "google-shape453p27-453",
+					"shapeId": 453,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape472p27-472",
+					"shapeId": 472,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "closing",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape481p28-481",
+					"shapeId": 481,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape483p28-483",
+					"shapeId": 483,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape484p28-484",
+					"shapeId": 484,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape485p28-485",
+					"shapeId": 485,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape486p28-486",
+					"shapeId": 486,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape487p28-487",
+					"shapeId": 487,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape488p28-488",
+					"shapeId": 488,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape489p28-489",
+					"shapeId": 489,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Pexels \u0026 Pixabay"
+				},
+				{
+					"id": "google-shape490p28-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				}
+			]
+		}
+	]
+}

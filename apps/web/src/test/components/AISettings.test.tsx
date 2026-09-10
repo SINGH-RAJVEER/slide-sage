@@ -2,7 +2,7 @@
 
 import { afterEach, expect, it, mock } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import { AISettings } from "@/routes/settings/AISettings";
+import { AISettings } from "../../routes/settings/AISettings";
 
 const originalFetch = globalThis.fetch;
 

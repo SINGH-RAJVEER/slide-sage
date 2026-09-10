@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
 )
 
 // defaultModel is used when no model is configured and no per-user AI selection exists.
@@ -76,27 +75,6 @@ func parseRetryAfter(value string) time.Duration {
 		}
 	}
 	return 0
-}
-
-func (h *handler) generatePlan(ctx context.Context, job streamJob) (map[string]any, int, error) {
-	plan, tokens, err := h.generateJSON(ctx, job, planningSystemPrompt, generationUserPrompt(job), maxPlanOutputTokens(job.slideCount))
-	if err != nil {
-		return nil, 0, err
-	}
-	normalized, err := presentation.NormalizeDeckPlan(plan, job.slideCount)
-	if err != nil {
-		return nil, 0, err
-	}
-	return normalized, tokens, nil
-}
-
-func (h *handler) generateDocument(ctx context.Context, job streamJob, plan map[string]any) (map[string]any, int, error) {
-	user := generationUserPrompt(job)
-	if plan != nil {
-		encoded, _ := json.Marshal(plan)
-		user += "\n\nDraft this validated DeckPlan in order. Preserve every planned slide's id, title, message, evidence, and semantic layout intent. Write substantive slide copy for each plan entry: " + string(encoded)
-	}
-	return h.generateJSON(ctx, job, generationSystemPrompt, user, maxOutputTokens(job.slideCount))
 }
 
 func (h *handler) generateJSON(ctx context.Context, job streamJob, system, user string, maxOutput int) (map[string]any, int, error) {
@@ -511,38 +489,6 @@ func repairTruncatedObject(content string) string {
 		repaired = append(repaired, closer)
 	}
 	return string(repaired)
-}
-
-func hasSubstantiveGeneratedContent(slides []any) bool {
-	for _, value := range slides {
-		slide, ok := value.(map[string]any)
-		if !ok || slide["type"] != "content" {
-			return false
-		}
-		blocks, ok := slide["blocks"].([]any)
-		if !ok {
-			return false
-		}
-		hasContent := false
-		for _, value := range blocks {
-			block, _ := value.(map[string]any)
-			switch block["type"] {
-			case "paragraph", "quote", "callout":
-				content := strings.TrimSpace(text(block["text"], ""))
-				if content != "" && content != "Content to be developed." {
-					hasContent = true
-				}
-			case "bullets":
-				if items, ok := block["items"].([]any); ok && len(items) > 0 {
-					hasContent = true
-				}
-			}
-		}
-		if !hasContent {
-			return false
-		}
-	}
-	return len(slides) > 0
 }
 
 func model() string {

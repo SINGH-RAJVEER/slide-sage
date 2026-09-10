@@ -1,4 +1,3 @@
-import { useAuth } from "@slidesage/ui";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -7,75 +6,38 @@ import {
 } from "@slidesage/ui/components/dropdown-menu";
 import MarketplaceCard from "@slidesage/ui/components/Marketplace/MarketplaceCard";
 import { MARKETPLACE_ITEMS, type MarketplaceItem } from "@slidesage/ui/lib/catalog";
+import { templateThumbnailUrl } from "@slidesage/ui/lib/template-thumbnails";
 import {
 	getInstalledMarketplaceThemes,
 	installMarketplaceTheme,
 	removeMarketplaceTheme,
 } from "@slidesage/ui/lib/marketplace-themes";
 import { Check, ChevronDown, Palette, Search, SlidersHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
-type MarketplaceSort = "popular" | "newest";
-const VOTES_STORAGE_PREFIX = "slidesage-marketplace-votes";
-
-function getVoteStorageKey(userId: string | null) {
-	return `${VOTES_STORAGE_PREFIX}:${userId ?? "anonymous"}`;
-}
-
-function getVotedMarketplaceIds(userId: string | null) {
-	if (typeof window === "undefined") return new Set<string>();
-
-	try {
-		const storedIds = JSON.parse(window.localStorage.getItem(getVoteStorageKey(userId)) || "[]");
-		const validIds = Array.isArray(storedIds)
-			? storedIds.filter((id: unknown): id is string => typeof id === "string")
-			: [];
-		return new Set<string>(validIds);
-	} catch {
-		return new Set<string>();
-	}
-}
+type MarketplaceSort = "catalog" | "name";
 
 function matchesSearch(item: MarketplaceItem, query: string) {
-	const searchable = [item.name, item.description, item.author, ...item.tags]
+	const searchable = [item.id, item.name, item.description, item.sourceFilename, ...item.tags]
 		.join(" ")
 		.toLowerCase();
 	return searchable.includes(query.trim().toLowerCase());
 }
 
 export default function MarketplacePage() {
-	const { user } = useAuth();
 	const navigate = useNavigate();
-	const [sort, setSort] = useState<MarketplaceSort>("popular");
+	const [sort, setSort] = useState<MarketplaceSort>("catalog");
 	const [query, setQuery] = useState("");
-	const [votedIds, setVotedIds] = useState<Set<string>>(() => getVotedMarketplaceIds(null));
 	const [installedThemeIds, setInstalledThemeIds] = useState<Set<string>>(
 		() => new Set(getInstalledMarketplaceThemes().map((theme) => theme.marketplaceId)),
 	);
-	const voterId = user?.id ?? null;
-
-	useEffect(() => {
-		setVotedIds(getVotedMarketplaceIds(voterId));
-	}, [voterId]);
-	const visibleItems = MARKETPLACE_ITEMS.filter((item) => matchesSearch(item, query)).sort(
-		(a, b) => {
-			if (a.isNew !== b.isNew) return a.isNew ? -1 : 1;
-			return sort === "popular" ? b.votes - a.votes : b.id.localeCompare(a.id);
-		},
-	);
-
-	const handleVote = (itemId: string) => {
-		setVotedIds((current) => {
-			const next = new Set(current);
-			if (next.has(itemId)) next.delete(itemId);
-			else next.add(itemId);
-			window.localStorage.setItem(getVoteStorageKey(voterId), JSON.stringify([...next]));
-			return next;
-		});
-	};
+	const visibleItems = MARKETPLACE_ITEMS.filter((item) => matchesSearch(item, query));
+	if (sort === "name") {
+		visibleItems.sort((a, b) => (a.name === b.name ? 0 : a.name < b.name ? -1 : 1));
+	}
 
 	const handleInstall = (itemId: string) => {
 		if (!installMarketplaceTheme(itemId)) return;
@@ -123,7 +85,7 @@ export default function MarketplacePage() {
 									type="search"
 									value={query}
 									onInput={(event) => setQuery(event.currentTarget.value)}
-									placeholder="Search designs or creators"
+									placeholder="Search templates"
 									className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
 								/>
 							</label>
@@ -136,7 +98,7 @@ export default function MarketplacePage() {
 											className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-black/15 px-4 text-sm text-white/60 transition-colors hover:border-white/20 hover:bg-white/[0.06] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
 										>
 											<SlidersHorizontal className="h-3.5 w-3.5" />
-											{sort === "popular" ? "Most upvoted" : "Newest"}
+											{sort === "catalog" ? "Catalog order" : "Name A-Z"}
 											<ChevronDown className="h-3.5 w-3.5 text-white/35" />
 										</button>
 									</DropdownMenuTrigger>
@@ -146,8 +108,8 @@ export default function MarketplacePage() {
 									>
 										{(
 											[
-												{ id: "popular", label: "Most upvoted" },
-												{ id: "newest", label: "Newest" },
+												{ id: "catalog", label: "Catalog order" },
+												{ id: "name", label: "Name A-Z" },
 											] as const
 										).map((option) => (
 											<DropdownMenuItem
@@ -165,7 +127,7 @@ export default function MarketplacePage() {
 						</div>
 
 						<div className="mb-7 mt-8 flex justify-end">
-							<p className="text-sm text-white/35">{visibleItems.length} themes</p>
+							<p className="text-sm text-white/35">{visibleItems.length} templates</p>
 						</div>
 
 						{visibleItems.length > 0 ? (
@@ -173,11 +135,9 @@ export default function MarketplacePage() {
 								{visibleItems.map((item) => (
 									<MarketplaceCard
 										key={item.id}
-										item={item}
-										voted={votedIds.has(item.id)}
+										item={{ ...item, thumbnailUrl: templateThumbnailUrl(item.thumbnailPath) }}
 										installed={installedThemeIds.has(item.id)}
 										onOpen={handleOpen}
-										onVote={handleVote}
 										onInstall={handleInstall}
 										onRemove={handleRemove}
 									/>

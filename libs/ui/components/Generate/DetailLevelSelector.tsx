@@ -23,7 +23,7 @@ export const DetailLevelSelector: React.FC<DetailLevelSelectorProps> = ({
 				<DropdownMenuTrigger asChild>
 					<Button
 						variant="ghost"
-						className="h-12 px-5 text-white/70 hover:text-white hover:bg-white/5 transition-all text-base font-light flex gap-3 items-center rounded-lg"
+						className="flex h-12 select-none items-center gap-3 rounded-lg px-5 text-base font-light text-white/70 transition-all outline-none hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus-visible:ring-0 focus-visible:outline-none"
 					>
 						<span className="opacity-50">Detail</span>
 						<span className="text-white">

@@ -1,19 +1,18 @@
-import type { SceneSlide } from "@slidesage/types";
+import { BINARY_PPTX_TEMPLATE_CATALOG, type PresentationData } from "@slidesage/types";
+import { useStreaming } from "@slidesage/ui";
+import { Button } from "@slidesage/ui/components/button";
 import {
-	type ContentSlide,
-	isContentSlide,
-	type PresentationData,
-	type SlideLayout,
-	type ThemeId,
-} from "@slidesage/types";
-import { useStreaming, useTemplate } from "@slidesage/ui";
-import { Card } from "@slidesage/ui/components/card";
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@slidesage/ui/components/select";
 import {
 	CenteredStatusScreen,
 	IterateModal,
 	type PresentationExporter,
-	ScaledSlide,
-	SlideRenderer,
+	PreviewSlide,
 	ViewerFullscreenOverlayControls,
 	ViewerHeaderControls,
 	ViewerNavigationControls,
@@ -22,31 +21,36 @@ import {
 } from "@slidesage/ui/components/Viewer";
 import { useAutoHideControls } from "@slidesage/ui/hooks/useAutoHideControls";
 import { useFullscreenMode } from "@slidesage/ui/hooks/useFullscreenMode";
-import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { usePlayback } from "@slidesage/ui/hooks/usePlayback";
 import {
 	usePresentationData,
 	type ViewerLocationState,
 } from "@slidesage/ui/hooks/usePresentationData";
+import { useRevisionPreviews } from "@slidesage/ui/hooks/useRevisionPreviews";
 import { useSlideNavigation } from "@slidesage/ui/hooks/useSlideNavigation";
 import { useViewerKeyboardNavigation } from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 import { API_URL } from "@slidesage/ui/lib/api";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
-import { persistPresentationMutations } from "@slidesage/ui/lib/presentation-mutations";
-import { applySlideLayout } from "@slidesage/ui/lib/slide-layout";
-import { findTemplate } from "@slidesage/ui/lib/templates";
+import { fetchPresentationRevision } from "@slidesage/ui/lib/presentation-revision";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ROUTES } from "@/app/router/paths";
-import { useVimMode } from "@/context/VimModeContext";
+import { ROUTES } from "../../app/router/paths";
+import { useVimMode } from "../../context/VimModeContext";
+
+function templateLabelFor(reference?: PresentationData["template"]): string | undefined {
+	return BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(candidate) => candidate.id === reference?.id && candidate.version === reference.version,
+	)?.name;
+}
+
+// Radix rejects an empty option value, so the live pointer needs a sentinel.
+const CURRENT_REVISION = "current";
 
 export default function PresentationViewerPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const params = useParams();
 	const { streamingState, getPresentation, generate, cancelGeneration } = useStreaming();
-	const { currentTemplate, changeTemplate } = useTemplate();
-	const installedThemes = useInstalledMarketplaceThemes();
 	const { isVimMode } = useVimMode();
 
 	const locationState = location.state as ViewerLocationState | undefined;
@@ -57,59 +61,43 @@ export default function PresentationViewerPage() {
 
 	const isStreamingMode = locationState?.isStreaming === true;
 
-	const {
-		presentation,
-		setPresentation,
+	const { presentation, presentationId, isLoading, streamingSlidesCount, shouldShowGenerating } =
+		usePresentationData({
+			apiUrl: API_URL,
+			navigate,
+			locationState,
+			presentationIdFromParams,
+			isStreamingMode,
+			streamingState,
+			getPresentation,
+		});
+
+	const [selectedRevision, setSelectedRevision] = useState<number>();
+	const [history, setHistory] = useState<Array<{ revision: number; source: string }>>([]);
+	const previews = useRevisionPreviews(
 		presentationId,
-		isLoading,
-		streamingSlidesCount,
-		shouldShowGenerating,
-	} = usePresentationData({
-		apiUrl: API_URL,
-		navigate,
-		locationState,
-		presentationIdFromParams,
-		isStreamingMode,
-		streamingState,
-		getPresentation,
-	});
-
-	// Sync the persisted theme into the selector when opening an existing deck. A manual
-	// choice during generation takes precedence over stale stream events, including while
-	// the viewer is showing its pre-slide skeleton.
-	const appliedThemeRef = useRef<string | null>(null);
-	const hasManualThemeSelectionRef = useRef(false);
-	const pendingThemeRef = useRef<string | null>(null);
-	const persistPendingThemeRef = useRef<(themeId: string) => void>(() => {});
-	const templateSaveSequenceRef = useRef(0);
+		presentation?.currentRevision?.revision,
+		!shouldShowGenerating,
+		selectedRevision,
+	);
+	const { document: pptxDocument, isLoading: isRevisionLoading } = previews;
 	useEffect(() => {
-		const theme = presentation?.theme;
-		if (!theme || theme === appliedThemeRef.current) return;
-		if (!findTemplate(theme)) return;
-		if (hasManualThemeSelectionRef.current) return;
-		appliedThemeRef.current = theme;
-		changeTemplate(theme);
-	}, [presentation?.theme, changeTemplate, streamingState.isStreaming]);
-
-	useEffect(() => {
-		const pendingTheme = pendingThemeRef.current;
-		if (
-			!pendingTheme ||
-			streamingState.isStreaming ||
-			!streamingState.isComplete ||
-			!presentationId
-		) {
-			return;
-		}
-		pendingThemeRef.current = null;
-		persistPendingThemeRef.current(pendingTheme);
-	}, [presentationId, streamingState.isComplete, streamingState.isStreaming]);
+		if (!presentationId || !previews.revision) return;
+		const controller = new AbortController();
+		void fetch(`${API_URL}/presentations/${presentationId}/revisions`, {
+			credentials: "include",
+			signal: controller.signal,
+		})
+			.then(async (response) => {
+				if (response.ok) setHistory(await response.json());
+			})
+			.catch(() => {});
+		return () => controller.abort();
+	}, [presentationId, previews.revision?.revision]);
 
 	const slideContainerRef = useRef<HTMLDivElement | null>(null);
-	const navigation = useSlideNavigation({
-		slideCount: presentation?.slides.length ?? 0,
-		slideContainerRef,
-	});
+	const slideCount = pptxDocument?.slides.length ?? 0;
+	const navigation = useSlideNavigation({ slideCount, slideContainerRef });
 
 	const { isFullscreenMode, enter: enterFullscreen, exit: exitFullscreen } = useFullscreenMode();
 
@@ -134,7 +122,6 @@ export default function PresentationViewerPage() {
 		}
 	}, [intervalMode]);
 
-	const slideCount = presentation?.slides.length ?? 0;
 	const playback = usePlayback({
 		slideCount,
 		currentSlide: navigation.currentSlide,
@@ -152,19 +139,6 @@ export default function PresentationViewerPage() {
 		onStopPlayback: playback.stop,
 	});
 
-	// While streaming, follow the latest slide
-	useEffect(() => {
-		if (!streamingState.isStreaming) return;
-		if (streamingSlidesCount <= 0) return;
-
-		const latestIndex = streamingSlidesCount - 1;
-		const id = setTimeout(() => {
-			navigation.scrollToSlide(latestIndex, "smooth");
-		}, 100);
-
-		return () => clearTimeout(id);
-	}, [navigation.scrollToSlide, streamingSlidesCount, streamingState.isStreaming]);
-
 	// Once streaming finishes and we have an ID, move to the canonical URL so reloads work
 	useEffect(() => {
 		if (!streamingState.isComplete || streamingState.isStreaming) return;
@@ -180,28 +154,16 @@ export default function PresentationViewerPage() {
 		navigate,
 	]);
 
-	// Reset to first slide when streaming completes
+	// Show the deck from its first slide once the finished revision is parsed.
 	useEffect(() => {
-		if (!streamingState.isComplete) return;
-		if (streamingState.isStreaming) return;
-		if (streamingSlidesCount <= 0) return;
-
+		if (slideCount === 0) return;
 		const id = setTimeout(() => {
 			navigation.scrollToSlide(0, "smooth");
 		}, 100);
-
 		return () => clearTimeout(id);
-	}, [
-		navigation.scrollToSlide,
-		streamingSlidesCount,
-		streamingState.isComplete,
-		streamingState.isStreaming,
-	]);
+	}, [navigation.scrollToSlide, slideCount]);
 
 	const [showIterateModal, setShowIterateModal] = useState(false);
-	const [savingEdit, setSavingEdit] = useState(false);
-	const [pendingSlides, setPendingSlides] = useState<Record<string, ContentSlide | SceneSlide>>({});
-	const [fullscreenSlideReady, setFullscreenSlideReady] = useState(false);
 	const [isCancelling, setIsCancelling] = useState(false);
 
 	const handleIteratePresentation = async (
@@ -211,7 +173,7 @@ export default function PresentationViewerPage() {
 		tonality: string,
 		useWebResearch: boolean,
 	) => {
-		if (!prompt.trim() || !presentationId) return;
+		if (!prompt.trim() || !presentationId || !presentation?.template) return false;
 		requestGenerationNotificationPermission();
 
 		const success = await generate({
@@ -221,54 +183,13 @@ export default function PresentationViewerPage() {
 			tonality,
 			researchEnabled: useWebResearch,
 			parentPresentationId: presentationId,
+			template: presentation.template,
 		});
 
 		if (success) {
 			setShowIterateModal(false);
 		}
-	};
-
-	const deleteCurrentSlide = async () => {
-		if (!presentation || presentation.slides.length === 1) return;
-
-		const slideToDelete = presentation.slides[navigation.currentSlide];
-		const slideId = slideToDelete?.id;
-		if (!slideId) return;
-
-		const newSlides = presentation.slides.filter((_, idx) => idx !== navigation.currentSlide);
-
-		const newCurrent = Math.min(navigation.currentSlide, Math.max(newSlides.length - 1, 0));
-
-		setPresentation({
-			...presentation,
-			slides: newSlides,
-			totalSlides: newSlides.length,
-		});
-		setPendingSlides((current) => {
-			const { [slideId]: _, ...remaining } = current;
-			return remaining;
-		});
-
-		navigation.scrollToSlide(newCurrent, "auto");
-
-		if (presentationId && slideId) {
-			try {
-				const saved = await persistPresentationMutations(presentationId, [
-					{ type: "delete-slide", slideId },
-				]);
-				setPresentation(saved);
-			} catch (error) {
-				console.error("Error deleting slide:", error);
-				setPresentation((current) => {
-					if (!current || current.slides.some((slide) => slide.id === slideId)) {
-						return current;
-					}
-					const slides = [...current.slides];
-					slides.splice(navigation.currentSlide, 0, slideToDelete);
-					return { ...current, slides, totalSlides: slides.length };
-				});
-			}
-		}
+		return success;
 	};
 
 	const handleCancelGeneration = async () => {
@@ -281,14 +202,32 @@ export default function PresentationViewerPage() {
 		setIsCancelling(false);
 	};
 
+	// Download serves the revision's exact bytes; the deck is already a PPTX, so
+	// there is nothing to convert and nothing that can diverge from what renders.
 	const exportPresentation: PresentationExporter = async (format, presentationToExport) => {
-		if (format === "pptx") {
-			const { exportEditablePptx } = await import("@slidesage/ui/lib/pptx-export");
-			await exportEditablePptx(presentationToExport);
-			return;
+		if (!presentationId) return;
+		const bytes = await fetchPresentationRevision(
+			presentationId,
+			undefined,
+			previews.revision?.revision,
+			format,
+		);
+		const url = URL.createObjectURL(
+			new Blob([bytes], {
+				type:
+					format === "pdf"
+						? "application/pdf"
+						: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+			}),
+		);
+		try {
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `${presentationToExport.title || "presentation"}.${format}`;
+			link.click();
+		} finally {
+			URL.revokeObjectURL(url);
 		}
-		const { exportPresentationPdf } = await import("@slidesage/ui/lib/pdf-export");
-		await exportPresentationPdf(presentationToExport, currentTemplate);
 	};
 
 	if (isLoading) {
@@ -299,115 +238,26 @@ export default function PresentationViewerPage() {
 		return null;
 	}
 
-	const baseViewerPresentation =
-		presentation ||
-		({
-			title: streamingState.prompt || "Untitled presentation",
-			theme: streamingState.theme || currentTemplate,
-			slides: [],
-			totalSlides: 0,
-		} satisfies PresentationData);
-	const viewerPresentation = baseViewerPresentation;
-	const hasSlides = viewerPresentation.slides.length > 0;
+	const viewerTitle = presentation?.title ?? streamingState.prompt ?? "Untitled presentation";
+	const hasSlides = slideCount > 0;
+	const isWaitingForDeck = shouldShowGenerating || isRevisionLoading;
 	const canCancelGeneration =
 		shouldShowGenerating &&
 		streamingState.operation === "generation" &&
 		streamingState.isStreaming &&
-		streamingState.slides.length === 0 &&
+		streamingSlidesCount === 0 &&
 		!!streamingState.jobId;
-	const activeSlide = viewerPresentation.slides[navigation.currentSlide];
-	const activeDraftSlide = activeSlide ? pendingSlides[activeSlide.id] : undefined;
-	const activeContentSlide = activeSlide && isContentSlide(activeSlide) ? activeSlide : undefined;
 
-	const handleTemplateChange = async (templateId: string) => {
-		const saveSequence = ++templateSaveSequenceRef.current;
-		const previousTheme = presentation?.theme || currentTemplate;
-		hasManualThemeSelectionRef.current = true;
-		appliedThemeRef.current = templateId;
-		changeTemplate(templateId);
-		setPresentation((current) => (current ? { ...current, theme: templateId } : current));
-		if (streamingState.isStreaming || !presentationId) {
-			pendingThemeRef.current = templateId;
-			return;
-		}
-		try {
-			const saved = await persistPresentationMutations(presentationId, [
-				{ type: "update-presentation", theme: templateId as ThemeId },
-			]);
-			setPresentation(saved);
-		} catch (error) {
-			console.error("Failed to save presentation theme:", error);
-			if (templateSaveSequenceRef.current !== saveSequence) return;
-			changeTemplate(previousTheme);
-			setPresentation((current) =>
-				current?.theme === templateId ? { ...current, theme: previousTheme } : current,
-			);
-		}
-	};
-	persistPendingThemeRef.current = (themeId) => void handleTemplateChange(themeId);
-
-	const handleLayoutChange = async (layout: SlideLayout) => {
-		if (!presentation) return;
-		const selected = presentation.slides[navigation.currentSlide];
-		if (!selected || !isContentSlide(selected)) return;
-		const contentSlide = selected;
-		const updatedSlide = applySlideLayout(contentSlide, layout);
-		const slides = [...presentation.slides];
-		slides[navigation.currentSlide] = updatedSlide;
-		setPresentation({ ...presentation, slides });
-		if (!presentationId) return;
-		try {
-			const saved = await persistPresentationMutations(presentationId, [
-				{ type: "update-slide", slideId: updatedSlide.id, slide: updatedSlide },
-			]);
-			setPresentation(saved);
-		} catch (error) {
-			console.error("Failed to save slide layout:", error);
-			setPresentation((current) => {
-				if (!current) return current;
-				const currentSlides = current.slides.map((slide) =>
-					slide.id === contentSlide.id ? contentSlide : slide,
-				);
-				return { ...current, slides: currentSlides };
-			});
-		}
-	};
-
-	const saveCanvasEdit = async (slide: ContentSlide | SceneSlide) => {
-		if (!presentation) return;
-		setSavingEdit(true);
-		const previous = presentation;
-		setPresentation({
-			...presentation,
-			slides: presentation.slides.map((item) => (item.id === slide.id ? slide : item)),
-		});
-		try {
-			if (presentationId) {
-				const saved = await persistPresentationMutations(presentationId, [
-					{ type: "update-slide", slideId: slide.id, slide },
-				]);
-				setPresentation(saved);
-			}
-		} catch (error) {
-			setPresentation(previous);
-			console.error("Failed to save canvas edit:", error);
-			throw error;
-		} finally {
-			setSavingEdit(false);
-		}
-	};
-
-	const savePendingSlide = async () => {
-		const active = presentation?.slides[navigation.currentSlide];
-		if (!active) return;
-		const pending = pendingSlides[active.id];
-		if (!pending) return;
-		await saveCanvasEdit(pending);
-		setPendingSlides((current) => {
-			if (current[pending.id] !== pending) return current;
-			const { [pending.id]: _, ...remaining } = current;
-			return remaining;
-		});
+	// ViewerNavigationControls reports deck metadata; while a deck is still
+	// generating there is no committed revision to describe yet.
+	const navigationPresentation: PresentationData = {
+		...(presentation ?? {
+			title: viewerTitle,
+			template: streamingState.template ?? { id: "", version: 0 },
+			totalSlides: 0,
+		}),
+		currentRevision: previews.revision ?? presentation?.currentRevision,
+		totalSlides: previews.revision?.slideCount ?? 0,
 	};
 
 	return (
@@ -421,48 +271,78 @@ export default function PresentationViewerPage() {
 			>
 				{showControls && !isFullscreenMode && (
 					<ViewerHeaderControls
-						title={viewerPresentation.title}
-						canIterate={hasSlides && !!presentationId}
-						currentTemplate={currentTemplate}
+						title={viewerTitle}
+						canIterate={!!previews.revision && !!presentationId && !selectedRevision}
+						templateLabel={templateLabelFor(presentation?.template)}
 						onBack={() => navigate(isStreamingMode ? ROUTES.generate : ROUTES.presentations)}
-						onTemplateChange={handleTemplateChange}
-						installedThemes={installedThemes}
-						selectedLayout={activeContentSlide?.layout}
-						onLayoutChange={handleLayoutChange}
-						layoutDisabled={!activeContentSlide}
-						showLayoutSelector={false}
 						onIterate={() => setShowIterateModal((current) => !current)}
 						onPresent={() => void enterFullscreen()}
 						presentDisabled={!hasSlides}
 					/>
 				)}
 
+				{!isFullscreenMode && history.length > 1 && (
+					<div className="flex items-center gap-2 px-4 text-sm">
+						<span>Revision</span>
+						<Select
+							value={selectedRevision ? String(selectedRevision) : CURRENT_REVISION}
+							onValueChange={(value) =>
+								setSelectedRevision(value === CURRENT_REVISION ? undefined : Number(value))
+							}
+						>
+							<SelectTrigger aria-label="Revision history" className="h-9 w-64">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={CURRENT_REVISION}>Current</SelectItem>
+								{history.map((item) => (
+									<SelectItem key={item.revision} value={String(item.revision)}>
+										Revision {item.revision} · {item.source}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+				)}
+				{!isFullscreenMode &&
+					(previews.error ||
+						(previews.revision && previews.revision.previewStatus !== "ready")) && (
+						<div role="status" className="px-4 py-3 text-sm">
+							{previews.error ??
+								(previews.revision?.previewStatus === "failed"
+									? "Preview rendering failed. Your PowerPoint is available to download."
+									: "Rendering slide previews. Your PowerPoint is available to download.")}
+							{previews.revision && previews.revision.previewStatus !== "ready" && (
+								<Button
+									variant="link"
+									className="ml-3 h-auto p-0"
+									onClick={() => void previews.retry()}
+								>
+									Retry previews
+								</Button>
+							)}
+						</div>
+					)}
 				{!isFullscreenMode && (
 					<ViewerSlideCarousel
-						slides={viewerPresentation.slides}
-						currentSlide={navigation.currentSlide}
+						document={pptxDocument}
 						visibleSlide={navigation.visibleSlide}
-						currentTemplate={currentTemplate}
 						containerRef={slideContainerRef}
-						isWaitingForFirstSlide={shouldShowGenerating}
+						isWaitingForFirstSlide={isWaitingForDeck}
 						onSelectSlide={(idx) => {
 							if (idx !== navigation.currentSlide) {
 								playback.stop();
 								navigation.scrollToSlide(idx, "smooth");
 							}
 						}}
-						onSlideChange={(slide) =>
-							setPendingSlides((current) => ({ ...current, [slide.id]: slide }))
-						}
-						draftSlide={activeDraftSlide}
 					/>
 				)}
 
 				{showControls && !isFullscreenMode && (
 					<ViewerNavigationControls
-						presentation={viewerPresentation}
+						presentation={navigationPresentation}
 						currentSlide={navigation.currentSlide}
-						totalSlides={viewerPresentation.slides.length}
+						totalSlides={slideCount}
 						onFirst={() => {
 							playback.stop();
 							navigation.first();
@@ -479,23 +359,18 @@ export default function PresentationViewerPage() {
 							playback.stop();
 							navigation.last();
 						}}
-						onDelete={deleteCurrentSlide}
-						deleteDisabled={viewerPresentation.slides.length <= 1}
 						onCancelGeneration={canCancelGeneration ? handleCancelGeneration : undefined}
 						cancelDisabled={isCancelling}
-						onSave={pendingSlides[activeSlide?.id || ""] ? savePendingSlide : undefined}
-						saveDisabled={savingEdit}
 						onExport={exportPresentation}
 					/>
 				)}
 
 				{showControls && !isFullscreenMode && (
 					<ViewerThumbnails
-						slides={viewerPresentation.slides}
+						document={pptxDocument}
 						currentSlide={navigation.currentSlide}
 						isStreamingMode={isStreamingMode}
 						isStreaming={streamingState.isStreaming || shouldShowGenerating}
-						currentTemplate={currentTemplate}
 						onSelect={(index) => {
 							playback.stop();
 							navigation.scrollToSlide(index, "smooth", { block: "center" });
@@ -503,23 +378,13 @@ export default function PresentationViewerPage() {
 					/>
 				)}
 
-				{isFullscreenMode && activeSlide && (
+				{isFullscreenMode && pptxDocument && hasSlides && (
 					<div className="min-h-0 flex-1 bg-black">
-						<ScaledSlide
-							key={activeSlide.id}
-							className="ss-slide-enter"
-							stageClassName="shadow-2xl"
-							onReadyChange={setFullscreenSlideReady}
-						>
-							<Card className="h-full w-full overflow-hidden rounded-none border-0 bg-black">
-								<SlideRenderer
-									key={`${activeSlide.id}-${fullscreenSlideReady ? "ready" : "measuring"}`}
-									slide={activeSlide}
-									currentTemplate={currentTemplate}
-									isActive={fullscreenSlideReady}
-								/>
-							</Card>
-						</ScaledSlide>
+						<PreviewSlide
+							document={pptxDocument}
+							index={navigation.currentSlide}
+							className="h-full w-full"
+						/>
 					</div>
 				)}
 
@@ -535,9 +400,9 @@ export default function PresentationViewerPage() {
 						setCustomInterval={setCustomInterval}
 						isPlaying={playback.isPlaying}
 						onTogglePlayback={playback.toggle}
-						playbackDisabled={viewerPresentation.slides.length <= 1}
+						playbackDisabled={slideCount <= 1}
 						currentSlide={navigation.currentSlide}
-						totalSlides={viewerPresentation.slides.length}
+						totalSlides={slideCount}
 						onFirst={() => {
 							playback.stop();
 							navigation.first();
@@ -564,6 +429,8 @@ export default function PresentationViewerPage() {
 					open={showIterateModal}
 					onOpenChange={setShowIterateModal}
 					onIterate={handleIteratePresentation}
+					currentSlideCount={previews.revision?.slideCount}
+					error={streamingState.operation === "iteration" ? streamingState.error : undefined}
 					isStreaming={streamingState.isStreaming}
 				/>
 			)}

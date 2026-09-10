@@ -1,25 +1,20 @@
 import type { PresentationData } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
-import { Check, ChevronLeft, ChevronRight, SkipBack, SkipForward, Trash, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, SkipBack, SkipForward, X } from "lucide-react";
 import type React from "react";
 import DownloadMenu, { type PresentationExporter } from "./DownloadMenu";
 
 interface ViewerNavigationControlsProps {
-	presentation: PresentationData;
+	presentation?: PresentationData;
 	currentSlide: number;
 	totalSlides: number;
 	onFirst: () => void;
 	onPrev: () => void;
 	onNext: () => void;
 	onLast: () => void;
-	onDelete: () => void;
-	deleteDisabled: boolean;
 	onCancelGeneration?: () => void;
 	cancelDisabled?: boolean;
-	onSave?: () => void;
-	saveDisabled?: boolean;
 	showDownload?: boolean;
-	showDelete?: boolean;
 	onExport?: PresentationExporter;
 }
 
@@ -31,14 +26,9 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
 	onPrev,
 	onNext,
 	onLast,
-	onDelete,
-	deleteDisabled,
 	onCancelGeneration,
 	cancelDisabled = false,
-	onSave,
-	saveDisabled = false,
 	showDownload = true,
-	showDelete = true,
 	onExport,
 }) => {
 	return (
@@ -47,7 +37,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
 			aria-label="Slide navigation"
 			style={{ minHeight: 36, fontSize: "0.95rem" }}
 		>
-			{showDownload && (
+			{showDownload && presentation && (
 				<div className="viewer-navigation__download absolute left-0 top-1/2 -translate-y-1/2">
 					<DownloadMenu presentation={presentation} onExport={onExport} />
 				</div>
@@ -106,27 +96,7 @@ export const ViewerNavigationControls: React.FC<ViewerNavigationControlsProps> =
 						Cancel generation
 					</Button>
 				</div>
-			) : (
-				showDelete && (
-					<div className="viewer-navigation__delete absolute right-0 top-1/2 flex -translate-y-1/2 gap-2">
-						{onSave && (
-							<Button variant="outline" onClick={onSave} disabled={saveDisabled}>
-								<Check className="mr-2 size-4" /> Save
-							</Button>
-						)}
-						<Button
-							variant="destructive"
-							onClick={onDelete}
-							disabled={deleteDisabled}
-							className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 shadow-none transition-all duration-200"
-							title="Delete current slide"
-						>
-							<Trash className="w-4 h-4 mr-2" />
-							Delete
-						</Button>
-					</div>
-				)
-			)}
+			) : null}
 		</nav>
 	);
 };

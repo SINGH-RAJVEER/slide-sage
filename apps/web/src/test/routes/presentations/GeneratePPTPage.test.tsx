@@ -1,11 +1,11 @@
 /// <reference lib="dom" />
 
 import { expect, it, mock } from "bun:test";
+import { BINARY_PPTX_TEMPLATE_CATALOG } from "@slidesage/types";
+import { StreamingProvider } from "@slidesage/ui";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { StreamingProvider } from "@/modules/contexts/StreamingContext";
-import GeneratePPTPage from "@/routes/presentations/GeneratePPTPage";
-import PresentationViewerPage from "@/routes/presentations/PresentationViewer";
+import GeneratePPTPage from "../../../routes/presentations/GeneratePPTPage";
 
 function RouteStateProbe() {
 	const location = useLocation();
@@ -43,6 +43,7 @@ it("prefills a failed presentation prompt and generation options", () => {
 	expect(view.getByText("Comprehensive")).toBeInTheDocument();
 	expect(view.getByText("Casual")).toBeInTheDocument();
 	expect(view.getByRole("button", { name: /Web Research/ })).toHaveClass("bg-white/10");
+	expect(view.getByRole("button", { name: /Simple Business Proposal/ })).toBeInTheDocument();
 	expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled();
 });
 
@@ -126,39 +127,19 @@ it("opens the viewer immediately while generation waits for the stream", async (
 			provider: "anthropic",
 			model: "claude-sonnet-4-20250514",
 		});
-		expect(requestBody).not.toHaveProperty("theme");
+		expect(requestBody["template"]).toEqual({ id: "simple-business-proposal", version: 1 });
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
 });
 
-it("switches the theme while the generation skeleton is visible", async () => {
-	const originalFetch = globalThis.fetch;
-	const fetchMock = mock((input: string | URL | Request, _init?: RequestInit) => {
-		const url = String(input);
-		if (url.includes("/ai/config")) {
-			return Promise.resolve(
-				Response.json({
-					generation: { mode: "openrouter", model: "openrouter/default", billing: "points" },
-					eligibility: { eligible: true, slideTokens: 100, minimumPointsExclusive: 50 },
-					connections: [],
-					models: [],
-					selection: null,
-				}),
-			);
-		}
-		if (url.includes("/presentation-jobs")) {
-			return Promise.resolve(
-				Response.json(
-					{ job_id: "job_1", presentation_id: "pres_1", status: "queued" },
-					{ status: 202 },
-				),
-			);
-		}
-		return new Promise<Response>(() => {});
-	});
-	globalThis.fetch = fetchMock as unknown as typeof fetch;
-
+it("disables generation when retry state names an unavailable template", () => {
+	const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(entry) => entry.id === "strategic-media-planning",
+	);
+	if (!template) throw new Error("Missing fixture template");
+	const publishedAsset = template.asset;
+	template.asset = { status: "pending-upload" };
 	try {
 		const view = render(
 			<MemoryRouter
@@ -167,11 +148,12 @@ it("switches the theme while the generation skeleton is visible", async () => {
 						pathname: "/generate",
 						state: {
 							retry: {
-								prompt: "Skeleton theme selection",
+								prompt: "Retry with an unavailable template",
 								slide_count: 5,
 								detail_level: "balanced",
 								tonality: "professional",
 								research_enabled: false,
+								template: { id: "strategic-media-planning", version: 1 },
 							},
 						},
 					},
@@ -180,35 +162,15 @@ it("switches the theme while the generation skeleton is visible", async () => {
 				<StreamingProvider>
 					<Routes>
 						<Route path="/generate" element={<GeneratePPTPage />} />
-						<Route path="/presentation" element={<PresentationViewerPage />} />
-						<Route path="/presentations" element={<div>Presentations grid</div>} />
 					</Routes>
 				</StreamingProvider>
 			</MemoryRouter>,
 		);
 
-		fireEvent.click(view.getByRole("button", { name: "Generate" }));
-		await waitFor(() =>
-			expect(
-				fetchMock.mock.calls.some(([input]) => String(input).includes("/presentation-jobs")),
-			).toBe(true),
-		);
-		await waitFor(() =>
-			expect(view.getByRole("button", { name: /Signal Grid/ })).toBeInTheDocument(),
-		);
-
-		fireEvent.pointerDown(view.getByRole("button", { name: /Signal Grid/ }), { button: 0 });
-		fireEvent.click(view.getByRole("menuitem", { name: /Midnight Terminal/ }));
-
-		expect(view.getByRole("button", { name: /Midnight Terminal/ })).toBeInTheDocument();
-		expect(
-			fetchMock.mock.calls.some(
-				([input, init]) =>
-					String(input).includes("/presentations/pres_1") && init?.method === "PATCH",
-			),
-		).toBe(false);
+		expect(view.getByRole("textbox", { name: "Prompt" })).toBeEnabled();
+		expect(view.getByRole("button", { name: "Generate" })).toBeDisabled();
 	} finally {
-		globalThis.fetch = originalFetch;
+		template.asset = publishedAsset;
 	}
 });
 
@@ -266,13 +228,26 @@ it("starts generation on Enter even when focus sits on an options-bar control", 
 			</MemoryRouter>,
 		);
 
-		// Focus the slide count slider as if the user had just moved it.
+		// Generation is gated on the eligibility response, so waiting for the
+		// prompt alone can fire Enter while the form is still disabled.
 		await waitFor(() => expect(document.getElementById("prompt")).toBeInTheDocument());
-		fireEvent.focus(view.getByRole("slider", { name: "Slide count" }));
-		fireEvent.keyDown(view.getByRole("slider", { name: "Slide count" }), { key: "Enter" });
+		await waitFor(() => expect(view.getByRole("button", { name: "Generate" })).not.toBeDisabled());
 
-		await waitFor(() => expect(generationBody?.["topic"]).toBe("Enter submits from anywhere"));
-		expect(view.getByText("Viewer waiting for stream")).toBeInTheDocument();
+		// Focus the slide count slider as if the user had just moved it. The
+		// options bar mounts after the eligibility response, so the control has to
+		// be awaited rather than queried synchronously.
+		const slider = await view.findByRole("slider", { name: "Slide count" });
+		fireEvent.focus(slider);
+		fireEvent.keyDown(slider, { key: "Enter" });
+
+		// The submit goes through the streaming context and a queued job request,
+		// which is slower than the default budget when the whole suite is running.
+		await waitFor(() => expect(generationBody?.["topic"]).toBe("Enter submits from anywhere"), {
+			timeout: 5000,
+		});
+		// Navigation happens after the job request resolves, so the viewer route
+		// has to be awaited rather than asserted synchronously.
+		expect(await view.findByText("Viewer waiting for stream")).toBeInTheDocument();
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

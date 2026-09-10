@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ROUTES } from "@/app/router/paths";
-import { useVimMode } from "@/context/VimModeContext";
+import { ROUTES } from "./router/paths";
+import { useVimMode } from "../context/VimModeContext";
 
 const PREFIX_TIMEOUT_MS = 750;
 const FOCUSABLE_SELECTOR = [

@@ -42,7 +42,7 @@ it("submits the selected generation settings including the slide count", () => {
 	fireEvent.click(view.getByRole("button", { name: "Generate revision" }));
 
 	expect(onIterate).toHaveBeenCalledWith("Strengthen the evidence", 7, "detailed", "casual", true);
-	expect(view.getByRole("textbox")).toHaveValue("");
+	expect(view.getByRole("textbox")).toHaveValue("Strengthen the evidence");
 });
 
 it("submits on Enter but preserves Shift+Enter for multiline prompts", () => {
@@ -57,4 +57,40 @@ it("submits on Enter but preserves Shift+Enter for multiline prompts", () => {
 	expect(onIterate).not.toHaveBeenCalled();
 	fireEvent.keyDown(prompt, { key: "Enter" });
 	expect(onIterate).toHaveBeenCalledTimes(1);
+});
+
+it("retains the prompt when a revision request fails", async () => {
+	const onIterate = mock(async () => false);
+	const view = render(
+		<IterateModal open={true} onOpenChange={mock()} onIterate={onIterate} isStreaming={false} />,
+	);
+	fireEvent.input(view.getByRole("textbox"), { target: { value: "Keep my requested changes" } });
+	fireEvent.keyDown(view.getByRole("textbox"), { key: "Enter" });
+	await Promise.resolve();
+	expect(view.getByRole("textbox")).toHaveValue("Keep my requested changes");
+});
+
+it("uses the existing deck count and displays submission errors", () => {
+	const onIterate = mock(() => false);
+	const view = render(
+		<IterateModal
+			open={true}
+			onOpenChange={mock()}
+			onIterate={onIterate}
+			isStreaming={false}
+			currentSlideCount={12}
+			error="Insufficient points"
+		/>,
+	);
+	expect(view.queryByRole("slider")).toBeNull();
+	expect(view.getByRole("alert")).toHaveTextContent("Insufficient points");
+	fireEvent.input(view.getByRole("textbox"), { target: { value: "Rewrite the conclusion" } });
+	fireEvent.keyDown(view.getByRole("textbox"), { key: "Enter" });
+	expect(onIterate).toHaveBeenCalledWith(
+		"Rewrite the conclusion",
+		12,
+		"balanced",
+		"professional",
+		false,
+	);
 });

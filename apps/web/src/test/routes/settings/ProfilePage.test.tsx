@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 const refreshSession = mock(async () => {});
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => ({
 		user: null,
 		refreshSession,
@@ -48,7 +48,7 @@ it("sends a pending email change to its verification route", async () => {
 	}) as unknown as typeof fetch;
 
 	try {
-		const { default: ProfilePage } = await import("@/routes/settings/ProfilePage");
+		const { default: ProfilePage } = await import("../../../routes/settings/ProfilePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/profile"]}>
 				<Routes>
@@ -104,7 +104,7 @@ it("updates the profile picture automatically after entering an image URL", asyn
 	}) as unknown as typeof fetch;
 
 	try {
-		const { default: ProfilePage } = await import("@/routes/settings/ProfilePage");
+		const { default: ProfilePage } = await import("../../../routes/settings/ProfilePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/profile"]}>
 				<Routes>
@@ -168,7 +168,7 @@ it("uploads a local profile picture from the folder button", async () => {
 	}) as unknown as typeof fetch;
 
 	try {
-		const { default: ProfilePage } = await import("@/routes/settings/ProfilePage");
+		const { default: ProfilePage } = await import("../../../routes/settings/ProfilePage");
 		const view = render(
 			<MemoryRouter initialEntries={["/profile"]}>
 				<Routes>

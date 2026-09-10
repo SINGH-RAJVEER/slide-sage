@@ -15,7 +15,9 @@ interface IterateModalProps {
 		detailLevel: string,
 		tonality: string,
 		useWebResearch: boolean,
-	) => void;
+	) => boolean | void | Promise<boolean | void>;
+	currentSlideCount?: number;
+	error?: string;
 	isStreaming: boolean;
 }
 
@@ -31,6 +33,8 @@ export default function IterateModal({
 	onOpenChange,
 	onIterate,
 	isStreaming,
+	currentSlideCount,
+	error,
 }: IterateModalProps) {
 	const [iteratePrompt, setIteratePrompt] = useState("");
 	const [slideCount, setSlideCount] = useState("5");
@@ -59,11 +63,11 @@ export default function IterateModal({
 		el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
 	};
 
-	const handleSubmit = () => {
-		if (iteratePrompt.trim()) {
-			const count = Math.min(40, Math.max(5, parseInt(slideCount, 10) || 5));
-			onIterate(iteratePrompt, count, detailLevel, tonality, useWebResearch);
-			setIteratePrompt("");
+	const handleSubmit = async () => {
+		if (iteratePrompt.trim() && !isStreaming) {
+			const count = currentSlideCount ?? Math.min(40, Math.max(5, parseInt(slideCount, 10) || 5));
+			const accepted = await onIterate(iteratePrompt, count, detailLevel, tonality, useWebResearch);
+			if (accepted === true) setIteratePrompt("");
 		}
 	};
 
@@ -85,7 +89,7 @@ export default function IterateModal({
 					<Textarea
 						id="iteratePrompt"
 						ref={textareaRef}
-						placeholder="e.g., 'Add more details to slide 3', 'Make it more casual', 'Add charts'"
+						placeholder="e.g., 'Add more details to slide 3', 'Make it more casual', 'Rewrite the conclusion'"
 						value={iteratePrompt}
 						onChange={(e) => handlePromptChange(e.target.value)}
 						onKeyDown={(e) => {
@@ -164,22 +168,33 @@ export default function IterateModal({
 
 						<div className="flex items-center gap-3">
 							<p className="text-sm font-light whitespace-nowrap text-white/50">Slide count</p>
-							<Slider
-								value={[Number(slideCount)]}
-								min={5}
-								max={40}
-								step={1}
-								disabled={isStreaming}
-								className="flex-1"
-								onValueChange={(values) => setSlideCount(values[0]?.toString() ?? "5")}
-							>
-								<SliderThumb aria-label="Slide count">{slideCount}</SliderThumb>
-							</Slider>
+							{currentSlideCount !== undefined ? (
+								<p className="text-sm text-white/60">
+									{currentSlideCount} slides. Text revisions keep the current slide count.
+								</p>
+							) : (
+								<Slider
+									value={[Number(slideCount)]}
+									min={5}
+									max={40}
+									step={1}
+									disabled={isStreaming}
+									className="flex-1"
+									onValueChange={(values) => setSlideCount(values[0]?.toString() ?? "5")}
+								>
+									<SliderThumb aria-label="Slide count">{slideCount}</SliderThumb>
+								</Slider>
+							)}
 						</div>
 					</div>
 				</div>
 			</div>
 			<div className="border-t border-white/10 bg-black/20 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-6">
+				{error && (
+					<p role="alert" className="mb-3 text-sm text-red-300">
+						{error}
+					</p>
+				)}
 				<Button
 					onClick={handleSubmit}
 					disabled={!iteratePrompt.trim() || isStreaming}

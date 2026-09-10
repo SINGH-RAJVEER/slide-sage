@@ -1,9 +1,9 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
+import type { User } from "@slidesage/ui/context/AuthContext";
 import { fireEvent, render } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
-import type { User } from "@/contexts/AuthContext";
 
 const mockAuthState: {
 	user: User | null;
@@ -17,7 +17,7 @@ const mockAuthState: {
 	signOut: () => Promise.resolve(),
 };
 
-mock.module("@/contexts/AuthContext", () => {
+mock.module("@slidesage/ui/context/AuthContext", () => {
 	return {
 		useAuth: () => mockAuthState,
 		AuthProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -25,10 +25,24 @@ mock.module("@/contexts/AuthContext", () => {
 });
 
 describe("Header", () => {
+	it("links the SlideSage icon to the landing page", async () => {
+		mockAuthState.user = null;
+
+		const { default: Header } = await import("../../app/Header");
+
+		const { getByRole } = render(
+			<MemoryRouter>
+				<Header />
+			</MemoryRouter>,
+		);
+
+		expect(getByRole("link", { name: "SlideSage — landing" })).toHaveAttribute("href", "/landing");
+	});
+
 	it("renders header component", async () => {
 		mockAuthState.user = null;
 
-		const { default: Header } = await import("@/app/Header");
+		const { default: Header } = await import("../../app/Header");
 
 		const { container } = render(
 			<BrowserRouter>
@@ -46,7 +60,7 @@ describe("Header", () => {
 	it("hides navigation tabs on auth pages", async () => {
 		mockAuthState.user = null;
 
-		const { default: Header } = await import("@/app/Header");
+		const { default: Header } = await import("../../app/Header");
 
 		const { queryByText } = render(
 			<MemoryRouter initialEntries={["/sign-in"]}>
@@ -62,7 +76,7 @@ describe("Header", () => {
 	it("hides navigation tabs on nested auth pages", async () => {
 		mockAuthState.user = null;
 
-		const { default: Header } = await import("@/app/Header");
+		const { default: Header } = await import("../../app/Header");
 
 		const { queryByText, rerender } = render(
 			<MemoryRouter initialEntries={["/sign-in/sso-callback"]}>
@@ -97,7 +111,7 @@ describe("Header", () => {
 			slideTokens: 10,
 		};
 
-		const { default: Header } = await import("@/app/Header");
+		const { default: Header } = await import("../../app/Header");
 
 		const { getByText } = render(
 			<BrowserRouter>
@@ -120,7 +134,7 @@ describe("Header", () => {
 			slideTokens: 10,
 		};
 
-		const { default: Header } = await import("@/app/Header");
+		const { default: Header } = await import("../../app/Header");
 		const { container, queryByText } = render(
 			<BrowserRouter>
 				<Header />
@@ -145,7 +159,7 @@ describe("Header", () => {
 			slideTokens: 10,
 		};
 
-		const { default: Header } = await import("@/app/Header");
+		const { default: Header } = await import("../../app/Header");
 		const view = render(
 			<MemoryRouter initialEntries={["/generate"]}>
 				<Header />

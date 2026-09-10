@@ -19,7 +19,7 @@ class MockAuthError extends Error {
 const signUp = mock(async () => ({ user: { id: "user_1" } }));
 const sendVerificationOtp = mock(async () => ({ success: true }));
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => ({
 		isSignedIn: false,
 		user: null,
@@ -27,7 +27,7 @@ mock.module("@/contexts/AuthContext", () => ({
 	}),
 }));
 
-mock.module("@/lib/auth-client", () => ({
+mock.module("@slidesage/ui/lib/auth-client", () => ({
 	auth: {
 		signUpEmail: signUp,
 		startSocialSignIn: mock(),
@@ -44,7 +44,7 @@ function VerificationProbe() {
 it("requests a verification OTP after creating an email account", async () => {
 	signUp.mockClear();
 	sendVerificationOtp.mockClear();
-	const { default: SignUpPage } = await import("@/routes/auth/SignUpPage");
+	const { default: SignUpPage } = await import("../../../routes/auth/SignUpPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-up"]}>
 			<Routes>
@@ -81,7 +81,7 @@ it("resends verification when the email belongs to an unverified account", async
 	signUp.mockImplementationOnce(async () => {
 		throw new MockAuthError("email address is not verified", 409, "EMAIL_NOT_VERIFIED");
 	});
-	const { default: SignUpPage } = await import("@/routes/auth/SignUpPage");
+	const { default: SignUpPage } = await import("../../../routes/auth/SignUpPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-up"]}>
 			<Routes>
@@ -109,7 +109,7 @@ it("resends verification when the email belongs to an unverified account", async
 });
 
 it("shows the orb loader when switching to sign in", async () => {
-	const { default: SignUpPage } = await import("@/routes/auth/SignUpPage");
+	const { default: SignUpPage } = await import("../../../routes/auth/SignUpPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-up"]}>
 			<SignUpPage />
@@ -125,7 +125,7 @@ it("shows the orb loader when switching to sign in", async () => {
 });
 
 it("preserves redirect_url when switching to sign in", async () => {
-	const { default: SignUpPage } = await import("@/routes/auth/SignUpPage");
+	const { default: SignUpPage } = await import("../../../routes/auth/SignUpPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-up?redirect_url=%2Fgenerate"]}>
 			<Routes>

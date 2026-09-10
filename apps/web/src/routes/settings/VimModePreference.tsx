@@ -1,6 +1,6 @@
 import { Switch } from "@slidesage/ui/components/switch";
 import { useEffect, useState } from "react";
-import { useVimMode } from "@/context/VimModeContext";
+import { useVimMode } from "../../context/VimModeContext";
 
 const MOBILE_VIEWPORT_QUERY = "(max-width: 767px)";
 

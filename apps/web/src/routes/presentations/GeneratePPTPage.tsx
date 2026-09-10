@@ -1,16 +1,35 @@
-import type { PresentationRetryOptions } from "@slidesage/types";
+import {
+	BINARY_PPTX_TEMPLATE_CATALOG,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
+	type PresentationRetryOptions,
+	type PresentationTemplateReference,
+} from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { GenerateForm, GenerateOptionsBar } from "@slidesage/ui/components/Generate";
+import { useInstalledMarketplaceThemes } from "@slidesage/ui/hooks/useInstalledMarketplaceThemes";
 import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/generation-notifications";
+import { templateIsSelectable } from "@slidesage/ui/lib/template-selection";
 import { useDebouncedCallback } from "@tanstack/react-pacer/debouncer";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 interface GenerateRouteState {
 	retry?: PresentationRetryOptions;
 	retryPresentationId?: string;
+}
+
+function templateSelection(
+	reference: PresentationRetryOptions["template"],
+): PresentationTemplateReference {
+	const template = BINARY_PPTX_TEMPLATE_CATALOG.find(
+		(candidate) => candidate.id === reference?.id && candidate.version === reference.version,
+	);
+	return {
+		id: template?.id ?? DEFAULT_BINARY_PPTX_TEMPLATE.id,
+		version: template?.version ?? DEFAULT_BINARY_PPTX_TEMPLATE.version,
+	};
 }
 
 export default function GeneratePPTPage() {
@@ -25,8 +44,13 @@ export default function GeneratePPTPage() {
 	const [detailLevel, setDetailLevel] = useState(retry?.detail_level ?? "balanced");
 	const [tonality, setTonality] = useState(retry?.tonality ?? "professional");
 	const [useWebResearch, setUseWebResearch] = useState(retry?.research_enabled ?? false);
+	const [selectedTemplate, setSelectedTemplate] = useState(() =>
+		templateSelection(retry?.template),
+	);
 	const navigate = useNavigate();
 	const { streamingState, generate } = useStreaming();
+	const installedThemes = useInstalledMarketplaceThemes();
+	const generationDisabled = !templateIsSelectable(selectedTemplate);
 
 	useEffect(() => {
 		if (streamingState.error) {
@@ -59,7 +83,7 @@ export default function GeneratePPTPage() {
 
 	const handleGenerateInternal = async (selectedPrompt: string) => {
 		const normalizedPrompt = selectedPrompt.trim();
-		if (!normalizedPrompt || streamingState.isStreaming) return;
+		if (!normalizedPrompt || streamingState.isStreaming || generationDisabled) return;
 
 		setLoading(true);
 
@@ -73,6 +97,7 @@ export default function GeneratePPTPage() {
 					detailLevel,
 					tonality,
 					retryPresentationId,
+					template: selectedTemplate,
 					...(retry?.ai ? { ai: retry.ai } : {}),
 				},
 			});
@@ -86,6 +111,7 @@ export default function GeneratePPTPage() {
 			tonality,
 			retryPresentationId,
 			ai: retry?.ai,
+			template: selectedTemplate,
 		});
 		navigate(ROUTES.presentation, {
 			state: { isStreaming: true },
@@ -103,7 +129,7 @@ export default function GeneratePPTPage() {
 	});
 
 	const handleGenerate = () => {
-		if (!prompt.trim()) return;
+		if (!prompt.trim() || generationDisabled) return;
 
 		requestGenerationNotificationPermission();
 		debouncedGenerate(prompt);
@@ -115,7 +141,7 @@ export default function GeneratePPTPage() {
 			document.getElementById("prompt")?.focus();
 			return;
 		}
-		if (!loading && !streamingState.isStreaming) {
+		if (!loading && !streamingState.isStreaming && !generationDisabled) {
 			handleGenerate();
 		}
 	};
@@ -151,10 +177,13 @@ export default function GeneratePPTPage() {
 					tonality={tonality}
 					useWebResearch={useWebResearch}
 					slideCount={slideCount}
+					selectedTemplate={selectedTemplate}
+					installedThemes={installedThemes}
 					onDetailLevelChange={setDetailLevel}
 					onTonalityChange={setTonality}
 					onUseWebResearchChange={setUseWebResearch}
 					onSlideCountChange={setSlideCount}
+					onTemplateChange={setSelectedTemplate}
 				/>
 			</div>
 
@@ -164,6 +193,7 @@ export default function GeneratePPTPage() {
 						<GenerateForm
 							prompt={prompt}
 							loading={loading || streamingState.isStreaming}
+							generationDisabled={generationDisabled}
 							onPromptChange={setPrompt}
 							onGenerate={handleGenerate}
 						/>

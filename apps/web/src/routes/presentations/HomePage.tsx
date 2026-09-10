@@ -1,7 +1,7 @@
 import { LoadingScreen, useAuth } from "@slidesage/ui";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "@/app/router/paths";
+import { ROUTES } from "../../app/router/paths";
 
 /**
  * Signed-in visitors land on the page they picked in settings. The generate

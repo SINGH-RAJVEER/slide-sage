@@ -1,7 +1,6 @@
 export * from "./components/alert";
 export * from "./components/badge";
 export * from "./components/button";
-export { default as ChartRenderer } from "./components/Charts/ChartRenderer";
 export * from "./components/card";
 export * from "./components/dialog";
 export * from "./components/dropdown-menu";
@@ -21,7 +20,4 @@ export * from "./components/Viewer";
 export * from "./context/AuthContext";
 export * from "./context/StreamingContext";
 export * from "./lib/presentation-motion";
-export * from "./lib/templates";
-export { useTemplate } from "./lib/useTemplate";
 export * from "./lib/utils";
-export * from "./lib/widget-scene";

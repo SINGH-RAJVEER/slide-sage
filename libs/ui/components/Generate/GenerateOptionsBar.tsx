@@ -1,8 +1,10 @@
+import type { PresentationTemplateReference } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { Globe } from "lucide-react";
 import type React from "react";
 import { DetailLevelSelector } from "./DetailLevelSelector";
 import { SlideCountSelector } from "./SlideCountSelector";
+import TemplateSelector, { type InstalledTemplateOption } from "./TemplateSelector";
 import { TonalitySelector } from "./TonalitySelector";
 
 interface GenerateOptionsBarProps {
@@ -10,10 +12,13 @@ interface GenerateOptionsBarProps {
 	tonality: string;
 	useWebResearch: boolean;
 	slideCount: string;
+	selectedTemplate: PresentationTemplateReference;
+	installedThemes?: InstalledTemplateOption[];
 	onDetailLevelChange: (level: string) => void;
 	onTonalityChange: (tonality: string) => void;
 	onUseWebResearchChange: (enabled: boolean) => void;
 	onSlideCountChange: (count: string) => void;
+	onTemplateChange: (template: PresentationTemplateReference) => void;
 }
 
 export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
@@ -21,10 +26,13 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 	tonality,
 	useWebResearch,
 	slideCount,
+	selectedTemplate,
+	installedThemes = [],
 	onDetailLevelChange,
 	onTonalityChange,
 	onUseWebResearchChange,
 	onSlideCountChange,
+	onTemplateChange,
 }) => {
 	return (
 		<div className="mb-2 w-full flex items-center justify-center">
@@ -34,7 +42,7 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 						type="button"
 						variant="ghost"
 						onClick={() => onUseWebResearchChange(!useWebResearch)}
-						className={`h-10 rounded-md border px-4 transition-colors ${
+						className={`h-10 rounded-md border px-4 transition-colors outline-none select-none focus-visible:ring-0 focus-visible:outline-none ${
 							useWebResearch
 								? "border-white/20 bg-white/10 text-white"
 								: "border-transparent bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
@@ -47,6 +55,11 @@ export const GenerateOptionsBar: React.FC<GenerateOptionsBarProps> = ({
 					</Button>
 				</div>
 
+				<TemplateSelector
+					selectedTemplate={selectedTemplate}
+					onTemplateChange={onTemplateChange}
+					installedThemes={installedThemes}
+				/>
 				<DetailLevelSelector detailLevel={detailLevel} onDetailLevelChange={onDetailLevelChange} />
 				<TonalitySelector tonality={tonality} onTonalityChange={onTonalityChange} />
 				<SlideCountSelector slideCount={slideCount} onSlideCountChange={onSlideCountChange} />

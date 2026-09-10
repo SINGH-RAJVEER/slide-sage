@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 const LANDING_PAGE_OPTIONS: Array<{ id: LandingPage; label: string }> = [
 	{ id: "generate", label: "Generate" },
 	{ id: "presentations", label: "Presentations" },
+	{ id: "landing", label: "Landing page" },
 ];
 
 interface LandingPreferenceProps {

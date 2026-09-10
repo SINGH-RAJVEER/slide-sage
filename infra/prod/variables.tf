@@ -1,60 +1,136 @@
 variable "gcp_project_id" {
-	description = "Google Cloud project that hosts the production backend."
-	type        = string
+  description = "Google Cloud project that hosts the production backend."
+  type        = string
 }
 
 variable "gcp_region" {
-	description = "Cloud Run and Artifact Registry region."
-	type        = string
-	default     = "asia-south1"
+  description = "Cloud Run and Artifact Registry region."
+  type        = string
+  default     = "asia-south1"
 }
 
 variable "cloudflare_account_id" {
-	description = "Cloudflare account ID that owns the Pages project."
-	type        = string
+  description = "Cloudflare account ID that owns the Pages project."
+  type        = string
 }
 
 variable "cloudflare_api_token" {
-	description = "Cloudflare API token with Zone and Pages edit permissions. Supply through TF_VAR_cloudflare_api_token."
-	type        = string
-	sensitive   = true
+  description = "Cloudflare API token with Zone and Pages edit permissions. Supply through TF_VAR_cloudflare_api_token."
+  type        = string
+  sensitive   = true
 }
 
 variable "domain_name" {
-	description = "A Cloudflare-managed apex domain for the production web application."
-	type        = string
-	default     = "slidesage.app"
+  description = "A Cloudflare-managed apex domain for the production web application."
+  type        = string
+  default     = "slidesage.app"
 }
 
 variable "github_owner" {
-	description = "GitHub organization or user that owns the repository connected to Cloudflare Pages."
-	type        = string
-	default     = "SINGH-RAJVEER"
+  description = "GitHub organization or user that owns the repository connected to Cloudflare Pages."
+  type        = string
+  default     = "SINGH-RAJVEER"
 }
 
 variable "github_repository" {
-	description = "GitHub repository name connected to Cloudflare Pages."
-	type        = string
-	default     = "slidesage"
+  description = "Repository name reported by the existing Cloudflare Pages Git integration. Preserve it during adoption, even if GitHub now redirects the old name."
+  type        = string
+  default     = "slide-sage"
 }
 
 variable "api_image" {
-	description = "Artifact Registry image for the API. CI should pass an immutable digest or commit tag."
-	type        = string
+  description = "Artifact Registry image for the API. CI should pass an immutable digest or commit tag."
+  type        = string
 }
 
 variable "worker_image" {
-	description = "Artifact Registry image for the generation worker. CI should pass an immutable digest or commit tag."
-	type        = string
+  description = "Artifact Registry image for the generation worker. CI should pass an immutable digest or commit tag."
+  type        = string
+}
+
+variable "preview_image" {
+  description = "Artifact Registry image for the LibreOffice preview renderer. CI should pass an immutable digest or commit tag."
+  type        = string
 }
 
 variable "migrate_image" {
-	description = "Artifact Registry image for the migration job. CI should pass an immutable digest or commit tag."
-	type        = string
+  description = "Artifact Registry image for the migration job. CI should pass an immutable digest or commit tag."
+  type        = string
 }
 
 variable "open_router_model" {
-	description = "Server-owned OpenRouter generation model."
-	type        = string
-	default     = "openrouter/free"
+  description = "Server-owned OpenRouter generation model."
+  type        = string
+  default     = "openrouter/free"
+}
+
+variable "open_router_api_base" {
+  description = "OpenRouter chat completions endpoint used by the API and worker."
+  type        = string
+  default     = "https://openrouter.ai/api/v1/chat/completions"
+}
+
+variable "template_gcs_bucket" {
+  description = "Existing private GCS bucket used as the Cloud CDN template origin."
+  type        = string
+  default     = "slidesage-504414-templates"
+}
+
+variable "presentation_gcs_bucket" {
+  description = "Private GCS bucket for immutable canonical presentation revisions. Defaults to <project-id>-presentation-revisions."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "cdn_url" {
+  description = "HTTPS origin used when signing template URLs. Templates are served by the API load balancer under /pptx-templates/."
+  type        = string
+  default     = "https://api.slidesage.app"
+}
+
+variable "cdn_signing_key_name" {
+  description = "Active signing-key name configured on the template Cloud CDN backend bucket."
+  type        = string
+  default     = "templates-key-v2"
+}
+
+variable "cdn_signed_url_ttl_seconds" {
+  description = "Lifetime of generated Cloud CDN template URLs."
+  type        = number
+  default     = 900
+
+  validation {
+    condition     = var.cdn_signed_url_ttl_seconds >= 60 && var.cdn_signed_url_ttl_seconds <= 3600
+    error_message = "cdn_signed_url_ttl_seconds must be between 60 and 3600 seconds."
+  }
+}
+
+variable "otel_exporter_otlp_endpoint" {
+  description = "Common Datadog OTLP intake endpoint. Leave empty to disable telemetry export."
+  type        = string
+  default     = ""
+}
+
+variable "otel_service_version" {
+  description = "Version attached to OpenTelemetry resources, normally the deployed commit SHA."
+  type        = string
+  default     = ""
+}
+
+variable "otel_logs_exporter" {
+  description = "Set to none when the Datadog GCP integration already collects Cloud Run stdout logs."
+  type        = string
+  default     = "otlp"
+
+  validation {
+    condition     = contains(["otlp", "none"], var.otel_logs_exporter)
+    error_message = "otel_logs_exporter must be otlp or none."
+  }
+}
+
+variable "maintenance_mode" {
+  description = "Disable API and queue consumers during incompatible database migrations. CI restores automatic scaling after the release apply."
+  type        = bool
+  default     = false
 }

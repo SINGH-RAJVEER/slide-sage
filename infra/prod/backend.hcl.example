@@ -1,0 +1,9 @@
+# terraform init -backend-config=backend.hcl
+# The state bucket is created out of band because it must exist before the first
+# init:
+#   gcloud storage buckets create gs://slidesage-504414-tfstate \
+#     --project=slidesage-504414 --location=asia-south1 \
+#     --uniform-bucket-level-access
+#   gcloud storage buckets update gs://slidesage-504414-tfstate --versioning
+bucket = "slidesage-504414-tfstate"
+prefix = "prod"

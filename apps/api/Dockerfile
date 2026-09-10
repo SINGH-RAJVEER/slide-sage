@@ -16,6 +16,7 @@ run --mount=type=cache,target=/go/pkg/mod \
 	export CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} && \
 	go build -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w" -o /out/api ./cmd/api && \
 	go build -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w" -o /out/worker ./cmd/worker && \
+	go build -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w" -o /out/previewworker ./cmd/previewworker && \
 	go build -mod=readonly -trimpath -buildvcs=false -ldflags="-s -w" -o /out/migrate ./cmd/migrate
 
 
@@ -47,7 +48,36 @@ copy --from=build /out/worker /app/worker
 
 entrypoint ["/app/worker"]
 
-#migrate
+# preview
+from docker.io/library/alpine:3.22 as preview
+
+run apk add --no-cache \
+	ca-certificates \
+	libreoffice-impress \
+	libreoffice-writer \
+	openjdk17-jre-headless \
+	poppler-utils \
+	libwebp-tools \
+	font-noto \
+	font-noto-cjk \
+	ttf-dejavu \
+	ttf-liberation && \
+	fc-cache -f
+
+workdir /app
+
+copy --from=build /out/previewworker /app/previewworker
+
+env HOME=/tmp
+
+run adduser -D -u 65532 preview && chown -R preview:preview /app
+
+user 65532:65532
+
+entrypoint ["/app/previewworker"]
+
+
+# migrate
 from base as migrate
 
 copy --from=build /out/migrate /app/migrate

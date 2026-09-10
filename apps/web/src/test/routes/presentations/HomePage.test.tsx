@@ -8,7 +8,7 @@ const authState = {
 	user: null as { landingPage?: "generate" | "presentations" } | null,
 };
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => ({
 		user: authState.user,
 		loading: false,
@@ -18,7 +18,7 @@ mock.module("@/contexts/AuthContext", () => ({
 	}),
 }));
 
-const { default: HomePage } = await import("@/routes/presentations/HomePage");
+const { default: HomePage } = await import("../../../routes/presentations/HomePage");
 
 function renderHome() {
 	return render(

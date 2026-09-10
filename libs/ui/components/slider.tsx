@@ -20,10 +20,7 @@ function Slider({
 				data-slot="slider-track"
 				className="relative h-2 w-full grow overflow-hidden rounded-full bg-white/10"
 			>
-				<SliderPrimitive.Range
-					data-slot="slider-range"
-					className="absolute h-full bg-white"
-				/>
+				<SliderPrimitive.Range data-slot="slider-range" className="absolute h-full bg-white" />
 			</SliderPrimitive.Track>
 			{children}
 		</SliderPrimitive.Root>

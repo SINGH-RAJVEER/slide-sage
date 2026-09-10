@@ -25,6 +25,8 @@ type submitInput struct {
 	Research        any
 	ResearchPayload *presentation.ResearchPayload
 	AI              *ai.Selection
+	Template        *presentation.TemplateReference
+	Theme           string
 }
 
 type persistedPresentation struct {
@@ -135,6 +137,29 @@ func (h *handler) submit(writer http.ResponseWriter, request *http.Request) {
 		h.reservationError(writer, err)
 		return
 	}
+	if job.kind == "generation" {
+		resolvedTemplate, err := resolveGenerationTemplate(job.template)
+		if err != nil {
+			writeError(writer, http.StatusBadRequest, err.Error())
+			return
+		}
+		job.template = &resolvedTemplate
+		if _, err := assignmentForJob(job); err != nil {
+			writeError(writer, http.StatusBadRequest, err.Error())
+			return
+		}
+	} else {
+		var count int
+		err := h.database.QueryRowContext(request.Context(), `SELECT r.revision,r.slide_count FROM presentations p JOIN presentation_revisions r ON r.presentation_id=p.id AND r.revision=p.current_pptx_revision WHERE p.id=$1 AND p.user_id=$2`, job.presentationID, userID).Scan(&job.pptxRevision, &count)
+		if err != nil {
+			writeError(writer, http.StatusConflict, "This presentation has no completed revision to edit yet")
+			return
+		}
+		if job.slideCount != count {
+			writeError(writer, http.StatusBadRequest, "AI text revisions preserve the current slide count. Generate a new presentation to change the number of slides.")
+			return
+		}
+	}
 
 	balance, _, err := h.enqueue(request.Context(), job, requestHashValue, create, input.Topic, placeholder)
 	if err != nil {
@@ -194,6 +219,21 @@ func parseSubmitInput(body map[string]any) (submitInput, error) {
 		return submitInput{}, err
 	}
 	input.AI = selection
+	input.Theme = "corporate-blue"
+	if value, found := body["theme"]; found {
+		theme, err := presentation.ParseTheme(value)
+		if err != nil {
+			return submitInput{}, err
+		}
+		input.Theme = theme
+	}
+	if value, found := body["template"]; found {
+		template, err := presentation.ParseTemplateReference(value)
+		if err != nil {
+			return submitInput{}, err
+		}
+		input.Template = &template
+	}
 	return input, nil
 }
 
@@ -206,6 +246,10 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 		}
 		var document map[string]any
 		_ = json.Unmarshal(existing.Data, &document)
+		if template, parseErr := presentation.ParseTemplateReference(document["template"]); parseErr == nil {
+			input.Template = &template
+		}
+		input.Theme = documentTheme(existing.Data)
 		if document["status"] != "failed" {
 			duplicate, err := h.existingSubmission(ctx, userID, jobID, hash)
 			if err == nil && duplicate.jobID != "" {
@@ -217,7 +261,7 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 			return streamJob{}, nil, writeStatusError{http.StatusConflict, "Only failed presentations can be retried"}
 		}
 	}
-	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, maxPlanOutputTokens(input.SlideCount))
+	quote := authorizationMillis(input.SlideCount, input.Topic, nil, input.Research, input.ResearchPayload, repairHeadroomTokens(input.SlideCount))
 	operationID, err := uuid()
 	if err != nil {
 		return streamJob{}, nil, err
@@ -235,10 +279,24 @@ func (h *handler) generationJob(ctx context.Context, userID string, input submit
 	if selection != nil {
 		quote = 0
 	}
-	initial := map[string]any{"title": "Generating...", "theme": "corporate-blue", "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}}}
+	initial := generationPlaceholder(input)
 	placeholder, _ := json.Marshal(initial)
-	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, kind: "generation"}
+	job := streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: presentationID, quote: quote, prompt: input.Topic, slideCount: input.SlideCount, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, template: input.Template, theme: input.Theme, kind: "generation"}
 	return job, placeholder, nil
+}
+
+func generationPlaceholder(input submitInput) map[string]any {
+	retry := map[string]any{"prompt": input.Topic, "slide_count": input.SlideCount, "detail_level": input.DetailLevel, "tonality": input.Tonality, "research_enabled": input.Research != nil || input.ResearchPayload != nil, "research_payload": input.ResearchPayload, "ai": input.AI}
+	theme := input.Theme
+	if theme == "" {
+		theme = "corporate-blue"
+	}
+	initial := map[string]any{"title": "Generating...", "theme": theme, "dimensions": map[string]int{"width": 1280, "height": 720}, "slides": []any{}, "status": "generating", "failure": map[string]any{"retry": retry}}
+	if input.Template != nil {
+		retry["template"] = input.Template
+		initial["template"] = input.Template
+	}
+	return initial
 }
 
 func (h *handler) iterationJob(ctx context.Context, userID string, input submitInput, jobID string) (streamJob, error) {
@@ -248,15 +306,11 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 	}
 	count := input.SlideCount
 	if count == 0 {
-		var document struct {
-			Slides []any `json:"slides"`
-		}
-		_ = json.Unmarshal(base.Data, &document)
-		count = len(document.Slides)
-		if count == 0 {
-			count = 5
+		if err := h.database.QueryRowContext(ctx, `SELECT r.slide_count FROM presentations p JOIN presentation_revisions r ON r.presentation_id=p.id AND r.revision=p.current_pptx_revision WHERE p.id=$1 AND p.user_id=$2`, base.ID, userID).Scan(&count); err != nil {
+			return streamJob{}, writeStatusError{http.StatusConflict, "This presentation has no completed revision to edit yet"}
 		}
 	}
+
 	operationID, err := uuid()
 	if err != nil {
 		return streamJob{}, err
@@ -274,10 +328,11 @@ func (h *handler) iterationJob(ctx context.Context, userID string, input submitI
 }
 
 func buildIterationJob(jobID, userID, operationID string, base persistedPresentation, input submitInput, count int, quote int64, selection *ai.Selection) streamJob {
-	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, selection: selection, current: base.Data, kind: "iteration"}
+	return streamJob{jobID: jobID, userID: userID, operationID: operationID, presentationID: base.ID, expectedRevision: base.Revision, quote: quote, prompt: input.Topic, slideCount: count, detailLevel: input.DetailLevel, tonality: input.Tonality, research: input.Research, researchPayload: input.ResearchPayload, selection: selection, template: templateFromDocument(base.Data), theme: documentTheme(base.Data), current: base.Data, kind: "iteration"}
 }
 
 type streamJob struct {
+	pptxRevision                               int
 	jobID, userID, operationID, presentationID string
 	expectedRevision                           int
 	quote                                      int64
@@ -287,9 +342,25 @@ type streamJob struct {
 	research                                   any
 	researchPayload                            *presentation.ResearchPayload
 	selection                                  *ai.Selection
+	template                                   *presentation.TemplateReference
+	theme                                      string
 	credential                                 string
 	current                                    json.RawMessage
 	requestHash                                string
+}
+
+func templateFromDocument(data []byte) *presentation.TemplateReference {
+	var document map[string]any
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.UseNumber()
+	if decoder.Decode(&document) != nil {
+		return nil
+	}
+	template, err := presentation.ParseTemplateReference(document["template"])
+	if err != nil {
+		return nil
+	}
+	return &template
 }
 
 func generationUserPrompt(job streamJob) string {

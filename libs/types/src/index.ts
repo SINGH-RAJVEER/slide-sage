@@ -1,78 +1,4 @@
-export interface ChartConfig {
-	type: "bar" | "line" | "pie" | "doughnut" | "radar" | "polarArea";
-	data: {
-		labels: string[];
-		datasets: Array<{
-			label?: string;
-			data: number[];
-			backgroundColor?: string | string[];
-			borderColor?: string | string[];
-			borderWidth?: number;
-			fill?: boolean;
-		}>;
-	};
-	options?: Record<string, unknown>;
-	title?: string;
-	description?: string;
-	[key: string]: unknown;
-}
-
-export type {
-	ResolvedScene,
-	ResolvedSceneNode,
-	SceneAlignment,
-	SceneArtDirection,
-	SceneChartWidgetProps,
-	SceneDiagnostic,
-	SceneDirection,
-	SceneDistribution,
-	SceneGridPlacement,
-	SceneGroupNode,
-	SceneImageNode,
-	SceneInsets,
-	SceneLayoutMode,
-	SceneNode,
-	SceneNodeBase,
-	SceneNodePatch,
-	SceneNodeStyle,
-	ScenePresentationDocument,
-	SceneRect,
-	SceneResponsiveProfile,
-	SceneShapeNode,
-	SceneSizeConstraint,
-	SceneSlide,
-	SceneTextNode,
-	SceneTextRole,
-	SceneThemeTokens,
-	SceneVariant,
-	SceneWidgetKind,
-	SceneWidgetNode,
-} from "./scene";
-export { SCENE_ENGINE_VERSION, SCENE_GRID_SIZE } from "./scene";
-export type { SceneCommand } from "./scene-commands";
-export { applySceneCommand, findSceneNode, invertSceneCommand } from "./scene-commands";
-export { resolveScene, sceneForProfile, slideToScene, validateSceneSlide } from "./scene-engine";
-
-export interface PresentationDimensions {
-	width: number;
-	height: number;
-}
-
-export type SlideTransitionType = "none" | "fade" | "slide" | "zoom" | "morph";
-
-export interface SlideTransition {
-	type: SlideTransitionType;
-	durationMs?: number;
-}
-
-export interface SlideEffect {
-	id: string;
-	type: "fade-in" | "count-up" | "ken-burns";
-	targetBlockId?: string;
-	order?: number;
-	durationMs?: number;
-}
-
+/** Browser-only semantic preview IDs. These are not PowerPoint template IDs. */
 export const THEME_IDS = [
 	"modern-dark",
 	"corporate-blue",
@@ -83,9 +9,8 @@ export const THEME_IDS = [
 ] as const;
 
 /**
- * Visual systems distributed exclusively through the template marketplace.
- * These never ship as default themes: they resolve through
- * MARKETPLACE_TEMPLATES and must be installed before they appear in the
+ * Browser-only semantic preview IDs. These are not PowerPoint templates.
+ * Marketplace preview themes must be installed before they appear in the
  * viewer theme dropdown.
  */
 export const MARKETPLACE_THEME_IDS = [
@@ -103,304 +28,25 @@ const ALL_THEME_IDS = [...THEME_IDS, ...MARKETPLACE_THEME_IDS] as const;
 
 export type ThemeId = (typeof ALL_THEME_IDS)[number];
 
-export const DECK_PLAN_PURPOSES = [
-	"cover",
-	"section",
-	"context",
-	"problem",
-	"insight",
-	"solution",
-	"evidence",
-	"comparison",
-	"process",
-	"recommendation",
-	"closing",
-] as const;
-
-export type DeckPlanPurpose = (typeof DECK_PLAN_PURPOSES)[number];
-
-export type DeckVisualIntent =
-	| { kind: "none" }
-	| { kind: "image-hero"; imagePrompt: string; focalPoint: BackgroundFocalPoint }
-	| {
-			kind: "timeline";
-			events: Array<{ label: string; title: string; description: string }>;
-	  }
-	| { kind: "process"; nodes: Array<{ label: string; description: string }> }
-	| {
-			kind: "comparison";
-			left: { title: string; items: string[] };
-			right: { title: string; items: string[] };
-	  }
-	| { kind: "metric-grid"; metrics: Array<{ value: string; label: string }> }
-	| {
-			kind: "chart";
-			chartType: ChartConfig["type"];
-			dataSeries: Array<{ label: string; values: number[] }>;
-	  };
-
-export interface DeckPlanSlide {
-	id: string;
-	purpose: DeckPlanPurpose;
-	title: string;
-	message: string;
-	evidence: string[];
-	visualIntent: DeckVisualIntent;
-	layout: SlideLayout;
-}
-
-export interface DeckPlan {
-	version: 1;
-	title: string;
-	audience: string;
-	thesis: string;
-	style: "minimal" | "visual" | "classic" | "consultant";
-	slides: DeckPlanSlide[];
-}
+export type {
+	BinaryPptxTemplate,
+	BinaryTemplateAspectRatio,
+	BinaryTemplateAssetStatus,
+	BinaryTemplateAvailability,
+	BinaryTemplateDimensions,
+	PresentationTemplateReference,
+} from "./template-catalog";
+export {
+	BINARY_PPTX_TEMPLATE_CATALOG,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
+} from "./template-catalog";
 
 export type PresentationGenerationStage =
 	| "researching"
-	| "planning"
+	| "assigning"
 	| "drafting"
-	| "designing"
+	| "compiling"
 	| "finalizing";
-
-export const SLIDE_LAYOUTS = [
-	"cover",
-	"section",
-	"body",
-	"split",
-	"comparison",
-	"sidebar",
-	"media-left",
-	"media-right",
-	"quote",
-	"spotlight",
-	"canvas",
-] as const;
-export type SlideLayout = (typeof SLIDE_LAYOUTS)[number];
-
-export const SLIDE_REGIONS = ["main", "primary", "secondary", "media"] as const;
-export type SlideRegion = (typeof SLIDE_REGIONS)[number];
-
-export const SLIDE_TONES = ["default", "muted", "accent", "inverse"] as const;
-export type SlideTone = (typeof SLIDE_TONES)[number];
-
-export const SLIDE_DENSITIES = ["airy", "standard", "compact"] as const;
-export type SlideDensity = (typeof SLIDE_DENSITIES)[number];
-
-export const SLIDE_PATTERNS = ["none", "grid", "dots", "diagonal"] as const;
-export type SlidePattern = (typeof SLIDE_PATTERNS)[number];
-
-export const BACKGROUND_FOCAL_POINTS = ["center", "top", "bottom", "left", "right"] as const;
-export type BackgroundFocalPoint = (typeof BACKGROUND_FOCAL_POINTS)[number];
-
-export const BACKGROUND_OVERLAYS = ["none", "subtle", "medium", "strong"] as const;
-export type BackgroundOverlay = (typeof BACKGROUND_OVERLAYS)[number];
-
-export const BLOCK_EMPHASES = ["standard", "strong", "hero", "supporting"] as const;
-export type BlockEmphasis = (typeof BLOCK_EMPHASES)[number];
-
-export const BLOCK_TREATMENTS = ["plain", "card", "outline", "accent"] as const;
-export type BlockTreatment = (typeof BLOCK_TREATMENTS)[number];
-
-export interface SlideBackgroundImage {
-	url: string;
-	alt: string;
-	focalPoint: BackgroundFocalPoint;
-	overlay: BackgroundOverlay;
-}
-
-export interface SlideObjectBounds {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-}
-
-export interface BaseSlideBlock {
-	id?: string;
-	region: SlideRegion;
-	sourceIds?: string[];
-	emphasis?: BlockEmphasis;
-	treatment?: BlockTreatment;
-	bounds?: SlideObjectBounds;
-}
-
-export interface ParagraphBlock extends BaseSlideBlock {
-	type: "paragraph";
-	text: string;
-}
-
-export interface BulletBlock extends BaseSlideBlock {
-	type: "bullets";
-	items: string[];
-	ordered: boolean;
-}
-
-export interface TableBlock extends BaseSlideBlock {
-	type: "table";
-	headers: string[];
-	rows: string[][];
-}
-
-export interface ImageBlock extends BaseSlideBlock {
-	type: "image";
-	url: string;
-	alt: string;
-	caption: string;
-	focalPoint?: BackgroundFocalPoint;
-}
-
-export interface ImagePlaceholderBlock extends BaseSlideBlock {
-	type: "image-placeholder";
-	alt: string;
-	caption: string;
-	focalPoint?: BackgroundFocalPoint;
-}
-
-export interface QuoteBlock extends BaseSlideBlock {
-	type: "quote";
-	text: string;
-	attribution: string;
-}
-
-export interface CalloutBlock extends BaseSlideBlock {
-	type: "callout";
-	heading: string;
-	text: string;
-}
-
-export interface StatsBlock extends BaseSlideBlock {
-	type: "stats";
-	items: Array<{
-		value: string;
-		label: string;
-	}>;
-}
-
-export const WIDGET_KINDS = ["timeline", "flow", "architecture", "comparison"] as const;
-export type WidgetKind = (typeof WIDGET_KINDS)[number];
-
-export const WIDGET_NODE_ROLES = [
-	"default",
-	"start",
-	"end",
-	"decision",
-	"actor",
-	"system",
-	"data",
-] as const;
-export type WidgetNodeRole = (typeof WIDGET_NODE_ROLES)[number];
-
-export const WIDGET_TONES = ["neutral", "accent", "positive", "warning", "danger"] as const;
-export type WidgetTone = (typeof WIDGET_TONES)[number];
-
-export const WIDGET_DIRECTIONS = ["horizontal", "vertical"] as const;
-export type WidgetDirection = (typeof WIDGET_DIRECTIONS)[number];
-
-export const MAX_WIDGET_NODES = 16;
-export const MAX_WIDGET_EDGES = 32;
-
-export interface WidgetNode {
-	id: string;
-	label: string;
-	description: string;
-	value: string;
-	role: WidgetNodeRole;
-	tone: WidgetTone;
-	parentId: string;
-}
-
-export interface WidgetEdge {
-	from: string;
-	to: string;
-	label: string;
-}
-
-export interface WidgetBlock extends BaseSlideBlock {
-	type: "widget";
-	version: 1;
-	kind: WidgetKind;
-	direction: WidgetDirection;
-	nodes: WidgetNode[];
-	edges: WidgetEdge[];
-}
-
-/**
- * How much slide real estate an embedded chart claims when it shares a slide
- * with explanatory text. `inline` sits inside a text column, `panel` fills a
- * composition cell (media region or spotlight hero), and `hero` is the legacy
- * whole-slide presentation. When omitted, the renderer derives the scale from
- * the block's region and layout.
- */
-export const CHART_SCALES = ["inline", "panel", "hero"] as const;
-export type ChartScale = (typeof CHART_SCALES)[number];
-
-export interface ChartBlock extends BaseSlideBlock {
-	type: "chart";
-	chartConfig: ChartConfig;
-	scale?: ChartScale;
-}
-
-export type SlideBlock =
-	| ParagraphBlock
-	| BulletBlock
-	| TableBlock
-	| ImageBlock
-	| ImagePlaceholderBlock
-	| QuoteBlock
-	| CalloutBlock
-	| StatsBlock
-	| WidgetBlock
-	| ChartBlock;
-
-export interface BaseSlide {
-	id: string;
-	type: "content" | "chart";
-	transition?: SlideTransition;
-	effects?: SlideEffect[];
-}
-
-export interface ContentSlide extends BaseSlide {
-	type: "content";
-	layout: SlideLayout;
-	title: string;
-	subtitle: string;
-	eyebrow?: string;
-	regionLabels?: Partial<Record<SlideRegion, string>>;
-	tone: SlideTone;
-	density: SlideDensity;
-	pattern: SlidePattern;
-	backgroundImage?: SlideBackgroundImage;
-	titleBounds?: SlideObjectBounds;
-	subtitleBounds?: SlideObjectBounds;
-	blocks: SlideBlock[];
-}
-
-export interface ChartSlide extends BaseSlide {
-	type: "chart";
-	chartConfig: ChartConfig;
-}
-
-export type StructuredSlide = ContentSlide | ChartSlide;
-export type Slide = StructuredSlide | import("./scene").SceneSlide;
-
-export function isSceneSlide(slide: Slide): slide is import("./scene").SceneSlide {
-	return slide.type === "scene";
-}
-
-export function isChartSlide(slide: Slide): slide is ChartSlide {
-	return !isSceneSlide(slide) && slide.type === "chart";
-}
-
-export function isContentSlide(slide: Slide): slide is ContentSlide {
-	return !isSceneSlide(slide) && slide.type === "content";
-}
-
-export function isChartBlock(block: SlideBlock): block is ChartBlock {
-	return block.type === "chart";
-}
 
 export interface Source {
 	url: string;
@@ -484,16 +130,26 @@ export interface ResearchOptions {
 	maxAgeHours?: number;
 }
 
+export type PresentationPreviewStatus = "pending" | "rendering" | "ready" | "failed";
+
+/** One immutable PPTX revision. Downloads and previews both come from it. */
+export interface PresentationRevision {
+	revision: number;
+	slideCount: number;
+	byteSize: number;
+	sha256: string;
+	previewStatus: PresentationPreviewStatus;
+	previewCount: number;
+	createdAt: string;
+}
+
 export interface PresentationData {
 	title: string;
-	theme: string;
-	dimensions?: PresentationDimensions;
-	slides: Slide[];
+	template: import("./template-catalog").PresentationTemplateReference;
+	currentRevision?: PresentationRevision;
 	totalSlides: number;
 	sources?: Source[];
 	tokens_used?: number;
-	engineVersion?: string;
-	deckPlan?: DeckPlan;
 	outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 }
 
@@ -507,6 +163,7 @@ export interface PresentationRetryOptions {
 	research_enabled: boolean;
 	research_payload?: ResearchPayload;
 	ai?: AIModelSelection;
+	template?: import("./template-catalog").PresentationTemplateReference;
 }
 
 export interface PresentationFailure {
@@ -516,32 +173,15 @@ export interface PresentationFailure {
 
 export interface PresentationJSON {
 	title: string;
-	theme: string;
-	dimensions?: PresentationDimensions;
-	slides: Slide[];
+	template?: import("./template-catalog").PresentationTemplateReference;
+	currentRevision?: PresentationRevision;
 	status?: PresentationStatus;
 	failure?: PresentationFailure;
 	totalSlides?: number;
 	tokens_used?: number;
 	sources?: Source[];
-	deckPlan?: DeckPlan;
 	outline_cache_status?: "bypass" | "exact-hit" | "semantic-hit" | "miss";
 	[key: string]: unknown;
-}
-
-export type PresentationMutation =
-	| {
-			type: "update-presentation";
-			title?: string;
-			theme?: ThemeId;
-			dimensions?: PresentationDimensions;
-	  }
-	| { type: "update-slide"; slideId: string; slide: Slide }
-	| { type: "delete-slide"; slideId: string }
-	| { type: "reorder-slides"; slideIds: string[] };
-
-export interface PresentationMutationRequest {
-	mutations: PresentationMutation[];
 }
 
 export interface StreamStartEvent {
@@ -592,23 +232,9 @@ export interface StreamStageEvent {
 	};
 }
 
-export interface StreamThemeEvent {
-	event: "theme";
-	data: { theme: string };
-}
-
-export interface StreamPlanEvent {
-	event: "plan";
-	data: DeckPlan;
-}
-
-export interface StreamSlideEvent {
-	event: "slide";
-	data: {
-		slide: Slide;
-		index: number;
-		title: string | null;
-	};
+export interface StreamRevisionEvent {
+	event: "revision";
+	data: PresentationRevision;
 }
 
 export interface StreamRetryEvent {
@@ -651,10 +277,8 @@ export type PresentationStreamEvent =
 	| StreamCreatedEvent
 	| StreamResearchEvent
 	| StreamStageEvent
-	| StreamThemeEvent
-	| StreamPlanEvent
 	| StreamRetryEvent
-	| StreamSlideEvent
+	| StreamRevisionEvent
 	| StreamCompleteEvent
 	| StreamSavedEvent
 	| StreamErrorEvent;
@@ -716,7 +340,7 @@ export interface PresentationResponse {
 	presentation: SavedPresentation;
 }
 
-export const LANDING_PAGES = ["generate", "presentations"] as const;
+export const LANDING_PAGES = ["generate", "presentations", "landing"] as const;
 export type LandingPage = (typeof LANDING_PAGES)[number];
 
 export interface UserProfile {
@@ -780,6 +404,3 @@ export interface BillingVerifyResponse {
 	tokens_awarded: number;
 	new_balance: number;
 }
-
-export type { SlideSupportVisual, SlideSupportVisualPlacement } from "./slide-background";
-export { resolveSlideSupportVisual } from "./slide-background";

@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import { describe, expect, it, mock } from "bun:test";
-import { installPreloadErrorRecovery } from "@/app/preload-error-recovery";
+import { installPreloadErrorRecovery } from "../../app/preload-error-recovery";
 
 function createStorage() {
 	const values = new Map<string, string>();

@@ -6,11 +6,11 @@ import { useState } from "react";
 import {
 	KEYBOARD_NAVIGATION_REPEAT_DELAY_MS,
 	KEYBOARD_NAVIGATION_REPEAT_INTERVAL_MS,
-} from "@/hooks/useSlideNavigation";
+} from "@slidesage/ui/hooks/useSlideNavigation";
 import {
 	getViewerKeyboardDestination,
 	useViewerKeyboardNavigation,
-} from "@/hooks/useViewerKeyboardNavigation";
+} from "@slidesage/ui/hooks/useViewerKeyboardNavigation";
 
 afterEach(() => {
 	jest.useRealTimers();

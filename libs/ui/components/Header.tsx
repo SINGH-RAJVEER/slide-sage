@@ -17,6 +17,7 @@ export interface HeaderUser {
 
 export interface HeaderRoutes {
 	home: string;
+	landing: string;
 	generate: string;
 	research: string;
 	presentations: string;
@@ -100,33 +101,35 @@ export function Header({
 		>
 			<div className="grid h-16 w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 md:grid-cols-3 md:px-10">
 				<div className="hidden items-center md:flex md:w-full">
-					<LinkComponent to={routes.home} aria-label="Go to home">
+					<LinkComponent to={routes.landing} aria-label="SlideSage — landing">
 						<img src="/icon.webp" alt="SlideSage" className="h-10 w-auto object-contain" />
 					</LinkComponent>
 				</div>
 
 				{!isAuthPage && (
 					<div className="min-w-0 overflow-x-auto md:col-span-1">
-						<nav className="flex min-w-max items-center gap-1 md:mx-auto md:w-max md:gap-2">
-							{[
-								[routes.generate, "Generate"],
-								[routes.presentations, "Presentations"],
-								[routes.marketplace, "Marketplace"],
-							].map(([path, label]) => (
-								<LinkComponent
-									key={path}
-									to={path as string}
-									className={cn(
-										"flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors md:min-h-0 md:px-4 md:py-2.5 md:text-base",
-										isActive(path as string)
-											? "bg-white/10 text-white"
-											: "text-white/70 hover:bg-white/5 hover:text-white",
-									)}
-								>
-									{label}
-								</LinkComponent>
-							))}
-						</nav>
+						<div className="flex min-w-max items-center gap-2 md:mx-auto md:w-max">
+							<nav className="flex items-center gap-1 md:gap-2">
+								{[
+									[routes.generate, "Generate"],
+									[routes.presentations, "Presentations"],
+									[routes.marketplace, "Marketplace"],
+								].map(([path, label]) => (
+									<LinkComponent
+										key={path}
+										to={path as string}
+										className={cn(
+											"flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors md:min-h-0 md:px-4 md:py-2.5 md:text-base",
+											isActive(path as string)
+												? "bg-white/10 text-white"
+												: "text-white/70 hover:bg-white/5 hover:text-white",
+										)}
+									>
+										{label}
+									</LinkComponent>
+								))}
+							</nav>
+						</div>
 					</div>
 				)}
 

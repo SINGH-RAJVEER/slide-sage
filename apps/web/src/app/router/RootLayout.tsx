@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
-import ActiveGenerationIndicator from "@/app/ActiveGenerationIndicator";
-import VimNavigation from "@/app/VimNavigation";
+import ActiveGenerationIndicator from "../ActiveGenerationIndicator";
+import VimNavigation from "../VimNavigation";
 
 export default function RootLayout() {
 	return (

@@ -1,8 +1,6 @@
 import type { AIConfigurationResponse, AIModelSelection, AIProvider } from "@slidesage/types";
 import { Button } from "@slidesage/ui/components/button";
 import { FloatingSettingsNotice } from "@slidesage/ui/components/Settings/FloatingSettingsNotice";
-import { Skeleton } from "@slidesage/ui/components/skeleton";
-
 import {
 	Select,
 	SelectContent,
@@ -10,6 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@slidesage/ui/components/select";
+import { Skeleton } from "@slidesage/ui/components/skeleton";
 import { Switch } from "@slidesage/ui/components/switch";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@slidesage/ui/components/tooltip";

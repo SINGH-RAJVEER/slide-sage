@@ -1,77 +1,107 @@
-# Template Marketplace
+# Template marketplace
 
-The Template Marketplace is an authenticated theme library at `/marketplace`. It introduces a single place to browse community presentation themes while preserving SlideSage's existing dark navy application shell.
+The authenticated `/marketplace` route lists curated binary PowerPoint templates. `BINARY_PPTX_TEMPLATE_CATALOG` in `libs/types/src/template-catalog.ts` is the catalog authority. The initial catalog contains six default templates and 24 marketplace templates.
 
-## Current Scope
+## Catalog model
 
-- Browse six complete third-party-style offerings rather than placeholder catalog entries: Neon District, Draft Board, Velvet Marquee, Bubblegum Pop, Concrete Brutal, and Terra Mesa.
-- Preview every item through the production `SlideRenderer` using supported themes.
-- Open a dedicated, URL-addressable theme preview by selecting a theme card.
-- Search theme and creator metadata and sort the catalog.
-- Upvote designs for the active user in this browser.
-- Remove previously added themes from the installed collection.
-- Add supported marketplace themes to the Viewer theme dropdown.
-- Show a disabled `Contribute a theme` toolbar action for the future theme editor.
-- Use a responsive navigation tab and catalog layout on desktop and mobile.
-- Use a centered, flexible marketplace search field with contribution and sorting actions anchored to the left and right edges of the toolbar.
-- Scale marketplace previews from the canonical 1280x720 canvas to each card's measured size, preserving all slide element positions and proportions without cropping.
+Each template has a stable kebab-case ID, version, availability, dimensions, object-storage path, and browser preview theme. Source files under the ignored root `templates/` directory use the same ID as their filename, for example `simple-business-proposal.pptx`.
 
-## Theme Systems
+The truncated agriculture deck is excluded from the catalog and retained as `quarantine-agriculture-business-plan.pptx`. The duplicate Textured Scrapbook file was removed.
 
-The six default renderer themes are complete visual systems, not palette swaps. Each owns a different typography pairing, color system, information density, shape grammar, image treatment, chart palette, and default composition treatment. They stay installed with every workspace:
+Default templates appear in the presentation template selector without installation. Marketplace templates must first be installed from `/marketplace`. Installation stores versioned `{ id, version }` references in browser local storage. The store accepts old string entries only when the string matches a current binary catalog ID; synthetic legacy IDs are discarded.
 
-| Default system    | Renderer ID     | Design language                                                |
-| ----------------- | --------------- | -------------------------------------------------------------- |
-| Midnight Terminal | `modern-dark`   | Dark cinematic space, terminal metadata, luminous proof points |
-| Signal Grid       | `corporate-blue` | Strict analytical grid, slim blue rail, precise data hierarchy |
-| Monochrome Grid   | `minimalist`    | Quiet serif headlines, paper grid, reading-first layouts       |
-| Kinetic Blocks    | `creative-studio` | Poster-like typography, hard edges, fixed diagonal accents     |
-| Editorial Ledger  | `elegant-serif` | Warm paper, folios, magazine columns, editorial serif voice    |
-| Field Report      | `nature-green`  | Organic contours, human-scale spacing, restrained natural palette |
+## Browser preview
 
-Marketplace offerings are a separate shelf of visual systems. None of them reuses a default theme ID, palette, typography pairing, or layout language. Each is authored as its own studio identity, so installing one swaps in a different design language instead of recoloring a built-in theme:
+Opening a marketplace thumbnail loads the complete template deck at `/marketplace/:marketplaceId/preview`. It uses the same rendered-slide carousel, thumbnails, keyboard navigation, and fullscreen controls as generated presentations.
 
-| Marketplace offering | Renderer ID       | Design language                                                    | Catalog author |
-| -------------------- | ----------------- | ------------------------------------------------------------------ | -------------- |
-| Neon District        | `neon-district`   | Violet-black synthwave, magenta/cyan neon, monospaced display type | Vera Kato      |
-| Draft Board          | `draft-board`     | Blueprint blue linework, orange markups, drafting-caps lettering   | Ines Okafor    |
-| Velvet Marquee       | `velvet-marquee`  | Theater-black glamour, champagne gold and burgundy, didone serif   | Maison Lune    |
-| Bubblegum Pop        | `bubblegum-pop`   | Y2K candy pastels, hot pink and sky accents, rounded chunky type   | Pip Sundae     |
-| Concrete Brutal      | `concrete-brutal` | Raw concrete gray, safety-orange signage, heavy grotesque caps     | R. Castellanos |
-| Terra Mesa           | `terra-mesa`      | Adobe sand craft, burnt sienna and turquoise, slab-serif voice     | Ada Reyes      |
+The browser requests `GET /template-previews/{id}/{version}` for the slide count and package digest, then loads each slide through `GET /template-previews/{id}/{version}/{digest}/{index}`. The API resolves the published catalog entry and signs CDN requests server-side. Slides come from `https://api.slidesage.app/pptx-templates/{id}/{version}/{digest}/previews/v1/`. Signing credentials never reach the browser.
 
-Every offering has its own cover, showcase composition, narrative slide, data colors, and close. Installation now selects the marketplace's own renderer system: the viewer dropdown lists it under "From Marketplace", saved presentations persist the marketplace theme ID, generation can target it, and both PDF and PowerPoint exports carry matching palette and typography tokens.
+These WebP slides are rendered from the actual CDN PPTX using the same LibreOffice renderer as generated decks. They are not semantic approximations or a cover-only fallback. Missing previews show an error with retry.
 
-Theme token definitions for defaults live in `AVAILABLE_TEMPLATES` in `libs/ui/lib/templates.ts`; marketplace systems live in `MARKETPLACE_TEMPLATES` in the same module. The renderer publishes those values as CSS custom properties for editorial content and uses the same colors and font families for scene slides and chart rendering. The PowerPoint exporter maintains matching palette and typography tokens for its native output.
+### Publishing full-deck previews
 
-The first implementation is still frontend-only. Installed marketplace themes and the active user's upvotes persist in browser local storage, while catalog metadata, usage counts, and aggregate votes are seeded data. Catalog authors are fictional seed identities; a persistent community backend must replace these browser-local records with real creator profiles.
+`cmd/publish-templates` renders previews as part of publication, from the same sanitized bytes it uploaded, so a published template cannot be missing the previews for its digest. Rendering needs LibreOffice on `PATH`, which the development shell provides. Pass `-skip-previews` where it is unavailable; the command then says so, and the previews must be backfilled before the template is usable.
 
-## Renderer Constraints
+`cmd/publish-template-previews` renders previews on their own. It is for backfilling a template published before previews existed, or for re-rendering after a renderer change. Stage a template locally for inspection:
 
-Marketplace previews render through their own `ThemeId` values, listed in `MARKETPLACE_THEME_IDS` in `libs/types`. Marketplace item IDs match their renderer ID so a deck saved from an installed marketplace theme normalizes cleanly; the API's `validThemes` allowlist includes the marketplace IDs so persistence and generation validation stay intact. Adding further serialized themes requires the same four-way update: web renderer tokens, API validation, the presentation document contract, and PowerPoint export.
+```sh
+devenv shell -- go -C apps/api run ./cmd/publish-template-previews \
+  -id charli-xcx-brat-album-inspired -out /tmp/template-previews
+```
 
-Preview rendering is noninteractive. Content blocks use plain containers unless the viewer supplies an editing callback, preventing editor controls from being nested inside the marketplace preview button while retaining the same visual renderer.
+After approval to write cloud objects, publish to the bucket backing the template CDN:
 
-Installed marketplace themes appear as named entries under "From Marketplace" in the theme dropdown and select their own visual system when chosen. Defaults and marketplace systems are resolved through the same `getTemplate` contract, so generation, persistence, and export validation remain intact.
+```sh
+devenv shell -- go -C apps/api run ./cmd/publish-template-previews \
+  -bucket YOUR_TEMPLATE_BUCKET
+```
 
-The viewer and marketplace render slides at canonical 1280x720 coordinates. Display surfaces use a shared measured scaling frame that applies one uniform scale to the complete slide. Marketplace cards fit their actual width, while fullscreen presentations contain the slide within the available screen and use the maximum size allowed by its 16:9 aspect ratio. Fullscreen chart slides activate only after that frame has a measured size, ensuring Chart.js runs its entrance animation against the final presentation dimensions instead of a zero-sized canvas.
+Omit `-id` to process all published templates. Both commands verify the rendered slide count against the compiler manifest, write immutable slide objects, and write `manifest.json` last so incomplete sets are not advertised. Existing objects with different bytes are rejected; changes to rendering output require a new preview format version rather than overwriting cached slides.
 
-Schema-v5 content slides use code-owned editorial compositions rather than theme-authored HTML. The renderer supports `cover`, `section`, `body`, `split`, `comparison`, `sidebar`, `media-left`, `media-right`, `quote`, `spotlight`, and `canvas`. Themes establish both the visual foundation and the composition treatment: for example, Signal Grid adds a data rail and a measured grid, Paper Grid removes panels in favor of reading columns, Kinetic Blocks uses hard-edged poster geometry, and Field Report uses rounded organic frames. Pattern rendering uses CSS gradients only. Image and background-image URLs are restricted to HTTPS; invalid content images become descriptive placeholders and invalid backgrounds are omitted.
+Uploading with `-bucket` needs application default credentials, which are separate from a `gcloud` login:
 
-Blocks retain their semantic kind inside every composition. Their `emphasis` (`standard`, `strong`, `hero`, or `supporting`) and `treatment` (`plain`, `card`, `outline`, or `accent`) values create visible hierarchy without changing content. Layout changes migrate blocks among the canonical `main`, `primary`, `secondary`, and `media` regions. Media layouts may add a temporary visual placeholder; that placeholder is removed when leaving a media layout without removing authored placeholders.
+```sh
+gcloud auth application-default login
+```
 
-The semantic deck-plan compiler also selects varied default content layouts before a slide reaches the renderer. Context, evidence, and recommendation slides use a sidebar; problem and solution slides use a split composition; insights use spotlight. Visual intents still take precedence, so comparisons, image heroes, timelines, processes, metrics, and charts retain their appropriate specialized layouts.
+Without them, stage with `-out` and upload with the CLI. `--no-clobber` preserves the create-only precondition the bucket path relies on, and the manifests go last for the same reason the publisher writes them last:
 
-Theme cards route to `/marketplace/:marketplaceId/preview`. This read-only page uses the same viewer header, carousel, navigation, thumbnails, scaled fullscreen stage, playback, and fullscreen controls as regular presentations. The selected theme is fixed and appears as a non-interactive indicator in place of the theme dropdown. Iterate, layout editing, download, and deletion controls are omitted. Because the catalog item is resolved from the URL, previews remain available on refresh and direct navigation. Preview navigation uses the same keyboard contract as the viewer: Left or `J` moves to the previous slide, Right or `L` moves to the next slide, Up moves to the first slide, and Down moves to the final slide. Each sample deck includes content, statistics, line-chart, and doughnut-chart slides to demonstrate typography, data visualization, Chart.js animation, and layout behavior.
+```sh
+gcloud storage cp -r -n /tmp/template-previews/pptx-templates gs://YOUR_TEMPLATE_BUCKET/
+```
 
-## Backend Roadmap
+Both commands print this guidance when the bucket cannot be opened.
 
-A persistent community marketplace should add:
+## Cover thumbnails
 
-- Versioned marketplace items with author, type, tags, license, publication, and moderation state.
-- Unique per-user votes and aggregate vote counts.
-- Creator submission, revision, preview, publish, and reporting endpoints.
-- Installation or application records linked to the supported theme format.
-- Public catalog search, filtering, sorting, pagination, and creator profiles.
+Marketplace cards load covers from `GET /template-thumbnails/{path}` on the API, where the path is the URL-encoded object path `pptx-templates/{id}/{version}/thumbnails/cover.webp` that `libs/types/src/template-catalog.ts` advertises. `libs/ui/lib/template-thumbnails.ts` builds the URL.
 
-The internal semantic `slide_templates` table is AI generation memory and should not be reused as the community catalog because it has no ownership, publishing, rendering, or voting contract.
+The browser cannot address the CDN itself: unsigned requests to `/pptx-templates/*` are refused, and giving the client a signing key would let anyone mint URLs for the packages. The API signs each request with the deployment's Cloud CDN key and streams the image back. It also keeps the marketplace from downloading a package of tens of megabytes to show one cover.
+
+The route refuses anything that is not exactly a cover path, and refuses templates absent from `apps/api/internal/templatecatalog/published.json`, so it cannot be used to sign arbitrary bucket objects. Responses carry `Cache-Control: public, max-age=604800`, matching the CDN's client TTL, because a cover is immutable for the life of a template version. An upstream failure answers `502`.
+
+Covers are produced by `scripts/render-template-thumbnails.ts` and uploaded beside the package. A template with no uploaded cover answers `502` until one exists.
+
+## Publication gating
+
+Three artifacts must exist before a template can produce a presentation: the digest-pinned object in the bucket, a digest recorded in both `libs/types/src/template-digests.json` and `apps/api/internal/templatecatalog/published.json`, and a compiler manifest under `apps/api/internal/templatemanifest/manifests`. A template missing any of them is listed but not usable.
+
+The browser derives `asset.status` from the digest map, so an unpublished template reads as `pending-upload` without anyone maintaining a second list. Selection is gated on it in three places: the template dropdown disables the entry, `GeneratePPTPage` disables generation while an unselectable template is chosen, and `installMarketplaceTheme` refuses to install one, because installing it would only add a permanently disabled entry to the selector. Marketplace cards show `Unpublished` in place of `Install`.
+
+`go run ./cmd/publish-templates -verify` checks those artifacts for every published entry, plus the cover and the preview set, and exits non-zero on any mismatch. Each object check is a signed `HEAD`, so it costs one request per template rather than a download. The preview check reads `manifest.json`, which is uploaded after its images, so its presence means the whole set resolved.
+
+The catalog files live in the repository while the objects live in the bucket, so the two drift apart silently. `.github/workflows/templates.yml` runs the verification daily and on demand to catch that drift. It needs the `CDN_URL` and `CDN_SIGNING_KEY_NAME` repository variables and the `CDN_SIGNING_KEY_SECRET` repository secret; signing is server-side, so a runner mints valid URLs with the same key the API uses. It is deliberately not part of the deploy workflow, whose service account has no Secret Manager access.
+
+## Presentation selection
+
+A presentation stores its PowerPoint template separately from its browser preview theme:
+
+```json
+{
+	"theme": "corporate-blue",
+	"template": {
+		"id": "simple-business-proposal",
+		"version": 1
+	}
+}
+```
+
+Selecting a template updates both fields in one presentation mutation. Generation and research routes submit the selected semantic preview theme alongside the binary template reference and carry both through retries, queued jobs, resumable streaming, and the final persisted document.
+
+## Export readiness
+
+Catalog visibility, installation, and export readiness are separate. A template can appear in the marketplace while its asset remains `pending-upload`. PowerPoint download requires all of the following:
+
+- The presentation selects a binary template.
+- The catalog asset status is `available`.
+- The runtime package exists under `VITE_PPTX_TEMPLATE_BASE_URL`.
+- The template has an OOXML manifest.
+- Every presentation slide kind is supported by that manifest and renderer.
+
+`Simple Business Proposal` is the first onboarded and available manifest. Unsupported rich content disables its PowerPoint export instead of producing a partial file. See [OOXML_TEMPLATE_EXPORT.md](OOXML_TEMPLATE_EXPORT.md) for package processing and validation.
+
+## Future backend work
+
+The current marketplace installation state remains browser-local. A persistent marketplace should add versioned publication records, creator ownership, license records, moderation, reporting, server-side installation records, search, and pagination.
+
+The internal `slide_templates` table is AI generation memory and must not be reused as the marketplace catalog.

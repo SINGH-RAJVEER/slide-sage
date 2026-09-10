@@ -1,7 +1,7 @@
-import Header from "@/app/Header";
-import { AISettings } from "@/routes/settings/AISettings";
-import { LandingPreference } from "@/routes/settings/LandingPreference";
-import { VimModePreference } from "@/routes/settings/VimModePreference";
+import Header from "../../app/Header";
+import { AISettings } from "./AISettings";
+import { LandingPreference } from "./LandingPreference";
+import { VimModePreference } from "./VimModePreference";
 
 export default function SettingsPage() {
 	return (

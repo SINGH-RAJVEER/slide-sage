@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -20,7 +21,10 @@ import (
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/ai"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/integrations/billing"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/middleware"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/observability"
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templateasset"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -28,9 +32,22 @@ func main() {
 	if os.Getenv("NODE_ENV") == "production" && strings.TrimSpace(os.Getenv("RATE_LIMIT_HASH_SECRET")) == "" {
 		log.Fatal("RATE_LIMIT_HASH_SECRET is required in production")
 	}
-	database, err := sql.Open("pgx", env("DATABASE_URL", "postgresql://slidesage:slidesage@localhost:5432/slidesage"))
+	telemetry, err := observability.Setup(context.Background(), observability.ConfigFromEnv())
 	if err != nil {
 		log.Fatal(err)
+	}
+	logger := telemetry.Logger()
+	slog.SetDefault(logger)
+	defer func() {
+		shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancelShutdown()
+		if err := telemetry.Shutdown(shutdownContext); err != nil {
+			logger.Error("telemetry shutdown failed", slog.Any("error", err))
+		}
+	}()
+	database, err := sql.Open("pgx", env("DATABASE_URL", "postgresql://slidesage:slidesage@localhost:5432/slidesage"))
+	if err != nil {
+		fatal(logger, err)
 	}
 	defer database.Close()
 	database.SetMaxOpenConns(envInt("DATABASE_POOL_MAX", 5))
@@ -39,7 +56,7 @@ func main() {
 	pingContext, cancelPing := context.WithTimeout(context.Background(), time.Duration(envInt("DATABASE_CONNECT_TIMEOUT", 10))*time.Second)
 	defer cancelPing()
 	if err := database.PingContext(pingContext); err != nil {
-		log.Fatal(err)
+		fatal(logger, err)
 	}
 
 	baseURL := env("BASE_URL", "http://localhost:8000")
@@ -63,7 +80,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		fatal(logger, err)
 	}
 	mux := http.NewServeMux()
 	auth.RegisterAuthRoutes(mux, service)
@@ -74,12 +91,9 @@ func main() {
 		return identity(request)
 	}, researchService, database)
 	ai.RegisterRoutes(mux, ai.ConnectionService{DB: database}, identity)
-	var razorpay *billing.RazorpayClient
-	if os.Getenv("RAZORPAY_KEY_ID") != "" && os.Getenv("RAZORPAY_KEY_SECRET") != "" {
-		razorpay, err = billing.NewRazorpayClientFromEnv()
-		if err != nil {
-			log.Fatal(err)
-		}
+	razorpay, err := billing.NewRazorpayClientFromEnv()
+	if err != nil {
+		fatal(logger, err)
 	}
 	billing.RegisterRoutes(mux, billing.PaymentService{DB: database}, razorpay, identity)
 	streamContext, cancelStreams := context.WithCancel(context.Background())
@@ -87,13 +101,25 @@ func main() {
 	generation.RegisterRoutes(mux, database, func(_ context.Context, request *http.Request) (string, error) {
 		return identity(request)
 	}, ai.ConnectionService{DB: database}, generation.RouteConfig{StreamContext: streamContext, Research: researchService})
+	if err := registerDocumentRoutes(mux, database, service); err != nil {
+		fatal(logger, err)
+	}
+	if templateasset.CDNConfigured() {
+		thumbnails, err := templateasset.NewCDNFetcherFromEnv()
+		if err != nil {
+			log.Fatal(err)
+		}
+		templateasset.RegisterRoutes(mux, templateasset.Handler{Fetcher: thumbnails, Published: templatecatalog.Published})
+	} else {
+		log.Print("template thumbnails are disabled: CDN signing is not configured")
+	}
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("/", notFoundHandler)
 
 	address := net.JoinHostPort(env("HOST", "0.0.0.0"), env("PORT", "8000"))
 	server := &http.Server{
 		Addr:              address,
-		Handler:           withRecovery(withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, mux))),
+		Handler:           observability.Middleware(withSecurity(middleware.RateLimit(database, env("RATE_LIMIT_HASH_SECRET", env("AUTH_SECRET", "development")), identity, mux))),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -110,12 +136,12 @@ func main() {
 		serveErrors <- err
 	}()
 
-	log.Printf("api listening on %s", server.Addr)
+	logger.Info("api listening", slog.String("address", server.Addr))
 	select {
 	case <-signalContext.Done():
 	case err := <-serveErrors:
 		if err != nil {
-			log.Fatal(err)
+			fatal(logger, err)
 		}
 		return
 	}
@@ -124,12 +150,17 @@ func main() {
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancelShutdown()
 	if err := server.Shutdown(shutdownContext); err != nil {
-		log.Printf("api shutdown failed: %v", err)
+		logger.Error("api shutdown failed", slog.Any("error", err))
 		_ = server.Close()
 	}
 	if err := <-serveErrors; err != nil {
-		log.Printf("api server failed: %v", err)
+		logger.Error("api server failed", slog.Any("error", err))
 	}
+}
+
+func fatal(logger *slog.Logger, err error) {
+	logger.Error("fatal", slog.Any("error", err))
+	os.Exit(1)
 }
 
 func healthHandler(writer http.ResponseWriter, _ *http.Request) {
@@ -174,18 +205,6 @@ func withSecurity(next http.Handler) http.Handler {
 			return
 		}
 		request.Body = http.MaxBytesReader(writer, request.Body, 1<<20)
-		next.ServeHTTP(writer, request)
-	})
-}
-
-func withRecovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		defer func() {
-			if recovered := recover(); recovered != nil {
-				log.Printf("panic serving %s %s: %v", request.Method, request.URL.Path, recovered)
-				writeJSONError(writer, http.StatusInternalServerError, "Internal server error")
-			}
-		}()
 		next.ServeHTTP(writer, request)
 	})
 }

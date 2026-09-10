@@ -20,7 +20,7 @@ import { API_URL } from "@slidesage/ui/lib/api";
 import { publishPointsBalance } from "@slidesage/ui/lib/points";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Header from "@/app/Header";
+import Header from "../../app/Header";
 
 declare global {
 	interface Window {

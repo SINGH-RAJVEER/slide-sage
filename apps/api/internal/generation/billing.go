@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"math"
 	"net/http"
 
@@ -103,7 +104,7 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string
 	if _, err := tx.ExecContext(ctx, `INSERT INTO generation_jobs (id, operation_id, user_id, presentation_id, kind, payload, expected_revision, status, stage, progress_completed, progress_total) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, 'queued', 'planning', 1, 3)`, job.jobID, job.operationID, job.userID, job.presentationID, job.kind, payload, revision); err != nil {
 		return 0, 0, err
 	}
-	inserted, err := h.queue.InsertTx(ctx, tx, JobArgs{JobID: job.jobID}, nil)
+	inserted, err := h.queue.InsertTx(ctx, tx, newJobArgs(ctx, job.jobID), nil)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -251,9 +252,13 @@ func (h *handler) recoverExpired(ctx context.Context, userID string) error {
 	expired := []expiredOperation{}
 	for rows.Next() {
 		var item expiredOperation
-		if err := rows.Scan(&item.id, &item.quote, &item.presentationID, &item.kind); err != nil {
+		// presentation_id is nullable and becomes NULL when the presentation is
+		// deleted, so a reservation outliving its presentation still refunds.
+		var presentationID sql.NullString
+		if err := rows.Scan(&item.id, &item.quote, &presentationID, &item.kind); err != nil {
 			return err
 		}
+		item.presentationID = presentationID.String
 		expired = append(expired, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -303,14 +308,15 @@ func recordLedger(tx *sql.Tx, userID, operationID, entryType string, delta, bala
 	return err
 }
 
-func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, planningOutputTokens int) int64 {
+func authorizationMillis(slideCount int, prompt string, current json.RawMessage, research any, payload *presentation.ResearchPayload, repairHeadroom int) int64 {
 	encodedResearch, _ := json.Marshal(research)
 	encodedSources, _ := json.Marshal(payload)
-	inputBytes := len(generationSystemPrompt) + len(prompt) + len(current) + len(encodedResearch) + len(encodedSources) + 256
-	// The validated plan becomes part of the drafting input after the planning
-	// call, so reserve for its bounded output a second time as prompt context.
-	inputTokens := (inputBytes+3)/4 + planningOutputTokens
-	outputTokens := maxOutputTokens(slideCount) + planningOutputTokens
+	inputBytes := len(slotSystemPrompt) + len(prompt) + len(current) + len(encodedResearch) + len(encodedSources) + 256
+	// A slide that fails validation is repaired in a second call that resends the
+	// prompt, so the headroom is reserved once as extra input and once as extra
+	// output rather than only against the reply.
+	inputTokens := (inputBytes+3)/4 + repairHeadroom
+	outputTokens := maxOutputTokens(slideCount) + repairHeadroom
 	// The provider may add protocol tokens beyond the serialized prompt. The
 	// buffer makes the authorization a real maximum while settlement charges the
 	// provider's exact aggregate usage.
@@ -328,7 +334,13 @@ func maxOutputTokens(slideCount int) int {
 	return outputTokens
 }
 
-func maxPlanOutputTokens(slideCount int) int {
+// repairHeadroomTokens covers the bounded repair passes the compiler makes when
+// a generated slide fails slot validation. It is headroom, not a worst case:
+// every slide could in principle be repaired twice, and reserving for that would
+// demand a balance far beyond what any real generation spends. Usage past the
+// authorization is clamped by actualCharge, so an underestimate costs SlideSage
+// the difference rather than failing the deck.
+func repairHeadroomTokens(slideCount int) int {
 	outputTokens := 600 + slideCount*240
 	if outputTokens > 4000 {
 		return 4000
@@ -381,5 +393,8 @@ func (h *handler) reservationError(writer http.ResponseWriter, err error) {
 		writeError(writer, http.StatusConflict, "Idempotency key was reused with a different request")
 		return
 	}
+	// Every remaining cause is a database or queue fault the client cannot act
+	// on, so the response stays generic and the reason is logged instead of lost.
+	slog.Error("reserve generation points", "error", err)
 	writeError(writer, http.StatusInternalServerError, "Unable to reserve generation points")
 }

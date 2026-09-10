@@ -3,8 +3,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { PRESENTATIONS_UPDATED_EVENT } from "@/lib/presentation-events";
-import PresentationsGridPage from "@/routes/presentations/PresentationsGridPage";
+import { PRESENTATIONS_UPDATED_EVENT } from "@slidesage/ui/lib/presentation-events";
+import PresentationsGridPage from "../../../routes/presentations/PresentationsGridPage";
 
 function RouteStateProbe() {
 	const location = useLocation();
@@ -305,6 +305,8 @@ it("loads additional presentations from the pagination offset", async () => {
 	}
 });
 
+// Rendering the grid and driving the confirm dialog runs past the default
+// 5s timeout on a loaded CI runner.
 it("removes a presentation after an empty 204 delete response", async () => {
 	const originalFetch = globalThis.fetch;
 	const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
@@ -350,4 +352,4 @@ it("removes a presentation after an empty 204 delete response", async () => {
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
-});
+}, 15000);

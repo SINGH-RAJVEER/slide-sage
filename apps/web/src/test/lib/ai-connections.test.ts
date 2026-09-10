@@ -1,5 +1,5 @@
 import { expect, it, mock } from "bun:test";
-import { deleteAIProvider } from "@/lib/ai-connections";
+import { deleteAIProvider } from "@slidesage/ui/lib/ai-connections";
 
 it("accepts an empty 204 response when deleting an AI connection", async () => {
 	const originalFetch = globalThis.fetch;

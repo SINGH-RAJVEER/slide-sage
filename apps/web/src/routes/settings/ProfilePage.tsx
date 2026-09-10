@@ -15,8 +15,8 @@ import { API_URL, readJsonResponse } from "@slidesage/ui/lib/api";
 import { FolderOpen } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 const AVATAR_URL_DEBOUNCE_MS = 800;
 const MAX_AVATAR_UPLOAD_BYTES = 800 * 1024;

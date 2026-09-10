@@ -1,0 +1,1489 @@
+{
+	"manifestVersion": 1,
+	"templateId": "pastel-street-maps-minitheme",
+	"templateVersion": 1,
+	"sha256": "05bc7c0d4389308b0b4d69894cf8c453c66391eb0d6a31c36103a2ea39aab25f",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 20,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape180p19-180",
+					"shapeId": 180,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape183p19-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape188p19-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape191p19-191",
+					"shapeId": 191,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape194p19-194",
+					"shapeId": 194,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape195p19-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Street Maps Minitheme"
+				},
+				{
+					"id": "google-shape196p19-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "scale"
+				},
+				{
+					"id": "google-shape197p19-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "symbols"
+				},
+				{
+					"id": "google-shape198p19-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "legend"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape203p20-203",
+					"shapeId": 203,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape206p20-206",
+					"shapeId": 206,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape211p20-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape214p20-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape217p20-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape218p20-218",
+					"shapeId": 218,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "minitheme"
+				},
+				{
+					"id": "google-shape219p20-219",
+					"shapeId": 219,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Street Maps"
+				},
+				{
+					"id": "google-shape220p20-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "business presentation"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape229p21-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Table Of Contents"
+				},
+				{
+					"id": "google-shape230p21-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "02.Elements of Street Maps"
+				},
+				{
+					"id": "google-shape231p21-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape232p21-232",
+					"shapeId": 232,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "01.Introduction and Overview"
+				},
+				{
+					"id": "google-shape233p21-233",
+					"shapeId": 233,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape234p21-234",
+					"shapeId": 234,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "03.Applications and Examples"
+				},
+				{
+					"id": "google-shape235p21-235",
+					"shapeId": 235,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape242p22-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape244p22-244",
+					"shapeId": 244,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Welcome To Presentation"
+				},
+				{
+					"id": "google-shape245p22-245",
+					"shapeId": 245,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "I'm Rain, and I'll be sharing with you my beautiful ideas. Follow me at @reallygreatsite to learn more."
+				},
+				{
+					"id": "google-shape247p22-247",
+					"shapeId": 247,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 219,
+					"sampleText": "Presentations are communication tools that can be used as demonstrations, lectures, speeches, reports, and more. It is mostly presented before an audience."
+				},
+				{
+					"id": "google-shape248p22-248",
+					"shapeId": 248,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "section",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape253p23-253",
+					"shapeId": 253,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape255p23-255",
+					"shapeId": 255,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "01.Introduction and Overview"
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape260p24-260",
+					"shapeId": 260,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape263p24-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape266p24-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape269p24-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape273p24-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape276p24-276",
+					"shapeId": 276,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Types of Street Maps"
+				},
+				{
+					"id": "google-shape277p24-277",
+					"shapeId": 277,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Digital Maps"
+				},
+				{
+					"id": "google-shape278p24-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Traditional Paper Maps"
+				},
+				{
+					"id": "google-shape279p24-279",
+					"shapeId": 279,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape280p24-280",
+					"shapeId": 280,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape281p24-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Specialized Maps"
+				},
+				{
+					"id": "google-shape282p24-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape289p25-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape292p25-292",
+					"shapeId": 292,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape297p25-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Mission"
+				},
+				{
+					"id": "google-shape298p25-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 66,
+					"sampleText": "Enter your grand vision statement!"
+				},
+				{
+					"id": "google-shape300p25-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Vision"
+				},
+				{
+					"id": "google-shape301p25-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 66,
+					"sampleText": "Enter your grand vision statement!"
+				},
+				{
+					"id": "google-shape302p25-302",
+					"shapeId": 302,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape303p25-303",
+					"shapeId": 303,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "section",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape309p26-309",
+					"shapeId": 309,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "02.Elements of Street Maps"
+				},
+				{
+					"id": "google-shape310p26-310",
+					"shapeId": 310,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape315p27-315",
+					"shapeId": 315,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Key Elements"
+				},
+				{
+					"id": "google-shape316p27-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Roads and Streets"
+				},
+				{
+					"id": "google-shape317p27-317",
+					"shapeId": 317,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "Landmarks and Points of Interest"
+				},
+				{
+					"id": "google-shape318p27-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Symbols and Icons"
+				},
+				{
+					"id": "google-shape319p27-319",
+					"shapeId": 319,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Scale and Legend"
+				},
+				{
+					"id": "google-shape320p27-320",
+					"shapeId": 320,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape321p27-321",
+					"shapeId": 321,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape322p27-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape323p27-323",
+					"shapeId": 323,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape326p27-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape329p27-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape332p27-332",
+					"shapeId": 332,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape335p27-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape337p27-337",
+					"shapeId": 337,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape344p28-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape345p28-345",
+					"shapeId": 345,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape346p28-346",
+					"shapeId": 346,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape347p28-347",
+					"shapeId": 347,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape350p28-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Gallery Image"
+				},
+				{
+					"id": "google-shape351p28-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "What can you say about your projects? Share it here!"
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape358p29-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape361p29-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape364p29-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape367p29-367",
+					"shapeId": 367,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape368p29-368",
+					"shapeId": 368,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape369p29-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape372p29-372",
+					"shapeId": 372,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape373p29-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape374p29-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "15.000"
+				},
+				{
+					"id": "google-shape375p29-375",
+					"shapeId": 375,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "65%"
+				},
+				{
+					"id": "google-shape376p29-376",
+					"shapeId": 376,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "128 million"
+				},
+				{
+					"id": "google-shape377p29-377",
+					"shapeId": 377,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "x 1.5"
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape382p30-382",
+					"shapeId": 382,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape383p30-383",
+					"shapeId": 383,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape384p30-384",
+					"shapeId": 384,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape387p30-387",
+					"shapeId": 387,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape393p30-393",
+					"shapeId": 393,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Client name"
+				},
+				{
+					"id": "google-shape394p30-394",
+					"shapeId": 394,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape395p30-395",
+					"shapeId": 395,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Testimonials"
+				},
+				{
+					"id": "google-shape396p30-396",
+					"shapeId": 396,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Client name"
+				},
+				{
+					"id": "google-shape397p30-397",
+					"shapeId": 397,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape398p30-398",
+					"shapeId": 398,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Client name"
+				},
+				{
+					"id": "google-shape399p30-399",
+					"shapeId": 399,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "section",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape405p31-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "03.Applications and Examples"
+				},
+				{
+					"id": "google-shape406p31-406",
+					"shapeId": 406,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape413p32-413",
+					"shapeId": 413,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape416p32-416",
+					"shapeId": 416,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape417p32-417",
+					"shapeId": 417,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape420p32-420",
+					"shapeId": 420,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Future Directions"
+				},
+				{
+					"id": "google-shape421p32-421",
+					"shapeId": 421,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 219,
+					"sampleText": "Presentations are communication tools that can be used as demonstrations, lectures, speeches, reports, and more. It is mostly presented before an audience."
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape426p33-426",
+					"shapeId": 426,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape429p33-429",
+					"shapeId": 429,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape431p33-431",
+					"shapeId": 431,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape432p33-432",
+					"shapeId": 432,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape433p33-433",
+					"shapeId": 433,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Our History"
+				},
+				{
+					"id": "google-shape436p33-436",
+					"shapeId": 436,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape438p33-438",
+					"shapeId": 438,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape439p33-439",
+					"shapeId": 439,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape442p33-442",
+					"shapeId": 442,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape444p33-444",
+					"shapeId": 444,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape445p33-445",
+					"shapeId": 445,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape448p33-448",
+					"shapeId": 448,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape450p33-450",
+					"shapeId": 450,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape451p33-451",
+					"shapeId": 451,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "section",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape456p34-456",
+					"shapeId": 456,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape459p34-459",
+					"shapeId": 459,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape460p34-460",
+					"shapeId": 460,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "A picture is worth a thousand words"
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "section",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape466p35-466",
+					"shapeId": 466,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape467p35-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "Write an original statement or inspiring quote"
+				},
+				{
+					"id": "google-shape468p35-468",
+					"shapeId": 468,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 87,
+					"sampleText": "— Include a credit, citation, or supporting message"
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape473p36-473",
+					"shapeId": 473,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "123-456-7890"
+				},
+				{
+					"id": "google-shape474p36-474",
+					"shapeId": 474,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "hello@reallygreatsite.com"
+				},
+				{
+					"id": "google-shape475p36-475",
+					"shapeId": 475,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "reallygreatsite.com"
+				},
+				{
+					"id": "google-shape476p36-476",
+					"shapeId": 476,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "@reallygreatsite"
+				},
+				{
+					"id": "google-shape477p36-477",
+					"shapeId": 477,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Contact Us"
+				},
+				{
+					"id": "google-shape481p36-481",
+					"shapeId": 481,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape484p36-484",
+					"shapeId": 484,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape487p36-487",
+					"shapeId": 487,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape490p36-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape493p36-493",
+					"shapeId": 493,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "content",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape499p37-499",
+					"shapeId": 499,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape500p37-500",
+					"shapeId": 500,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape502p37-502",
+					"shapeId": 502,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape503p37-503",
+					"shapeId": 503,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape505p37-505",
+					"shapeId": 505,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape506p37-506",
+					"shapeId": 506,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape508p37-508",
+					"shapeId": 508,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape509p37-509",
+					"shapeId": 509,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape511p37-511",
+					"shapeId": 511,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape512p37-512",
+					"shapeId": 512,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape514p37-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape515p37-515",
+					"shapeId": 515,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape517p37-517",
+					"shapeId": 517,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape518p37-518",
+					"shapeId": 518,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape520p37-520",
+					"shapeId": 520,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape521p37-521",
+					"shapeId": 521,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape523p37-523",
+					"shapeId": 523,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape524p37-524",
+					"shapeId": 524,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape525p37-525",
+					"shapeId": 525,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nAlata\n\nHEADERS:\nALATA\n\nBODY COPY:\nBLINKER"
+				},
+				{
+					"id": "google-shape526p37-526",
+					"shapeId": 526,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#1A1A1A"
+				},
+				{
+					"id": "google-shape527p37-527",
+					"shapeId": 527,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#BBCDD2"
+				},
+				{
+					"id": "google-shape528p37-528",
+					"shapeId": 528,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#ED7843"
+				},
+				{
+					"id": "google-shape529p37-529",
+					"shapeId": 529,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F4C76B"
+				},
+				{
+					"id": "google-shape530p37-530",
+					"shapeId": 530,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F5F0E2"
+				},
+				{
+					"id": "google-shape531p37-531",
+					"shapeId": 531,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape532p37-532",
+					"shapeId": 532,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "DON'T FORGET TO DELETE THIS PAGE BEFORE PRESENTING."
+				},
+				{
+					"id": "google-shape533p37-533",
+					"shapeId": 533,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				},
+				{
+					"id": "google-shape534p37-534",
+					"shapeId": 534,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape535p37-535",
+					"shapeId": 535,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape536p37-536",
+					"shapeId": 536,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "closing",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape550p38-550",
+					"shapeId": 550,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape551p38-551",
+					"shapeId": 551,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "HAPPY DESIGNING!"
+				},
+				{
+					"id": "google-shape552p38-552",
+					"shapeId": 552,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape553p38-553",
+					"shapeId": 553,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape554p38-554",
+					"shapeId": 554,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape555p38-555",
+					"shapeId": 555,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				},
+				{
+					"id": "google-shape559p38-559",
+					"shapeId": 559,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "HAPPY DESIGNING!"
+				},
+				{
+					"id": "google-shape560p38-560",
+					"shapeId": 560,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "HAPPY DESIGNING!"
+				}
+			]
+		}
+	]
+}

@@ -9,11 +9,11 @@ const authState = {
 	loading: false,
 };
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => authState,
 }));
 
-const { default: RequireSignedInLayout } = await import("@/app/router/RequireSignedInLayout");
+const { default: RequireSignedInLayout } = await import("../../app/router/RequireSignedInLayout");
 
 function CurrentLocation() {
 	const location = useLocation();

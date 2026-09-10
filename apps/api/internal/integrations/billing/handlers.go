@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -23,6 +22,9 @@ type Identity func(*http.Request) (string, error)
 func RegisterRoutes(mux *http.ServeMux, payments PaymentService, razorpay *RazorpayClient, identity Identity) {
 	if mux == nil {
 		panic("billing mux is required")
+	}
+	if razorpay == nil {
+		panic("billing Razorpay client is required")
 	}
 	router := billingRouter{payments: payments, razorpay: razorpay, identity: identity}
 	mux.HandleFunc("GET /billing/balance", router.balance)
@@ -76,10 +78,6 @@ func (r billingRouter) checkout(w http.ResponseWriter, request *http.Request) {
 		writeError(w, http.StatusBadRequest, "Custom quantity must be 25-10000")
 		return
 	}
-	if r.razorpay == nil {
-		writeError(w, http.StatusInternalServerError, "Failed to create order")
-		return
-	}
 	order, err := r.razorpay.CreateOrder(request.Context(), userID, pack, quantity)
 	if err == nil {
 		err = r.payments.RecordOrder(request.Context(), userID, order)
@@ -109,7 +107,7 @@ func (r billingRouter) verify(w http.ResponseWriter, request *http.Request) {
 		writeError(w, http.StatusBadRequest, "Missing payment details")
 		return
 	}
-	if r.razorpay == nil || !VerifyPaymentSignature(r.razorpay.KeySecret, input.OrderID, input.PaymentID, input.Signature) {
+	if !VerifyPaymentSignature(r.razorpay.KeySecret, input.OrderID, input.PaymentID, input.Signature) {
 		writeError(w, http.StatusBadRequest, "Invalid payment signature")
 		return
 	}
@@ -145,7 +143,7 @@ func (r billingRouter) webhook(w http.ResponseWriter, request *http.Request) {
 		writeError(w, statusForJSONError(err), "Request body is too large")
 		return
 	}
-	if !VerifyWebhookSignature(os.Getenv("RAZORPAY_WEBHOOK_SECRET"), rawBody, request.Header.Get("x-razorpay-signature")) {
+	if !VerifyWebhookSignature(r.razorpay.WebhookSecret, rawBody, request.Header.Get("x-razorpay-signature")) {
 		writeError(w, http.StatusBadRequest, "Invalid webhook signature")
 		return
 	}

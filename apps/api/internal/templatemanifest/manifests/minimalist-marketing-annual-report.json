@@ -1,0 +1,2187 @@
+{
+	"manifestVersion": 1,
+	"templateId": "minimalist-marketing-annual-report",
+	"templateVersion": 1,
+	"sha256": "b591b6815a7fc860d92c8a5b4f61814eea4160570eea56e7d1b6c761d13330a6",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 20,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape222p19-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape225p19-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape226p19-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape229p19-229",
+					"shapeId": 229,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape231p19-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "COMPANY NAME"
+				},
+				{
+					"id": "google-shape232p19-232",
+					"shapeId": 232,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "DATE: DD/MM/YY"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape237p20-237",
+					"shapeId": 237,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape238p20-238",
+					"shapeId": 238,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape239p20-239",
+					"shapeId": 239,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape240p20-240",
+					"shapeId": 240,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape243p20-243",
+					"shapeId": 243,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape250p20-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape256p20-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape257p20-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Our Projects"
+				},
+				{
+					"id": "google-shape258p20-258",
+					"shapeId": 258,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape259p20-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Introduction"
+				},
+				{
+					"id": "google-shape260p20-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape261p20-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "About Us"
+				},
+				{
+					"id": "google-shape262p20-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape263p20-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape264p20-264",
+					"shapeId": 264,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Conclusion"
+				},
+				{
+					"id": "google-shape265p20-265",
+					"shapeId": 265,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "1."
+				},
+				{
+					"id": "google-shape266p20-266",
+					"shapeId": 266,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "2."
+				},
+				{
+					"id": "google-shape267p20-267",
+					"shapeId": 267,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "3."
+				},
+				{
+					"id": "google-shape268p20-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "4."
+				},
+				{
+					"id": "google-shape269p20-269",
+					"shapeId": 269,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape270p20-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape275p21-275",
+					"shapeId": 275,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape278p21-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape282p21-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape283p21-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape287p21-287",
+					"shapeId": 287,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape289p21-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "INTRODUCTION"
+				},
+				{
+					"id": "google-shape290p21-290",
+					"shapeId": 290,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape297p22-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape302p22-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "04"
+				},
+				{
+					"id": "google-shape305p22-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape309p22-309",
+					"shapeId": 309,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape310p22-310",
+					"shapeId": 310,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "WELCOME TO PRESENTATION"
+				},
+				{
+					"id": "google-shape311p22-311",
+					"shapeId": 311,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 267,
+					"maxListItems": 3,
+					"sampleText": "I'm Rain, and I'll be sharing with you my beautiful ideas.\n\nJoin me on a journey of imagination and discovery as we explore the beauty of ideas together. Follow me on my adventures at @reallygreatsite, where we can connect, create, and inspire each other."
+				},
+				{
+					"id": "google-shape312p22-312",
+					"shapeId": 312,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape313p22-313",
+					"shapeId": 313,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape316p22-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape323p23-323",
+					"shapeId": 323,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape326p23-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape331p23-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "05"
+				},
+				{
+					"id": "google-shape334p23-334",
+					"shapeId": 334,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape337p23-337",
+					"shapeId": 337,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape339p23-339",
+					"shapeId": 339,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Who we are?"
+				},
+				{
+					"id": "google-shape341p23-341",
+					"shapeId": 341,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape343p23-343",
+					"shapeId": 343,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "OUR"
+				},
+				{
+					"id": "google-shape344p23-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "REPORT"
+				},
+				{
+					"id": "google-shape346p23-346",
+					"shapeId": 346,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Who we are?"
+				},
+				{
+					"id": "google-shape347p23-347",
+					"shapeId": 347,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Briefly elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape348p23-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape349p23-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape357p24-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape362p24-362",
+					"shapeId": 362,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "06"
+				},
+				{
+					"id": "google-shape365p24-365",
+					"shapeId": 365,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape367p24-367",
+					"shapeId": 367,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape368p24-368",
+					"shapeId": 368,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape370p24-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "MISSION"
+				},
+				{
+					"id": "google-shape371p24-371",
+					"shapeId": 371,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 217,
+					"sampleText": "Presentations are communication tools that can be used as demonstrations, lectures, speeches, reports, and more. It is mostly presented before an audience."
+				},
+				{
+					"id": "google-shape373p24-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "VISION"
+				},
+				{
+					"id": "google-shape374p24-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 217,
+					"sampleText": "Presentations are communication tools that can be used as demonstrations, lectures, speeches, reports, and more. It is mostly presented before an audience."
+				},
+				{
+					"id": "google-shape378p24-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape381p24-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape387p25-387",
+					"shapeId": 387,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape390p25-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape394p25-394",
+					"shapeId": 394,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape395p25-395",
+					"shapeId": 395,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape399p25-399",
+					"shapeId": 399,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape401p25-401",
+					"shapeId": 401,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "OUR PROJECTS"
+				},
+				{
+					"id": "google-shape402p25-402",
+					"shapeId": 402,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape413p26-413",
+					"shapeId": 413,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape418p26-418",
+					"shapeId": 418,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "08"
+				},
+				{
+					"id": "google-shape421p26-421",
+					"shapeId": 421,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape427p26-427",
+					"shapeId": 427,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "WHAT WE OFFER"
+				},
+				{
+					"id": "google-shape428p26-428",
+					"shapeId": 428,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 219,
+					"sampleText": "Presentations are communication tools that can be used as demonstrations, lectures, speeches, reports, and more. It is mostly presented before an audience."
+				},
+				{
+					"id": "google-shape430p26-430",
+					"shapeId": 430,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Service One"
+				},
+				{
+					"id": "google-shape431p26-431",
+					"shapeId": 431,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape433p26-433",
+					"shapeId": 433,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Service Two"
+				},
+				{
+					"id": "google-shape434p26-434",
+					"shapeId": 434,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape436p26-436",
+					"shapeId": 436,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Service Three"
+				},
+				{
+					"id": "google-shape437p26-437",
+					"shapeId": 437,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape439p26-439",
+					"shapeId": 439,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "Service Four"
+				},
+				{
+					"id": "google-shape440p26-440",
+					"shapeId": 440,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape441p26-441",
+					"shapeId": 441,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape442p26-442",
+					"shapeId": 442,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape448p27-448",
+					"shapeId": 448,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape449p27-449",
+					"shapeId": 449,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape450p27-450",
+					"shapeId": 450,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape451p27-451",
+					"shapeId": 451,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape452p27-452",
+					"shapeId": 452,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape455p27-455",
+					"shapeId": 455,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape462p27-462",
+					"shapeId": 462,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape466p27-466",
+					"shapeId": 466,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "09"
+				},
+				{
+					"id": "google-shape467p27-467",
+					"shapeId": 467,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "GALLERY IMAGE"
+				},
+				{
+					"id": "google-shape468p27-468",
+					"shapeId": 468,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "What can you say about your projects? Share it here!"
+				},
+				{
+					"id": "google-shape469p27-469",
+					"shapeId": 469,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape470p27-470",
+					"shapeId": 470,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape477p28-477",
+					"shapeId": 477,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape482p28-482",
+					"shapeId": 482,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "10"
+				},
+				{
+					"id": "google-shape485p28-485",
+					"shapeId": 485,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape489p28-489",
+					"shapeId": 489,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape490p28-490",
+					"shapeId": 490,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "MARKET RESEARCH"
+				},
+				{
+					"id": "google-shape491p28-491",
+					"shapeId": 491,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "Elaborate on the featured statistic"
+				},
+				{
+					"id": "google-shape492p28-492",
+					"shapeId": 492,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape493p28-493",
+					"shapeId": 493,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape497p28-497",
+					"shapeId": 497,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape498p28-498",
+					"shapeId": 498,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape499p28-499",
+					"shapeId": 499,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape500p28-500",
+					"shapeId": 500,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape501p28-501",
+					"shapeId": 501,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "content",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape506p29-506",
+					"shapeId": 506,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape509p29-509",
+					"shapeId": 509,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape516p29-516",
+					"shapeId": 516,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape520p29-520",
+					"shapeId": 520,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "11"
+				},
+				{
+					"id": "google-shape521p29-521",
+					"shapeId": 521,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape522p29-522",
+					"shapeId": 522,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape523p29-523",
+					"shapeId": 523,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "BUDGET"
+				},
+				{
+					"id": "google-shape524p29-524",
+					"shapeId": 524,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 141,
+					"sampleText": "voluptate nostrud aliquip mollit aute ex labore ullamco eiusmod irure dolore anim veniam duis"
+				},
+				{
+					"id": "google-shape525p29-525",
+					"shapeId": 525,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "10%"
+				},
+				{
+					"id": "google-shape526p29-526",
+					"shapeId": 526,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "40%"
+				},
+				{
+					"id": "google-shape527p29-527",
+					"shapeId": 527,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "70%"
+				},
+				{
+					"id": "google-shape528p29-528",
+					"shapeId": 528,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 69,
+					"maxListItems": 4,
+					"sampleText": "Elaborate on the featured statistic.\nElaborate on the featured statistic.\nElaborate on the featured statistic.\nElaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape529p29-529",
+					"shapeId": 529,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 69,
+					"maxListItems": 2,
+					"sampleText": "Elaborate on the featured statistic.\nElaborate on the featured statistic."
+				},
+				{
+					"id": "google-shape530p29-530",
+					"shapeId": 530,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "Elaborate on the featured statistic."
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape536p30-536",
+					"shapeId": 536,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape537p30-537",
+					"shapeId": 537,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape540p30-540",
+					"shapeId": 540,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape547p30-547",
+					"shapeId": 547,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape553p30-553",
+					"shapeId": 553,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape556p30-556",
+					"shapeId": 556,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape557p30-557",
+					"shapeId": 557,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Client name"
+				},
+				{
+					"id": "google-shape558p30-558",
+					"shapeId": 558,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "voluptate nostrud aliquip mollit aute ex labore ullamco eiusmod irure dolore anim veniam duis sunt nisi"
+				},
+				{
+					"id": "google-shape559p30-559",
+					"shapeId": 559,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "12"
+				},
+				{
+					"id": "google-shape560p30-560",
+					"shapeId": 560,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "TESTIMONIALS"
+				},
+				{
+					"id": "google-shape561p30-561",
+					"shapeId": 561,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape562p30-562",
+					"shapeId": 562,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape563p30-563",
+					"shapeId": 563,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "Client name"
+				},
+				{
+					"id": "google-shape564p30-564",
+					"shapeId": 564,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Year: 2020"
+				},
+				{
+					"id": "google-shape565p30-565",
+					"shapeId": 565,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Year: 2021"
+				},
+				{
+					"id": "google-shape566p30-566",
+					"shapeId": 566,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "voluptate nostrud aliquip mollit aute ex labore ullamco eiusmod irure dolore anim veniam duis sunt nisi"
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape573p31-573",
+					"shapeId": 573,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape574p31-574",
+					"shapeId": 574,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape577p31-577",
+					"shapeId": 577,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape579p31-579",
+					"shapeId": 579,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "ABOUT US"
+				},
+				{
+					"id": "google-shape580p31-580",
+					"shapeId": 580,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape583p31-583",
+					"shapeId": 583,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape588p31-588",
+					"shapeId": 588,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape589p31-589",
+					"shapeId": 589,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape594p32-594",
+					"shapeId": 594,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "OUR"
+				},
+				{
+					"id": "google-shape595p32-595",
+					"shapeId": 595,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape596p32-596",
+					"shapeId": 596,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape599p32-599",
+					"shapeId": 599,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape600p32-600",
+					"shapeId": 600,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape601p32-601",
+					"shapeId": 601,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "HISTORY"
+				},
+				{
+					"id": "google-shape604p32-604",
+					"shapeId": 604,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape609p32-609",
+					"shapeId": 609,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "14"
+				},
+				{
+					"id": "google-shape612p32-612",
+					"shapeId": 612,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape616p32-616",
+					"shapeId": 616,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape617p32-617",
+					"shapeId": 617,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape618p32-618",
+					"shapeId": 618,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 306,
+					"sampleText": "irure culpa ea enim deserunt et proident anim ea labore mollit consequat enim occaecat est exercitation Lorem ullamco mollit laborum ullamco consequat nostrud aliquip in aliqua fugiat ipsum excepteur magna velit aliqua qui non"
+				},
+				{
+					"id": "google-shape619p32-619",
+					"shapeId": 619,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "voluptate nostrud aliquip mollit aute ex labore ullamco eiusmod irure dolore anim veniam duis sunt nisi"
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape626p33-626",
+					"shapeId": 626,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape633p33-633",
+					"shapeId": 633,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape639p33-639",
+					"shapeId": 639,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape640p33-640",
+					"shapeId": 640,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape642p33-642",
+					"shapeId": 642,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape643p33-643",
+					"shapeId": 643,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape646p33-646",
+					"shapeId": 646,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape647p33-647",
+					"shapeId": 647,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape649p33-649",
+					"shapeId": 649,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape650p33-650",
+					"shapeId": 650,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape654p33-654",
+					"shapeId": 654,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape657p33-657",
+					"shapeId": 657,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape658p33-658",
+					"shapeId": 658,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "15"
+				},
+				{
+					"id": "google-shape659p33-659",
+					"shapeId": 659,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "FUTURE"
+				},
+				{
+					"id": "google-shape660p33-660",
+					"shapeId": 660,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape661p33-661",
+					"shapeId": 661,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape662p33-662",
+					"shapeId": 662,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape663p33-663",
+					"shapeId": 663,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape664p33-664",
+					"shapeId": 664,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape665p33-665",
+					"shapeId": 665,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape666p33-666",
+					"shapeId": 666,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape667p33-667",
+					"shapeId": 667,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape668p33-668",
+					"shapeId": 668,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape669p33-669",
+					"shapeId": 669,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				},
+				{
+					"id": "google-shape670p33-670",
+					"shapeId": 670,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "OUTLOOK"
+				},
+				{
+					"id": "google-shape671p33-671",
+					"shapeId": 671,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "2010"
+				},
+				{
+					"id": "google-shape675p33-675",
+					"shapeId": 675,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape678p33-678",
+					"shapeId": 678,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape679p33-679",
+					"shapeId": 679,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "2015"
+				},
+				{
+					"id": "google-shape683p33-683",
+					"shapeId": 683,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape686p33-686",
+					"shapeId": 686,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape687p33-687",
+					"shapeId": 687,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "2020"
+				},
+				{
+					"id": "google-shape691p33-691",
+					"shapeId": 691,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape694p33-694",
+					"shapeId": 694,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape695p33-695",
+					"shapeId": 695,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "2025"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape700p34-700",
+					"shapeId": 700,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape703p34-703",
+					"shapeId": 703,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape706p34-706",
+					"shapeId": 706,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape707p34-707",
+					"shapeId": 707,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 135,
+					"sampleText": "A single image can convey a wealth of emotions, memories, and narratives in one snapshot."
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape712p35-712",
+					"shapeId": 712,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape715p35-715",
+					"shapeId": 715,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape722p35-722",
+					"shapeId": 722,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape726p35-726",
+					"shapeId": 726,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "17"
+				},
+				{
+					"id": "google-shape727p35-727",
+					"shapeId": 727,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "WRITE AN ORIGINAL STATEMENT OR INSPIRING QUOTE"
+				},
+				{
+					"id": "google-shape728p35-728",
+					"shapeId": 728,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 87,
+					"sampleText": "— Include a credit, citation, or supporting message"
+				},
+				{
+					"id": "google-shape729p35-729",
+					"shapeId": 729,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape730p35-730",
+					"shapeId": 730,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				},
+				{
+					"id": "google-shape733p35-733",
+					"shapeId": 733,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "content",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape738p36-738",
+					"shapeId": 738,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape739p36-739",
+					"shapeId": 739,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "CONTACT US"
+				},
+				{
+					"id": "google-shape750p36-750",
+					"shapeId": 750,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "123 Anywhere St., Any City,ST 12345"
+				},
+				{
+					"id": "google-shape751p36-751",
+					"shapeId": 751,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "123-456-7890"
+				},
+				{
+					"id": "google-shape752p36-752",
+					"shapeId": 752,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "hello@reallygreatsite.com"
+				},
+				{
+					"id": "google-shape753p36-753",
+					"shapeId": 753,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "reallygreatsite.com"
+				},
+				{
+					"id": "google-shape754p36-754",
+					"shapeId": 754,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "@reallygreatsite"
+				},
+				{
+					"id": "google-shape757p36-757",
+					"shapeId": 757,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape762p36-762",
+					"shapeId": 762,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "18"
+				},
+				{
+					"id": "google-shape765p36-765",
+					"shapeId": 765,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape768p36-768",
+					"shapeId": 768,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "MARKETING ANNUAL REPORT"
+				},
+				{
+					"id": "google-shape769p36-769",
+					"shapeId": 769,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "DATE: DD | MM | YY"
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "content",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape778p37-778",
+					"shapeId": 778,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape779p37-779",
+					"shapeId": 779,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape781p37-781",
+					"shapeId": 781,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape782p37-782",
+					"shapeId": 782,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape784p37-784",
+					"shapeId": 784,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape785p37-785",
+					"shapeId": 785,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape787p37-787",
+					"shapeId": 787,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape788p37-788",
+					"shapeId": 788,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape790p37-790",
+					"shapeId": 790,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape791p37-791",
+					"shapeId": 791,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape793p37-793",
+					"shapeId": 793,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape794p37-794",
+					"shapeId": 794,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape796p37-796",
+					"shapeId": 796,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape797p37-797",
+					"shapeId": 797,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape799p37-799",
+					"shapeId": 799,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape800p37-800",
+					"shapeId": 800,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape802p37-802",
+					"shapeId": 802,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape803p37-803",
+					"shapeId": 803,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape804p37-804",
+					"shapeId": 804,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape805p37-805",
+					"shapeId": 805,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape806p37-806",
+					"shapeId": 806,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 44,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nSIX CAPS\n\nHEADERS:\nPLAYFAIR DISPLAY\n\nBODY COPY:\nPLAYFAIR DISPLAY"
+				},
+				{
+					"id": "google-shape807p37-807",
+					"shapeId": 807,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#333333"
+				},
+				{
+					"id": "google-shape808p37-808",
+					"shapeId": 808,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#596548"
+				},
+				{
+					"id": "google-shape809p37-809",
+					"shapeId": 809,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#BFCDAC"
+				},
+				{
+					"id": "google-shape810p37-810",
+					"shapeId": 810,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F8F3E2"
+				},
+				{
+					"id": "google-shape811p37-811",
+					"shapeId": 811,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape812p37-812",
+					"shapeId": 812,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "DON'T FORGET TO DELETE THIS PAGE BEFORE PRESENTING."
+				},
+				{
+					"id": "google-shape813p37-813",
+					"shapeId": 813,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "RESOURCE PAGE"
+				},
+				{
+					"id": "google-shape814p37-814",
+					"shapeId": 814,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape815p37-815",
+					"shapeId": 815,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape816p37-816",
+					"shapeId": 816,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "closing",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape861p38-861",
+					"shapeId": 861,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape862p38-862",
+					"shapeId": 862,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape863p38-863",
+					"shapeId": 863,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape864p38-864",
+					"shapeId": 864,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "for the photos"
+				},
+				{
+					"id": "google-shape865p38-865",
+					"shapeId": 865,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape866p38-866",
+					"shapeId": 866,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Pexels, Pixabay"
+				}
+			]
+		}
+	]
+}

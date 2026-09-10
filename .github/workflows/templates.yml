@@ -1,0 +1,46 @@
+name: Published template check
+
+# Template packages, covers, and previews live in the bucket, not the
+# repository, so nothing in the test suite can notice when one goes missing. A
+# template whose previews were never published is listed by the marketplace and
+# fails only when a visitor opens it.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: templates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Verify every published template resolves
+        working-directory: apps/api
+        env:
+          CDN_URL: ${{ vars.CDN_URL }}
+          CDN_SIGNING_KEY_NAME: ${{ vars.CDN_SIGNING_KEY_NAME }}
+          CDN_SIGNING_KEY_SECRET: ${{ secrets.CDN_SIGNING_KEY_SECRET }}
+        run: |
+          set -euo pipefail
+          # Signing is server-side, so a runner mints valid URLs with the same
+          # key the API uses. Without the key the run must fail rather than
+          # report a check that never actually reached the CDN.
+          : "${CDN_URL:?Set the CDN_URL repository variable}"
+          : "${CDN_SIGNING_KEY_NAME:?Set the CDN_SIGNING_KEY_NAME repository variable}"
+          : "${CDN_SIGNING_KEY_SECRET:?Set the CDN_SIGNING_KEY_SECRET repository secret}"
+          go run ./cmd/publish-templates -verify \
+            -published internal/templatecatalog/published.json \
+            -digests ../../libs/types/src/template-digests.json \
+            -manifests internal/templatemanifest/manifests

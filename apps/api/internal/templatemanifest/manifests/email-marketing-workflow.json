@@ -1,0 +1,1268 @@
+{
+	"manifestVersion": 1,
+	"templateId": "email-marketing-workflow",
+	"templateVersion": 1,
+	"sha256": "c622be9eab63eb1a47903f00d728eeca3e8f5deb6095a3b3d514e1bb24343b91",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 5,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape106p16-106",
+					"shapeId": 106,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape107p16-107",
+					"shapeId": 107,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape110p16-110",
+					"shapeId": 110,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "Does the customer \nopen the email?"
+				},
+				{
+					"id": "google-shape113p16-113",
+					"shapeId": 113,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Send email reminder \nafter one week"
+				},
+				{
+					"id": "google-shape115p16-115",
+					"shapeId": 115,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape116p16-116",
+					"shapeId": 116,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Customer directed to landing page"
+				},
+				{
+					"id": "google-shape119p16-119",
+					"shapeId": 119,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Does customer open \nthe follow-up email?"
+				},
+				{
+					"id": "google-shape121p16-121",
+					"shapeId": 121,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape122p16-122",
+					"shapeId": 122,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 64,
+					"maxListItems": 2,
+					"sampleText": "START HERE:\nOffer Sent to Customer via Email"
+				},
+				{
+					"id": "google-shape124p16-124",
+					"shapeId": 124,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape125p16-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Send another email reminder"
+				},
+				{
+					"id": "google-shape129p16-129",
+					"shapeId": 129,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape130p16-130",
+					"shapeId": 130,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Customer directed to landing page"
+				},
+				{
+					"id": "google-shape133p16-133",
+					"shapeId": 133,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Does the customer download information?"
+				},
+				{
+					"id": "google-shape143p16-143",
+					"shapeId": 143,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Customer added to \nemail marketing list"
+				},
+				{
+					"id": "google-shape146p16-146",
+					"shapeId": 146,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Send marketing email after 2 days"
+				},
+				{
+					"id": "google-shape150p16-150",
+					"shapeId": 150,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape151p16-151",
+					"shapeId": 151,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 47,
+					"maxListItems": 2,
+					"sampleText": "Customer landed to \nthank you page"
+				},
+				{
+					"id": "google-shape154p16-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape155p16-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "Customer downloads information"
+				},
+				{
+					"id": "google-shape158p16-158",
+					"shapeId": 158,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 51,
+					"maxListItems": 2,
+					"sampleText": "Customer acquired and \nremoved from list"
+				},
+				{
+					"id": "google-shape161p16-161",
+					"shapeId": 161,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Customer subscribes \nor downloads product"
+				},
+				{
+					"id": "google-shape163p16-163",
+					"shapeId": 163,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape164p16-164",
+					"shapeId": 164,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "Email newsletter 1 week after download"
+				},
+				{
+					"id": "google-shape172p16-172",
+					"shapeId": 172,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Email Marketing"
+				},
+				{
+					"id": "google-shape173p16-173",
+					"shapeId": 173,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Workflow Infographic"
+				},
+				{
+					"id": "google-shape175p16-175",
+					"shapeId": 175,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape176p16-176",
+					"shapeId": 176,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape177p16-177",
+					"shapeId": 177,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape178p16-178",
+					"shapeId": 178,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape179p16-179",
+					"shapeId": 179,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape180p16-180",
+					"shapeId": 180,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape181p16-181",
+					"shapeId": 181,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape182p16-182",
+					"shapeId": 182,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape183p16-183",
+					"shapeId": 183,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape184p16-184",
+					"shapeId": 184,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape197p17-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape198p17-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape200p17-200",
+					"shapeId": 200,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape201p17-201",
+					"shapeId": 201,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "Offer Sent to Customer via Email"
+				},
+				{
+					"id": "google-shape203p17-203",
+					"shapeId": 203,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape204p17-204",
+					"shapeId": 204,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "Does the customer \nopen the email?"
+				},
+				{
+					"id": "google-shape208p17-208",
+					"shapeId": 208,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Send email reminder \nafter one week"
+				},
+				{
+					"id": "google-shape210p17-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape211p17-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Customer directed to landing page"
+				},
+				{
+					"id": "google-shape213p17-213",
+					"shapeId": 213,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape214p17-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Does the customer download information?"
+				},
+				{
+					"id": "google-shape216p17-216",
+					"shapeId": 216,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape217p17-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "YES"
+				},
+				{
+					"id": "google-shape219p17-219",
+					"shapeId": 219,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape220p17-220",
+					"shapeId": 220,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "NO"
+				},
+				{
+					"id": "google-shape221p17-221",
+					"shapeId": 221,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Email Marketing"
+				},
+				{
+					"id": "google-shape222p17-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Workflow Infographic"
+				},
+				{
+					"id": "google-shape224p17-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape225p17-225",
+					"shapeId": 225,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Does customer open \nthe follow-up email?"
+				},
+				{
+					"id": "google-shape227p17-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape228p17-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Send another email reminder"
+				},
+				{
+					"id": "google-shape230p17-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape231p17-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Customer landed to thank you page"
+				},
+				{
+					"id": "google-shape234p17-234",
+					"shapeId": 234,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 51,
+					"maxListItems": 2,
+					"sampleText": "Customer acquired and \nremoved from list"
+				},
+				{
+					"id": "google-shape237p17-237",
+					"shapeId": 237,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Customer subscribes \nor downloads product"
+				},
+				{
+					"id": "google-shape239p17-239",
+					"shapeId": 239,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape240p17-240",
+					"shapeId": 240,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "Email newsletter 1 week after download"
+				},
+				{
+					"id": "google-shape245p17-245",
+					"shapeId": 245,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Customer added to \nemail marketing list"
+				},
+				{
+					"id": "google-shape248p17-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Send marketing email after 2 days"
+				},
+				{
+					"id": "google-shape250p17-250",
+					"shapeId": 250,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape251p17-251",
+					"shapeId": 251,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "YES"
+				},
+				{
+					"id": "google-shape253p17-253",
+					"shapeId": 253,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape254p17-254",
+					"shapeId": 254,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "YES"
+				},
+				{
+					"id": "google-shape256p17-256",
+					"shapeId": 256,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape257p17-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "NO"
+				},
+				{
+					"id": "google-shape259p17-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape260p17-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "NO"
+				},
+				{
+					"id": "google-shape262p17-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape263p17-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "Customer downloads information"
+				},
+				{
+					"id": "google-shape270p17-270",
+					"shapeId": 270,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape271p17-271",
+					"shapeId": 271,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape272p17-272",
+					"shapeId": 272,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape273p17-273",
+					"shapeId": 273,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape278p18-278",
+					"shapeId": 278,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape282p18-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape283p18-283",
+					"shapeId": 283,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "Does the customer \nopen the email?"
+				},
+				{
+					"id": "google-shape286p18-286",
+					"shapeId": 286,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Send email reminder \nafter one week"
+				},
+				{
+					"id": "google-shape288p18-288",
+					"shapeId": 288,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape289p18-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Customer directed to landing page"
+				},
+				{
+					"id": "google-shape291p18-291",
+					"shapeId": 291,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape292p18-292",
+					"shapeId": 292,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Does customer open \nthe follow-up email?"
+				},
+				{
+					"id": "google-shape294p18-294",
+					"shapeId": 294,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape295p18-295",
+					"shapeId": 295,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 64,
+					"maxListItems": 2,
+					"sampleText": "START HERE:\nOffer Sent to Customer via Email"
+				},
+				{
+					"id": "google-shape297p18-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape298p18-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Send another email reminder"
+				},
+				{
+					"id": "google-shape302p18-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape303p18-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Customer directed to landing page"
+				},
+				{
+					"id": "google-shape305p18-305",
+					"shapeId": 305,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape306p18-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Does the customer download information?"
+				},
+				{
+					"id": "google-shape315p18-315",
+					"shapeId": 315,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Customer added to \nemail marketing list"
+				},
+				{
+					"id": "google-shape318p18-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Send marketing email after 2 days"
+				},
+				{
+					"id": "google-shape322p18-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape323p18-323",
+					"shapeId": 323,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 47,
+					"maxListItems": 2,
+					"sampleText": "Customer landed to \nthank you page"
+				},
+				{
+					"id": "google-shape326p18-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape327p18-327",
+					"shapeId": 327,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "Customer downloads information"
+				},
+				{
+					"id": "google-shape330p18-330",
+					"shapeId": 330,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 51,
+					"maxListItems": 2,
+					"sampleText": "Customer acquired and \nremoved from list"
+				},
+				{
+					"id": "google-shape333p18-333",
+					"shapeId": 333,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Customer subscribes \nor downloads product"
+				},
+				{
+					"id": "google-shape335p18-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape336p18-336",
+					"shapeId": 336,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "Email newsletter 1 week after download"
+				},
+				{
+					"id": "google-shape344p18-344",
+					"shapeId": 344,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Email Marketing"
+				},
+				{
+					"id": "google-shape345p18-345",
+					"shapeId": 345,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Workflow Infographic"
+				},
+				{
+					"id": "google-shape347p18-347",
+					"shapeId": 347,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape348p18-348",
+					"shapeId": 348,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape349p18-349",
+					"shapeId": 349,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape350p18-350",
+					"shapeId": 350,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape351p18-351",
+					"shapeId": 351,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape352p18-352",
+					"shapeId": 352,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape353p18-353",
+					"shapeId": 353,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape354p18-354",
+					"shapeId": 354,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape361p19-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape362p19-362",
+					"shapeId": 362,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape363p19-363",
+					"shapeId": 363,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape364p19-364",
+					"shapeId": 364,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape365p19-365",
+					"shapeId": 365,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape366p19-366",
+					"shapeId": 366,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape367p19-367",
+					"shapeId": 367,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "RESOURCES"
+				},
+				{
+					"id": "google-shape368p19-368",
+					"shapeId": 368,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape369p19-369",
+					"shapeId": 369,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 91,
+					"sampleText": "Use these design resources in your Canva Presentation."
+				},
+				{
+					"id": "google-shape370p19-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "TITLES:"
+				},
+				{
+					"id": "google-shape371p19-371",
+					"shapeId": 371,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Abeezee"
+				},
+				{
+					"id": "google-shape372p19-372",
+					"shapeId": 372,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "HEADERS:"
+				},
+				{
+					"id": "google-shape373p19-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "AMIKO"
+				},
+				{
+					"id": "google-shape374p19-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "BODY COPY:"
+				},
+				{
+					"id": "google-shape375p19-375",
+					"shapeId": 375,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "AMIKO"
+				},
+				{
+					"id": "google-shape376p19-376",
+					"shapeId": 376,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape377p19-377",
+					"shapeId": 377,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				},
+				{
+					"id": "google-shape380p19-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape381p19-381",
+					"shapeId": 381,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape382p19-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape383p19-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape384p19-384",
+					"shapeId": 384,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape385p19-385",
+					"shapeId": 385,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape387p19-387",
+					"shapeId": 387,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape388p19-388",
+					"shapeId": 388,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape389p19-389",
+					"shapeId": 389,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape390p19-390",
+					"shapeId": 390,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape391p19-391",
+					"shapeId": 391,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape392p19-392",
+					"shapeId": 392,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape393p19-393",
+					"shapeId": 393,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape394p19-394",
+					"shapeId": 394,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "closing",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape400p20-400",
+					"shapeId": 400,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape401p20-401",
+					"shapeId": 401,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape402p20-402",
+					"shapeId": 402,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape404p20-404",
+					"shapeId": 404,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape405p20-405",
+					"shapeId": 405,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "For the photos"
+				},
+				{
+					"id": "google-shape406p20-406",
+					"shapeId": 406,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "PEXELS AND PIXABAY"
+				},
+				{
+					"id": "google-shape408p20-408",
+					"shapeId": 408,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape409p20-409",
+					"shapeId": 409,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape410p20-410",
+					"shapeId": 410,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "CREDITS"
+				},
+				{
+					"id": "google-shape411p20-411",
+					"shapeId": 411,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 74,
+					"maxListItems": 3,
+					"sampleText": "This design template is free for \neveryone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape412p20-412",
+					"shapeId": 412,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape413p20-413",
+					"shapeId": 413,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape414p20-414",
+					"shapeId": 414,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

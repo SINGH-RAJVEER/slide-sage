@@ -10,6 +10,7 @@ interface TopicInputProps {
 	onPromptChange: (value: string) => void;
 	onGenerate: () => void;
 	disabled: boolean;
+	generationDisabled?: boolean;
 	loading: boolean;
 }
 
@@ -39,6 +40,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 	onPromptChange,
 	onGenerate,
 	disabled,
+	generationDisabled = false,
 	loading,
 }) => {
 	const [expanded, setExpanded] = useState(false);
@@ -241,7 +243,10 @@ export const TopicInput: React.FC<TopicInputProps> = ({
 							if (!morphing) onGenerate();
 						}}
 						onKeyDown={handleExpandedControlKeyDown}
-						disabled={disabled || !prompt.trim()}
+						disabled={disabled || generationDisabled || !prompt.trim()}
+						title={
+							generationDisabled ? "The selected template is not ready for generation" : undefined
+						}
 						className={`generation-prompt-action h-11 rounded-md border border-white/20 bg-white/10 px-6 text-white transition-[background-color,transform] duration-200 hover:bg-white/15 active:scale-[0.98] ${expanded ? "pointer-events-auto ml-auto shrink-0" : ""}`}
 					>
 						{loading ? (

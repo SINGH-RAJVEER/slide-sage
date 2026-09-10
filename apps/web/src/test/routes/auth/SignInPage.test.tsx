@@ -21,7 +21,7 @@ const signIn = mock(async () => {
 });
 const sendVerificationOtp = mock(async () => ({ success: true }));
 
-mock.module("@/contexts/AuthContext", () => ({
+mock.module("@slidesage/ui/context/AuthContext", () => ({
 	useAuth: () => ({
 		isSignedIn: false,
 		refreshSession: mock(),
@@ -29,7 +29,7 @@ mock.module("@/contexts/AuthContext", () => ({
 	}),
 }));
 
-mock.module("@/lib/auth-client", () => ({
+mock.module("@slidesage/ui/lib/auth-client", () => ({
 	auth: {
 		signInEmail: signIn,
 		startSocialSignIn: mock(),
@@ -46,7 +46,7 @@ function VerificationProbe() {
 it("resends verification when an unverified user signs in", async () => {
 	signIn.mockClear();
 	sendVerificationOtp.mockClear();
-	const { default: SignInPage } = await import("@/routes/auth/SignInPage");
+	const { default: SignInPage } = await import("../../../routes/auth/SignInPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-in"]}>
 			<Routes>
@@ -70,7 +70,7 @@ it("resends verification when an unverified user signs in", async () => {
 });
 
 it("shows the orb loader when switching to sign up", async () => {
-	const { default: SignInPage } = await import("@/routes/auth/SignInPage");
+	const { default: SignInPage } = await import("../../../routes/auth/SignInPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-in"]}>
 			<SignInPage />
@@ -86,7 +86,7 @@ it("shows the orb loader when switching to sign up", async () => {
 });
 
 it("preserves redirect_url when switching to sign up", async () => {
-	const { default: SignInPage } = await import("@/routes/auth/SignInPage");
+	const { default: SignInPage } = await import("../../../routes/auth/SignInPage");
 	const view = render(
 		<MemoryRouter initialEntries={["/sign-in?redirect_url=%2Fgenerate"]}>
 			<Routes>

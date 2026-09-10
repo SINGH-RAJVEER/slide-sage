@@ -9,7 +9,24 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
+	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 )
+
+// testTemplateDigest stands in for a real package digest. Nothing reads the
+// bytes it names; it only has to satisfy the catalog's format check.
+const testTemplateDigest = "3b1f4c5d6e7a8b9c0d1e2f30415263748596a7b8c9dae0f1023456789abcdef0"
+
+// publishTestTemplate makes simple-business-proposal generation-ready for one
+// test. The embedded catalog is empty until the publication command runs, so a
+// test that expects a ready template has to say so.
+func publishTestTemplate(t *testing.T) {
+	t.Helper()
+	t.Cleanup(templatecatalog.Swap([]templatecatalog.Entry{
+		{ID: "simple-business-proposal", Version: 1, SHA256: testTemplateDigest},
+	}))
+}
 
 func decodeSubmitBody(t *testing.T, raw string) map[string]any {
 	t.Helper()
@@ -60,6 +77,64 @@ func TestSubmitInputKeepsEnabledResearch(t *testing.T) {
 	}
 }
 
+func TestSubmitInputParsesBinaryTemplate(t *testing.T) {
+	body := decodeSubmitBody(t, `{
+		"topic":"Grid storage",
+		"slide_count":5,
+		"theme":"terra-mesa",
+		"template":{"id":"soft-skills-training","version":1}
+	}`)
+	input, err := parseSubmitInput(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if input.Template == nil || input.Template.ID != "soft-skills-training" {
+		t.Fatalf("template = %#v", input.Template)
+	}
+	if input.Theme != "terra-mesa" {
+		t.Fatalf("theme = %q", input.Theme)
+	}
+
+	body["template"] = map[string]any{"id": "Invalid Template", "version": json.Number("1")}
+	if _, err := parseSubmitInput(body); err == nil {
+		t.Fatal("invalid template ID was accepted")
+	}
+	body["template"] = map[string]any{"id": "soft-skills-training", "version": json.Number("1")}
+	body["theme"] = "unknown-theme"
+	if _, err := parseSubmitInput(body); err == nil {
+		t.Fatal("invalid semantic theme was accepted")
+	}
+}
+
+func TestGenerationPlaceholderCarriesTemplateIntoRetryState(t *testing.T) {
+	body := decodeSubmitBody(t, `{
+		"topic":"Grid storage",
+		"slide_count":5,
+		"template":{"id":"soft-skills-training","version":1}
+	}`)
+	input, err := parseSubmitInput(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	placeholder := generationPlaceholder(input)
+	if placeholder["theme"] != "corporate-blue" {
+		t.Fatalf("theme = %#v", placeholder["theme"])
+	}
+	retry := placeholder["failure"].(map[string]any)["retry"].(map[string]any)
+	encoded, _ := json.Marshal(retry["template"])
+	if string(encoded) != `{"id":"soft-skills-training","version":1}` {
+		t.Fatalf("retry template = %s", encoded)
+	}
+}
+
+func TestRequestHashIncludesTemplate(t *testing.T) {
+	first := submitInput{Topic: "Grid storage", Template: &presentation.TemplateReference{ID: "simple-business-proposal", Version: 1}}
+	second := submitInput{Topic: "Grid storage", Template: &presentation.TemplateReference{ID: "soft-skills-training", Version: 1}}
+	if requestHash(first) == requestHash(second) {
+		t.Fatal("template did not affect request hash")
+	}
+}
+
 func TestSubmitInputRejectsParentAndRetryTogether(t *testing.T) {
 	body := decodeSubmitBody(t, `{
 		"topic":"Grid storage",
@@ -95,54 +170,6 @@ func TestIterationJobRetainsTheSubmissionJobID(t *testing.T) {
 	)
 	if job.jobID != "iteration-job-123456789" {
 		t.Fatalf("iteration job ID = %q", job.jobID)
-	}
-}
-
-func TestGenerationPromptDefinesExactBlockFields(t *testing.T) {
-	for _, contract := range []string{
-		`{"type":"paragraph","region":"main","text":"Concise presentation copy"}`,
-		`{"type":"bullets","region":"main","items":["Specific point"],"ordered":false}`,
-		`"focalPoint":"center"`,
-		"Every slide must contain at least one substantive text block",
-	} {
-		if !strings.Contains(generationSystemPrompt, contract) {
-			t.Fatalf("generation prompt is missing %q", contract)
-		}
-	}
-}
-
-func TestPlanningPromptDefinesBoundedVisualIntents(t *testing.T) {
-	for _, contract := range []string{"DeckPlan", `"kind":"timeline"`, `"kind":"comparison"`, `"kind":"chart"`} {
-		if !strings.Contains(planningSystemPrompt, contract) {
-			t.Fatalf("planning prompt is missing %q", contract)
-		}
-	}
-	if maxPlanOutputTokens(40) > 4000 || maxPlanOutputTokens(1) < 600 {
-		t.Fatalf("unexpected planning output bound")
-	}
-}
-
-func TestGeneratedContentRejectsSyntheticPlaceholder(t *testing.T) {
-	placeholder := []any{map[string]any{
-		"type": "content",
-		"blocks": []any{map[string]any{
-			"type": "paragraph",
-			"text": "Content to be developed.",
-		}},
-	}}
-	if hasSubstantiveGeneratedContent(placeholder) {
-		t.Fatal("synthetic placeholder was accepted as generated content")
-	}
-
-	content := []any{map[string]any{
-		"type": "content",
-		"blocks": []any{map[string]any{
-			"type":  "bullets",
-			"items": []any{"A specific point"},
-		}},
-	}}
-	if !hasSubstantiveGeneratedContent(content) {
-		t.Fatal("substantive generated content was rejected")
 	}
 }
 

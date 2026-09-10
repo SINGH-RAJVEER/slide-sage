@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, mock } from "bun:test";
 import {
 	requestGenerationNotificationPermission,
 	showGenerationCompleteNotification,
-} from "@/lib/generation-notifications";
+} from "@slidesage/ui/lib/generation-notifications";
 
 const originalNotification = globalThis.Notification;
 const originalHidden = Object.getOwnPropertyDescriptor(document, "hidden");
@@ -26,7 +26,14 @@ class MockNotification {
 }
 
 afterEach(() => {
-	globalThis.Notification = originalNotification;
+	// happy-dom has no Notification, so assigning the captured value back would
+	// define the property as undefined. The key would then exist while reading
+	// it throws, which breaks every later test that starts a generation.
+	if (originalNotification) {
+		globalThis.Notification = originalNotification;
+	} else {
+		delete (globalThis as { Notification?: unknown }).Notification;
+	}
 	if (originalHidden) Object.defineProperty(document, "hidden", originalHidden);
 	createdNotifications.length = 0;
 	MockNotification.permission = "default";

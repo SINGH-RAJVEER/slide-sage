@@ -1,0 +1,1249 @@
+{
+	"manifestVersion": 1,
+	"templateId": "my-travel-wrapped",
+	"templateVersion": 1,
+	"sha256": "ceaf82c7c86ef7cfa8ecfa6e892048bc86bcf13400a8b95d5f92e6440807c101",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 11,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape88p8-88",
+					"shapeId": 88,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape93p8-93",
+					"shapeId": 93,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "travel"
+				},
+				{
+					"id": "google-shape95p8-95",
+					"shapeId": 95,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape96p8-96",
+					"shapeId": 96,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape97p8-97",
+					"shapeId": 97,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "2030 WRAPPED"
+				},
+				{
+					"id": "google-shape98p8-98",
+					"shapeId": 98,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "My Year in"
+				},
+				{
+					"id": "google-shape99p8-99",
+					"shapeId": 99,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "2030 WRAPPED"
+				},
+				{
+					"id": "google-shape100p8-100",
+					"shapeId": 100,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "2030 WRAPPED"
+				},
+				{
+					"id": "google-shape101p8-101",
+					"shapeId": 101,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "2030 WRAPPED"
+				},
+				{
+					"id": "google-shape103p8-103",
+					"shapeId": 103,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape104p8-104",
+					"shapeId": 104,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape106p8-106",
+					"shapeId": 106,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape107p8-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape113p9-113",
+					"shapeId": 113,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape115p9-115",
+					"shapeId": 115,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "My favorite destination"
+				},
+				{
+					"id": "google-shape116p9-116",
+					"shapeId": 116,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 196,
+					"sampleText": "Share a photo of your favorite destination from the past year. Describe it, and explain what made it so memorable in one or two sentences."
+				},
+				{
+					"id": "google-shape117p9-117",
+					"shapeId": 117,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 57,
+					"sampleText": "Location: Country goes here"
+				},
+				{
+					"id": "google-shape118p9-118",
+					"shapeId": 118,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Date: Date goes here"
+				},
+				{
+					"id": "google-shape121p9-121",
+					"shapeId": 121,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape122p9-122",
+					"shapeId": 122,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape128p10-128",
+					"shapeId": 128,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape130p10-130",
+					"shapeId": 130,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 57,
+					"sampleText": "Location: Country goes here"
+				},
+				{
+					"id": "google-shape131p10-131",
+					"shapeId": 131,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Date: Date goes here"
+				},
+				{
+					"id": "google-shape134p10-134",
+					"shapeId": 134,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Landmark: Landmark goes here"
+				},
+				{
+					"id": "google-shape137p10-137",
+					"shapeId": 137,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "My favorite landmark"
+				},
+				{
+					"id": "google-shape138p10-138",
+					"shapeId": 138,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 147,
+					"sampleText": "Share a photo of your favorite landmark from the past year. Briefly explain why it’s your favorite."
+				},
+				{
+					"id": "google-shape139p10-139",
+					"shapeId": 139,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape144p11-144",
+					"shapeId": 144,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape145p11-145",
+					"shapeId": 145,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape147p11-147",
+					"shapeId": 147,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape150p11-150",
+					"shapeId": 150,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Adventure or activity here"
+				},
+				{
+					"id": "google-shape151p11-151",
+					"shapeId": 151,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape152p11-152",
+					"shapeId": 152,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "My favorite  adventures"
+				},
+				{
+					"id": "google-shape153p11-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Date: Date here"
+				},
+				{
+					"id": "google-shape154p11-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 171,
+					"sampleText": "In one or two short paragraphs, describe your favorite activities and explain what makes them stand out from the rest."
+				},
+				{
+					"id": "google-shape155p11-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Adventure or activity here"
+				},
+				{
+					"id": "google-shape156p11-156",
+					"shapeId": 156,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape157p11-157",
+					"shapeId": 157,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Date: Date here"
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape167p12-167",
+					"shapeId": 167,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape169p12-169",
+					"shapeId": 169,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape170p12-170",
+					"shapeId": 170,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape176p12-176",
+					"shapeId": 176,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape179p12-179",
+					"shapeId": 179,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape180p12-180",
+					"shapeId": 180,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape183p12-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape184p12-184",
+					"shapeId": 184,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape188p12-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape189p12-189",
+					"shapeId": 189,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape191p12-191",
+					"shapeId": 191,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape192p12-192",
+					"shapeId": 192,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape193p12-193",
+					"shapeId": 193,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "Briefly describe its taste here."
+				},
+				{
+					"id": "google-shape194p12-194",
+					"shapeId": 194,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Dish name here"
+				},
+				{
+					"id": "google-shape195p12-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Dish name here"
+				},
+				{
+					"id": "google-shape196p12-196",
+					"shapeId": 196,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "Briefly describe its taste here."
+				},
+				{
+					"id": "google-shape197p12-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Dish name here"
+				},
+				{
+					"id": "google-shape198p12-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "Briefly describe its taste here."
+				},
+				{
+					"id": "google-shape199p12-199",
+					"shapeId": 199,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "My favorite foods"
+				},
+				{
+					"id": "google-shape200p12-200",
+					"shapeId": 200,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape205p13-205",
+					"shapeId": 205,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape207p13-207",
+					"shapeId": 207,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape210p13-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape211p13-211",
+					"shapeId": 211,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Date: Date here"
+				},
+				{
+					"id": "google-shape215p13-215",
+					"shapeId": 215,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape217p13-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape218p13-218",
+					"shapeId": 218,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Date: Date here"
+				},
+				{
+					"id": "google-shape222p13-222",
+					"shapeId": 222,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape224p13-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Location: Location here"
+				},
+				{
+					"id": "google-shape225p13-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Date: Date here"
+				},
+				{
+					"id": "google-shape228p13-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "My favorite fits"
+				},
+				{
+					"id": "google-shape229p13-229",
+					"shapeId": 229,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Name your fit here"
+				},
+				{
+					"id": "google-shape230p13-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Name your fit here"
+				},
+				{
+					"id": "google-shape231p13-231",
+					"shapeId": 231,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Name your fit here"
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "section",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape236p14-236",
+					"shapeId": 236,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape237p14-237",
+					"shapeId": 237,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape238p14-238",
+					"shapeId": 238,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape243p14-243",
+					"shapeId": 243,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Looking ahead"
+				},
+				{
+					"id": "google-shape244p14-244",
+					"shapeId": 244,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 120,
+					"maxListItems": 2,
+					"sampleText": "In one or two short sentences, describe your travel plans for the year ahead."
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape250p15-250",
+					"shapeId": 250,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape252p15-252",
+					"shapeId": 252,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape254p15-254",
+					"shapeId": 254,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape256p15-256",
+					"shapeId": 256,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape258p15-258",
+					"shapeId": 258,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 99,
+					"sampleText": "Briefly describe why you want to travel to this destination."
+				},
+				{
+					"id": "google-shape259p15-259",
+					"shapeId": 259,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Destination goes here"
+				},
+				{
+					"id": "google-shape260p15-260",
+					"shapeId": 260,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 99,
+					"sampleText": "Briefly describe why you want to travel to this destination."
+				},
+				{
+					"id": "google-shape261p15-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Destination goes here"
+				},
+				{
+					"id": "google-shape262p15-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 99,
+					"sampleText": "Briefly describe why you want to travel to this destination."
+				},
+				{
+					"id": "google-shape263p15-263",
+					"shapeId": 263,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 50,
+					"sampleText": "Destination goes here"
+				},
+				{
+					"id": "google-shape264p15-264",
+					"shapeId": 264,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Where should I go next?"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape269p16-269",
+					"shapeId": 269,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape270p16-270",
+					"shapeId": 270,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape273p16-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "— Credit or citation"
+				},
+				{
+					"id": "google-shape274p16-274",
+					"shapeId": 274,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 82,
+					"sampleText": "Original statement or inspiring quote goes here"
+				},
+				{
+					"id": "google-shape276p16-276",
+					"shapeId": 276,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape277p16-277",
+					"shapeId": 277,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape278p16-278",
+					"shapeId": 278,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "My year in travel"
+				},
+				{
+					"id": "google-shape280p16-280",
+					"shapeId": 280,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape281p16-281",
+					"shapeId": 281,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape286p16-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape292p17-292",
+					"shapeId": 292,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape295p17-295",
+					"shapeId": 295,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape298p17-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape300p17-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape301p17-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape303p17-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape304p17-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 52,
+					"sampleText": "Design Elements / Icons"
+				},
+				{
+					"id": "google-shape306p17-306",
+					"shapeId": 306,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape307p17-307",
+					"shapeId": 307,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				},
+				{
+					"id": "google-shape309p17-309",
+					"shapeId": 309,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape310p17-310",
+					"shapeId": 310,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape312p17-312",
+					"shapeId": 312,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape313p17-313",
+					"shapeId": 313,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape315p17-315",
+					"shapeId": 315,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape316p17-316",
+					"shapeId": 316,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape318p17-318",
+					"shapeId": 318,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape319p17-319",
+					"shapeId": 319,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape321p17-321",
+					"shapeId": 321,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape322p17-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape325p17-325",
+					"shapeId": 325,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape328p17-328",
+					"shapeId": 328,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape335p17-335",
+					"shapeId": 335,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape347p17-347",
+					"shapeId": 347,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape348p17-348",
+					"shapeId": 348,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape349p17-349",
+					"shapeId": 349,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Homemade Apple"
+				},
+				{
+					"id": "google-shape350p17-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Special Elite"
+				},
+				{
+					"id": "google-shape351p17-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "TITLES:"
+				},
+				{
+					"id": "google-shape352p17-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "BODY TEXT:"
+				},
+				{
+					"id": "google-shape353p17-353",
+					"shapeId": 353,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F2E7DD"
+				},
+				{
+					"id": "google-shape354p17-354",
+					"shapeId": 354,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#D5CAC0"
+				},
+				{
+					"id": "google-shape355p17-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#47557D"
+				},
+				{
+					"id": "google-shape356p17-356",
+					"shapeId": 356,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#FCE8BC"
+				},
+				{
+					"id": "google-shape357p17-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#F5BA53"
+				},
+				{
+					"id": "google-shape360p17-360",
+					"shapeId": 360,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape361p17-361",
+					"shapeId": 361,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 119,
+					"sampleText": "Use these in your presentation. Delete or hide this page before presenting."
+				},
+				{
+					"id": "google-shape362p17-362",
+					"shapeId": 362,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "closing",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape370p18-370",
+					"shapeId": 370,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 61,
+					"sampleText": "for this presentation template"
+				},
+				{
+					"id": "google-shape374p18-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape375p18-375",
+					"shapeId": 375,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape377p18-377",
+					"shapeId": 377,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape378p18-378",
+					"shapeId": 378,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape379p18-379",
+					"shapeId": 379,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape380p18-380",
+					"shapeId": 380,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape382p18-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 124,
+					"sampleText": "This presentation template is free for everyone to use, thanks to the following:"
+				},
+				{
+					"id": "google-shape383p18-383",
+					"shapeId": 383,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape385p18-385",
+					"shapeId": 385,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "for the photos, graphics, and elements"
+				},
+				{
+					"id": "google-shape386p18-386",
+					"shapeId": 386,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 56,
+					"sampleText": "Pexels, Pixabay, Sketchify"
+				},
+				{
+					"id": "google-shape390p18-390",
+					"shapeId": 390,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape391p18-391",
+					"shapeId": 391,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape393p18-393",
+					"shapeId": 393,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape394p18-394",
+					"shapeId": 394,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape395p18-395",
+					"shapeId": 395,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape397p18-397",
+					"shapeId": 397,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

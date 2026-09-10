@@ -6,8 +6,8 @@ import { getPresentationRetryDestination } from "@slidesage/ui/lib/presentation-
 import { RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 interface PresentationErrorPageProps {
 	presentationId?: number | string;

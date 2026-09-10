@@ -1,0 +1,1382 @@
+{
+	"manifestVersion": 1,
+	"templateId": "illustrative-mathematics-quiz",
+	"templateVersion": 1,
+	"sha256": "72e6ab8dbed4fdc9e21e5da3475f1e3568896bde064953c2b2bcde772a6b305f",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 20,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape90p13-90",
+					"shapeId": 90,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 37,
+					"maxListItems": 2,
+					"sampleText": "Mathematics\nQuiz"
+				},
+				{
+					"id": "google-shape96p13-96",
+					"shapeId": 96,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape97p13-97",
+					"shapeId": 97,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape98p13-98",
+					"shapeId": 98,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "With teacher Canva"
+				},
+				{
+					"id": "google-shape99p13-99",
+					"shapeId": 99,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 47,
+					"sampleText": "For 7th \u0026 8th grade"
+				},
+				{
+					"id": "google-shape100p13-100",
+					"shapeId": 100,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape107p14-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape119p14-119",
+					"shapeId": 119,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 310,
+					"maxListItems": 3,
+					"sampleText": "Click on the \"PowerPoint\" button below this presentation preview. Start editing your presentation.\n\nAlternative: From Canva template file, Click on the \"Share\" button on the top right corner in Canva and click on \"More\" at the bottom of the menu. Enter \"PowerPoint\" in the search bar and click on the PowerPoint icon to download."
+				},
+				{
+					"id": "google-shape120p14-120",
+					"shapeId": 120,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "How to Use This Presentation"
+				},
+				{
+					"id": "google-shape121p14-121",
+					"shapeId": 121,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 325,
+					"maxListItems": 3,
+					"sampleText": "Click on the \"Google Slides\" button below this presentation preview. Make sure to sign in to your Google account. Click on \"Make a copy.\" Start editing your presentation.\n\nAlternative: Click on the \"Share\" button on the top right corner in Canva and click on \"More\" at the bottom of the menu. Enter \"Google Drive\" in the search bar and click on the GDrive icon to add this design as a Google slide in your GDrive."
+				},
+				{
+					"id": "google-shape122p14-122",
+					"shapeId": 122,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Google Slides"
+				},
+				{
+					"id": "google-shape123p14-123",
+					"shapeId": 123,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "PowerPoint"
+				},
+				{
+					"id": "google-shape124p14-124",
+					"shapeId": 124,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 194,
+					"sampleText": "Click on the \"Canva\" button under this presentation preview. Start editing your presentation. You need to sign in to your Canva account."
+				},
+				{
+					"id": "google-shape125p14-125",
+					"shapeId": 125,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Canva"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "content",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape133p15-133",
+					"shapeId": 133,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape153p15-153",
+					"shapeId": 153,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "Add an Agenda Page"
+				},
+				{
+					"id": "google-shape154p15-154",
+					"shapeId": 154,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "01"
+				},
+				{
+					"id": "google-shape155p15-155",
+					"shapeId": 155,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "02"
+				},
+				{
+					"id": "google-shape156p15-156",
+					"shapeId": 156,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "03"
+				},
+				{
+					"id": "google-shape157p15-157",
+					"shapeId": 157,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Section A"
+				},
+				{
+					"id": "google-shape158p15-158",
+					"shapeId": 158,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Section B"
+				},
+				{
+					"id": "google-shape159p15-159",
+					"shapeId": 159,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Section C"
+				},
+				{
+					"id": "google-shape160p15-160",
+					"shapeId": 160,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "Describe the topic\nof this section."
+				},
+				{
+					"id": "google-shape161p15-161",
+					"shapeId": 161,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "Describe the topic\nof this section."
+				},
+				{
+					"id": "google-shape162p15-162",
+					"shapeId": 162,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "Describe the topic\nof this section."
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape169p16-169",
+					"shapeId": 169,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape181p16-181",
+					"shapeId": 181,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape185p16-185",
+					"shapeId": 185,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 31,
+					"maxListItems": 2,
+					"sampleText": "Hello\nthere!"
+				},
+				{
+					"id": "google-shape186p16-186",
+					"shapeId": 186,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 154,
+					"sampleText": "I'm Rain, and I'll be sharing with you my beautiful ideas. Follow me at @reallygreatsite to learn more."
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "content",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape193p17-193",
+					"shapeId": 193,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape206p17-206",
+					"shapeId": 206,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Directions"
+				},
+				{
+					"id": "google-shape208p17-208",
+					"shapeId": 208,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape209p17-209",
+					"shapeId": 209,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape210p17-210",
+					"shapeId": 210,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape211p17-211",
+					"shapeId": 211,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Briefly elaborate on\nwhat you want to discuss."
+				},
+				{
+					"id": "google-shape213p17-213",
+					"shapeId": 213,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape214p17-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape216p17-216",
+					"shapeId": 216,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape217p17-217",
+					"shapeId": 217,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape219p17-219",
+					"shapeId": 219,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape220p17-220",
+					"shapeId": 220,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Briefly elaborate on\nwhat you want to discuss."
+				},
+				{
+					"id": "google-shape221p17-221",
+					"shapeId": 221,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Briefly elaborate on\nwhat you want to discuss."
+				},
+				{
+					"id": "google-shape222p17-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape230p18-230",
+					"shapeId": 230,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape244p18-244",
+					"shapeId": 244,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape247p18-247",
+					"shapeId": 247,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape248p18-248",
+					"shapeId": 248,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape249p18-249",
+					"shapeId": 249,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "Write Your Topic or Idea"
+				},
+				{
+					"id": "google-shape250p18-250",
+					"shapeId": 250,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 72,
+					"maxListItems": 4,
+					"sampleText": "Elaborate on what you want to discuss. \nElaborate on what you want to discuss. \nElaborate on what you want to discuss. \nElaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape257p19-257",
+					"shapeId": 257,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape270p19-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape273p19-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape276p19-276",
+					"shapeId": 276,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape277p19-277",
+					"shapeId": 277,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape278p19-278",
+					"shapeId": 278,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape279p19-279",
+					"shapeId": 279,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape282p19-282",
+					"shapeId": 282,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Quiz Categories"
+				},
+				{
+					"id": "google-shape283p19-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape284p19-284",
+					"shapeId": 284,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape285p19-285",
+					"shapeId": 285,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Briefly elaborate on\nwhat you want to discuss."
+				},
+				{
+					"id": "google-shape286p19-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Add a main point"
+				},
+				{
+					"id": "google-shape287p19-287",
+					"shapeId": 287,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Briefly elaborate on\nwhat you want to discuss."
+				},
+				{
+					"id": "google-shape288p19-288",
+					"shapeId": 288,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 55,
+					"maxListItems": 2,
+					"sampleText": "Briefly elaborate on\nwhat you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "section",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape302p20-302",
+					"shapeId": 302,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "TEST 01"
+				},
+				{
+					"id": "google-shape303p20-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "SECTION 1"
+				},
+				{
+					"id": "google-shape304p20-304",
+					"shapeId": 304,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape312p21-312",
+					"shapeId": 312,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape325p21-325",
+					"shapeId": 325,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 81,
+					"sampleText": "Write an original statement or inspiring quote"
+				},
+				{
+					"id": "google-shape329p21-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 85,
+					"sampleText": "Include a credit, citation, or supporting message"
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape336p22-336",
+					"shapeId": 336,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape348p22-348",
+					"shapeId": 348,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 59,
+					"maxListItems": 3,
+					"sampleText": "If 3a + 2 = a + 6, then\nwhich of these is incorrect?"
+				},
+				{
+					"id": "google-shape350p22-350",
+					"shapeId": 350,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Question 1"
+				},
+				{
+					"id": "google-shape351p22-351",
+					"shapeId": 351,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "3a + 2 - a = 6"
+				},
+				{
+					"id": "google-shape352p22-352",
+					"shapeId": 352,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "A"
+				},
+				{
+					"id": "google-shape353p22-353",
+					"shapeId": 353,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "C"
+				},
+				{
+					"id": "google-shape354p22-354",
+					"shapeId": 354,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "B"
+				},
+				{
+					"id": "google-shape355p22-355",
+					"shapeId": 355,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "D"
+				},
+				{
+					"id": "google-shape356p22-356",
+					"shapeId": 356,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "2a = 6 + 2"
+				},
+				{
+					"id": "google-shape357p22-357",
+					"shapeId": 357,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "2a = 4"
+				},
+				{
+					"id": "google-shape358p22-358",
+					"shapeId": 358,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "a = 4⁄2"
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "section",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape373p23-373",
+					"shapeId": 373,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "TEST 02"
+				},
+				{
+					"id": "google-shape374p23-374",
+					"shapeId": 374,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "SECTION 2"
+				},
+				{
+					"id": "google-shape375p23-375",
+					"shapeId": 375,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "content",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape382p24-382",
+					"shapeId": 382,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape398p24-398",
+					"shapeId": 398,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "9x = 7 + 2\nx = 9⁄9"
+				},
+				{
+					"id": "google-shape399p24-399",
+					"shapeId": 399,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 60,
+					"maxListItems": 2,
+					"sampleText": "If 9x - 2 = 7, then which of\nthe following is not correct?"
+				},
+				{
+					"id": "google-shape400p24-400",
+					"shapeId": 400,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 31,
+					"maxListItems": 2,
+					"sampleText": "9x = 9\nx = 2"
+				},
+				{
+					"id": "google-shape401p24-401",
+					"shapeId": 401,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Question 1"
+				},
+				{
+					"id": "google-shape402p24-402",
+					"shapeId": 402,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 26,
+					"maxListItems": 2,
+					"sampleText": "A.\nC."
+				},
+				{
+					"id": "google-shape403p24-403",
+					"shapeId": 403,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 26,
+					"maxListItems": 2,
+					"sampleText": "B.\nD."
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape410p25-410",
+					"shapeId": 410,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape422p25-422",
+					"shapeId": 422,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 46,
+					"maxListItems": 2,
+					"sampleText": "The correct\nanswer is D. x = 2"
+				},
+				{
+					"id": "google-shape426p25-426",
+					"shapeId": 426,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 57,
+					"maxListItems": 2,
+					"sampleText": "To be correct, the last\nitem would need to be x = 1"
+				},
+				{
+					"id": "google-shape427p25-427",
+					"shapeId": 427,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Answer"
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape434p26-434",
+					"shapeId": 434,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape448p26-448",
+					"shapeId": 448,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 52,
+					"maxListItems": 2,
+					"sampleText": "If x + 4 = b,\nwhat is the value of x?"
+				},
+				{
+					"id": "google-shape449p26-449",
+					"shapeId": 449,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "4b"
+				},
+				{
+					"id": "google-shape450p26-450",
+					"shapeId": 450,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "-4b"
+				},
+				{
+					"id": "google-shape451p26-451",
+					"shapeId": 451,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "b+4"
+				},
+				{
+					"id": "google-shape452p26-452",
+					"shapeId": 452,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "b-4"
+				},
+				{
+					"id": "google-shape453p26-453",
+					"shapeId": 453,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 25,
+					"sampleText": "A"
+				},
+				{
+					"id": "google-shape454p26-454",
+					"shapeId": 454,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "B."
+				},
+				{
+					"id": "google-shape455p26-455",
+					"shapeId": 455,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "C."
+				},
+				{
+					"id": "google-shape456p26-456",
+					"shapeId": 456,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "D."
+				},
+				{
+					"id": "google-shape457p26-457",
+					"shapeId": 457,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Multiple Choices"
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "content",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape464p27-464",
+					"shapeId": 464,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape478p27-478",
+					"shapeId": 478,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 129,
+					"sampleText": "When + 4 crosses over to the other side of the equals sign it must be changed to - 4"
+				},
+				{
+					"id": "google-shape479p27-479",
+					"shapeId": 479,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 30,
+					"maxListItems": 2,
+					"sampleText": "a.\nb - 4"
+				},
+				{
+					"id": "google-shape480p27-480",
+					"shapeId": 480,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Answer"
+				}
+			]
+		},
+		{
+			"id": "slide-16",
+			"role": "content",
+			"sourceSlide": 16,
+			"partName": "ppt/slides/slide16.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape488p28-488",
+					"shapeId": 488,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape501p28-501",
+					"shapeId": 501,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 1"
+				},
+				{
+					"id": "google-shape502p28-502",
+					"shapeId": 502,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 2"
+				},
+				{
+					"id": "google-shape503p28-503",
+					"shapeId": 503,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 3"
+				},
+				{
+					"id": "google-shape504p28-504",
+					"shapeId": 504,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 4"
+				},
+				{
+					"id": "google-shape505p28-505",
+					"shapeId": 505,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Item 5"
+				},
+				{
+					"id": "google-shape506p28-506",
+					"shapeId": 506,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "50"
+				},
+				{
+					"id": "google-shape507p28-507",
+					"shapeId": 507,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "40"
+				},
+				{
+					"id": "google-shape508p28-508",
+					"shapeId": 508,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "30"
+				},
+				{
+					"id": "google-shape509p28-509",
+					"shapeId": 509,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "20"
+				},
+				{
+					"id": "google-shape510p28-510",
+					"shapeId": 510,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 27,
+					"sampleText": "10"
+				},
+				{
+					"id": "google-shape511p28-511",
+					"shapeId": 511,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 26,
+					"sampleText": "0"
+				},
+				{
+					"id": "google-shape513p28-513",
+					"shapeId": 513,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape514p28-514",
+					"shapeId": 514,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape515p28-515",
+					"shapeId": 515,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape516p28-516",
+					"shapeId": 516,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape517p28-517",
+					"shapeId": 517,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape529p28-529",
+					"shapeId": 529,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Ranking"
+				},
+				{
+					"id": "google-shape530p28-530",
+					"shapeId": 530,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 72,
+					"sampleText": "Elaborate on what you want to discuss."
+				}
+			]
+		},
+		{
+			"id": "slide-17",
+			"role": "content",
+			"sourceSlide": 17,
+			"partName": "ppt/slides/slide17.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape537p29-537",
+					"shapeId": 537,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape550p29-550",
+					"shapeId": 550,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Add Students Page"
+				},
+				{
+					"id": "google-shape551p29-551",
+					"shapeId": 551,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Name"
+				},
+				{
+					"id": "google-shape553p29-553",
+					"shapeId": 553,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape554p29-554",
+					"shapeId": 554,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Name"
+				},
+				{
+					"id": "google-shape555p29-555",
+					"shapeId": 555,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape556p29-556",
+					"shapeId": 556,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Name"
+				},
+				{
+					"id": "google-shape557p29-557",
+					"shapeId": 557,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape558p29-558",
+					"shapeId": 558,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Name"
+				},
+				{
+					"id": "google-shape559p29-559",
+					"shapeId": 559,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Title or Position"
+				},
+				{
+					"id": "google-shape561p29-561",
+					"shapeId": 561,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape562p29-562",
+					"shapeId": 562,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape563p29-563",
+					"shapeId": 563,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape564p29-564",
+					"shapeId": 564,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-18",
+			"role": "section",
+			"sourceSlide": 18,
+			"partName": "ppt/slides/slide18.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape581p30-581",
+					"shapeId": 581,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "Thank you!"
+				},
+				{
+					"id": "google-shape582p30-582",
+					"shapeId": 582,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 85,
+					"sampleText": "Write a closing statement or call-to-action here."
+				}
+			]
+		},
+		{
+			"id": "slide-19",
+			"role": "section",
+			"sourceSlide": 19,
+			"partName": "ppt/slides/slide19.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape587p31-587",
+					"shapeId": 587,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 35,
+					"maxListItems": 2,
+					"sampleText": "Resource \nPage"
+				},
+				{
+					"id": "google-shape588p31-588",
+					"shapeId": 588,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 91,
+					"maxListItems": 9,
+					"sampleText": "Use these design resources in your Canva Presentation.\n\nUse these design resources in your Canva Presentation.\n\nTitles: Caveat Brush\nHeaders: Roboto\nBody Copy: Roboto\n\nYou can find these fonts online too. Happy designing!"
+				}
+			]
+		},
+		{
+			"id": "slide-20",
+			"role": "closing",
+			"sourceSlide": 20,
+			"partName": "ppt/slides/slide20.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape658p32-658",
+					"shapeId": 658,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "This presentation template is free for everyone to use thanks to the following:"
+				},
+				{
+					"id": "google-shape659p32-659",
+					"shapeId": 659,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 79,
+					"maxListItems": 2,
+					"sampleText": "SlidesCarnival for the presentation template\nPexels for the photos"
+				},
+				{
+					"id": "google-shape660p32-660",
+					"shapeId": 660,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape661p32-661",
+					"shapeId": 661,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape662p32-662",
+					"shapeId": 662,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

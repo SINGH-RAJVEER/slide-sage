@@ -1,4 +1,9 @@
-import type { AIModelSelection, ResearchPayload } from "@slidesage/types";
+import {
+	type AIModelSelection,
+	type PresentationTemplateReference,
+	DEFAULT_BINARY_PPTX_TEMPLATE,
+	type ResearchPayload,
+} from "@slidesage/types";
 import { useStreaming } from "@slidesage/ui";
 import { Button } from "@slidesage/ui/components/button";
 import { ThinkingOrb } from "@slidesage/ui/components/thinking-orb";
@@ -6,8 +11,8 @@ import { requestGenerationNotificationPermission } from "@slidesage/ui/lib/gener
 import { ArrowLeft, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Header from "@/app/Header";
-import { ROUTES } from "@/app/router/paths";
+import Header from "../../app/Header";
+import { ROUTES } from "../../app/router/paths";
 
 interface ResearchRouteState {
 	prompt: string;
@@ -17,6 +22,7 @@ interface ResearchRouteState {
 	researchPayload?: ResearchPayload;
 	retryPresentationId?: string;
 	ai?: AIModelSelection;
+	template: PresentationTemplateReference;
 }
 
 type ResearchStatus = "loading" | "ready" | "error";
@@ -34,6 +40,10 @@ export default function GenerateResearchPage() {
 	const savedResearch = routeState?.researchPayload;
 	const retryPresentationId = routeState?.retryPresentationId;
 	const ai = routeState?.ai;
+	const template = routeState?.template ?? {
+		id: DEFAULT_BINARY_PPTX_TEMPLATE.id,
+		version: DEFAULT_BINARY_PPTX_TEMPLATE.version,
+	};
 
 	const [isProceeding, setIsProceeding] = useState(false);
 	const [researchAttempt, setResearchAttempt] = useState(0);
@@ -109,6 +119,7 @@ export default function GenerateResearchPage() {
 			researchPayload: payload,
 			retryPresentationId,
 			ai,
+			template,
 		});
 		navigate(ROUTES.presentation, { state: { isStreaming: true } });
 
@@ -124,6 +135,7 @@ export default function GenerateResearchPage() {
 		prompt,
 		researchStatus,
 		retryPresentationId,
+		template,
 		navigate,
 		slideCount,
 		sources,

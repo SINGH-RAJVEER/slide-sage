@@ -1,0 +1,1125 @@
+{
+	"manifestVersion": 1,
+	"templateId": "saving-and-investment",
+	"templateVersion": 1,
+	"sha256": "c0e76cb647c14d9beaf81bf74f73a275de886101cc1f0ab44fdbe7e506603cf1",
+	"widthEmu": 18288000,
+	"heightEmu": 10287000,
+	"slideCount": 15,
+	"coverSlide": 1,
+	"archetypes": [
+		{
+			"id": "slide-1",
+			"role": "cover",
+			"sourceSlide": 1,
+			"partName": "ppt/slides/slide1.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape84p13-84",
+					"shapeId": 84,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape88p13-88",
+					"shapeId": 88,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape93p13-93",
+					"shapeId": 93,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 50,
+					"maxListItems": 2,
+					"sampleText": "Difference Between\nSaving and Investment"
+				},
+				{
+					"id": "google-shape94p13-94",
+					"shapeId": 94,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 79,
+					"sampleText": "Prof. Dennison Hastings | Leonton University"
+				}
+			]
+		},
+		{
+			"id": "slide-2",
+			"role": "content",
+			"sourceSlide": 2,
+			"partName": "ppt/slides/slide2.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape99p14-99",
+					"shapeId": 99,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape105p14-105",
+					"shapeId": 105,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape107p14-107",
+					"shapeId": 107,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "What’s inside"
+				},
+				{
+					"id": "google-shape109p14-109",
+					"shapeId": 109,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 31,
+					"maxListItems": 2,
+					"sampleText": "Why\ninvest"
+				},
+				{
+					"id": "google-shape110p14-110",
+					"shapeId": 110,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Explore the benefits\nof investing"
+				},
+				{
+					"id": "google-shape112p14-112",
+					"shapeId": 112,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Saving vs. Investing"
+				},
+				{
+					"id": "google-shape113p14-113",
+					"shapeId": 113,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 85,
+					"sampleText": "Learn the difference between saving and investing"
+				},
+				{
+					"id": "google-shape115p14-115",
+					"shapeId": 115,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 64,
+					"sampleText": "Balancing Savings and Investment"
+				},
+				{
+					"id": "google-shape116p14-116",
+					"shapeId": 116,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 95,
+					"sampleText": "Discover some tips on how to balance saving and investing"
+				},
+				{
+					"id": "google-shape118p14-118",
+					"shapeId": 118,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 35,
+					"maxListItems": 2,
+					"sampleText": "Tips on\ninvesting"
+				},
+				{
+					"id": "google-shape119p14-119",
+					"shapeId": 119,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 79,
+					"sampleText": "Get started with practical tips on investing"
+				}
+			]
+		},
+		{
+			"id": "slide-3",
+			"role": "section",
+			"sourceSlide": 3,
+			"partName": "ppt/slides/slide3.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape124p15-124",
+					"shapeId": 124,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape126p15-126",
+					"shapeId": 126,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 96,
+					"maxListItems": 3,
+					"sampleText": "Imagine this: You just found $100 on the ground.\nWhat would you do with it? Would you stash it in your\nwallet, spend it immediately, or try turning it into $200?"
+				},
+				{
+					"id": "google-shape127p15-127",
+					"shapeId": 127,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "Are you a saver or a spender?"
+				}
+			]
+		},
+		{
+			"id": "slide-4",
+			"role": "content",
+			"sourceSlide": 4,
+			"partName": "ppt/slides/slide4.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape134p16-134",
+					"shapeId": 134,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape140p16-140",
+					"shapeId": 140,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Savings"
+				},
+				{
+					"id": "google-shape141p16-141",
+					"shapeId": 141,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 90,
+					"maxListItems": 2,
+					"sampleText": "Setting aside money, typically in a bank account, for\nfuture use"
+				},
+				{
+					"id": "google-shape143p16-143",
+					"shapeId": 143,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Investing"
+				},
+				{
+					"id": "google-shape144p16-144",
+					"shapeId": 144,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 106,
+					"sampleText": "Involves buying assets that have the potential for higher returns"
+				},
+				{
+					"id": "google-shape145p16-145",
+					"shapeId": 145,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Saving vs. Investing"
+				},
+				{
+					"id": "google-shape146p16-146",
+					"shapeId": 146,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 77,
+					"sampleText": "The difference between saving and investing"
+				}
+			]
+		},
+		{
+			"id": "slide-5",
+			"role": "section",
+			"sourceSlide": 5,
+			"partName": "ppt/slides/slide5.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape151p17-151",
+					"shapeId": 151,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 49,
+					"sampleText": "Saving vs. Investing"
+				},
+				{
+					"id": "google-shape152p17-152",
+					"shapeId": 152,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		},
+		{
+			"id": "slide-6",
+			"role": "content",
+			"sourceSlide": 6,
+			"partName": "ppt/slides/slide6.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape157p18-157",
+					"shapeId": 157,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape158p18-158",
+					"shapeId": 158,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "How much should you save vs. invest?"
+				},
+				{
+					"id": "google-shape159p18-159",
+					"shapeId": 159,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 89,
+					"sampleText": "A good starting point is saving 20% of your income."
+				},
+				{
+					"id": "google-shape160p18-160",
+					"shapeId": 160,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 134,
+					"sampleText": "After building your emergency fund, begin allocating any extra funds toward investments."
+				}
+			]
+		},
+		{
+			"id": "slide-7",
+			"role": "content",
+			"sourceSlide": 7,
+			"partName": "ppt/slides/slide7.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape165p19-165",
+					"shapeId": 165,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape167p19-167",
+					"shapeId": 167,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape168p19-168",
+					"shapeId": 168,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "emergency fund"
+				},
+				{
+					"id": "google-shape169p19-169",
+					"shapeId": 169,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Saving"
+				},
+				{
+					"id": "google-shape170p19-170",
+					"shapeId": 170,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 49,
+					"maxListItems": 2,
+					"sampleText": "Financial goals for\nsaving vs. investing"
+				},
+				{
+					"id": "google-shape171p19-171",
+					"shapeId": 171,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 35,
+					"sampleText": "Investing"
+				},
+				{
+					"id": "google-shape173p19-173",
+					"shapeId": 173,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape174p19-174",
+					"shapeId": 174,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 46,
+					"sampleText": "vacation or travel"
+				},
+				{
+					"id": "google-shape176p19-176",
+					"shapeId": 176,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape177p19-177",
+					"shapeId": 177,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 37,
+					"sampleText": "new gadgets"
+				},
+				{
+					"id": "google-shape179p19-179",
+					"shapeId": 179,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape180p19-180",
+					"shapeId": 180,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "car down-payment"
+				},
+				{
+					"id": "google-shape182p19-182",
+					"shapeId": 182,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape183p19-183",
+					"shapeId": 183,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "property taxes"
+				},
+				{
+					"id": "google-shape185p19-185",
+					"shapeId": 185,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape186p19-186",
+					"shapeId": 186,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "wealth growth"
+				},
+				{
+					"id": "google-shape188p19-188",
+					"shapeId": 188,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape189p19-189",
+					"shapeId": 189,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 45,
+					"sampleText": "child’s education"
+				},
+				{
+					"id": "google-shape191p19-191",
+					"shapeId": 191,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape192p19-192",
+					"shapeId": 192,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 34,
+					"sampleText": "business"
+				},
+				{
+					"id": "google-shape194p19-194",
+					"shapeId": 194,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape195p19-195",
+					"shapeId": 195,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "home ownership"
+				},
+				{
+					"id": "google-shape197p19-197",
+					"shapeId": 197,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape198p19-198",
+					"shapeId": 198,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 36,
+					"sampleText": "retirement"
+				}
+			]
+		},
+		{
+			"id": "slide-8",
+			"role": "content",
+			"sourceSlide": 8,
+			"partName": "ppt/slides/slide8.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape203p20-203",
+					"shapeId": 203,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape205p20-205",
+					"shapeId": 205,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 51,
+					"sampleText": "Why should you invest?"
+				},
+				{
+					"id": "google-shape206p20-206",
+					"shapeId": 206,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 115,
+					"sampleText": "Investing helps you stay ahead of rising living costs caused by inflation"
+				},
+				{
+					"id": "google-shape207p20-207",
+					"shapeId": 207,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 146,
+					"sampleText": "Long-term investments also offer the potential for compound interest and significant wealth growth"
+				}
+			]
+		},
+		{
+			"id": "slide-9",
+			"role": "content",
+			"sourceSlide": 9,
+			"partName": "ppt/slides/slide9.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape214p21-214",
+					"shapeId": 214,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape215p21-215",
+					"shapeId": 215,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape221p21-221",
+					"shapeId": 221,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "Risk"
+				},
+				{
+					"id": "google-shape222p21-222",
+					"shapeId": 222,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Return"
+				},
+				{
+					"id": "google-shape223p21-223",
+					"shapeId": 223,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 74,
+					"sampleText": "Profit or gain earned from an investment"
+				},
+				{
+					"id": "google-shape224p21-224",
+					"shapeId": 224,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 80,
+					"sampleText": "The possibility of an investment losing value"
+				},
+				{
+					"id": "google-shape225p21-225",
+					"shapeId": 225,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 54,
+					"sampleText": "The risk-return tradeoff"
+				},
+				{
+					"id": "google-shape226p21-226",
+					"shapeId": 226,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 109,
+					"sampleText": "Investments differ in their potential returns and market risk levels"
+				},
+				{
+					"id": "google-shape227p21-227",
+					"shapeId": 227,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 29,
+					"sampleText": "Risk"
+				},
+				{
+					"id": "google-shape228p21-228",
+					"shapeId": 228,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Return"
+				},
+				{
+					"id": "google-shape229p21-229",
+					"shapeId": 229,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 36,
+					"maxListItems": 2,
+					"sampleText": "Low risk\nLow return"
+				},
+				{
+					"id": "google-shape230p21-230",
+					"shapeId": 230,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 52,
+					"maxListItems": 2,
+					"sampleText": "High risk\nHigher potential return"
+				}
+			]
+		},
+		{
+			"id": "slide-10",
+			"role": "content",
+			"sourceSlide": 10,
+			"partName": "ppt/slides/slide10.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape237p22-237",
+					"shapeId": 237,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape241p22-241",
+					"shapeId": 241,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 59,
+					"sampleText": "Tips when starting to invest"
+				},
+				{
+					"id": "google-shape242p22-242",
+					"shapeId": 242,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "Start by building an emergency fund"
+				},
+				{
+					"id": "google-shape243p22-243",
+					"shapeId": 243,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 106,
+					"sampleText": "Setting aside 3-6 months’ worth of living expenses is recommended."
+				},
+				{
+					"id": "google-shape244p22-244",
+					"shapeId": 244,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 67,
+					"sampleText": "Diversify your investment portfolio"
+				},
+				{
+					"id": "google-shape245p22-245",
+					"shapeId": 245,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 122,
+					"sampleText": "Owning a mix of investments can protect your money in case of market downturns."
+				},
+				{
+					"id": "google-shape246p22-246",
+					"shapeId": 246,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 76,
+					"sampleText": "Explore how to allocate your assets wisely"
+				},
+				{
+					"id": "google-shape247p22-247",
+					"shapeId": 247,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 154,
+					"maxListItems": 2,
+					"sampleText": "Balance risk and security by deciding how much to allocate to stocks, bonds, and other investments based\non your financial goals and risk tolerance."
+				}
+			]
+		},
+		{
+			"id": "slide-11",
+			"role": "section",
+			"sourceSlide": 11,
+			"partName": "ppt/slides/slide11.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape252p23-252",
+					"shapeId": 252,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape255p23-255",
+					"shapeId": 255,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Review"
+				}
+			]
+		},
+		{
+			"id": "slide-12",
+			"role": "section",
+			"sourceSlide": 12,
+			"partName": "ppt/slides/slide12.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape260p24-260",
+					"shapeId": 260,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape261p24-261",
+					"shapeId": 261,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 224,
+					"sampleText": "Investing can be intimidating for beginners. Think of a fun and simple analogy to explain investment terms and concepts, and present it creatively on a poster."
+				},
+				{
+					"id": "google-shape262p24-262",
+					"shapeId": 262,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 65,
+					"sampleText": "Explain investing using analogies"
+				}
+			]
+		},
+		{
+			"id": "slide-13",
+			"role": "content",
+			"sourceSlide": 13,
+			"partName": "ppt/slides/slide13.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape267p25-267",
+					"shapeId": 267,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape268p25-268",
+					"shapeId": 268,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 41,
+					"sampleText": "Got questions?"
+				},
+				{
+					"id": "google-shape270p25-270",
+					"shapeId": 270,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Email"
+				},
+				{
+					"id": "google-shape271p25-271",
+					"shapeId": 271,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 55,
+					"sampleText": "hello@reallygreatsite.com"
+				},
+				{
+					"id": "google-shape273p25-273",
+					"shapeId": 273,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Phone"
+				},
+				{
+					"id": "google-shape274p25-274",
+					"shapeId": 274,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 39,
+					"sampleText": "123-456-7890"
+				},
+				{
+					"id": "google-shape275p25-275",
+					"shapeId": 275,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				}
+			]
+		},
+		{
+			"id": "slide-14",
+			"role": "content",
+			"sourceSlide": 14,
+			"partName": "ppt/slides/slide14.xml",
+			"repeatable": true,
+			"slots": [
+				{
+					"id": "google-shape280p26-280",
+					"shapeId": 280,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape283p26-283",
+					"shapeId": 283,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape286p26-286",
+					"shapeId": 286,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape289p26-289",
+					"shapeId": 289,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape291p26-291",
+					"shapeId": 291,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape292p26-292",
+					"shapeId": 292,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape294p26-294",
+					"shapeId": 294,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape295p26-295",
+					"shapeId": 295,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape297p26-297",
+					"shapeId": 297,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape298p26-298",
+					"shapeId": 298,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape300p26-300",
+					"shapeId": 300,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape301p26-301",
+					"shapeId": 301,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape303p26-303",
+					"shapeId": 303,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape304p26-304",
+					"shapeId": 304,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 24
+				},
+				{
+					"id": "google-shape321p26-321",
+					"shapeId": 321,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 61,
+					"maxListItems": 2,
+					"sampleText": "This presentation template\nuses the following free fonts:"
+				},
+				{
+					"id": "google-shape322p26-322",
+					"shapeId": 322,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 69,
+					"sampleText": "You can find these fonts online too."
+				},
+				{
+					"id": "google-shape323p26-323",
+					"shapeId": 323,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 44,
+					"maxListItems": 8,
+					"sampleText": "TITLES:\nSOURCE SERIF PRO\n\nHEADERS:\nSOURCE SERIF PRO\n\nBODY COPY:\nOPEN SANS"
+				},
+				{
+					"id": "google-shape324p26-324",
+					"shapeId": 324,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#BBEED6"
+				},
+				{
+					"id": "google-shape325p26-325",
+					"shapeId": 325,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#B8E28A"
+				},
+				{
+					"id": "google-shape326p26-326",
+					"shapeId": 326,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#5EC57E"
+				},
+				{
+					"id": "google-shape327p26-327",
+					"shapeId": 327,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#347175"
+				},
+				{
+					"id": "google-shape328p26-328",
+					"shapeId": 328,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "#000000"
+				},
+				{
+					"id": "google-shape329p26-329",
+					"shapeId": 329,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 119,
+					"sampleText": "Use these in your presentation. Delete or hide this page before presenting."
+				},
+				{
+					"id": "google-shape330p26-330",
+					"shapeId": 330,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 40,
+					"sampleText": "Resource Page"
+				},
+				{
+					"id": "google-shape331p26-331",
+					"shapeId": 331,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 30,
+					"sampleText": "Fonts"
+				},
+				{
+					"id": "google-shape332p26-332",
+					"shapeId": 332,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 42,
+					"sampleText": "Design Elements"
+				},
+				{
+					"id": "google-shape333p26-333",
+					"shapeId": 333,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 31,
+					"sampleText": "Colors"
+				}
+			]
+		},
+		{
+			"id": "slide-15",
+			"role": "closing",
+			"sourceSlide": 15,
+			"partName": "ppt/slides/slide15.xml",
+			"repeatable": false,
+			"slots": [
+				{
+					"id": "google-shape338p27-338",
+					"shapeId": 338,
+					"kind": "table",
+					"required": false,
+					"maxCharacters": 0
+				},
+				{
+					"id": "google-shape339p27-339",
+					"shapeId": 339,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 124,
+					"sampleText": "This presentation template is free for everyone to use, thanks to the following:"
+				},
+				{
+					"id": "google-shape340p27-340",
+					"shapeId": 340,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 44,
+					"sampleText": "Happy designing!"
+				},
+				{
+					"id": "google-shape341p27-341",
+					"shapeId": 341,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 60,
+					"sampleText": "for the presentation template"
+				},
+				{
+					"id": "google-shape342p27-342",
+					"shapeId": 342,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 32,
+					"sampleText": "Credits"
+				},
+				{
+					"id": "google-shape343p27-343",
+					"shapeId": 343,
+					"kind": "text",
+					"required": false,
+					"maxCharacters": 71,
+					"sampleText": "for the photos, graphics, and elements"
+				},
+				{
+					"id": "google-shape344p27-344",
+					"shapeId": 344,
+					"kind": "list",
+					"required": false,
+					"maxCharacters": 44,
+					"maxListItems": 2,
+					"sampleText": "Pexels, Pixabay,\nSketchify"
+				},
+				{
+					"id": "google-shape345p27-345",
+					"shapeId": 345,
+					"kind": "image",
+					"required": false,
+					"maxCharacters": 0
+				}
+			]
+		}
+	]
+}

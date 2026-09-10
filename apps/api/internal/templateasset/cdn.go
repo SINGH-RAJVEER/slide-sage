@@ -1,0 +1,280 @@
+// Package templateasset retrieves immutable, digest-pinned presentation templates.
+package templateasset
+
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base64"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"io"
+	"mime"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+)
+
+const (
+	PPTXContentType          = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+	ThumbnailContentType     = "image/webp"
+	DefaultMaxAssetBytes     = int64(64 << 20)
+	DefaultMaxThumbnailBytes = int64(4 << 20)
+	DefaultSignedURLTTL      = 15 * time.Minute
+	defaultRequestTimeout    = 30 * time.Second
+)
+
+var (
+	ErrAssetTooLarge  = errors.New("template asset exceeds the byte limit")
+	ErrDigestMismatch = errors.New("template asset SHA-256 mismatch")
+	ErrFetchFailed    = errors.New("template asset request failed")
+	ErrUnexpectedType = errors.New("template asset has an unexpected content type")
+	keyNamePattern    = regexp.MustCompile(`^[A-Za-z0-9_-]{1,63}$`)
+	assetIDPattern    = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,127}$`)
+)
+
+type Asset struct {
+	ID      string
+	Version int
+	SHA256  string
+}
+
+type CDNFetcherConfig struct {
+	BaseURL           string
+	KeyName           string
+	KeySecret         string
+	TTL               time.Duration
+	MaxBytes          int64
+	Client            *http.Client
+	allowExplicitPort bool
+}
+
+type CDNFetcher struct {
+	baseURL  *url.URL
+	keyName  string
+	key      []byte
+	ttl      time.Duration
+	maxBytes int64
+	client   *http.Client
+	now      func() time.Time
+}
+
+func NewCDNFetcher(config CDNFetcherConfig) (*CDNFetcher, error) {
+	baseURL, err := url.Parse(config.BaseURL)
+	if err != nil || baseURL.Scheme != "https" || baseURL.Host == "" || baseURL.User != nil || baseURL.RawQuery != "" || baseURL.ForceQuery || baseURL.Fragment != "" || (baseURL.Port() != "" && !config.allowExplicitPort) {
+		return nil, errors.New("CDN base URL must be an HTTPS origin without credentials, query, or fragment")
+	}
+	if !keyNamePattern.MatchString(config.KeyName) {
+		return nil, errors.New("invalid Cloud CDN signing key name")
+	}
+	key, err := decodeSigningKey(config.KeySecret)
+	if err != nil {
+		return nil, err
+	}
+	if config.TTL <= 0 {
+		config.TTL = DefaultSignedURLTTL
+	}
+	if config.MaxBytes <= 0 {
+		config.MaxBytes = DefaultMaxAssetBytes
+	}
+	client := config.Client
+	if client == nil {
+		client = &http.Client{Timeout: defaultRequestTimeout}
+	} else {
+		clientCopy := *client
+		client = &clientCopy
+	}
+	if client.Timeout <= 0 {
+		client.Timeout = defaultRequestTimeout
+	}
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return errors.New("template CDN redirects are not allowed")
+	}
+	return &CDNFetcher{
+		baseURL:  baseURL,
+		keyName:  config.KeyName,
+		key:      key,
+		ttl:      config.TTL,
+		maxBytes: config.MaxBytes,
+		client:   client,
+		now:      time.Now,
+	}, nil
+}
+
+func (fetcher *CDNFetcher) Fetch(ctx context.Context, asset Asset) ([]byte, error) {
+	if err := validateAsset(asset); err != nil {
+		return nil, err
+	}
+	contents, err := fetcher.object(ctx, assetPath(asset), PPTXContentType, fetcher.maxBytes)
+	if err != nil {
+		return nil, err
+	}
+	digest := sha256.Sum256(contents)
+	want, _ := hex.DecodeString(asset.SHA256)
+	if subtle.ConstantTimeCompare(digest[:], want) != 1 {
+		return nil, ErrDigestMismatch
+	}
+	return contents, nil
+}
+
+// FetchThumbnail retrieves a template's marketplace cover image. Thumbnails are
+// not digest-pinned: they sit beside the package under a version prefix that
+// publication never rewrites, so the version is the only pin available.
+func (fetcher *CDNFetcher) FetchThumbnail(ctx context.Context, id string, version int) ([]byte, error) {
+	if !assetIDPattern.MatchString(id) || version <= 0 {
+		return nil, errors.New("invalid template asset identity")
+	}
+	return fetcher.object(ctx, thumbnailPath(id, version), ThumbnailContentType, DefaultMaxThumbnailBytes)
+}
+
+// Exists reports whether a published package resolves at its digest-pinned key.
+// It exists because the catalog files and the bucket can drift apart — the
+// digest is recorded in the repository while the object lives in the bucket —
+// and downloading tens of megabytes per template only to discard them is a
+// wasteful way to learn that they still agree.
+func (fetcher *CDNFetcher) Exists(ctx context.Context, asset Asset) error {
+	if err := validateAsset(asset); err != nil {
+		return err
+	}
+	return fetcher.head(ctx, assetPath(asset), PPTXContentType)
+}
+
+// ThumbnailExists reports whether a template's cover resolves.
+func (fetcher *CDNFetcher) ThumbnailExists(ctx context.Context, id string, version int) error {
+	if !assetIDPattern.MatchString(id) || version <= 0 {
+		return errors.New("invalid template asset identity")
+	}
+	return fetcher.head(ctx, thumbnailPath(id, version), ThumbnailContentType)
+}
+
+func (fetcher *CDNFetcher) head(ctx context.Context, objectPath, contentType string) error {
+	signedURL := fetcher.signedURL(objectPath, fetcher.now().Add(fetcher.ttl))
+	request, err := http.NewRequestWithContext(ctx, http.MethodHead, signedURL, nil)
+	if err != nil {
+		return fmt.Errorf("create template request: %w", err)
+	}
+	response, err := fetcher.client.Do(request)
+	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("head template asset: %w", err)
+		}
+		return ErrFetchFailed
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("head template asset: unexpected HTTP status %d", response.StatusCode)
+	}
+	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	if err != nil || mediaType != contentType {
+		return ErrUnexpectedType
+	}
+	return nil
+}
+
+func (fetcher *CDNFetcher) object(ctx context.Context, objectPath, contentType string, maxBytes int64) ([]byte, error) {
+	signedURL := fetcher.signedURL(objectPath, fetcher.now().Add(fetcher.ttl))
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, signedURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create template request: %w", err)
+	}
+	response, err := fetcher.client.Do(request)
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil, fmt.Errorf("fetch template asset: %w", context.Canceled)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, fmt.Errorf("fetch template asset: %w", context.DeadlineExceeded)
+		}
+		return nil, ErrFetchFailed
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetch template asset: unexpected HTTP status %d", response.StatusCode)
+	}
+	if response.ContentLength > maxBytes {
+		return nil, ErrAssetTooLarge
+	}
+	mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	if err != nil || mediaType != contentType {
+		return nil, ErrUnexpectedType
+	}
+	contents, err := io.ReadAll(io.LimitReader(response.Body, maxBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("read template asset: %w", err)
+	}
+	if int64(len(contents)) > maxBytes {
+		return nil, ErrAssetTooLarge
+	}
+	return contents, nil
+}
+
+func (fetcher *CDNFetcher) signedURL(assetPath string, expires time.Time) string {
+	resource := *fetcher.baseURL
+	resource.Path = path.Join(fetcher.baseURL.Path, assetPath)
+	unsigned := resource.String() + "?Expires=" + fmt.Sprintf("%d", expires.UTC().Unix()) + "&KeyName=" + url.QueryEscape(fetcher.keyName)
+	mac := hmac.New(sha1.New, fetcher.key)
+	_, _ = io.WriteString(mac, unsigned)
+	return unsigned + "&Signature=" + base64.URLEncoding.EncodeToString(mac.Sum(nil))
+}
+
+func decodeSigningKey(value string) ([]byte, error) {
+	key, err := base64.RawURLEncoding.DecodeString(value)
+	if err != nil {
+		key, err = base64.URLEncoding.DecodeString(value)
+	}
+	if err != nil || len(key) != 16 {
+		return nil, errors.New("Cloud CDN signing key must be a base64url-encoded 16-byte secret")
+	}
+	return key, nil
+}
+
+func validateAsset(asset Asset) error {
+	if !assetIDPattern.MatchString(asset.ID) || asset.Version <= 0 {
+		return errors.New("invalid template asset identity")
+	}
+	if len(asset.SHA256) != sha256.Size*2 || asset.SHA256 != strings.ToLower(asset.SHA256) {
+		return errors.New("invalid template asset SHA-256")
+	}
+	if _, err := hex.DecodeString(asset.SHA256); err != nil {
+		return errors.New("invalid template asset SHA-256")
+	}
+	return nil
+}
+
+func assetPath(asset Asset) string {
+	return fmt.Sprintf("pptx-templates/%s/%d/%s/template.pptx", asset.ID, asset.Version, asset.SHA256)
+}
+
+func thumbnailPath(id string, version int) string {
+	return fmt.Sprintf("pptx-templates/%s/%d/thumbnails/cover.webp", id, version)
+}
+
+// CDNConfigured reports whether the deployment names a template CDN. A process
+// with none of these variables set runs without template delivery; a partial
+// configuration is an error, because a signer missing its key cannot fetch.
+func CDNConfigured() bool {
+	return os.Getenv("CDN_URL") != "" || os.Getenv("CDN_SIGNING_KEY_NAME") != "" || os.Getenv("CDN_SIGNING_KEY_SECRET") != ""
+}
+
+// NewCDNFetcherFromEnv builds a fetcher from the deployment's CDN variables so
+// every caller signs with the same origin, key, and lifetime.
+func NewCDNFetcherFromEnv() (*CDNFetcher, error) {
+	ttl := time.Duration(0)
+	if seconds, err := strconv.Atoi(os.Getenv("CDN_SIGNED_URL_TTL_SECONDS")); err == nil && seconds > 0 {
+		ttl = time.Duration(seconds) * time.Second
+	}
+	return NewCDNFetcher(CDNFetcherConfig{
+		BaseURL:   os.Getenv("CDN_URL"),
+		KeyName:   os.Getenv("CDN_SIGNING_KEY_NAME"),
+		KeySecret: os.Getenv("CDN_SIGNING_KEY_SECRET"),
+		TTL:       ttl,
+	})
+}

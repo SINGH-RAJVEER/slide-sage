@@ -64,6 +64,15 @@ type PresentationDetail struct {
 	UpdatedAt  time.Time       `json:"updated_at"`
 }
 
+type TemplateReference struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// SHA256 is the digest of the published package. It is resolved server-side
+	// from the published catalog, never taken from client input, and pins the
+	// exact bytes a presentation was compiled from.
+	SHA256 string `json:"sha256,omitempty"`
+}
+
 type ResearchOptions struct {
 	Enabled            bool     `json:"enabled"`
 	Freshness          string   `json:"freshness,omitempty"`
