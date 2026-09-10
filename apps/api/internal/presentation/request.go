@@ -3,7 +3,6 @@ package presentation
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/url"
 	"regexp"
 	"strings"
@@ -107,11 +106,7 @@ func ParseResearchPayload(input any) (ResearchPayload, error) {
 		if err != nil {
 			return ResearchPayload{}, err
 		}
-		published := source["published_date"]
-		if published == nil {
-			published = source["publishedDate"]
-		}
-		publishedText, err := optionalText(published, fmt.Sprintf("research_payload.sources[%d].published_date", index), 64)
+		publishedText, err := optionalText(source["published_date"], fmt.Sprintf("research_payload.sources[%d].published_date", index), 64)
 		if err != nil {
 			return ResearchPayload{}, err
 		}
@@ -128,17 +123,6 @@ func ParseResearchPayload(input any) (ResearchPayload, error) {
 			return ResearchPayload{}, err
 		}
 		payload.Sources = append(payload.Sources, Source{URL: urlValue, Title: title, Snippet: snippet, RetrievedAt: retrieved, PublishedDate: publishedText, Author: author, Highlights: highlights, Summary: summary})
-	}
-	if raw, exists := object["estimated_tokens"]; exists {
-		value, ok := raw.(json.Number)
-		if !ok {
-			return ResearchPayload{}, inputError("research_payload.estimated_tokens is invalid", 400)
-		}
-		number, err := value.Float64()
-		if err != nil || math.IsNaN(number) || math.IsInf(number, 0) || number < 0 || number > 1000000 {
-			return ResearchPayload{}, inputError("research_payload.estimated_tokens is invalid", 400)
-		}
-		payload.EstimatedTokens = &number
 	}
 	return payload, nil
 }
