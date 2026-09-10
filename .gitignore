@@ -6,6 +6,8 @@ node_modules/
 .devenv/
 .direnv/
 .DS_Store
+.claude/
+.agents/
 
 # Templates
 templates/
