@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"math"
 	"net/http"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
@@ -119,13 +118,6 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string
 			return 0, 0, err
 		}
 	}
-	theme := "corporate-blue"
-	if job.kind == "iteration" {
-		theme = documentTheme(job.current)
-	}
-	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": theme}); err != nil {
-		return 0, 0, err
-	}
 	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Preparing presentation", "completed": 1, "total": 3}); err != nil {
 		return 0, 0, err
 	}
@@ -186,7 +178,6 @@ func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) erro
 	if job.kind == "generation" {
 		failed := map[string]any{
 			"title":  "Generation failed",
-			"theme":  "corporate-blue",
 			"slides": []any{},
 			"status": "failed",
 			"failure": map[string]any{
@@ -361,18 +352,6 @@ func actualCharge(tokens int, quote int64) int64 {
 		return quote
 	}
 	return charge
-}
-
-func estimate(slides int, detail, tonality string, researchTokens int) float64 {
-	detailMultiplier := map[string]float64{"brief": .6, "concise": .8, "balanced": 1, "detailed": 2, "comprehensive": 2.5}[detail]
-	if detailMultiplier == 0 {
-		detailMultiplier = 1
-	}
-	toneMultiplier := map[string]float64{"casual": .9, "professional": 1, "enthusiastic": 1.05, "persuasive": 1.1}[tonality]
-	if toneMultiplier == 0 {
-		toneMultiplier = 1
-	}
-	return math.Round((float64(slides)*detailMultiplier*toneMultiplier+float64(researchTokens)/1000)*10) / 10
 }
 
 func (h *handler) reservationError(writer http.ResponseWriter, err error) {

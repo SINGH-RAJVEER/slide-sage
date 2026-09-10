@@ -18,27 +18,6 @@ func NewRepository(database *sql.DB) *Repository {
 	return &Repository{database: database}
 }
 
-func (repository *Repository) CreateUser(ctx context.Context, user User) error {
-	transaction, err := repository.database.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer transaction.Rollback()
-	balanceMillis := pointsToMillis(user.SlideTokens)
-	if _, err = transaction.ExecContext(ctx, `INSERT INTO users (id, name, email, email_verified, image, balance_millis, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)`, user.ID, user.Name, user.Email, user.EmailVerified, user.Image, balanceMillis, user.CreatedAt); err != nil {
-		return err
-	}
-	if _, err = transaction.ExecContext(ctx, `INSERT INTO point_ledger (id, user_id, entry_type, delta_millis, balance_after_millis) VALUES (md5(random()::text || clock_timestamp()::text), $1, 'signup_credit', $2, $2)`, user.ID, balanceMillis); err != nil {
-		return err
-	}
-	return transaction.Commit()
-}
-
-func (repository *Repository) CreateCredential(ctx context.Context, id, userID, password string) error {
-	_, err := repository.database.ExecContext(ctx, `INSERT INTO accounts (id, account_id, provider_id, user_id, password, created_at, updated_at) VALUES ($1, $2, 'credential', $2, $3, NOW(), NOW())`, id, userID, password)
-	return err
-}
-
 func (repository *Repository) CreateUserWithCredential(ctx context.Context, user User, accountID, password string) error {
 	transaction, err := repository.database.BeginTx(ctx, nil)
 	if err != nil {

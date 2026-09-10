@@ -2,9 +2,7 @@ package presentation
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,23 +18,6 @@ type Repository struct {
 
 func NewRepository(db DBTX) *Repository {
 	return &Repository{db: db}
-}
-
-func (r *Repository) Create(ctx context.Context, input NewPresentation) (Presentation, error) {
-	if input.ID == "" {
-		id, err := newUUID()
-		if err != nil {
-			return Presentation{}, err
-		}
-		input.ID = id
-	}
-	if input.UserID == "" || input.Title == "" || input.Prompt == "" || !json.Valid(input.SlidesData) {
-		return Presentation{}, errors.New("presentation requires user ID, title, prompt, and valid slides data")
-	}
-	const query = `INSERT INTO presentations (id, user_id, title, prompt, slides_data, ai_provider, ai_model, parent_presentation_id)
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)
-        RETURNING id, user_id, title, prompt, slides_data, ai_provider, ai_model, parent_presentation_id, revision, created_at, updated_at`
-	return scanPresentation(r.db.QueryRowContext(ctx, query, input.ID, input.UserID, input.Title, input.Prompt, input.SlidesData, input.AIProvider, input.AIModel, input.ParentPresentationID))
 }
 
 func (r *Repository) FindByID(ctx context.Context, presentationID string) (Presentation, error) {
@@ -103,21 +84,6 @@ func (r *Repository) DeleteOwned(ctx context.Context, presentationID, userID str
 	return ErrPresentationNotFound
 }
 
-func (r *Repository) UpdateOwnedAtRevision(ctx context.Context, presentationID, userID string, revision int, title string, slidesData json.RawMessage) (Presentation, error) {
-	if title == "" || !json.Valid(slidesData) {
-		return Presentation{}, errors.New("presentation update requires title and valid slides data")
-	}
-	const query = `UPDATE presentations
-        SET title = $1, slides_data = $2::jsonb, revision = revision + 1, updated_at = NOW()
-        WHERE id = $3 AND user_id = $4 AND revision = $5
-        RETURNING id, user_id, title, prompt, slides_data, ai_provider, ai_model, parent_presentation_id, revision, created_at, updated_at`
-	presentation, err := scanPresentation(r.db.QueryRowContext(ctx, query, title, slidesData, presentationID, userID, revision))
-	if errors.Is(err, ErrPresentationNotFound) {
-		return Presentation{}, ErrPresentationConflict
-	}
-	return presentation, err
-}
-
 type scanner interface {
 	Scan(...any) error
 }
@@ -139,17 +105,6 @@ func scanPresentation(row scanner) (Presentation, error) {
 	}
 	presentation.SlidesData = append(json.RawMessage(nil), slidesData...)
 	return presentation, nil
-}
-
-func newUUID() (string, error) {
-	bytes := make([]byte, 16)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("generate presentation ID: %w", err)
-	}
-	bytes[6] = bytes[6]&0x0f | 0x40
-	bytes[8] = bytes[8]&0x3f | 0x80
-	encoded := hex.EncodeToString(bytes)
-	return encoded[0:8] + "-" + encoded[8:12] + "-" + encoded[12:16] + "-" + encoded[16:20] + "-" + encoded[20:], nil
 }
 
 // Canonical document metadata comes from the current revision, including editor saves.

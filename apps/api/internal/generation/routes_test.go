@@ -11,22 +11,7 @@ import (
 	"time"
 
 	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/presentation"
-	"github.com/SINGH-RAJVEER/SlideSage/apps/api/internal/templatecatalog"
 )
-
-// testTemplateDigest stands in for a real package digest. Nothing reads the
-// bytes it names; it only has to satisfy the catalog's format check.
-const testTemplateDigest = "3b1f4c5d6e7a8b9c0d1e2f30415263748596a7b8c9dae0f1023456789abcdef0"
-
-// publishTestTemplate makes simple-business-proposal generation-ready for one
-// test. The embedded catalog is empty until the publication command runs, so a
-// test that expects a ready template has to say so.
-func publishTestTemplate(t *testing.T) {
-	t.Helper()
-	t.Cleanup(templatecatalog.Swap([]templatecatalog.Entry{
-		{ID: "simple-business-proposal", Version: 1, SHA256: testTemplateDigest},
-	}))
-}
 
 func decodeSubmitBody(t *testing.T, raw string) map[string]any {
 	t.Helper()
@@ -81,7 +66,6 @@ func TestSubmitInputParsesBinaryTemplate(t *testing.T) {
 	body := decodeSubmitBody(t, `{
 		"topic":"Grid storage",
 		"slide_count":5,
-		"theme":"terra-mesa",
 		"template":{"id":"soft-skills-training","version":1}
 	}`)
 	input, err := parseSubmitInput(body)
@@ -91,18 +75,10 @@ func TestSubmitInputParsesBinaryTemplate(t *testing.T) {
 	if input.Template == nil || input.Template.ID != "soft-skills-training" {
 		t.Fatalf("template = %#v", input.Template)
 	}
-	if input.Theme != "terra-mesa" {
-		t.Fatalf("theme = %q", input.Theme)
-	}
 
 	body["template"] = map[string]any{"id": "Invalid Template", "version": json.Number("1")}
 	if _, err := parseSubmitInput(body); err == nil {
 		t.Fatal("invalid template ID was accepted")
-	}
-	body["template"] = map[string]any{"id": "soft-skills-training", "version": json.Number("1")}
-	body["theme"] = "unknown-theme"
-	if _, err := parseSubmitInput(body); err == nil {
-		t.Fatal("invalid semantic theme was accepted")
 	}
 }
 
@@ -117,9 +93,6 @@ func TestGenerationPlaceholderCarriesTemplateIntoRetryState(t *testing.T) {
 		t.Fatal(err)
 	}
 	placeholder := generationPlaceholder(input)
-	if placeholder["theme"] != "corporate-blue" {
-		t.Fatalf("theme = %#v", placeholder["theme"])
-	}
 	retry := placeholder["failure"].(map[string]any)["retry"].(map[string]any)
 	encoded, _ := json.Marshal(retry["template"])
 	if string(encoded) != `{"id":"soft-skills-training","version":1}` {

@@ -81,16 +81,14 @@ it.
 
 | Variable                        | Required                                  | Default                              | Purpose                                                                                                                                    |
 | ------------------------------- | ----------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `OPEN_ROUTER_API_KEY`           | Yes for default generation and embeddings | None                                 | Server OpenRouter authentication; BYOK replaces only generation calls                                                                      |
+| `OPEN_ROUTER_API_KEY`           | Yes for default generation                | None                                 | Server OpenRouter authentication; BYOK replaces only generation calls                                                                      |
 | `OPEN_ROUTER_MODEL`             | No                                        | `openrouter/free`                     | Generation model; OpenRouter selects an available free model for each request                                                                |
 | `OPEN_ROUTER_API_BASE`          | No                                        | OpenRouter chat completions endpoint | Chat endpoint override                                                                                                                     |
-| `OPEN_ROUTER_EMBEDDINGS_URL`    | No                                        | OpenRouter embeddings endpoint       | Embedding endpoint override                                                                                                                |
 | `OPEN_ROUTER_MAX_OUTPUT_TOKENS` | No                                        | Not used                             | Generation enforces a server-owned 2,000-16,000 output-token ceiling based on requested slide count so point authorizations remain bounded |
 | `PROVIDER_VALIDATION_TIMEOUT_MS` | No                                        | `15000`                              | Total timeout for listing models from a user-connected BYOK provider                                                                       |
-| `EMBEDDING_REQUEST_TIMEOUT_MS`  | No                                        | `15000`                              | Maximum embedding request duration; caller cancellation can stop it earlier                                                                |
 | `EXA_API_KEY`                   | For web research                          | None                                 | Exa search authentication                                                                                                                  |
 | `EXA_REQUEST_TIMEOUT_MS`        | No                                        | `10000`                              | Maximum Exa request duration; caller cancellation can stop it earlier                                                                      |
-Presentation requests without a valid user provider connection use OpenRouter JSON output and consume SlideSage points. The default `openrouter/free` router selects an available free model for each request, improving availability at the cost of less predictable model behavior. Set `OPEN_ROUTER_MODEL` explicitly when a pinned model is required. Valid BYOK connections replace this generation path but do not replace the server embedding configuration.
+Presentation requests without a valid user provider connection use OpenRouter JSON output and consume SlideSage points. The default `openrouter/free` router selects an available free model for each request, improving availability at the cost of less predictable model behavior. Set `OPEN_ROUTER_MODEL` explicitly when a pinned model is required. Valid BYOK connections replace this generation path.
 
 ## Authentication and email
 
@@ -170,6 +168,6 @@ Setting `OTEL_SDK_DISABLED=true` also disables export regardless of endpoint. Se
 | `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` | For BYOK | Active encryption key version, normally `1` initially |
 | `BYOK_ENCRYPTION_KEY`                 | For BYOK | Base64-encoded 32-byte AES-GCM key (active version `1`) |
 
-Provider API keys are supplied by users and encrypted with these deployment secrets. They are used only for presentation generation. OpenRouter remains the exclusive embedding provider.
+Provider API keys are supplied by users and encrypted with these deployment secrets. They are used only for presentation generation.
 
 `BYOK_ENCRYPTION_KEY_CURRENT_VERSION` is a non-secret version selector. The active version `1` key is read from `BYOK_ENCRYPTION_KEY`; rotated-out versions `n > 1` stay in `BYOK_ENCRYPTION_KEY_V<n>`. Every referenced key is secret and must remain available while stored credentials still use that version.

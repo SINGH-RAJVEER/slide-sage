@@ -33,6 +33,7 @@
 		"format:web": "bun --cwd apps/web format"
 	},
 	"devDependencies": {
+		"@aiden0z/pptx-renderer": "^1.2.4",
 		"@types/bun": "1.3.14",
 		"playwright": "^1.62.1",
 		"typescript": "^7.0.2"

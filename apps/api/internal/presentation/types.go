@@ -96,8 +96,7 @@ type Source struct {
 }
 
 type ResearchPayload struct {
-	Sources         []Source `json:"sources"`
-	EstimatedTokens *float64 `json:"estimated_tokens,omitempty"`
+	Sources []Source `json:"sources"`
 }
 
 type DBTX interface {
