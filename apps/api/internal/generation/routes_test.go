@@ -81,7 +81,6 @@ func TestSubmitInputParsesBinaryTemplate(t *testing.T) {
 	body := decodeSubmitBody(t, `{
 		"topic":"Grid storage",
 		"slide_count":5,
-		"theme":"terra-mesa",
 		"template":{"id":"soft-skills-training","version":1}
 	}`)
 	input, err := parseSubmitInput(body)
@@ -91,18 +90,10 @@ func TestSubmitInputParsesBinaryTemplate(t *testing.T) {
 	if input.Template == nil || input.Template.ID != "soft-skills-training" {
 		t.Fatalf("template = %#v", input.Template)
 	}
-	if input.Theme != "terra-mesa" {
-		t.Fatalf("theme = %q", input.Theme)
-	}
 
 	body["template"] = map[string]any{"id": "Invalid Template", "version": json.Number("1")}
 	if _, err := parseSubmitInput(body); err == nil {
 		t.Fatal("invalid template ID was accepted")
-	}
-	body["template"] = map[string]any{"id": "soft-skills-training", "version": json.Number("1")}
-	body["theme"] = "unknown-theme"
-	if _, err := parseSubmitInput(body); err == nil {
-		t.Fatal("invalid semantic theme was accepted")
 	}
 }
 
@@ -117,9 +108,6 @@ func TestGenerationPlaceholderCarriesTemplateIntoRetryState(t *testing.T) {
 		t.Fatal(err)
 	}
 	placeholder := generationPlaceholder(input)
-	if placeholder["theme"] != "corporate-blue" {
-		t.Fatalf("theme = %#v", placeholder["theme"])
-	}
 	retry := placeholder["failure"].(map[string]any)["retry"].(map[string]any)
 	encoded, _ := json.Marshal(retry["template"])
 	if string(encoded) != `{"id":"soft-skills-training","version":1}` {

@@ -118,13 +118,6 @@ func (h *handler) enqueue(ctx context.Context, job streamJob, requestHash string
 			return 0, 0, err
 		}
 	}
-	theme := "corporate-blue"
-	if job.kind == "iteration" {
-		theme = documentTheme(job.current)
-	}
-	if err := appendEventTx(ctx, tx, job.jobID, "theme", map[string]any{"theme": theme}); err != nil {
-		return 0, 0, err
-	}
 	if err := appendEventTx(ctx, tx, job.jobID, "stage", map[string]any{"stage": "planning", "message": "Preparing presentation", "completed": 1, "total": 3}); err != nil {
 		return 0, 0, err
 	}
@@ -185,7 +178,6 @@ func failTx(ctx context.Context, tx *sql.Tx, job streamJob, message string) erro
 	if job.kind == "generation" {
 		failed := map[string]any{
 			"title":  "Generation failed",
-			"theme":  "corporate-blue",
 			"slides": []any{},
 			"status": "failed",
 			"failure": map[string]any{

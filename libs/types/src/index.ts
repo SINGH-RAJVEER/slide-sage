@@ -1,33 +1,3 @@
-/** Browser-only semantic preview IDs. These are not PowerPoint template IDs. */
-export const THEME_IDS = [
-	"modern-dark",
-	"corporate-blue",
-	"minimalist",
-	"creative-studio",
-	"elegant-serif",
-	"nature-green",
-] as const;
-
-/**
- * Browser-only semantic preview IDs. These are not PowerPoint templates.
- * Marketplace preview themes must be installed before they appear in the
- * viewer theme dropdown.
- */
-export const MARKETPLACE_THEME_IDS = [
-	"neon-district",
-	"draft-board",
-	"velvet-marquee",
-	"bubblegum-pop",
-	"concrete-brutal",
-	"terra-mesa",
-] as const;
-
-export type MarketplaceThemeId = (typeof MARKETPLACE_THEME_IDS)[number];
-
-const ALL_THEME_IDS = [...THEME_IDS, ...MARKETPLACE_THEME_IDS] as const;
-
-export type ThemeId = (typeof ALL_THEME_IDS)[number];
-
 export type {
 	BinaryPptxTemplate,
 	BinaryTemplateAspectRatio,

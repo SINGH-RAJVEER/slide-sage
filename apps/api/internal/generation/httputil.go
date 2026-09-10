@@ -88,12 +88,6 @@ func validTonality(value string) bool {
 	return false
 }
 
-func documentTheme(data []byte) string {
-	var document map[string]any
-	_ = json.Unmarshal(data, &document)
-	return text(document["theme"], "corporate-blue")
-}
-
 func truncate(value string, maximum int) string {
 	if len(value) > maximum {
 		return value[:maximum]
