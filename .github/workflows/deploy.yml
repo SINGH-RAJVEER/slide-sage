@@ -36,7 +36,7 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker $REGISTRY_LOCATION-docker.pkg.dev --quiet
+        run: gcloud auth configure-docker "$REGISTRY_LOCATION-docker.pkg.dev" --quiet
 
       - uses: docker/setup-buildx-action@v3
 
@@ -134,7 +134,7 @@ jobs:
           : "${TF_VAR_cloudflare_account_id:?Set CLOUDFLARE_ACCOUNT_ID}"
           : "${TF_VAR_cloudflare_api_token:?Set CLOUDFLARE_API_TOKEN}"
           for component in api worker preview migrate; do
-            echo "TF_VAR_${component}_image=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/$component:$IMAGE_VERSION" >> "$GITHUB_ENV"
+            echo "TF_VAR_${component}_image="$REGISTRY_LOCATION-docker.pkg.dev"/$PROJECT_ID/$REGISTRY_REPOSITORY/$component:$IMAGE_VERSION" >> "$GITHUB_ENV"
           done
 
       - name: Initialize Terraform
@@ -206,27 +206,27 @@ jobs:
       - name: Verify Cloud Run exposure
         run: |
           API_INGRESS=$(gcloud run services describe api \
-            --project=$PROJECT_ID \
-            --region=$RUN_REGION \
+            --project="$PROJECT_ID" \
+            --region="$RUN_REGION" \
             --format="value(metadata.annotations.'run.googleapis.com/ingress')")
           WORKER_INGRESS=$(gcloud run services describe worker \
-            --project=$PROJECT_ID \
-            --region=$RUN_REGION \
+            --project="$PROJECT_ID" \
+            --region="$RUN_REGION" \
             --format="value(metadata.annotations.'run.googleapis.com/ingress')")
           PREVIEW_INGRESS=$(gcloud run services describe preview-worker \
-            --project=$PROJECT_ID \
-            --region=$RUN_REGION \
+            --project="$PROJECT_ID" \
+            --region="$RUN_REGION" \
             --format="value(metadata.annotations.'run.googleapis.com/ingress')")
           WORKER_PUBLIC_BINDING=$(gcloud run services get-iam-policy worker \
-            --project=$PROJECT_ID \
-            --region=$RUN_REGION \
+            --project="$PROJECT_ID" \
+            --region="$RUN_REGION" \
             --flatten='bindings[].members' \
             --filter='bindings.role=roles/run.invoker AND bindings.members=allUsers' \
             --format='value(bindings.members)')
 
           PREVIEW_PUBLIC_BINDING=$(gcloud run services get-iam-policy preview-worker \
-            --project=$PROJECT_ID \
-            --region=$RUN_REGION \
+            --project="$PROJECT_ID" \
+            --region="$RUN_REGION" \
             --flatten='bindings[].members' \
             --filter='bindings.role=roles/run.invoker AND bindings.members=allUsers' \
             --format='value(bindings.members)')
