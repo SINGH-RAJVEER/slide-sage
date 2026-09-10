@@ -134,7 +134,7 @@ jobs:
           : "${TF_VAR_cloudflare_account_id:?Set CLOUDFLARE_ACCOUNT_ID}"
           : "${TF_VAR_cloudflare_api_token:?Set CLOUDFLARE_API_TOKEN}"
           for component in api worker preview migrate; do
-            echo "TF_VAR_${component}_image="$REGISTRY_LOCATION-docker.pkg.dev"/$PROJECT_ID/$REGISTRY_REPOSITORY/$component:$IMAGE_VERSION" >> "$GITHUB_ENV"
+            echo "TF_VAR_${component}_image=$REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$REGISTRY_REPOSITORY/$component:$IMAGE_VERSION" >> "$GITHUB_ENV"
           done
 
       - name: Initialize Terraform
