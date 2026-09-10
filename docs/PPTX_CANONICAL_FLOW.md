@@ -170,7 +170,9 @@ prompts, and the browser mutation client have all been deleted.
 - custom browser element selection and resizing;
 - client-side OOXML export and download-time compilation;
 - DOM-to-image PDF export;
-- fixed 1280 by 720 viewer geometry.
+- fixed 1280 by 720 viewer geometry;
+- the browser preview theme, its request field, its stored document field, and
+  the `theme` stream event.
 
 Presentations produced by the semantic pipeline are deleted, not migrated. Migration 25 removes
 every presentation without a committed PPTX revision and drops the `document_kind` column along

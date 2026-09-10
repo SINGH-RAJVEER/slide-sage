@@ -4,7 +4,7 @@ The authenticated `/marketplace` route lists curated binary PowerPoint templates
 
 ## Catalog model
 
-Each template has a stable kebab-case ID, version, availability, dimensions, object-storage path, and browser preview theme. Source files under the ignored root `templates/` directory use the same ID as their filename, for example `simple-business-proposal.pptx`.
+Each template has a stable kebab-case ID, version, availability, dimensions, and object-storage path. Source files under the ignored root `templates/` directory use the same ID as their filename, for example `simple-business-proposal.pptx`.
 
 The truncated agriculture deck is excluded from the catalog and retained as `quarantine-agriculture-business-plan.pptx`. The duplicate Textured Scrapbook file was removed.
 
@@ -74,11 +74,10 @@ The catalog files live in the repository while the objects live in the bucket, s
 
 ## Presentation selection
 
-A presentation stores its PowerPoint template separately from its browser preview theme:
+A presentation stores the PowerPoint template it was generated from:
 
 ```json
 {
-	"theme": "corporate-blue",
 	"template": {
 		"id": "simple-business-proposal",
 		"version": 1
@@ -86,19 +85,11 @@ A presentation stores its PowerPoint template separately from its browser previe
 }
 ```
 
-Selecting a template updates both fields in one presentation mutation. Generation and research routes submit the selected semantic preview theme alongside the binary template reference and carry both through retries, queued jobs, resumable streaming, and the final persisted document.
+The reference is carried through retries, queued jobs, resumable streaming, and the final persisted document.
 
-## Export readiness
+## Download readiness
 
-Catalog visibility, installation, and export readiness are separate. A template can appear in the marketplace while its asset remains `pending-upload`. PowerPoint download requires all of the following:
-
-- The presentation selects a binary template.
-- The catalog asset status is `available`.
-- The runtime package exists under `VITE_PPTX_TEMPLATE_BASE_URL`.
-- The template has an OOXML manifest.
-- Every presentation slide kind is supported by that manifest and renderer.
-
-`Simple Business Proposal` is the first onboarded and available manifest. Unsupported rich content disables its PowerPoint export instead of producing a partial file. See [OOXML_TEMPLATE_EXPORT.md](OOXML_TEMPLATE_EXPORT.md) for package processing and validation.
+Catalog visibility, installation, and download readiness are separate. A template can appear in the marketplace while its asset remains `pending-upload`. Download returns the exact bytes of the presentation's current revision, so it requires only that generation committed one. Whether a template can produce a revision at all is decided by the publication gating above.
 
 ## Future backend work
 
